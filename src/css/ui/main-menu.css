@@ -1,0 +1,1062 @@
+/* ═══════════════════════════════════════════════════════════
+   SHUTDOWN LOADING SCREEN
+   ═══════════════════════════════════════════════════════════ */
+#overlay-shutdown-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: #005ea6; /* same Windows blue as restart screen */
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.45s;
+  isolation: isolate;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  user-select: none;
+}
+
+#overlay-shutdown-screen.sd-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+#overlay-shutdown-screen.sd-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Red-tinted spinner override — just reuses winSpinnerSpin */
+.win-spinner-red {
+  animation: winSpinnerSpin 1.15s linear infinite;
+}
+
+/* ════════════════════════════════════════════════════════════
+   CYBERZERO MAIN MENU
+════════════════════════════════════════════════════════════ */
+#overlay-main-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #62b8fc;
+  overflow: hidden;
+  font-family: var(--font-cyberzero);
+}
+
+/* Background image */
+.mm-bg {
+  position: absolute;
+  inset: 0;
+  background: url('../../../assets/background/main_menu_bg.jpg') no-repeat center center;
+  background-size: cover;
+  z-index: 0;
+}
+
+/* Subtle digital scanlines */
+.mm-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.04) 3px,
+    rgba(255, 255, 255, 0.04) 4px
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Floating particles (disabled per user preference) */
+.mm-particles {
+  display: none !important;
+}
+
+/* Center container */
+.mm-center {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Logo Block ── */
+.mm-logo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  /* The shield, title, and line form ONE unified logo block */
+}
+
+/* Shield/logo wrapper — single combined image */
+.mm-shield-wrap {
+  position: relative;
+  width: 520px;
+  max-width: 92vw;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  animation: mmShieldFloat 4s ease-in-out infinite;
+}
+.mm-shield-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+@keyframes mmShieldFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* Title Image Wrapper — sits immediately below shield */
+.mm-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: -28px;  /* snaps up under the shield */
+  z-index: 1;
+}
+.mm-title-img {
+  width: 520px;
+  max-width: 92vw;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 18px rgba(0, 140, 255, 0.5));
+}
+
+/* Tech HUD Divider — snaps immediately below title */
+.mm-tech-divider {
+  width: 440px;
+  max-width: 93vw;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -2px;
+  margin-bottom: 0;
+}
+.mm-tech-divider svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── Nav Buttons Container ── */
+.mm-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 260px;
+  margin-top: 8px;
+  transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1), transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), filter 0.32s ease;
+}
+.mm-nav.mm-nav-exiting {
+  opacity: 0;
+  transform: translateY(22px) scale(0.96);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+/* Base button style (chamfered frame container) */
+.mm-btn {
+  position: relative;
+  width: 260px;
+  height: 62px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+}
+.mm-btn:hover {
+  transform: translateY(-2px) scale(1.025);
+}
+.mm-btn:active {
+  transform: translateY(0.5px) scale(0.98);
+}
+
+/* SVG Frame inside button */
+.mm-btn-frame-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  transition: filter 0.2s ease;
+}
+
+.mm-btn-start:hover .mm-btn-frame-svg {
+  filter: drop-shadow(0 0 18px rgba(0, 216, 255, 0.95)) brightness(1.08);
+}
+
+.mm-btn-dark:hover .mm-btn-frame-svg {
+  filter: drop-shadow(0 0 14px rgba(0, 176, 244, 0.7)) brightness(1.18);
+}
+
+/* Inner content: wrapper for absolute-positioned icon and centered label */
+.mm-btn-content {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Icon — pinned to the left side */
+.mm-btn-icon-wrap {
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #ffffff;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Divider — hidden */
+.mm-btn-divider {
+  display: none;
+}
+
+/* Label text — absolutely centered in the full button width */
+.mm-btn-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── Inner Modals (About / Exit) ── */
+.mm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 10, 30, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  animation: mmModalFadeIn 0.25s ease forwards;
+}
+.mm-modal-backdrop.hidden {
+  display: none;
+}
+@keyframes mmModalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.mm-modal-card {
+  background: linear-gradient(160deg, #0d1b2a 0%, #112240 100%);
+  border: 1px solid rgba(66, 165, 245, 0.3);
+  border-radius: 18px;
+  padding: 36px 40px 32px;
+  max-width: 480px;
+  width: 90vw;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(66, 165, 245, 0.1);
+  animation: mmCardSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes mmCardSlideUp {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* ABOUT MODAL — Redesigned to match reference image */
+.mm-about-card {
+  position: relative;
+  background: linear-gradient(160deg, #071428 0%, #0a1e3d 60%, #0d2850 100%);
+  border: 2px solid #00c8f0;
+  border-radius: 4px;
+  clip-path: polygon(22px 0%, calc(100% - 22px) 0%, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0% calc(100% - 22px), 0% 22px);
+  width: 580px;
+  max-width: 93vw;
+  padding: 32px 36px 28px;
+  text-align: center;
+  box-shadow:
+    0 0 0 1px rgba(0, 200, 240, 0.2),
+    0 0 30px rgba(0, 180, 240, 0.25),
+    0 0 60px rgba(0, 100, 200, 0.2),
+    inset 0 0 40px rgba(0, 30, 80, 0.5);
+  animation: mmCardSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+/* Cyan Sci-Fi Corner Brackets (All 4 Corners) */
+.mm-about-corner {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  pointer-events: none;
+  z-index: 3;
+  filter: drop-shadow(0 0 6px rgba(0, 248, 255, 0.95)) drop-shadow(0 0 14px rgba(0, 180, 255, 0.6));
+}
+.mm-about-corner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.mm-about-corner-tl { top: 0; left: 0; }
+.mm-about-corner-tr { top: 0; right: 0; }
+.mm-about-corner-bl { bottom: 0; left: 0; }
+.mm-about-corner-br { bottom: 0; right: 0; }
+
+.mm-about-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(0, 180, 240, 0.15);
+  border: 2px solid #00c8f0;
+  color: #00e8ff;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.15s;
+  box-shadow: 0 0 10px rgba(0, 200, 240, 0.4);
+  z-index: 10;
+}
+.mm-about-close:hover { background: rgba(0, 200, 240, 0.35); transform: scale(1.1); color: #fff; }
+.mm-about-logo-block {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0;
+  margin-bottom: 14px;
+}
+.mm-about-logo-img {
+  width: 310px;
+  max-width: 82%;
+  height: auto;
+  object-fit: contain;
+}
+.mm-about-shield {
+  width: 90px; height: 90px;
+  object-fit: contain;
+  margin-bottom: -6px;
+}
+.mm-about-title-img {
+  width: 300px; max-width: 80%;
+  height: auto; object-fit: contain;
+}
+.mm-about-title-line { width: 100%; height: 6px; margin-top: 6px; }
+.mm-about-desc {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 15px; font-weight: 800;
+  color: #d0e8ff; line-height: 1.7;
+  text-align: center; margin: 0 0 18px; padding: 0 8px;
+}
+.mm-about-divider {
+  width: 100%; height: 1.5px;
+  background: linear-gradient(90deg, transparent, #00b4f0 30%, #00f8ff 50%, #00b4f0 70%, transparent);
+  margin-bottom: 20px; opacity: 0.7;
+}
+.mm-about-pillars {
+  display: flex; align-items: center;
+  justify-content: center; gap: 0;
+}
+.mm-about-pillar {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+  flex: 1; padding: 0 8px;
+}
+.mm-about-pillar-icon {
+  width: 56px; height: 56px;
+  background: rgba(0, 100, 200, 0.2);
+  border: 1.5px solid rgba(0, 200, 240, 0.4);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(0, 180, 240, 0.25);
+}
+.mm-about-pillar-label {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 15px; font-weight: 800;
+  color: #ffffff; letter-spacing: 0.5px;
+}
+.mm-about-pillar-sep {
+  width: 1.5px; height: 60px;
+  background: linear-gradient(180deg, transparent, #00b4f0 40%, #00b4f0 60%, transparent);
+  opacity: 0.6; flex-shrink: 0;
+}
+
+.mm-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #90CAF9;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.mm-modal-close:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.mm-modal-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.mm-modal-title {
+  font-family: var(--font-cyberzero);
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 18px;
+  letter-spacing: 0.5px;
+}
+
+.mm-modal-body {
+  color: #b0c4de;
+  font-size: 14.5px;
+  line-height: 1.7;
+  text-align: center;
+}
+.mm-modal-body p { margin: 0 0 12px; text-align: center; }
+.mm-modal-body strong { color: #e8f4fd; }
+
+.mm-modal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.mm-modal-chip {
+  background: rgba(66, 165, 245, 0.15);
+  border: 1px solid rgba(66, 165, 245, 0.35);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: #90CAF9;
+  font-weight: 500;
+}
+
+.mm-modal-motto {
+  text-align: center !important;
+  font-style: italic;
+  color: #90CAF9 !important;
+  font-size: 13.5px !important;
+  margin-top: 14px !important;
+}
+
+/* OK button */
+.mm-modal-ok-btn {
+  margin-top: 22px;
+  background: linear-gradient(135deg, #1565C0, #1E88E5);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 40px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.4px;
+  transition: filter 0.15s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(21, 101, 192, 0.5);
+}
+.mm-modal-ok-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+/* Exit Confirm Modal — styled with same sci-fi chamfered card, glow border & typography as About */
+.mm-exit-card {
+  width: 490px;
+  max-width: 93vw;
+  padding: 34px 38px 30px;
+}
+.mm-exit-icon {
+  font-size: 40px;
+  line-height: 1;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 14px rgba(255, 193, 7, 0.65));
+}
+.mm-exit-title {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+.mm-exit-divider {
+  width: 100%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #00b4f0 30%, #00f8ff 50%, #00b4f0 70%, transparent);
+  margin: 10px 0 16px;
+  opacity: 0.75;
+}
+.mm-exit-desc {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #d0e8ff;
+  line-height: 1.6;
+  text-align: center;
+  margin: 0 0 6px;
+  padding: 0 10px;
+}
+
+/* Modal action buttons row */
+.mm-modal-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 22px;
+}
+.mm-modal-cancel-btn {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  background: rgba(0, 180, 240, 0.12);
+  border: 1.5px solid rgba(0, 200, 240, 0.4);
+  color: #cde8ff;
+  border-radius: 6px;
+  padding: 11px 32px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mm-modal-cancel-btn:hover {
+  background: rgba(0, 180, 240, 0.28);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45);
+  transform: translateY(-1px);
+}
+.mm-modal-danger-btn {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+  border: 1.5px solid #ff5252;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 11px 32px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(244, 67, 54, 0.45);
+  transition: all 0.15s ease;
+}
+.mm-modal-danger-btn:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 18px rgba(244, 67, 54, 0.7);
+  transform: translateY(-1px);
+}
+
+/* ACHIEVEMENTS MODAL */
+.mm-achievement-card {
+  width: 620px;
+  max-width: 94vw;
+  max-height: 85vh;
+  padding: 28px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mm-ach-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.mm-ach-trophy-ring {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.25) 0%, rgba(255, 215, 0, 0.05) 70%, transparent 100%);
+  border: 2px solid #ffd700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), inset 0 0 14px rgba(255, 215, 0, 0.2);
+  margin-bottom: 6px;
+}
+
+.mm-ach-title {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.7);
+  margin: 0;
+}
+
+.mm-ach-sub {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 13px;
+  color: #a0c8f0;
+  margin: 4px 0 0;
+}
+
+.mm-ach-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 4px 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #00b0f4 rgba(0, 20, 50, 0.5);
+}
+
+.mm-ach-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: rgba(10, 28, 56, 0.75);
+  border: 1px solid rgba(0, 180, 244, 0.35);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mm-ach-item:hover {
+  background: rgba(14, 40, 78, 0.85);
+  border-color: #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+}
+
+.mm-ach-item.ach-completed {
+  border-color: #ffd700;
+  background: linear-gradient(135deg, rgba(20, 45, 80, 0.85) 0%, rgba(35, 45, 20, 0.6) 100%);
+}
+
+.mm-ach-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(0, 180, 244, 0.15);
+  border: 1.5px solid rgba(0, 180, 244, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.mm-ach-item.ach-completed .mm-ach-icon {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.mm-ach-info {
+  flex: 1;
+  text-align: left;
+}
+
+.mm-ach-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.mm-ach-name {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.mm-ach-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(0, 200, 255, 0.2);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 200, 255, 0.4);
+}
+
+.mm-ach-item.ach-completed .mm-ach-badge {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.mm-ach-desc {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  color: #8bb8e8;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.mm-ach-status {
+  flex-shrink: 0;
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+
+.mm-ach-status.status-locked {
+  background: rgba(255, 255, 255, 0.08);
+  color: #8899aa;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.mm-ach-status.status-completed {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.mm-ach-status.status-ready {
+  background: rgba(0, 229, 255, 0.18);
+  color: #00f8ff;
+  border: 1px solid #00f8ff;
+}
+
+/* ── Empty state ── */
+.mm-ach-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 40px 20px;
+  text-align: center;
+  animation: achEmptyFade 0.6s ease both;
+}
+
+@keyframes achEmptyFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mm-ach-empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px dashed rgba(0, 180, 244, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: achEmptyPulse 3s ease-in-out infinite;
+}
+
+@keyframes achEmptyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 180, 244, 0); border-color: rgba(0, 180, 244, 0.4); }
+  50%       { box-shadow: 0 0 18px 4px rgba(0, 180, 244, 0.18); border-color: rgba(0, 229, 255, 0.7); }
+}
+
+.mm-ach-empty-title {
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 17px;
+  font-weight: 800;
+  color: #7aa5c8;
+  letter-spacing: 2px;
+}
+
+.mm-ach-empty-sub {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 13px;
+  color: #4e7099;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* ── Award badge (ribbon/trophy icon left of card) ── */
+.mm-ach-award-badge {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.mm-ach-item:hover .mm-ach-award-badge {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+/* Ribbon card variant — cyan accent */
+.mm-ach-item.ach-ribbon {
+  border-color: rgba(0, 229, 255, 0.6);
+  background: linear-gradient(135deg, rgba(0, 40, 80, 0.85) 0%, rgba(0, 20, 55, 0.7) 100%);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.12);
+}
+
+.mm-ach-item.ach-ribbon .mm-ach-award-badge {
+  background: rgba(0, 200, 255, 0.18);
+  border: 1.5px solid rgba(0, 229, 255, 0.5);
+}
+
+.mm-ach-item.ach-ribbon:hover {
+  border-color: #00e5ff;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+/* Trophy card variant — gold accent */
+.mm-ach-item.ach-trophy {
+  border-color: rgba(255, 215, 0, 0.6);
+  background: linear-gradient(135deg, rgba(30, 45, 10, 0.85) 0%, rgba(20, 30, 5, 0.7) 100%);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.12);
+}
+
+.mm-ach-item.ach-trophy .mm-ach-award-badge {
+  background: rgba(255, 215, 0, 0.18);
+  border: 1.5px solid rgba(255, 215, 0, 0.55);
+}
+
+.mm-ach-item.ach-trophy:hover {
+  border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+/* Grand master card variant — star gradient */
+.mm-ach-item.ach-grand {
+  border-color: rgba(255, 215, 0, 0.8);
+  background: linear-gradient(135deg, rgba(40, 30, 10, 0.92) 0%, rgba(10, 5, 30, 0.85) 100%);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.22), 0 0 40px rgba(255, 180, 0, 0.1);
+}
+
+.mm-ach-item.ach-grand .mm-ach-award-badge {
+  background: rgba(255, 200, 0, 0.22);
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.45);
+  font-size: 22px;
+}
+
+.mm-ach-item.ach-grand:hover {
+  border-color: #ffe44a;
+  box-shadow: 0 0 28px rgba(255, 215, 0, 0.42);
+}
+
+.mm-ach-item.ach-grand .mm-ach-name {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* ── Award tag pill (right side of each card) ── */
+.mm-ach-award-tag {
+  flex-shrink: 0;
+  font-family: 'QB One Extra Bold', 'QB One', var(--font-cyberzero);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 5px 11px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.mm-ach-award-tag.award-ribbon {
+  background: rgba(0, 229, 255, 0.18);
+  color: #00f8ff;
+  border: 1px solid rgba(0, 229, 255, 0.55);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+.mm-ach-award-tag.award-trophy {
+  background: rgba(255, 215, 0, 0.18);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.55);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+.mm-ach-award-tag.award-grand {
+  background: rgba(255, 200, 0, 0.22);
+  color: #ffe066;
+  border: 1px solid #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+
+/* ── Meta score/rank line ── */
+.mm-ach-meta {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11.5px;
+  color: #a0c8f0;
+  margin-top: 4px;
+}
+
+.mm-ach-meta strong {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+/* Entry animation for earned cards */
+.mm-ach-item.ach-completed {
+  animation: achCardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes achCardIn {
+  from { opacity: 0; transform: translateX(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.mm-ach-item.ach-completed:nth-child(1) { animation-delay: 0.05s; }
+.mm-ach-item.ach-completed:nth-child(2) { animation-delay: 0.12s; }
+.mm-ach-item.ach-completed:nth-child(3) { animation-delay: 0.19s; }
+.mm-ach-item.ach-completed:nth-child(4) { animation-delay: 0.26s; }
+.mm-ach-item.ach-completed:nth-child(5) { animation-delay: 0.33s; }
+
+/* ════════════════════════════════════════════════════════════
+   MAIN MENU — SIGNED-IN USER BAR
+   Positioned in the top-right corner of #overlay-main-menu.
+   Hidden by default (hidden attr); shown via auth.js updateChip().
+════════════════════════════════════════════════════════════ */
+.mm-user-bar {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  background: rgba(5, 15, 40, 0.80);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 15px rgba(0, 229, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: mmUserBarIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  max-width: calc(100vw - 40px);
+}
+
+.mm-user-bar[hidden] {
+  display: none !important;
+}
+
+@keyframes mmUserBarIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mm-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.mm-user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1.5px solid rgba(0, 229, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(0, 229, 255, 0.9);
+  overflow: hidden;
+}
+
+.mm-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.mm-user-name {
+  font-family: var(--font-main, 'Segoe UI', sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  text-transform: uppercase;
+}
+
+.mm-signout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 80, 80, 0.35);
+  background: rgba(255, 50, 50, 0.08);
+  color: rgba(255, 140, 130, 0.95);
+  font-family: var(--font-main, 'Segoe UI', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
+}
+
+.mm-signout-btn:hover {
+  background: rgba(255, 60, 60, 0.22);
+  border-color: rgba(255, 100, 100, 0.6);
+  color: #ff8a80;
+  transform: translateY(-1px);
+}
+
+.mm-signout-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .mm-center { gap: 0; }
+  .mm-nav { width: 240px; max-width: 94vw; gap: 6px; }
+  .mm-btn { width: 240px; max-width: 100%; height: 56px; }
+  .mm-btn-label { font-size: 18px; }
+  .mm-shield-wrap { width: 110px; height: 110px; }
+  .mm-title-img { width: 250px; }
+  .mm-tech-divider { width: 90vw; max-width: 260px; }
+  .loading-bar-shell { width: 90vw; }
+  .loading-status-text { font-size: 13px; letter-spacing: 3px; }
+}

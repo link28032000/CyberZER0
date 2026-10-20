@@ -1,0 +1,468 @@
+/* ══════════════════════════════════════════════════════════
+   CHAPTER 1 COMIC STRIP VIEWER (CINEMATIC AUTOMATIC)
+══════════════════════════════════════════════════════════ */
+.comic-strip-overlay {
+  background: #000000 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  z-index: 9200;
+  transform: none !important;
+  overflow: hidden;
+  user-select: none;
+}
+.comic-strip-overlay.active {
+  pointer-events: all;
+  opacity: 1;
+  visibility: visible;
+  transform: none !important;
+}
+
+/* Deep cinematic black backdrop */
+.comic-bg-black {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, rgba(14, 18, 28, 0.7) 0%, #030305 70%, #000000 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── STAGE VIEWPORT: full screen, centers comic strip page ── */
+.comic-stage {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.comic-stage.finished {
+  cursor: default;
+}
+
+/* ── COMIC STRIP CONTAINER: authentic comic book page layout ── */
+.comic-strip-container {
+  display: flex;
+  flex-direction: column;
+  width: min(96vw, calc((100vh - 40px) * (1515 / 962)));
+  max-height: calc(100vh - 40px);
+  aspect-ratio: 1515 / 962;
+  background: #000000;
+  padding: 7px;
+  gap: 7px;
+  box-sizing: border-box;
+  border-radius: 3px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.95);
+  user-select: none;
+}
+
+/* ── ROWS: exact height proportions matching original artwork ── */
+.comic-row {
+  display: flex;
+  gap: 7px;
+  width: 100%;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* Row 1: Panel 1 (1650 x 290) */
+.comic-row-1, .comic-strip-container > .comic-row:nth-child(1) {
+  flex: 290 1 0;
+}
+/* Row 2: Panel 2 (755 x 221) & Panel 3 (760 x 216) */
+.comic-row-2, .comic-strip-container > .comic-row:nth-child(2) {
+  flex: 221 1 0;
+}
+/* Row 3: Panel 4 (1536 x 172) */
+.comic-row-3, .comic-strip-container > .comic-row:nth-child(3) {
+  flex: 172 1 0;
+}
+/* Row 4: Panel 5 (721 x 277) & Panel 6 (794 x 280) */
+.comic-row-4, .comic-strip-container > .comic-row:nth-child(4) {
+  flex: 279 1 0;
+}
+
+.comic-row-wide { flex-direction: row; }
+.comic-row-wide .comic-panel-card { width: 100%; flex: 1 1 0; }
+
+.comic-row-split { flex-direction: row; }
+
+/* Precise column flex ratios for Row 2 */
+.comic-row-2 .panel-left,
+.comic-strip-container > .comic-row:nth-child(2) .panel-left {
+  flex: 755 1 0;
+}
+.comic-row-2 .panel-right,
+.comic-strip-container > .comic-row:nth-child(2) .panel-right {
+  flex: 760 1 0;
+}
+
+/* Precise column flex ratios for Row 4 */
+.comic-row-4 .panel-left,
+.comic-strip-container > .comic-row:nth-child(4) .panel-left {
+  flex: 721 1 0;
+}
+.comic-row-4 .panel-right,
+.comic-strip-container > .comic-row:nth-child(4) .panel-right {
+  flex: 794 1 0;
+}
+
+/* ── CHAPTER 2 COMIC STRIP SPECIFIC LAYOUT (3 ROWS: 2 SPLIT, 1 WIDE) ── */
+.comic-strip-container-ch2 {
+  aspect-ratio: 1520 / 1002;
+  width: min(96vw, calc((100vh - 40px) * (1520 / 1002)));
+  max-height: calc(100vh - 40px);
+}
+
+/* Row heights matching exact artwork pixel heights (335px, 316px, 337px) */
+.comic-strip-container-ch2 > .comic-row:nth-child(1),
+.comic-strip-container-ch2 .comic-row-ch2-1 {
+  flex: 335 1 0 !important;
+}
+.comic-strip-container-ch2 > .comic-row:nth-child(2),
+.comic-strip-container-ch2 .comic-row-ch2-2 {
+  flex: 316 1 0 !important;
+}
+.comic-strip-container-ch2 > .comic-row:nth-child(3),
+.comic-strip-container-ch2 .comic-row-ch2-3 {
+  flex: 337 1 0 !important;
+}
+
+/* Row 1 split: Panel 1 (757px) & Panel 2 (752px) */
+.comic-strip-container-ch2 .comic-row-ch2-1 .panel-left {
+  flex: 757 1 0 !important;
+}
+.comic-strip-container-ch2 .comic-row-ch2-1 .panel-right {
+  flex: 752 1 0 !important;
+}
+
+/* Row 2 split: Panel 3 (789px) & Panel 4 (724px) */
+.comic-strip-container-ch2 .comic-row-ch2-2 .panel-left {
+  flex: 789 1 0 !important;
+}
+.comic-strip-container-ch2 .comic-row-ch2-2 .panel-right {
+  flex: 724 1 0 !important;
+}
+
+/* Row 3 wide: Panel 5 (1520px) */
+.comic-strip-container-ch2 .comic-row-wide .comic-panel-card {
+  flex: 1 1 0 !important;
+  width: 100% !important;
+}
+
+/* Ensure ALL content of every picture is completely visible without any cropping */
+.comic-strip-container-ch2 .comic-panel-img {
+  object-fit: contain !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: #000000;
+}
+
+/* ── INDIVIDUAL PANEL CARDS ── */
+.comic-panel-card {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #000000;
+  border: 2px solid #111111;
+  border-radius: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  /* Start hidden before reveal */
+  opacity: 0;
+  transform: scale(0.98);
+  filter: blur(2px);
+  pointer-events: none;
+  transition:
+    opacity   0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    filter    0.35s ease,
+    border-color 0.35s ease,
+    box-shadow   0.35s ease;
+}
+
+/* Previously revealed panels: stay 100% visible, crisp and clean comic page */
+.comic-panel-card.revealed:not(.active) {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  border-color: #111111;
+  pointer-events: auto;
+}
+
+/* Current active panel: full brightness without blue border */
+.comic-panel-card.active {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  filter: blur(0) !important;
+  border-color: #111111 !important;
+  box-shadow: none !important;
+  z-index: 10;
+  pointer-events: auto;
+  animation: comicPanelPop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes comicPanelPop {
+  0%   { opacity: 0; transform: scale(0.96); filter: blur(3px); }
+  70%  { opacity: 1; transform: scale(1.01); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1);    filter: blur(0); }
+}
+
+/* Panel image — completely fills panel box without black bars or letterboxing */
+.comic-panel-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  background: #000000;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── PANEL COUNTER (removed) ── */
+.comic-panel-counter {
+  display: none !important;
+}
+
+.comic-panel-highlight-border {
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── FINISH ACTION: CORNER OVERLAY (bottom-right corner over panels) ── */
+.comic-finish-wrap {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Comic-book continue button — clean button with no speech bubble tail on top */
+.comic-tap-continue-btn {
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 3px solid #111111;
+  color: #111111;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 14px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0px #111111;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
+  text-align: center;
+  white-space: nowrap;
+  animation: comicBtnPulse 2s ease-in-out infinite;
+}
+
+@keyframes comicBtnPulse {
+  0%, 100% { transform: scale(1); box-shadow: 5px 5px 0px #111111; }
+  50%       { transform: scale(1.04) translateY(-2px); box-shadow: 6px 7px 0px #111111; }
+}
+
+.comic-tap-continue-btn:hover {
+  animation: none;
+  transform: translateY(-3px);
+  box-shadow: 6px 8px 0px #111111;
+  background: #f0f0f0;
+}
+
+.comic-tap-continue-btn:active {
+  animation: none;
+  transform: translateY(1px);
+  box-shadow: 2px 2px 0px #111111;
+}
+
+.comic-desktop-icon {
+  width: 20px;
+  height: 20px;
+  color: #111111;
+  flex-shrink: 0;
+}
+
+/* ── TAP HINT (bottom-center, first panel only) ── */
+.comic-tap-hint {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9300;
+  color: rgba(255,255,255,0.55);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  white-space: nowrap;
+}
+.comic-tap-hint.visible {
+  opacity: 1;
+  animation: comicHintPulse 2.5s ease-in-out infinite;
+}
+@keyframes comicHintPulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .comic-stage {
+    padding: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  .comic-strip-container {
+    width: 98vw;
+    padding: 4px;
+    gap: 4px;
+  }
+  .comic-row {
+    gap: 4px;
+  }
+  .comic-panel-card {
+    border-width: 1.5px;
+  }
+  .comic-finish-wrap { bottom: 14px; right: 14px; }
+  .comic-panel-counter { bottom: 14px; left: 14px; font-size: 11px; padding: 5px 12px; }
+  .comic-tap-hint { bottom: 14px; font-size: 11px; }
+  .comic-tap-continue-btn { font-size: 12px; padding: 10px 16px; gap: 8px; }
+}
+
+/* ── TRAINING CARD ── */
+.training-card {
+  background: linear-gradient(145deg, rgba(10,20,60,0.97), rgba(5,10,30,0.97));
+  border: 1px solid rgba(79,195,247,0.25);
+  border-radius: var(--radius-xl);
+  padding: 40px 48px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.capy-avatar {
+  font-size: 60px;
+  filter: drop-shadow(0 2px 12px rgba(79,195,247,0.35));
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.capy-bubble {
+  background: rgba(79,195,247,0.06);
+  border: 1px solid rgba(79,195,247,0.2);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  width: 100%;
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  min-height: 140px;
+}
+.capy-bubble h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+}
+.capy-bubble .highlight {
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-cyan);
+  display: inline-block;
+  margin: 2px;
+}
+.capy-bubble .example-box {
+  background: rgba(255,82,82,0.08);
+  border: 1px solid rgba(255,82,82,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #ef9a9a;
+}
+.capy-bubble .indicator-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.capy-bubble .indicator-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  padding: 8px 14px;
+  background: rgba(79,195,247,0.05);
+  border: 1px solid rgba(79,195,247,0.12);
+  border-radius: var(--radius-sm);
+}
+
+.training-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.training-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(79,195,247,0.2);
+  border: 1px solid rgba(79,195,247,0.3);
+  transition: var(--transition);
+  cursor: pointer;
+}
+.training-dot.active {
+  background: var(--accent-blue);
+  box-shadow: 0 0 8px rgba(79,195,247,0.5);
+  width: 20px;
+  border-radius: 4px;
+}
+
+.training-nav {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+

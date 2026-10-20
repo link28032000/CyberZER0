@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════════════
+   APP WINDOWS
+═══════════════════════════════════════════════ */
+.app-window {
+  position: absolute;
+  min-width: 480px;
+  min-height: 320px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  background: #07122a;
+  border: 1px solid var(--win-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 200;
+  transition: top 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow var(--transition);
+  resize: both;
+}
+
+.app-window.dragging {
+  transition: none !important;
+}
+
+/* When the Ryan dialogue is visible, clamp window height to the safe area
+   above it so windows fit neatly. Users can still drag windows freely
+   (including behind the dialogue) — the dialogue stays on top via z-index. */
+body.has-ryan-dialogue .app-window:not(.maximized) {
+  max-height: calc(100vh - 245px) !important;
+}
+
+#win-gmail {
+  width: 840px;
+  max-width: calc(100vw - 80px);
+  height: min(525px, calc(100vh - 64px));
+  max-height: calc(100vh - 64px);
+}
+
+#win-browser {
+  width: 840px;
+  max-width: calc(100vw - 80px);
+  height: min(525px, calc(100vh - 64px));
+  max-height: calc(100vh - 64px);
+}
+
+#win-folder {
+  width: 760px;
+  max-width: calc(100vw - 80px);
+  height: min(480px, calc(100vh - 64px));
+  max-height: calc(100vh - 64px);
+}
+
+#win-antivirus {
+  width: 720px;
+  max-width: calc(100vw - 80px);
+  height: min(480px, calc(100vh - 64px));
+  max-height: calc(100vh - 64px);
+}
+
+#win-comms {
+  width: 760px;
+  max-width: calc(100vw - 80px);
+  height: min(500px, calc(100vh - 64px));
+  max-height: calc(100vh - 64px);
+}
+
+#win-ransomware {
+  width: 800px;
+  max-width: calc(100vw - 80px);
+  height: min(520px, calc(100vh - 64px));
+  max-height: calc(100vh - 64px);
+}
+
+.app-window.hidden { display: none; }
+.app-window.minimized { display: none; }
+
+.app-window.maximized {
+  position: fixed !important;
+  inset: 0 0 48px 0 !important;   /* top right bottom left — exact taskbar clearance */
+  width: auto !important;           /* let inset drive the size, no conflict */
+  height: auto !important;
+  min-width: unset !important;
+  min-height: unset !important;
+  max-width: unset !important;
+  max-height: unset !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  resize: none !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+.app-window.focused {
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(79,195,247,0.3), 0 0 32px rgba(79,195,247,0.1);
+}
+
+@keyframes win-pop-in {
+  0% { transform: scale(0.96); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.app-window.window-pop-in:not(.maximized) {
+  animation: win-pop-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Title Bar ── */
+.win-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 14px;
+  height: 36px;
+  background: var(--win-titlebar-bg);
+  border-bottom: 1px solid var(--win-border);
+  cursor: move;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.win-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+.win-icon { font-size: 16px; }
+
+.win-controls { display: flex; gap: 2px; }
+
+.win-btn {
+  width: 30px;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.win-btn:hover { background: rgba(79,195,247,0.15); color: var(--text-primary); }
+.win-close:hover { background: rgba(255,82,82,0.8) !important; color: #fff; }
+
+/* ── Window Body ── */
+.win-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
