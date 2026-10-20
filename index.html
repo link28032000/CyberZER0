@@ -2105,23 +2105,24 @@
   <!-- Animated scanline overlay -->
   <div class="mm-scanlines"></div>
 
-  <!-- ── Signed-In User Bar (Top Corner, Main Menu Only) ── -->
+  <!-- ── Signed-In User Profile (Top Corner, Main Menu Only) ── -->
   <div class="mm-user-bar" id="mm-user-bar" hidden>
-    <div class="mm-user-info">
-      <div class="mm-user-avatar" id="mm-user-avatar" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <div class="mm-user-avatar" id="mm-user-avatar" aria-hidden="true">
+      <div class="mm-avatar-ring"></div>
+      <div class="mm-avatar-inner">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="8" r="4" fill="currentColor"/>
           <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
         </svg>
       </div>
-      <span class="mm-user-name" id="mm-user-name">—</span>
+      <div class="mm-avatar-status"></div>
     </div>
     <button type="button" class="mm-signout-btn" id="mm-signout-btn" onclick="czSignOut()" title="Sign out">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
         <path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      Sign out
+      <span class="mm-signout-label">Sign out</span>
     </button>
   </div>
 
