@@ -107,17 +107,8 @@ const RyanPretest = (() => {
     }
   };
 
-  const MOTIVATION = {
-    title: 'A note from Ryan',
-    body: "A low score today doesn't define you. It simply shows where you can grow. " +
-          "Study hard, read every lesson carefully, and you will be surprised how fast this number climbs. " +
-          "I believe you can beat this score!",
-    tips: [
-      'Read each lesson slowly. There is no rush.',
-      'Remember the four steps: STOP, CHECK, VERIFY, ACT.',
-      "Keep your Detective's Notes open while you work."
-    ]
-  };
+
+
 
   const RING_R = 54;
   const RING_C = 2 * Math.PI * RING_R;
@@ -608,16 +599,7 @@ const RyanPretest = (() => {
     say.appendChild(_el('span', 'rpt-ryan-say-text', copy.ryan));
     wrap.appendChild(say);
 
-    if (tier === 'low') {
-      const note = _el('div', 'rpt-motivation');
-      note.style.setProperty('--s', '0.7s');
-      note.appendChild(_el('div', 'rpt-motivation-title', '\uD83D\uDCAA ' + MOTIVATION.title));
-      note.appendChild(_el('p', 'rpt-motivation-body', MOTIVATION.body));
-      const ul = _el('ul', 'rpt-motivation-tips');
-      MOTIVATION.tips.forEach((t) => ul.appendChild(_el('li', '', t)));
-      note.appendChild(ul);
-      wrap.appendChild(note);
-    }
+
 
     const foot = _el('div', 'rpt-footer rpt-footer-result');
     const go = _el('button', 'rpt-next rpt-go', 'Continue with Ryan');
