@@ -5,7 +5,7 @@
    RYAN GUIDE - Event Hooks & Integration
 =========================================================== */
 
-// Hook: openApp — only fires Ryan for Chapter 1 (phishing)
+// Hook: openApp — only fires Ryan for Chapter 1 (phishing), and only AFTER the intro/pretest is done
 (function patchOpenApp() {
   const _orig = window.openApp;
   if (typeof _orig !== 'function') return;
@@ -13,6 +13,13 @@
     _orig.apply(this, arguments);
     const curCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
     if (curCat !== 'phishing') return;
+
+    // ── Skip reactive dialogues while pretest OR Ryan intro is still active ──
+    const pretestOn  = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+    const introOn    = typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0
+                       && typeof gameState !== 'undefined' && gameState.phase === 'mission';
+    if (pretestOn || introOn) return;
+
     if (appName === 'gmail') {
       RyanGuide.once('gmail-open', function() {
         setTimeout(function() {
@@ -25,7 +32,7 @@
   };
 })();
 
-// Hook: toggleStickyNote — only fires Ryan for Chapter 1 (phishing)
+// Hook: toggleStickyNote — only fires Ryan for Chapter 1 (phishing), and only AFTER the intro/pretest is done
 (function patchStickyNote() {
   const _orig = window.toggleStickyNote;
   if (typeof _orig !== 'function') return;
@@ -33,6 +40,13 @@
     _orig.apply(this, arguments);
     const curCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
     if (curCat !== 'phishing') return;
+
+    // ── Skip reactive dialogues while pretest OR Ryan intro is still active ──
+    const pretestOn  = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+    const introOn    = typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0
+                       && typeof gameState !== 'undefined' && gameState.phase === 'mission';
+    if (pretestOn || introOn) return;
+
     RyanGuide.once('sticky-open', function() {
       setTimeout(function() {
         if ((window._currentChapterCategory || activeCategoryStory) === 'phishing') {

@@ -27,7 +27,7 @@ function showStickyNote() {
   if (typeof IconAttention !== 'undefined') IconAttention.hide('notes');
 
   const titleEl = document.getElementById('sticky-note-title');
-  if (titleEl) titleEl.textContent = '📒 Phishing Investigation Tasks';
+  if (titleEl) titleEl.textContent = '📝 Sticky Notes';
 
   const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
   if (!scrollEl) return;
@@ -48,34 +48,17 @@ function showStickyNote() {
     return;
   }
 
-  // ── Hide the task list when user has not completed the first email ──
-  const isFirstEmailCompleted = Boolean(gameState.emailResults && gameState.emailResults.length >= 1);
-  if (!isFirstEmailCompleted && gameState.phase === 'mission') {
-    scrollEl.innerHTML = `
-      <div class="sn-locked-container">
-        <div class="sn-locked-icon-bubble">🔒</div>
-        <div class="sn-locked-title">Tasks Locked</div>
-        <div class="sn-locked-desc">
-          Complete your first email investigation in Zmail to unlock your live <strong>Mission Task List</strong>.
-        </div>
-        <div class="sn-locked-hint">
-          👉 <span>Inspect email #1 to unlock tracking</span>
-        </div>
-      </div>`;
+  // ── Show checklist only after first email is completed ──
+  if (gameState.emailResults && gameState.emailResults.length >= 1) {
+    if (!document.getElementById('sn-checklist-section')) {
+      scrollEl.innerHTML = '<div id="sn-checklist-section"></div>';
+    }
+    updateStickyChecklist();
     return;
   }
 
-  if (!document.getElementById('sn-checklist-section')) {
-    scrollEl.innerHTML = '<div id="sn-checklist-section"></div>';
-  }
-
-  updateStickyChecklist();
-
-  // If inbox was somehow empty on mission start, inject wave 1 as safety fallback
-  if (gameState.phase === 'mission' && ch1InboxEmails.length === 0) {
-    ch1InjectWave(1);
-    updateFolderCounts();
-  }
+  // ── Default: open with empty body (no tasks, no locked message) ──
+  scrollEl.innerHTML = '';
 }
 
 
@@ -421,6 +404,18 @@ function closePhishingTrophy() {
 
 
 function toggleStickyNote() {
+  // ── Block during pretest / Ryan intro dialogue ──
+  const pretestRunning  = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+  const ryanIntroActive = typeof RyanGuide   !== 'undefined' && RyanGuide.isActive   && RyanGuide.isActive()
+                          && typeof gameState !== 'undefined' && gameState.phase === 'mission'
+                          && typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0;
+  if (pretestRunning || ryanIntroActive) {
+    if (typeof showToast === 'function') showToast('Please complete the pre-test with Ryan first.', 'warning');
+    const bd = document.getElementById('ryan-pretest-backdrop');
+    if (bd && pretestRunning) bd.style.zIndex = '99999';
+    return;
+  }
+
   const note = document.getElementById('sticky-note');
   if (!note) return;
   if (note.classList.contains('hidden')) {

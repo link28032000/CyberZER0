@@ -154,12 +154,12 @@
 
 @keyframes verdict-pulse-legit {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(66, 183, 110, 0.65), 0 0 12px rgba(66, 183, 110, 0.45);
-    border-color: rgba(66, 183, 110, 0.85);
+    box-shadow: 0 0 0 0 rgba(144, 238, 144, 0.7), 0 0 12px rgba(144, 238, 144, 0.5);
+    border-color: rgba(82, 201, 122, 0.85);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(66, 183, 110, 0), 0 0 20px rgba(66, 183, 110, 0.75);
-    border-color: #42b76e;
+    box-shadow: 0 0 0 6px rgba(144, 238, 144, 0), 0 0 22px rgba(144, 238, 144, 0.85);
+    border-color: #52c97a;
   }
 }
 
@@ -172,9 +172,10 @@
 
 .verdict-legit.verdict-btn-highlight {
   animation: verdict-pulse-legit 1.4s ease-in-out infinite !important;
-  background: rgba(27, 94, 32, 0.32) !important;
-  color: #ffffff !important;
+  background: rgba(144, 238, 144, 0.45) !important;
+  color: #1a3a1a !important;
   font-weight: 800 !important;
+  border-color: #52c97a !important;
 }
 
 /* ════════════════════════════════════════════════════════════

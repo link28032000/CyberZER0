@@ -70,6 +70,22 @@ function updateAppLockStates() {
 }
 
 function openApp(appName) {
+  // ── Block all apps while the pretest is running ──
+  const pretestRunning = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+  const ryanIntroActive = typeof RyanGuide !== 'undefined' && RyanGuide.isActive && RyanGuide.isActive()
+                          && gameState.phase === 'mission' && ch1InboxEmails.length === 0;
+  if (pretestRunning || ryanIntroActive) {
+    if (typeof showToast === 'function') {
+      showToast('Please complete the pre-test with Ryan before opening other apps.', 'warning');
+    }
+    // Bring the pretest panel to front if it exists
+    const bd = document.getElementById('ryan-pretest-backdrop');
+    if (bd && pretestRunning) {
+      bd.style.zIndex = '99999';
+    }
+    return;
+  }
+
   if (isAppLocked(appName)) {
     const remaining = EMAILS.length - (gameState.emailResults ? gameState.emailResults.length : 0);
     showToast(`🔒 Locked: Complete all 5 email investigations first (${remaining} remaining) to unlock ${appName === 'folder' ? 'File Explorer' : appName === 'comms' ? 'Phone Link' : 'Anti-Virus'}!`, 'warning');
@@ -95,39 +111,7 @@ function openApp(appName) {
 
   if (appName === 'gmail') {
     updateFolderCounts();
-    if (gameState.phase === 'mission') {
-      if (ch1InboxEmails.length === 0 && ch1Stage === 0) {
-        ch1InjectWave(1);
-      }
-      if (ch1InboxEmails.length > 0) {
-        setTimeout(function() {
-          updateStickyChecklist();
-
-          // Ryan gives a guided intro: click the email to start investigating
-          setTimeout(function() {
-            if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission' && !window._ryanFirstEmailSpoken) {
-              window._ryanFirstEmailSpoken = true;
-              RyanGuide.speak([
-                { text: "You've got mail! 📧 Click the email in your inbox to open it and start investigating.", state: 'speaking' },
-                { text: "Remember: you can check your Detective's Notes anytime for tips and your mission checklist!", state: 'thinking' }
-              ], {
-                onDone: function() {
-                  setTimeout(function() {
-                    const firstRow = document.querySelector('#email-list .email-list-item');
-                    if (firstRow) {
-                      firstRow.classList.remove('email-row-pulse');
-                      void firstRow.offsetWidth;
-                      firstRow.classList.add('email-row-pulse');
-                      setTimeout(function() { firstRow.classList.remove('email-row-pulse'); }, 3000);
-                    }
-                  }, 200);
-                }
-              });
-            }
-          }, 800);
-        }, 300);
-      }
-    }
+    renderEmailList();
   }
 
   if (appName === 'browser') {

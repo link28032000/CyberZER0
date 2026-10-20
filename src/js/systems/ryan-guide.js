@@ -22,6 +22,8 @@ const RyanGuide = (() => {
   // Internal state
   let _queue          = [];
   let _typing         = false;
+  let _transitioning  = false;  // true while moving between dialogue steps
+  let _mainFlowLocked = false;  // true while the mission intro/pretest flow owns the dialogue
   let _typeTimeout    = null;
   let _cursorEl       = null;
   let _onDoneCallback = null;
@@ -51,6 +53,7 @@ const RyanGuide = (() => {
   }
 
   function _hide() {
+    _transitioning = false;
     clearTimeout(_dismissTimer);
     _dismissTimer = null;
     document.body.classList.remove('has-ryan-dialogue');
@@ -130,6 +133,7 @@ const RyanGuide = (() => {
 
   // Display current message in queue
   function _showStep() {
+    _transitioning = false;  // step is now being shown
     if (_queue.length === 0) return;
     clearTimeout(_dismissTimer);
     _dismissTimer = null;
@@ -179,6 +183,13 @@ const RyanGuide = (() => {
       return;
     }
     _opts = opts || {};
+
+    // ── If the main mission-intro flow owns the dialogue, block all other callers ──
+    if (_mainFlowLocked && !(_opts && _opts.mainFlow)) return;
+
+    // ── mainFlow=true: this caller IS the main flow — acquire the lock ──
+    if (_opts && _opts.mainFlow) _mainFlowLocked = true;
+
     if (!messages || messages.length === 0) return;
 
     // ── FIX: Clear any running typing animation to prevent race conditions ──
@@ -215,15 +226,27 @@ const RyanGuide = (() => {
   }
 
   /**
-   * Advance to next dialogue or close if finished
+   * Advance to next dialogue or close if finished.
+   * One click always moves forward — if typing is in progress it is skipped
+   * and the next message loads immediately.
    */
   function advance() {
     clearTimeout(_dismissTimer);
     _dismissTimer = null;
+
+    _transitioning = true;  // between steps — keep isActive() = true
+
+    // If still typing, stop immediately and show full text
     if (_typing) {
-      _skipTyping();
-      return;
+      clearTimeout(_typeTimeout);
+      _typing = false;
+      const textEl = el().text;
+      const step = _queue[0];
+      if (_cursorEl && _cursorEl.parentNode) _cursorEl.parentNode.removeChild(_cursorEl);
+      if (textEl && step && step._fullText) textEl.innerHTML = step._fullText;
+      // Fall through — do NOT return, proceed to advance the queue
     }
+
     const current = _queue.shift();
     if (current && typeof current.action === 'function') {
       try { current.action(); } catch(e) {}
@@ -279,10 +302,16 @@ const RyanGuide = (() => {
 
   function reset() {
     _seen = {};
+    _mainFlowLocked = false;
     dismiss();
   }
 
-  return { speak, advance, ask, dismiss, once, reset };
+  function lockMainFlow()    { _mainFlowLocked = true; }
+  function releaseMainFlow() { _mainFlowLocked = false; }
+
+  return { speak, advance, ask, dismiss, once, reset,
+           lockMainFlow, releaseMainFlow,
+           isActive: () => _typing || _transitioning || _queue.length > 0 };
 })();
 
 

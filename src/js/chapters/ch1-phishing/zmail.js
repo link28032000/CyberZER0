@@ -50,11 +50,18 @@ function updateFolderCounts() {
   const sentBadge = document.getElementById('sent-count');
   const trashBadge = document.getElementById('trash-count');
 
-  // Inbox badge — dynamic Chapter 1 system:
+  // Inbox badge — hide only during intro phase (pretest/Ryan talking before any emails arrive)
   if (inboxBadge) {
-    let remainingInbox = ch1InboxEmails.filter(e => !gameState.emailResults.some(r => r.emailId === e.id)).length;
-    inboxBadge.textContent = remainingInbox;
-    inboxBadge.style.display = remainingInbox > 0 ? 'inline-block' : 'none';
+    const noEmailsYet = ch1InboxEmails.length === 0 && (!gameState.emailResults || gameState.emailResults.length === 0);
+    const pretestOn   = noEmailsYet && typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+    const ryanIntroOn = noEmailsYet && typeof RyanGuide   !== 'undefined' && RyanGuide.isActive   && RyanGuide.isActive();
+    if (pretestOn || ryanIntroOn) {
+      inboxBadge.style.display = 'none';
+    } else {
+      let remainingInbox = ch1InboxEmails.filter(e => !gameState.emailResults.some(r => r.emailId === e.id)).length;
+      inboxBadge.textContent = remainingInbox;
+      inboxBadge.style.display = remainingInbox > 0 ? 'inline-block' : 'none';
+    }
   }
 
   // Sent badge: count unread/unopened sent emails (excluding trashed ones)
@@ -83,13 +90,18 @@ function renderEmailList() {
   const list = document.getElementById('email-list');
   list.innerHTML = '';
 
-  // Dynamic wave injection fallback: ensure wave 1 is injected if inbox is empty
-  if (gameState.phase === 'mission' && ch1InboxEmails.length === 0) {
-    ch1InjectWave(1);
+  // ── Only hide inbox during the intro phase (no emails injected yet, none completed yet) ──
+  const noEmailsYet    = ch1InboxEmails.length === 0 && (!gameState.emailResults || gameState.emailResults.length === 0);
+  const pretestRunning = noEmailsYet && typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+  const ryanIntroOn    = noEmailsYet && typeof RyanGuide   !== 'undefined' && RyanGuide.isActive   && RyanGuide.isActive();
+  if (pretestRunning || ryanIntroOn) {
+    list.innerHTML = `<div class="email-empty-state">Your inbox is empty.</div>`;
+    return;
   }
-  // If no emails yet (after review/all done), show empty state
+
+  // If no emails in inbox, show empty state
   if (ch1InboxEmails.length === 0) {
-    list.innerHTML = `<div class="email-empty-state">📭 Your inbox is empty.</div>`;
+    list.innerHTML = `<div class="email-empty-state">Your inbox is empty.</div>`;
     return;
   }
 
@@ -300,6 +312,9 @@ function restoreSentEmail(id) {
 // ═══════════════════════════════════════════════════════════
 
 function openEmail(idx) {
+  // ── Block email opening while the pre-test is still in progress ──
+  if (typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning()) return;
+
   const email = ch1InboxEmails[idx];
   if (!email) return;
   gameState.currentEmail = idx;

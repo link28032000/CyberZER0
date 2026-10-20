@@ -718,15 +718,20 @@ const RyanPretest = (() => {
   /**
    * Show the 20-question pre-test. onDone(result, info) runs after the
    * player taps Continue on the result screen.
-   * If the player already has a saved result, onDone runs right away
-   * with info.alreadyTaken === true.
+   * The pretest always runs — saved results from previous sessions are cleared.
    */
   function launch(onDone) {
     if (_running) return;
-    const existing = getResult();
-    if (existing) {
-      if (typeof onDone === 'function') onDone(existing, { alreadyTaken: true });
-      return;
+
+    // Always clear any previously saved result so the test always runs fresh.
+    try {
+      localStorage.removeItem(_playerKey());
+    } catch (e) { /* storage blocked */ }
+    if (typeof gameState !== 'undefined') {
+      delete gameState.preTestCompleted;
+      delete gameState.preTestScore;
+      delete gameState.preTestTotal;
+      delete gameState.preTestResult;
     }
 
     const bd = $('ryan-pretest-backdrop');
@@ -780,5 +785,5 @@ const RyanPretest = (() => {
     _showResult(result);
   }
 
-  return { launch, getResult, reset, tierOf, preview, QUESTION_COUNT: QUESTIONS.length };
+  return { launch, getResult, reset, tierOf, preview, isRunning: () => _running, QUESTION_COUNT: QUESTIONS.length };
 })();

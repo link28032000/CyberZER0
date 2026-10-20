@@ -115,6 +115,84 @@ function submitReport(isPhishing) {
   try {
     const correctDecision = (isPhishing === email.phishing);
 
+    // ── Contradiction check: flagged red flags but submitting as Non-Phishing ──
+    const hasFlags = gameState.currentEmailFlags && gameState.currentEmailFlags.length > 0;
+    if (!isPhishing && hasFlags) {
+      // Force wrong — you can't flag suspicious elements and call it safe
+      if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
+      ch1MistakeCount++;
+
+      const flagCount = gameState.currentEmailFlags.length;
+      const flagNames = gameState.currentEmailFlags
+        .map(f => f.type ? f.type.replace(/-/g, ' ') : 'unknown')
+        .join(', ');
+
+      const contradictionMsg = [
+        {
+          text: `⚠️ Contradiction detected! You flagged ${flagCount} red flag${flagCount > 1 ? 's' : ''} (${flagNames}) — but then submitted this email as Non-Phishing.`,
+          state: 'concerned'
+        },
+        {
+          text: "If you found suspicious elements worth flagging, that's a strong signal the email may be a threat. Red flags and a 'safe' verdict don't add up.",
+          state: 'speaking'
+        },
+        {
+          text: "Rule of thumb: If you added flags, always report as Phishing. Only submit as Non-Phishing when you find zero red flags.",
+          state: 'thinking'
+        }
+      ];
+
+      // Save as wrong result
+      const result = {
+        emailId: email.id,
+        emailIdx: gameState.currentEmail,
+        isPhishing: email.phishing,
+        playerDecision: false,
+        correctDecision: false,   // forced wrong due to contradiction
+        contradictionPenalty: true,
+        playerFlags: gameState.currentEmailFlags.map(f => f.type),
+        savedFlags: [...gameState.currentEmailFlags]
+      };
+      gameState.emailResults.push(result);
+
+      if (typeof RyanGuide !== 'undefined') {
+        RyanGuide.speak(contradictionMsg, {
+          onDone: function() {
+            // Continue normal post-verdict flow after Ryan explains
+            updateHUD();
+            updateFolderCounts();
+            if (gameState.emailResults.length >= 1) updateStickyNoteForPhase('phishing');
+            updateStickyChecklist();
+            savePhishingProgress();
+
+            const detailView = document.getElementById('email-detail-view');
+            const listView   = document.getElementById('email-list-view');
+            if (detailView) detailView.classList.remove('active');
+            if (listView)   listView.classList.add('active');
+
+            gameState.currentEmailFlags = [];
+            gameState.flagModeActive = false;
+            const flagModeBtn = document.getElementById('flag-mode-btn');
+            if (flagModeBtn) { flagModeBtn.disabled = true; flagModeBtn.classList.remove('active'); }
+
+            // Check wave progression
+            const reviewedInWave = ch1InboxEmails.length > 0 &&
+              ch1InboxEmails.every(e => gameState.emailResults.some(r => r.emailId === e.id));
+            if (reviewedInWave) {
+              let nextWave = ch1Stage + 1;
+              if (nextWave <= 1) nextWave = 2;
+              if (nextWave <= 4 && CH1_WAVE_DEFS[nextWave]) {
+                renderEmailList(); updateHUD(); ch1InjectWave(nextWave);
+              } else { finishMission(); }
+            } else {
+              renderEmailList(); updateHUD();
+            }
+          }
+        });
+      }
+      return;
+    }
+
     // ── First Email Tutorial: show "Take a closer look before deciding" ONLY ONCE ──
     const isFirstEmail = (email.id === 1 || gameState.emailResults.length === 0);
     if (!correctDecision && isFirstEmail && !ch1CloserLookWarnedOnce) {

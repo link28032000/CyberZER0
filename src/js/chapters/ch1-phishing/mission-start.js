@@ -33,8 +33,10 @@ function startMission(openGmail = false) {
   }
   window._ryanFirstEmailSpoken = false;
 
-  // Immediately inject Wave 1 so the first email is ready in the inbox without requiring notes first
-  ch1InjectWave(1);
+  // ── Clear any saved pretest result so it always runs fresh ──
+  if (typeof RyanPretest !== 'undefined' && RyanPretest.reset) RyanPretest.reset();
+
+  // ── Inbox starts EMPTY — emails are injected after Ryan's full dialogue ends ──
 
   hideAllOverlays(true);
   const desktop = document.getElementById('desktop');
@@ -44,7 +46,7 @@ function startMission(openGmail = false) {
   }
   renderEmailList();
   updateHUD();
-  updateFolderCounts();        // Will show (1) notification
+  updateFolderCounts();
   updateAppLockStates();
   if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications('phishing', false);
 
@@ -108,9 +110,6 @@ function startMission(openGmail = false) {
           { text: "Thank you for being honest with me. That's exactly what this test is for.", state: 'speaking' },
           { text: "This score is only your starting point, not a measure of what you can do. Everybody begins somewhere.", state: 'speaking' },
           { text: "If you stay curious and study hard, you'll be surprised how quickly it grows. I'll be right here with you.", state: 'success' }
-        ],
-        returning: [
-          { text: "Welcome back! I still have your pre-test results from earlier, so let's keep going.", state: 'success' }
         ]
       };
 
@@ -141,34 +140,38 @@ function startMission(openGmail = false) {
       ];
 
       var ryanFinishLesson = function() {
+        if (gameState.phase !== 'mission') return;
+        // Release the main-flow lock so reactive app-open dialogues work after this
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+        // ch1InjectWave calls renderEmailList + updateFolderCounts internally
+        if (ch1InboxEmails.length === 0) {
+          ch1InjectWave(1);
+        }
         if (typeof IconAttention !== 'undefined') IconAttention.show('gmail');
-        updateFolderCounts();
       };
 
-      // Pre-test done (or already saved): Ryan reacts to the score, then
-      // continues with the lesson.
+      // Pre-test always runs — Ryan reacts to the actual score, then continues with the lesson.
       var ryanContinueLesson = function(result, info) {
         if (gameState.phase !== 'mission') return;
-        var key = 'ok';
-        if (info && info.alreadyTaken) {
-          key = 'returning';
-        } else if (result && typeof RyanPretest !== 'undefined') {
+        // Release the main-flow lock — pretest is done, gameplay dialogues must work freely
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+        var key = null;
+        if (result && typeof RyanPretest !== 'undefined') {
           key = RyanPretest.tierOf(result);
-        } else if (!result) {
-          key = null; // pre-test unavailable: go straight to the lesson
         }
         var reaction = key && ryanReactions[key] ? ryanReactions[key] : [];
-        RyanGuide.speak(reaction.concat(ryanIntroPart2), { onDone: ryanFinishLesson });
+        RyanGuide.speak(reaction.concat(ryanIntroPart2), { mainFlow: true, onDone: ryanFinishLesson });
       };
 
       RyanGuide.speak(ryanIntroPart1, {
+        mainFlow: true,
         moreAfter: true,
         onDone: function() {
           if (gameState.phase !== 'mission') return;
           if (typeof RyanPretest !== 'undefined') {
             RyanPretest.launch(ryanContinueLesson);
           } else {
-            ryanContinueLesson(null); // pre-test not loaded: never block the simulation
+            ryanContinueLesson(null);
           }
         }
       });
