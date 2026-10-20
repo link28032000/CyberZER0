@@ -1,0 +1,769 @@
+/* ═══════════════════════════════════════════════════════════
+   WINDOWS 10 SPOTLIGHT LOCK SCREEN (Paused Terminal)
+═══════════════════════════════════════════════════════════ */
+#overlay-lock-paused {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  display: block;
+  transition: transform 0.42s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.35s ease;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+#overlay-lock-paused.hidden {
+  display: none !important;
+}
+
+#overlay-lock-paused.slide-up {
+  transform: translateY(-100%);
+  opacity: 0.95;
+}
+
+.lock-paused-bg {
+  position: absolute;
+  inset: 0;
+  background: url('../../../assets/Desktop/Lockscreen.png') no-repeat center center;
+  background-size: cover;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Fade in the background when JS adds .is-visible after a forced reflow */
+#overlay-lock-paused.is-visible .lock-paused-bg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.lock-paused-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top right, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.1) 45%, transparent 100%);
+}
+
+.lock-paused-content {
+  position: absolute;
+  left: clamp(32px, 6vw, 84px);
+  bottom: clamp(36px, 8vh, 96px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 10;
+  user-select: none;
+  pointer-events: none;
+}
+
+.lock-paused-icon-wrap {
+  width: 44px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.lock-paused-svg {
+  width: 38px;
+  height: 46px;
+  display: block;
+}
+
+.lock-paused-time {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: clamp(64px, 8.5vw, 96px);
+  font-weight: 200;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: -1.5px;
+  margin: 16px 0 6px 0;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+
+.lock-paused-date {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: clamp(20px, 2.6vw, 32px);
+  font-weight: 300;
+  color: #ffffff;
+  line-height: 1.25;
+  letter-spacing: 0.2px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.lock-paused-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  animation: lockHintPulse 2.4s infinite ease-in-out;
+}
+
+.lock-paused-hint-icon {
+  font-size: 11px;
+}
+
+@keyframes lockHintPulse {
+  0%, 100% {
+    opacity: 0.65;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WINDOWS 10 LOCK & LOGIN SCREEN — CyberZero Main Menu
+═══════════════════════════════════════════════════════════ */
+#overlay-title-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020c1b;
+  padding: 0;
+  overflow: hidden;
+  z-index: 1200;
+  position: fixed;
+  inset: 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  user-select: none;
+  /* Smooth fade-in when overlay becomes active */
+  opacity: 0;
+  transition: opacity 0.55s ease;
+  pointer-events: none;
+}
+#overlay-title-menu.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Windows 10 Wallpaper Background — smooth fade-in + subtle zoom ── */
+.ls-win10-bg {
+  position: absolute;
+  inset: 0;
+  background: url('../../../assets/Desktop/Login.png') no-repeat center center;
+  background-size: cover;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Fade the bg in once the overlay is active */
+#overlay-title-menu.active .ls-win10-bg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Center Login Panel ── */
+.ls-center-panel {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* ── User Avatar ── */
+.ls-user-avatar {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.2);
+  margin-bottom: 22px;
+  flex-shrink: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.ls-user-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── "Enter your Name" Title ── */
+.ls-win10-username {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 26px;
+  font-weight: 300;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Name Input & Button Wrapper ── */
+.ls-name-input-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  gap: 0;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Text Input Box ── */
+.ls-name-input {
+  width: 250px;
+  height: 36px;
+  background: #ffffff;
+  color: #111111;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 0 12px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-right: none;
+  border-radius: 0;
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  transition: border-color 0.15s ease;
+}
+
+.ls-name-input:focus {
+  border-color: #ffffff;
+}
+
+.ls-name-input::placeholder {
+  color: #9e9e9e;
+  font-weight: 300;
+  font-style: italic;
+  opacity: 1;
+  letter-spacing: 0.5px;
+}
+
+/* ── Windows 10 Arrow Sign-in Button ── */
+.ls-signin-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(72, 80, 92, 0.88);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ls-name-input-wrap:focus-within .ls-name-input,
+.ls-name-input-wrap:focus-within .ls-signin-btn {
+  border-color: #ffffff;
+}
+
+.ls-signin-btn:hover {
+  background: rgba(105, 115, 130, 0.95);
+  border-color: #ffffff;
+}
+
+.ls-signin-btn:active {
+  background: rgba(55, 62, 72, 0.95);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.ls-signin-btn svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* Sign-in hint below password field */
+.ls-signin-hint {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  margin-top: 10px;
+  letter-spacing: 0.2px;
+  user-select: none;
+}
+
+/* ── Windows 10 Error Box (Authentic desktop error dialog) ── */
+.ls-win10-error-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 320px;
+  margin-top: 2px;
+  animation: lsErrorShake 0.35s ease;
+}
+
+.ls-win10-error-box.hidden {
+  display: none !important;
+}
+
+@keyframes lsErrorShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.ls-win10-error-text {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 14.5px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.45;
+  margin-bottom: 16px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.1px;
+}
+
+.ls-win10-error-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 38px;
+  border-radius: 0;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ls-win10-error-btn:hover,
+.ls-win10-error-btn:focus {
+  background: rgba(255, 255, 255, 0.34);
+  border-color: #ffffff;
+}
+
+.ls-win10-error-btn:active {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Clock block (Hidden by default for identical visual match) ── */
+.ls-win10-clock-block {
+  display: none;
+}
+
+
+
+/* ── Taskbar Username Pill ── */
+.taskbar-username-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 20px;
+  background: rgba(0, 229, 255, 0.07);
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  cursor: default;
+  transition: background 0.2s;
+  margin-right: 4px;
+}
+.taskbar-username-pill:hover {
+  background: rgba(0, 229, 255, 0.14);
+  border-color: rgba(0, 229, 255, 0.25);
+}
+.tb-user-avatar-mini {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-cyan), #0094d4);
+  color: #020c1e;
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.tb-username-text {
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  white-space: nowrap;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+.title-screen-container {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  min-height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(0, 229, 255, 0.18);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: #08102e;
+  padding: 44px 36px 36px;
+}
+
+/* Tactical Corner Accents */
+.title-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: var(--accent-cyan);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0.8;
+}
+.title-corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+.title-corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+.title-corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+.title-corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+.title-cyber-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-cyber-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.8), rgba(79, 195, 247, 0.9), transparent);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.7);
+  animation: titleScanBeam 4s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes titleScanBeam {
+  0% { top: -10px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.title-content-card {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.title-intel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  padding: 6px 18px;
+  border-radius: 30px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent-cyan);
+  margin-bottom: 20px;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green);
+  animation: pulseGreenDot 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGreenDot {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+.title-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.title-shield-badge {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.22) 0%, rgba(13, 24, 60, 0.7) 65%, transparent 100%);
+  border: 2px solid rgba(0, 229, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.4), inset 0 0 15px rgba(0, 229, 255, 0.2);
+  animation: floatShield 3.5s ease-in-out infinite alternate;
+  margin-bottom: 4px;
+}
+
+.title-shield-icon {
+  font-size: 40px;
+  filter: drop-shadow(0 0 14px rgba(0, 229, 255, 0.7));
+}
+
+@keyframes floatShield {
+  0% { transform: translateY(0px) scale(1); }
+  100% { transform: translateY(-5px) scale(1.03); }
+}
+
+.title-logo {
+  font-family: var(--font-cyberzero);
+  font-size: 58px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(79, 195, 247, 0.6), 0 0 45px rgba(0, 229, 255, 0.45);
+  margin: 0;
+  line-height: 1;
+}
+
+.title-logo .logo-accent {
+  color: var(--accent-cyan);
+  text-shadow: 0 0 25px rgba(0, 229, 255, 0.85);
+}
+
+.title-subtitle-badge {
+  background: linear-gradient(90deg, rgba(76, 29, 149, 0.45), rgba(30, 64, 175, 0.45));
+  border: 1px solid rgba(156, 39, 176, 0.5);
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #e1bee7;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-accent-bracket {
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+/* Vertically Stacked Menu Actions: Start on top, Exit down below */
+.title-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+  margin: 36px 0 8px;
+}
+
+.btn-title-play {
+  width: 100%;
+  justify-content: center;
+  background: linear-gradient(135deg, #00e5ff 0%, #00b0ff 50%, #0091ea 100%);
+  color: #041026;
+  font-family: var(--font-main);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 16px 36px;
+  border-radius: 35px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 6px 28px rgba(0, 229, 255, 0.5);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-title-play:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 38px rgba(0, 229, 255, 0.8);
+  filter: brightness(1.1);
+}
+
+.btn-title-play:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-title-exit {
+  width: 100%;
+  justify-content: center;
+  background: rgba(255, 82, 82, 0.1);
+  border: 1.5px solid rgba(255, 82, 82, 0.4);
+  color: #ff8a80;
+  font-family: var(--font-main);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 14px 36px;
+  border-radius: 35px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.25s ease;
+}
+
+.btn-title-exit:hover {
+  background: rgba(255, 82, 82, 0.25);
+  border-color: var(--accent-red);
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px rgba(255, 82, 82, 0.35);
+}
+
+.title-footer-notes {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+/* Exit Modal & Disconnected Screen */
+.title-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 9, 23, 0.88);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+
+.title-modal-backdrop.hidden {
+  display: none !important;
+}
+
+.shutdown-screen-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  background: #01040a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shutdown-screen-backdrop.hidden {
+  display: none !important;
+}
+
+.title-exit-card {
+  background: rgba(13, 24, 60, 0.95);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 16px;
+  padding: 32px 28px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  animation: modalPop 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Exit Modal Icon */
+.exit-modal-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.exit-modal-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.exit-modal-msg {
+  color: #90caf9;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.exit-modal-sub {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  margin-bottom: 24px;
+}
+
+.exit-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .title-threat-vectors {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .title-logo {
+    font-size: 40px;
+  }
+  .title-screen-container {
+    padding: 30px 20px;
+  }
+}
+

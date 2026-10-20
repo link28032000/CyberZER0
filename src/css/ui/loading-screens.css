@@ -1,0 +1,119 @@
+/* ══════════════════════════════════════════════════════════════
+   LOADING SCREEN OVERLAY — Pixel-art style
+   (shown for 10s after clicking START)
+══════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════
+   WINDOWS LOADING SCREEN ("Just a moment...")
+   ═══════════════════════════════════════════════════════════════ */
+#overlay-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: #005ea6; /* Windows Setup Blue */
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.45s;
+  isolation: isolate;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  user-select: none;
+}
+
+#overlay-loading-screen.ls-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+#overlay-loading-screen.ls-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.win-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 680px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ── 12-dot Windows Spinning Ring ── */
+.win-spinner-wrap {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win-spinner-svg {
+  animation: winSpinnerSpin 1.15s linear infinite;
+  transform-origin: center center;
+}
+
+@keyframes winSpinnerSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ── "Just a moment..." Title ── */
+.win-loading-title {
+  margin: 30px 0 44px 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: clamp(30px, 4.5vw, 42px);
+  font-weight: 300;
+  letter-spacing: -0.2px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Note Box with Shield Icon ── */
+.win-loading-note-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  max-width: 520px;
+  width: 90vw;
+  box-sizing: border-box;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.win-loading-note-wrap.transitioning {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.win-loading-shield-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.win-loading-note-text {
+  margin: 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: #ffffff;
+  letter-spacing: 0.1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+
