@@ -712,6 +712,19 @@ function finishMission() {
   }
   setEl('results-rank-label', rankLabel);
 
+  // ── Ryan one-liner: gentle score-based message ──
+  const ryanLine = document.getElementById('results-ryan-line');
+  if (ryanLine) {
+    const ryanMsgs = {
+      S: '\u201cFlawless. You\u2019re thinking like a real security analyst now.\u201d',
+      A: '\u201cGreat work. You caught the threats that matter most \u2014 keep that instinct sharp.\u201d',
+      B: '\u201cSolid investigation. A few near-misses, but your instincts are building.\u201d',
+      C: '\u201cGood start. Every mistake is a lesson \u2014 review the ones you missed and try again.\u201d',
+      D: '\u201cDon\u2019t worry. Phishing is tricky by design. That\u2019s exactly why we practice.\u201d'
+    };
+    ryanLine.textContent = ryanMsgs[rank] || ryanMsgs['B'];
+  }
+
   completeCategory('phishing', correct * 100, rank);
   updateAppLockStates();
 

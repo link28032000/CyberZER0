@@ -517,6 +517,126 @@ const AudioManager = (() => {
     } catch (e) {}
   }
 
+  // ── Pre-test sound set (calm, friendly, synthesized) ───────────────
+  function _tone(ac, o) {
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = o.type || 'sine';
+    osc.frequency.setValueAtTime(o.freq, o.t);
+    if (o.end) osc.frequency.exponentialRampToValueAtTime(o.end, o.t + o.dur);
+    g.gain.setValueAtTime(0.0001, o.t);
+    g.gain.linearRampToValueAtTime(o.vol, o.t + (o.attack || 0.005));
+    g.gain.exponentialRampToValueAtTime(0.0001, o.t + o.dur);
+    osc.connect(g);
+    g.connect(ac.destination);
+    osc.start(o.t);
+    osc.stop(o.t + o.dur + 0.03);
+  }
+
+  // Soft two-note welcome chime when the pre-test opens
+  function playPretestStart() {
+    const eff = getEffectiveSfxGain();
+    if (eff <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+    try {
+      const now = ac.currentTime;
+      _tone(ac, { freq: 523.25, t: now,        dur: 0.55, vol: 0.11 * eff, attack: 0.02 });
+      _tone(ac, { freq: 783.99, t: now + 0.13, dur: 0.70, vol: 0.10 * eff, attack: 0.02 });
+    } catch (e) {}
+  }
+
+  // Tiny rising tick while the score counts up
+  function playResultTick(step, total) {
+    const eff = getEffectiveSfxGain();
+    if (eff <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+    try {
+      const now = ac.currentTime;
+      const f = 480 + 560 * (total ? step / total : 0);
+      _tone(ac, { freq: f, t: now, dur: 0.07, vol: 0.07 * eff, type: 'triangle' });
+    } catch (e) {}
+  }
+
+  // Confetti cannon pop: noise burst + low thump
+  function playConfettiPop() {
+    const eff = getEffectiveSfxGain();
+    if (eff <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+    try {
+      const now = ac.currentTime;
+      const len = Math.floor(ac.sampleRate * 0.14);
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const bp = ac.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(1800, now);
+      bp.Q.value = 0.7;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.28 * eff, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+      src.connect(bp); bp.connect(g); g.connect(ac.destination);
+      src.start(now);
+      _tone(ac, { freq: 190, end: 60, t: now, dur: 0.12, vol: 0.22 * eff });
+    } catch (e) {}
+  }
+
+  // Perfect score: arpeggio, full chord, shimmering sparkles
+  function playPerfectFanfare() {
+    const eff = getEffectiveSfxGain();
+    if (eff <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+    try {
+      const now = ac.currentTime;
+      [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+        _tone(ac, { freq: f, t: now + i * 0.11, dur: 0.28, vol: 0.18 * eff, type: 'triangle' });
+      });
+      const t = now + 0.52;
+      [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((f) => {
+        _tone(ac, { freq: f, t: t, dur: 1.7, vol: 0.12 * eff, type: 'sine', attack: 0.015 });
+      });
+      _tone(ac, { freq: 130.81, t: t, dur: 1.4, vol: 0.16 * eff, type: 'triangle' });
+      [2637.02, 3135.96, 4186.01, 3135.96, 2637.02].forEach((f, i) => {
+        _tone(ac, { freq: f, t: t + 0.25 + i * 0.13, dur: 0.30, vol: 0.05 * eff });
+      });
+    } catch (e) {}
+  }
+
+  // Great / good result: bright, short major chime
+  function playResultGood() {
+    const eff = getEffectiveSfxGain();
+    if (eff <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+    try {
+      const now = ac.currentTime;
+      [523.25, 659.25, 783.99].forEach((f, i) => {
+        _tone(ac, { freq: f, t: now + i * 0.10, dur: 0.75, vol: 0.14 * eff, type: 'triangle', attack: 0.01 });
+      });
+    } catch (e) {}
+  }
+
+  // Low result: warm, calm, rising and hopeful (never harsh)
+  function playResultEncourage() {
+    const eff = getEffectiveSfxGain();
+    if (eff <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+    try {
+      const now = ac.currentTime;
+      _tone(ac, { freq: 196.00, t: now, dur: 1.6, vol: 0.06 * eff, attack: 0.08 });
+      [392.00, 493.88, 587.33].forEach((f, i) => {
+        _tone(ac, { freq: f, t: now + i * 0.24, dur: 1.0, vol: 0.12 * eff, attack: 0.04 });
+      });
+    } catch (e) {}
+  }
+
   return {
     settings,
     unlock,
@@ -533,6 +653,12 @@ const AudioManager = (() => {
     playMissionComplete,
     playTypingKey,
     playNarratorTyping,
-    playExamChoice
+    playExamChoice,
+    playPretestStart,
+    playResultTick,
+    playConfettiPop,
+    playPerfectFanfare,
+    playResultGood,
+    playResultEncourage
   };
 })();

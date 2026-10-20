@@ -490,8 +490,9 @@ function refreshStorySelectLocks() {
     }
 
     if (!targetCard) {
-      targetCard = document.querySelector('.ss-card-unlocked');
-      targetCatId = (typeof CATEGORIES !== 'undefined' && CATEGORIES[0] && CATEGORIES[0].id) ? CATEGORIES[0].id : 'phishing';
+      // Always default to Chapter 1 (Alex) on fresh page load
+      targetCard = document.getElementById('ss-card-1') || document.querySelector('.ss-card-unlocked');
+      targetCatId = 'phishing';
       targetChapterNum = 1;
     }
 

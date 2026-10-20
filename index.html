@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="src/css/ui/game-loading.css">
   <link rel="stylesheet" href="src/css/story/story-select.css">
   <link rel="stylesheet" href="src/css/systems/ryan-guide.css">
+  <link rel="stylesheet" href="src/css/systems/ryan-pretest.css">
   <link rel="stylesheet" href="src/css/chapters/ch1-phishing-ui.css">
   <link rel="stylesheet" href="src/css/ui/auth.css">
 </head>
@@ -3576,7 +3577,7 @@
     <div class="ryan-results-card">
       <div class="ryan-results-portrait-wrap">
         <div class="ryan-results-portrait">
-          <img src="assets/Character Ryan.Png" alt="Ryan, IT Support Mentor" class="ryan-portrait-img">
+          <img src="assets/Character/Ryan.png" alt="Ryan, IT Support Mentor" class="ryan-portrait-img">
         </div>
       </div>
       <div class="ryan-results-dialogue">
@@ -3912,6 +3913,45 @@
 </div>
 
 
+<!-- ════════════════════════════════════════════════════════
+     RYAN PRE-TEST — 20-Question Cybersecurity Baseline
+════════════════════════════════════════════════════════ -->
+<div id="ryan-pretest-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Cybersecurity Pre-Test">
+  <div id="ryan-pretest-panel">
+
+    <!-- Header: Ryan portrait + title -->
+    <div class="rpt-header">
+      <div class="rpt-portrait-wrap">
+        <div class="rpt-portrait-ring"></div>
+        <div class="rpt-portrait">
+          <img src="assets/Character/Ryan.png" alt="Ryan, IT Support Mentor">
+        </div>
+      </div>
+      <div class="rpt-title-block">
+        <div class="rpt-label">Ryan &middot; IT Support Mentor</div>
+        <div class="rpt-title">Cybersecurity Pre-Test</div>
+        <div class="rpt-subtitle" id="rpt-subtitle">Take your time. There&#39;s no pressure, just answer honestly.</div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="rpt-progress-wrap">
+      <div class="rpt-progress-row">
+        <span class="rpt-q-counter" id="rpt-q-counter">Question 1 / 20</span>
+        <span class="rpt-q-total">Starting Point &middot; No pass or fail</span>
+      </div>
+      <div class="rpt-progress-bar">
+        <div class="rpt-progress-fill" id="rpt-progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Dynamic question body (rendered by JS) -->
+    <div id="rpt-body"></div>
+
+  </div>
+</div>
+
+
 
 <script src="src/js/data/emails.js"></script>
 <script src="src/js/data/email-waves.js"></script>
@@ -3964,6 +4004,7 @@
 <script src="src/js/ui/taskbar-search.js"></script>
 <script src="src/js/systems/phish-tutorial.js"></script>
 <script src="src/js/systems/ryan-guide.js"></script>
+<script src="src/js/systems/ryan-pretest.js"></script>
 <script src="src/js/systems/runtime-patches.js"></script>
 <script src="src/js/systems/ryan-welcome.js"></script>
 <script src="src/js/apps/settings-about.js"></script>

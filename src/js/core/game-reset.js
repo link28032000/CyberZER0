@@ -31,6 +31,9 @@ function restartEntireGame() {
   if (typeof RyanGuide !== 'undefined') {
     RyanGuide.reset();
   }
+  if (typeof RyanPretest !== 'undefined') {
+    RyanPretest.reset(); // fresh baseline on a full restart
+  }
 
   // Immediately hide desktop so it can NEVER pop in or flash
   const desktop = document.getElementById('desktop');

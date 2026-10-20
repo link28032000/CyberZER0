@@ -73,6 +73,11 @@ document.addEventListener('pointerdown', (e) => {
 
 // Start game with Title Menu on load
 window.addEventListener('DOMContentLoaded', () => {
+  // ── Reset chapter tracking so login screen always defaults to Alex on page load/refresh ──
+  window._currentChapterCategory  = null;
+  window._pendingStoryChapter     = null;
+  window._currentChapterCharacter = null;
+
   loadCategoriesProgress();
   loadPhishingProgress();
   initTitleParticles();
@@ -87,4 +92,10 @@ window.addEventListener('DOMContentLoaded', () => {
   updateNetworkUI();
   // Start lock screen clock
   lsStartClock();
+
+  // ── Ensure login screen always starts with Alex (Chapter 1) ──
+  if (typeof updateLoginScreenForChapter === 'function') {
+    updateLoginScreenForChapter('phishing');
+  }
 });
+

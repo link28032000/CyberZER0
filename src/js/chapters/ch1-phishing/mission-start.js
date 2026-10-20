@@ -79,14 +79,47 @@ function startMission(openGmail = false) {
   if (typeof RyanGuide !== 'undefined') {
     window._ryanMissionIntroTimer = setTimeout(function() {
       if (gameState.phase !== 'mission') return;
-      RyanGuide.speak([
-        // === Introduction ===
-        { text: "Hi! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions — it's great to have you on board!", state: 'speaking' },
-        { text: "Before we get started, let's explore why cybersecurity matters to everyone here.", state: 'speaking' },
-        { text: "Cyber threats aren't always about complicated technology.", state: 'thinking' },
-        { text: "Attackers often target people using trust, urgency, fear, curiosity, or deception.", state: 'concerned' },
+      // Ryan's intro is calm and friendly, and is written to lead straight
+      // into the 20-question pre-test. After the test he reacts to the score
+      // (see RYAN_PRETEST_REACTIONS) and then bridges into the lesson.
+      var ryanIntroPart1 = [
+        { text: "Hi there! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions. Welcome to the team, I'm really glad you're here.", state: 'speaking' },
+        { text: "Before we dive in, I'd like to know where you're starting from. That way I can guide you at a pace that feels right for you.", state: 'speaking' },
+        { text: "So I've put together a short pre-test: twenty quick questions about staying safe online.", state: 'thinking' },
+        { text: "There's no pass or fail, and nobody is judging you. If you're not sure about one, just pick your best guess. Honest answers help me the most.", state: 'speaking' },
+        { text: "Take your time and breathe. Whenever you're ready, let's begin!", state: 'success' }
+      ];
+
+      // What Ryan says right after the result screen, by score tier
+      var ryanReactions = {
+        perfect: [
+          { text: "Twenty out of twenty. Wow, that's impressive! 🎉", state: 'success' },
+          { text: "You clearly know your stuff. I'll still show you how attackers think, because the best defenders never stop learning.", state: 'speaking' }
+        ],
+        great: [
+          { text: "Great job! You already know a lot, and that's a really solid start.", state: 'success' },
+          { text: "A few topics might still feel fuzzy, and that's perfectly okay. We'll sharpen them together.", state: 'speaking' }
+        ],
+        ok: [
+          { text: "Nice work. You've got a good base to build on.", state: 'success' },
+          { text: "Some of these topics are probably new, and that's exactly why I'm here. We'll go step by step, no rush.", state: 'speaking' }
+        ],
+        low: [
+          { text: "Thank you for being honest with me. That's exactly what this test is for.", state: 'speaking' },
+          { text: "This score is only your starting point, not a measure of what you can do. Everybody begins somewhere.", state: 'speaking' },
+          { text: "If you stay curious and study hard, you'll be surprised how quickly it grows. I'll be right here with you.", state: 'success' }
+        ],
+        returning: [
+          { text: "Welcome back! I still have your pre-test results from earlier, so let's keep going.", state: 'success' }
+        ]
+      };
+
+      var ryanIntroPart2 = [
+        // === Bridge from the pre-test into the lesson ===
+        { text: "Let's start with an important idea: cyber threats aren't always about complicated technology.", state: 'thinking' },
+        { text: "Attackers often target people, using trust, urgency, fear, curiosity, or deception.", state: 'concerned' },
         // === Common Threats ===
-        { text: "First, there's phishing. An attacker pretends to be someone you trust and tries to get you to click a link, open a file, or reveal information.", state: 'speaking' },
+        { text: "Remember the very first question on the test? Phishing. An attacker pretends to be someone you trust and tries to get you to click a link, open a file, or reveal information.", state: 'speaking' },
         { text: "Vishing is voice phishing. An attacker may call pretending to be IT support, your manager, a bank, or another trusted person.", state: 'speaking' },
         { text: "Smishing is phishing through text messages or SMS.", state: 'speaking' },
         { text: "Attackers can also use malicious attachments, fake websites, impersonation, social engineering, and stolen passwords.", state: 'concerned' },
@@ -96,7 +129,7 @@ function startMission(openGmail = false) {
         { text: "Cybersecurity isn't only an IT responsibility. Everyone has a role in keeping the organization safe.", state: 'speaking' },
         { text: "Your awareness can help protect you, your coworkers, and the entire organization.", state: 'success' },
         // === STOP → CHECK → VERIFY → ACT ===
-        { text: "Whenever something feels suspicious, remember four simple steps.", state: 'thinking' },
+        { text: "Whenever something feels suspicious, remember four simple steps. They're the answer to most of the questions you just saw.", state: 'thinking' },
         { text: "STOP before reacting.", state: 'speaking' },
         { text: "CHECK the details.", state: 'speaking' },
         { text: "VERIFY through a trusted method.", state: 'speaking' },
@@ -105,10 +138,38 @@ function startMission(openGmail = false) {
         // === Transition to Zmail ===
         { text: "Now let's put that knowledge into practice.", state: 'speaking' },
         { text: "Open Zmail to inspect incoming cases. You can also refer to your Detective's Notes on the desktop anytime for tips and checklist items!", state: 'thinking' }
-      ], {
+      ];
+
+      var ryanFinishLesson = function() {
+        if (typeof IconAttention !== 'undefined') IconAttention.show('gmail');
+        updateFolderCounts();
+      };
+
+      // Pre-test done (or already saved): Ryan reacts to the score, then
+      // continues with the lesson.
+      var ryanContinueLesson = function(result, info) {
+        if (gameState.phase !== 'mission') return;
+        var key = 'ok';
+        if (info && info.alreadyTaken) {
+          key = 'returning';
+        } else if (result && typeof RyanPretest !== 'undefined') {
+          key = RyanPretest.tierOf(result);
+        } else if (!result) {
+          key = null; // pre-test unavailable: go straight to the lesson
+        }
+        var reaction = key && ryanReactions[key] ? ryanReactions[key] : [];
+        RyanGuide.speak(reaction.concat(ryanIntroPart2), { onDone: ryanFinishLesson });
+      };
+
+      RyanGuide.speak(ryanIntroPart1, {
+        moreAfter: true,
         onDone: function() {
-          if (typeof IconAttention !== 'undefined') IconAttention.show('gmail');
-          updateFolderCounts();
+          if (gameState.phase !== 'mission') return;
+          if (typeof RyanPretest !== 'undefined') {
+            RyanPretest.launch(ryanContinueLesson);
+          } else {
+            ryanContinueLesson(null); // pre-test not loaded: never block the simulation
+          }
         }
       });
     }, 3000);
