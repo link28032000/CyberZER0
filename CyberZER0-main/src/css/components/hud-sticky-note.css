@@ -1,0 +1,329 @@
+/* ═══════════════════════════════════════════════
+   HUD (Removed / Hidden)
+═══════════════════════════════════════════════ */
+#hud {
+  display: none !important;
+}
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 64px;
+}
+.hud-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.hud-value {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+#hud-score { font-size: 14px; white-space: nowrap; }
+.hud-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--glass-border);
+  margin: 0 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   STICKY NOTE — Scoring Reminder & Mission Checklist
+═══════════════════════════════════════════════ */
+.sticky-note {
+  position: absolute;
+  bottom: 64px;
+  right: 24px;
+  width: 330px;
+  max-width: calc(100vw - 32px);
+  height: 480px;
+  max-height: min(560px, calc(100vh - 80px));
+  display: flex;
+  flex-direction: column;
+  z-index: 4500;
+  background: linear-gradient(175deg, #fffbc8 0%, #fff176 28%, #ffee55 70%, #fcd34d 100%);
+  color: #1e293b;
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  border-radius: 6px 6px 12px 12px;
+  padding: 18px 14px 14px;
+  box-sizing: border-box;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28), 0 4px 12px rgba(161, 98, 7, 0.18), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  transform: none;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  transition: box-shadow 200ms ease, opacity 180ms ease;
+  user-select: none;
+}
+.sticky-note:hover {
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.32), 0 5px 14px rgba(161, 98, 7, 0.22), 0 1px 0 rgba(255, 255, 255, 0.95) inset;
+}
+.sticky-note.hidden { display: none; }
+.sticky-note.dragging {
+  transition: none;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.42), 0 4px 12px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset;
+  cursor: grabbing;
+  transform: scale(1.02);
+}
+
+.sticky-note.collapsed {
+  height: auto !important;
+  max-height: fit-content !important;
+  padding-bottom: 8px;
+}
+.sticky-note.collapsed .sticky-note-scroll {
+  display: none;
+}
+
+.sticky-note.sticky-note-pop {
+  animation: none !important;
+}
+
+.sticky-note.sticky-note-highlight {
+  outline: none !important;
+}
+
+.sticky-note-tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 76px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  border-radius: 2px;
+  z-index: 2;
+}
+.sticky-note.dragging .sticky-note-tape,
+.sticky-note.dragging .sticky-note-header { cursor: grabbing; }
+
+.sticky-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid rgba(161, 98, 7, 0.28);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.sticky-note-title-text {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #713f12;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sticky-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sticky-note-btn {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(161, 98, 7, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #713f12;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms ease;
+  padding: 0;
+}
+.sticky-note-btn:hover {
+  background: #fff;
+  border-color: rgba(161, 98, 7, 0.55);
+  color: #451a03;
+  transform: scale(1.05);
+}
+.sticky-note-btn-close:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+.sticky-note-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 4px;
+  padding-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sticky-note-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sticky-note-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+}
+.sticky-note-scroll::-webkit-scrollbar-thumb {
+  background: rgba(180, 83, 9, 0.22);
+  border-radius: 4px;
+}
+.sticky-note-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 83, 9, 0.38);
+}
+
+/* Locked State — Fills the sticky note keeping its full dimensions */
+.sn-locked-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 18px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
+  border: 1.5px dashed rgba(202, 138, 4, 0.45);
+  border-radius: 10px;
+  box-sizing: border-box;
+  margin: auto 0;
+  min-height: 380px;
+}
+
+.sn-locked-icon-bubble {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(254, 240, 138, 0.95);
+  border: 2px solid rgba(234, 179, 8, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 12px rgba(161, 98, 7, 0.16);
+}
+
+.sn-locked-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #713f12;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.sn-locked-desc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #854d0e;
+  max-width: 250px;
+  margin-bottom: 18px;
+}
+
+.sn-locked-hint {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #a16207;
+  background: rgba(254, 243, 199, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Rules Card */
+.sn-rules-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(2px);
+  border: 1px dashed rgba(180, 83, 9, 0.35);
+  border-radius: 8px;
+  padding: 10px;
+}
+.sn-rules-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #854d0e;
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sticky-note-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sticky-note-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #334155;
+}
+.sn-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.sticky-note-tip {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 8px 10px;
+  background: rgba(254, 240, 138, 0.75);
+  border-left: 3px solid #d97706;
+  border-radius: 4px;
+  color: #78350f;
+}
+
+/* Notes desktop icon reuses .desktop-icon; hidden until the mission begins */
+#icon-notes.hidden { display: none; }
+
+.email-empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.email-action-btn {
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 4px;
+}
+.email-action-btn:hover { background: rgba(255,255,255,0.18); }
+.email-delete-btn:hover { background: rgba(255,82,82,0.25); }
+.email-restore-btn:hover { background: rgba(0,230,118,0.25); }
+

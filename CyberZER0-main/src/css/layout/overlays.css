@@ -1,0 +1,41 @@
+/* ═══════════════════════════════════════════════
+   OVERLAY SYSTEM
+═══════════════════════════════════════════════ */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 500;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition-slow), visibility var(--transition-slow);
+}
+.overlay-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+  backdrop-filter: blur(4px);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  background: #050e1f;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.96);
+  transition: opacity var(--transition-slow), transform var(--transition-slow), visibility var(--transition-slow);
+}
+.overlay.active {
+  pointer-events: all;
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+

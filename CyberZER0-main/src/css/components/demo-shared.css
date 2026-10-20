@@ -1,0 +1,128 @@
+/* ═══════════════════════════════════════════════
+   DETECTIVE EMOJI SIZING — upgraded from capybara
+═══════════════════════════════════════════════ */
+/* .vn-char-sprite font-size removed — now uses PNG images via .vn-char-img */
+.gdemo-capy-avatar { font-size: 52px; filter: drop-shadow(0 0 12px rgba(79,195,247,0.4)); }
+.capy-avatar { font-size: 64px; filter: drop-shadow(0 0 16px rgba(79,195,247,0.4)); }
+.capy-avatar-large { font-size: 72px; filter: drop-shadow(0 0 20px rgba(79,195,247,0.5)); }
+
+/* ═══════════════════════════════════════════════
+   DEMO — LEGITIMATE EMAIL ELEMENTS
+═══════════════════════════════════════════════ */
+
+/* Trust / legitimacy banner */
+.gdemo-legit-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(79,195,247,0.08), rgba(79,195,247,0.03));
+  border: 1px solid rgba(79,195,247,0.25);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  transition: background 600ms, border-color 600ms;
+}
+.gdemo-legit-banner-icon { font-size: 18px; flex-shrink: 0; }
+
+/* Legitimacy checklist panel */
+.gdemo-legit-checklist {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: rgba(0, 230, 118, 0.04);
+  border: 1px solid rgba(0, 230, 118, 0.2);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gdemo-legit-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--accent-green);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.gdemo-legit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 300ms, border-color 300ms;
+}
+.gdemo-legit-item.gdemo-lcheck-passed {
+  background: rgba(0, 230, 118, 0.07);
+  border-color: rgba(0, 230, 118, 0.2);
+  color: var(--text-primary);
+}
+.gdemo-legit-item code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(0,230,118,0.1);
+  border: 1px solid rgba(0,230,118,0.2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: #69db7c;
+}
+
+.gdemo-lcheck-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: transform 200ms;
+}
+.gdemo-lcheck-passed .gdemo-lcheck-icon { transform: scale(1.1); }
+
+/* Legit check summary inside report modal */
+.gdemo-legit-check-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.gdemo-lcs-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0, 230, 118, 0.1);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  border-radius: 20px;
+  color: var(--accent-green);
+}
+
+/* Legit report modal styling */
+#gdemo-legit-report-modal .btn-success {
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+#gdemo-legit-report-modal .btn-success:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0,230,118,0.3);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes pop-in {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 20px rgba(0,230,118,0.3); }
+}
+

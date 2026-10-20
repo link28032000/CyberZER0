@@ -1,0 +1,409 @@
+/* ═══════════════════════════════════════════════════════════
+   CHROME ERROR PAGE (DNS_PROBE_FINISHED_NXDOMAIN)
+   ═══════════════════════════════════════════════════════════ */
+.chrome-error-page {
+  min-height: 100%;
+  background: #ffffff;
+  color: #202124;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 50px 24px 40px;
+  box-sizing: border-box;
+}
+
+.chrome-error-container {
+  max-width: 580px;
+  width: 100%;
+  text-align: left;
+}
+
+.chrome-error-icon {
+  margin-bottom: 24px;
+}
+
+.chrome-error-icon svg {
+  display: block;
+  width: 44px;
+  height: 44px;
+  stroke: #5f6368;
+}
+
+.chrome-dino-icon svg {
+  stroke: none !important;
+  fill: #5f6368;
+  width: 56px;
+  height: 56px;
+}
+
+.chrome-error-try {
+  font-size: 14px;
+  color: #5f6368;
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
+
+.chrome-error-heading {
+  font-size: 22px;
+  font-weight: 500;
+  color: #202124;
+  margin: 0 0 16px 0;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
+}
+
+.chrome-error-msg {
+  font-size: 14px;
+  color: #5f6368;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+}
+
+.chrome-error-domain {
+  color: #202124;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.chrome-error-suggestions {
+  margin-bottom: 28px;
+}
+
+.chrome-error-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #5f6368;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.chrome-error-list li {
+  margin-bottom: 6px;
+}
+
+.chrome-diag-link {
+  color: #1a73e8;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.chrome-diag-link:hover {
+  text-decoration: underline;
+}
+
+.chrome-error-actions {
+  margin-bottom: 36px;
+}
+
+.chrome-reload-btn {
+  background: #1a73e8;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+  user-select: none;
+}
+
+.chrome-reload-btn:hover {
+  background: #1765cc;
+  box-shadow: 0 1px 3px rgba(60,64,67,0.4);
+}
+
+.chrome-reload-btn:active {
+  background: #1557b0;
+}
+
+.chrome-reload-btn.loading {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.chrome-reload-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: chrome-spin 0.7s linear infinite;
+}
+
+@keyframes chrome-spin {
+  to { transform: rotate(360deg); }
+}
+
+.chrome-error-code {
+  font-size: 11px;
+  color: #5f6368;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTHENTIC PHISHING WEBSITE SIMULATIONS & LEGIT SITES
+   ═══════════════════════════════════════════════════════════ */
+.phish-sim-banner {
+  background: #fef2f2;
+  border-bottom: 2px solid #ef4444;
+  color: #991b1b;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.phish-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.phish-banner-text code {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.fakesite-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.fakesite-subtag {
+  font-size: 13px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.fakesite-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 28px 24px;
+  margin-bottom: 20px;
+}
+
+.fakesite-card-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.fakesite-card-header p {
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+.fakesite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 0 16px;
+  font-size: 13px;
+}
+
+.fakesite-remember {
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fakesite-link {
+  color: #0070ba;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.fakesite-link:hover {
+  text-decoration: underline;
+}
+
+.fakesite-card-footer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.fakesite-secondary-btn {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.fakesite-secondary-btn:hover {
+  background: #e2e8f0;
+}
+
+.fakesite-phone-wrap {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fakesite-phone-prefix {
+  padding: 10px 14px;
+  background: #e2e8f0;
+  font-weight: 700;
+  color: #334155;
+  font-size: 14px;
+  border-right: 1px solid #cbd5e1;
+}
+
+.fakesite-phone-wrap input {
+  border: none !important;
+  background: transparent !important;
+  flex: 1;
+}
+
+.fakesite-disclaimer {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: #1e40af;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.fakesite-footer {
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 20px 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Legitimate websites in browser */
+.legitsite {
+  min-height: 100%;
+  background: #ffffff;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.legitsite-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.legitsite-body {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 36px 24px;
+}
+
+.legitsite-advisory-banner {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: #065f46;
+}
+
+.legitsite-advisory-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* Wikipedia-style mock page (rendered inside browser-content) */
+.wikisite {
+  min-height: 100%;
+  font-family: 'Linux Libertine', Georgia, 'Times New Roman', serif;
+  background: #fff;
+  color: #202122;
+}
+.wikisite-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-bottom: 1px solid #a2a9b1;
+  background: #f8f9fa;
+  font-family: Arial, sans-serif;
+}
+.wikisite-logo { font-size: 22px; }
+.wikisite-wordmark { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.wikisite-tag { font-size: 12px; color: #54595d; }
+.wikisite-body { padding: 28px 32px; max-width: 640px; margin: 0 auto; }
+.wikisite-body h1 { font-size: 26px; font-weight: 400; border-bottom: 1px solid #a2a9b1; padding-bottom: 8px; margin-bottom: 4px; }
+.wikisite-sub { font-size: 13px; color: #54595d; margin-bottom: 12px; }
+.wikisite-body hr { border: none; border-top: 1px solid #eaecf0; margin: 12px 0; }
+.wikisite-body p { font-size: 15px; line-height: 1.7; margin-bottom: 14px; }
+.wikisite-note { font-family: Arial, sans-serif; font-size: 12px; color: #888; font-style: italic; }
+
+/* Generic mock website (rendered inside browser-content) */
+.genericsite {
+  min-height: 100%;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #fff;
+}
+.genericsite-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 28px;
+  background: #1a1a2e;
+  color: white;
+}
+.genericsite-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #0070e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.genericsite-name { font-size: 17px; font-weight: 700; margin-right: auto; }
+.genericsite-nav { display: flex; gap: 18px; }
+.genericsite-nav a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; }
+.genericsite-nav a:hover { color: #fff; }
+.genericsite-body { padding: 40px 28px; max-width: 480px; margin: 0 auto; text-align: center; }
+.genericsite-body h2 { font-size: 22px; margin-bottom: 10px; color: #1a1a2e; }
+.genericsite-body p { color: #444; margin-bottom: 12px; font-size: 14px; line-height: 1.6; }
+.genericsite-note { font-size: 12px; color: #888; font-style: italic; }
+
