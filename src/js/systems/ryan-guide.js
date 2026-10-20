@@ -149,7 +149,8 @@ const RyanGuide = (() => {
     refs.continueBtn.classList.remove('hidden');
 
     const isLast = _queue.length === 1;
-    refs.continueLabel.textContent = (isLast && !(_opts && _opts.moreAfter)) ? 'TAP / CLICK TO CLOSE' : 'TAP TO CONTINUE';
+    const defaultLabel = (isLast && !(_opts && _opts.moreAfter)) ? 'TAP / CLICK TO CLOSE' : 'TAP TO CONTINUE';
+    refs.continueLabel.textContent = step.label || defaultLabel;
 
     // Guard: ensure text is always a valid string before typing
     const safeText = (step.text !== undefined && step.text !== null) ? String(step.text) : '';

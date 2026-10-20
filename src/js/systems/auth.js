@@ -593,22 +593,20 @@
   }
 
   function updateChip(u) {
-    const bar      = document.getElementById('mm-user-bar');
-    const nameEl   = document.getElementById('mm-user-name');
-    const avatarEl = document.getElementById('mm-user-avatar');
+    const bar       = document.getElementById('mm-user-bar');
+    const avatarInner = document.querySelector('#mm-user-avatar .mm-avatar-inner');
     if (!bar) return;
 
     if (u) {
-      if (nameEl) nameEl.textContent = displayName(u);
-      if (avatarEl) {
-        avatarEl.innerHTML = u.photoURL
-          ? `<img src="${u.photoURL}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" referrerpolicy="no-referrer">`
-          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+      // Inject photo into mm-avatar-inner if the user has one
+      if (avatarInner && u.photoURL) {
+        avatarInner.innerHTML = `<img src="${u.photoURL}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" referrerpolicy="no-referrer">`;
+      } else if (avatarInner) {
+        avatarInner.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
       }
       bar.hidden = false;
     } else {
       bar.hidden = true;
-      if (nameEl) nameEl.textContent = '—';
     }
   }
 

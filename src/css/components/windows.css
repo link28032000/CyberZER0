@@ -5,8 +5,8 @@
   position: absolute;
   min-width: 480px;
   min-height: 320px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  max-height: calc(100vh - 48px);
   background: #07122a;
   border: 1px solid var(--win-border);
   border-radius: var(--radius-md);
@@ -23,53 +23,50 @@
   transition: none !important;
 }
 
-/* When the Ryan dialogue is visible, clamp window height to the safe area
-   above it so windows fit neatly. Users can still drag windows freely
-   (including behind the dialogue) — the dialogue stays on top via z-index. */
-body.has-ryan-dialogue .app-window:not(.maximized) {
-  max-height: calc(100vh - 245px) !important;
-}
+/* Ryan dialogue stays on top via z-index — windows can be freely
+   resized, dragged, or maximized at any time, even while Ryan is speaking.
+   The dialogue panel (z-index: 100010) always renders above everything. */
 
 #win-gmail {
   width: 840px;
-  max-width: calc(100vw - 80px);
-  height: min(525px, calc(100vh - 64px));
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  height: min(525px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 #win-browser {
   width: 840px;
-  max-width: calc(100vw - 80px);
-  height: min(525px, calc(100vh - 64px));
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  height: min(525px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 #win-folder {
   width: 760px;
-  max-width: calc(100vw - 80px);
-  height: min(480px, calc(100vh - 64px));
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  height: min(480px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 #win-antivirus {
   width: 720px;
-  max-width: calc(100vw - 80px);
-  height: min(480px, calc(100vh - 64px));
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  height: min(480px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 #win-comms {
   width: 760px;
-  max-width: calc(100vw - 80px);
-  height: min(500px, calc(100vh - 64px));
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  height: min(500px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 #win-ransomware {
   width: 800px;
-  max-width: calc(100vw - 80px);
-  height: min(520px, calc(100vh - 64px));
-  max-height: calc(100vh - 64px);
+  max-width: 100vw;
+  height: min(520px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 .app-window.hidden { display: none; }

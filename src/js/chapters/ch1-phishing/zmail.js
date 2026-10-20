@@ -339,18 +339,18 @@ function openEmail(idx) {
         if (isNoteOpen) {
           RyanGuide.speak([
             {
-              text: "Welcome to your second email case! 📒 Check your live Mission Checklist in Sticky Notes to track your tasks as you inspect this message!",
+              text: "Here is your second email case. Check your live Mission Checklist in Sticky Notes to keep track of your tasks as you inspect this one.",
               state: 'speaking'
             }
           ]);
         } else {
           RyanGuide.speak([
             {
-              text: "Welcome to your second email case! 📒 Notice your Sticky Notes app on the desktop — I've highlighted it for you.",
+              text: "Here is your second email case. Your Sticky Notes app is on the desktop and I highlighted it for you.",
               state: 'speaking'
             },
             {
-              text: "Open your Sticky Notes to check your live Mission Checklist progress as you inspect this message!",
+              text: "Open your Sticky Notes to check your live Mission Checklist progress as you inspect this message.",
               state: 'success'
             }
           ]);

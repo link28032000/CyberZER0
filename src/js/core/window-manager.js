@@ -143,10 +143,8 @@ function openApp(appName) {
   state.hasBeenPositioned = true;
 }
 
-// Centers a window on the desktop.
-// When the Ryan dialogue is visible, the window is initially placed in the
-// safe area above it so it doesn't open on top of the dialogue.
-// After opening the user can drag it anywhere — including behind the dialogue.
+// Centers a window on the desktop, always using the full available space.
+// The Ryan dialogue floats on top via z-index, so no clearance offset is needed.
 function centerWindow(appName) {
   const win = document.getElementById(`win-${appName}`);
   const desktop = document.getElementById('desktop');
@@ -157,15 +155,7 @@ function centerWindow(appName) {
   const h = win.offsetHeight || 520;
   const viewportW = desktop.clientWidth || window.innerWidth;
   const taskbarH = taskbar ? taskbar.offsetHeight : 48;
-
-  const ryanOverlay = document.getElementById('ryan-guide-overlay');
-  const hasDialogue = document.body.classList.contains('has-ryan-dialogue') ||
-    (ryanOverlay && !ryanOverlay.classList.contains('hidden') && !ryanOverlay.classList.contains('ryan-animate-out'));
-
-  // Safe vertical space: full desktop height minus taskbar, and minus the
-  // dialogue strip (≈195px) when it is visible, so the window opens clear of it.
-  const dialogueClearance = hasDialogue ? 195 : 0;
-  const viewportH = (desktop.clientHeight || window.innerHeight) - taskbarH - dialogueClearance;
+  const viewportH = (desktop.clientHeight || window.innerHeight) - taskbarH;
 
   const left = Math.max(0, Math.round((viewportW - w) / 2));
   const top  = Math.max(0, Math.round((viewportH - h) / 2));
@@ -174,41 +164,11 @@ function centerWindow(appName) {
   win.style.top  = top  + 'px';
 }
 
-// When the Ryan dialogue appears/disappears, nudge already-open windows so
-// they sit neatly in the safe area above it. Users can still drag them freely
-// afterward — including behind the dialogue — as the drag handler has no limits.
+// adjustAppsForDialogue is kept for compatibility but no longer repositions windows.
+// The Ryan dialogue panel (z-index: 100010) always floats on top of all app windows,
+// so apps can be freely dragged, resized, or maximized even while Ryan is speaking.
 function adjustAppsForDialogue(hasDialogue) {
-  const desktop = document.getElementById('desktop');
-  const viewportH = desktop ? desktop.clientHeight : window.innerHeight;
-  const taskbar   = document.getElementById('taskbar');
-  const taskbarH  = taskbar ? taskbar.offsetHeight : 48;
-  // Safe bottom edge: viewport minus taskbar minus dialogue strip
-  const safeBottom = viewportH - taskbarH - 195;
-
-  const openWins = document.querySelectorAll('.app-window:not(.hidden):not(.minimized)');
-  openWins.forEach(win => {
-    if (win.classList.contains('maximized')) return;
-
-    if (hasDialogue) {
-      // Save original top so we can restore it later
-      if (win.dataset.preDialogueTop === undefined) {
-        win.dataset.preDialogueTop = win.style.top || `${win.offsetTop}px`;
-      }
-      // If the window's bottom edge overlaps the dialogue, slide it up
-      const winH      = win.offsetHeight || 520;
-      const currentTop = parseInt(win.style.top, 10) || win.offsetTop;
-      if (currentTop + winH > safeBottom) {
-        const newTop = Math.max(0, safeBottom - winH);
-        win.style.top = newTop + 'px';
-      }
-    } else {
-      // Restore pre-dialogue position when Ryan leaves
-      if (win.dataset.preDialogueTop !== undefined) {
-        win.style.top = win.dataset.preDialogueTop;
-        delete win.dataset.preDialogueTop;
-      }
-    }
-  });
+  // No-op: windows are no longer forced to move around the dialogue strip.
 }
 
 function closeApp(appName) {

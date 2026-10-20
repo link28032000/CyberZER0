@@ -42,12 +42,12 @@ function submitReportPhishing() {
       if (toast) toast.classList.add('hidden');
 
       RyanGuide.speak([
-        { text: "Hold on, Detective! 🛑 You need to add a flag before reporting an email as phishing.", state: 'concerned' },
-        { text: "Always think before you report or mark as legitimate! In a real investigation, you cannot submit a phishing report without evidence.", state: 'thinking' },
-        { text: "Tag what made you suspicious first — check the sender's domain, false urgency, or deceptive links!", state: 'speaking' }
+        { text: "Hold on! You need to add a flag before reporting an email as phishing.", state: 'concerned' },
+        { text: "Think before you report. In a real investigation you cannot submit a phishing report without any evidence.", state: 'thinking' },
+        { text: "Flag what made you suspicious first. Check the sender's domain, look for urgency pressure, or inspect any links.", state: 'speaking' }
       ]);
     } else {
-      showToast('🚩 Evidence required! Flag at least one suspicious clue before reporting as phishing.', 'warning');
+      showToast('Flag at least one suspicious clue before reporting as phishing.', 'warning');
     }
     return;
   }
@@ -129,15 +129,15 @@ function submitReport(isPhishing) {
 
       const contradictionMsg = [
         {
-          text: `⚠️ Contradiction detected! You flagged ${flagCount} red flag${flagCount > 1 ? 's' : ''} (${flagNames}) — but then submitted this email as Non-Phishing.`,
+          text: `You flagged ${flagCount} red flag${flagCount > 1 ? 's' : ''} (${flagNames}) but then submitted this email as Non-Phishing.`,
           state: 'concerned'
         },
         {
-          text: "If you found suspicious elements worth flagging, that's a strong signal the email may be a threat. Red flags and a 'safe' verdict don't add up.",
+          text: "If you found something suspicious enough to flag, that is a strong signal this email could be a threat. Flagging something and calling it safe at the same time does not add up.",
           state: 'speaking'
         },
         {
-          text: "Rule of thumb: If you added flags, always report as Phishing. Only submit as Non-Phishing when you find zero red flags.",
+          text: "Quick rule: if you added any flags, report it as Phishing. Only submit as Non-Phishing when you find zero red flags.",
           state: 'thinking'
         }
       ];
@@ -199,7 +199,7 @@ function submitReport(isPhishing) {
       ch1CloserLookWarnedOnce = true;
       if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
 
-      const explainText = "Take a closer look before deciding! The sender address 'rewards-claim@paypa1.com' uses typosquatting ('1' instead of 'l'), creates extreme urgency with a 30-minute deadline, and the link leads to an unverified domain. Review the email and simulated URL, then try again!";
+      const explainText = "Take a closer look before deciding. The sender address 'rewards-claim@paypa1.com' uses a '1' instead of 'l', creates urgency with a 30-minute deadline, and the link leads to an unverified domain. Review the email and try again.";
 
       if (typeof RyanGuide !== 'undefined') {
         RyanGuide.speak([{ text: explainText, state: 'concerned' }]);
@@ -276,10 +276,10 @@ function submitReport(isPhishing) {
       let bannerTitle = '';
       let bannerMsg = '';
       if (correctDecision) {
-        bannerTitle = isPhishing ? 'CORRECT — PHISHING' : 'CORRECT — NON-PHISHING';
+        bannerTitle = isPhishing ? 'CORRECT: PHISHING' : 'CORRECT: NON-PHISHING';
         bannerMsg = isPhishing ? 'Good catch! You correctly identified this as a phishing email.' : 'Correct! This email is safe and legitimate.';
       } else {
-        bannerTitle = isPhishing ? 'INCORRECT — NOT PHISHING' : 'INCORRECT — THIS WAS PHISHING';
+        bannerTitle = isPhishing ? 'INCORRECT: NOT PHISHING' : 'INCORRECT: THIS WAS PHISHING';
         bannerMsg = isPhishing ? 'This email was actually legitimate, not phishing.' : 'This was actually a phishing attempt that went undetected.';
       }
       banner.innerHTML = `
@@ -361,22 +361,22 @@ function submitReport(isPhishing) {
         const addr = email.sender ? email.sender.address : 'unknown';
         if (isPhishing && correctDecision) {
           messages = [
-            { text: `✅ Great catch! "${addr}" is a fake domain designed to look legitimate. That was a phishing email.`, state: 'success' },
-            { text: 'Always verify sender domains character by character. Attackers register look-alike domains to steal your credentials.', state: 'speaking' }
+            { text: `Nice catch! "${addr}" is a fake domain built to look like the real thing. That was a phishing email.`, state: 'success' },
+            { text: 'Always verify sender domains character by character. Attackers register lookalike domains to steal your credentials.', state: 'speaking' }
           ];
         } else if (isPhishing && !correctDecision) {
           messages = [
-            { text: `⚠️ "${addr}" is actually a real, verified sender. That email was legitimate.`, state: 'concerned' },
-            { text: 'Before flagging, check: Is the domain official? Is there real urgency or suspicious links? Not every unexpected email is a threat.', state: 'speaking' }
+            { text: `"${addr}" is actually a real, verified sender. That email was legitimate.`, state: 'concerned' },
+            { text: 'Before flagging, ask yourself: is the domain official? Is there real urgency or suspicious links? Not every unexpected email is a threat.', state: 'speaking' }
           ];
         } else if (!isPhishing && correctDecision) {
           messages = [
-            { text: `✅ Correct! "${addr}" is a verified, trusted sender with no suspicious urgency or links. That was a clean, legitimate email.`, state: 'success' }
+            { text: `Right call! "${addr}" is a verified, trusted sender with no suspicious urgency or links. That was a safe, legitimate email.`, state: 'success' }
           ];
         } else {
           messages = [
-            { text: `⚠️ That was actually a phishing email! "${addr}" is a fake domain impersonating a real organization.`, state: 'concerned' },
-            { text: 'Key red flags: fake sender domain, urgency pressure, suspicious links. Review each email carefully before deciding.', state: 'speaking' }
+            { text: `That was actually a phishing email. "${addr}" is a fake domain impersonating a real organization.`, state: 'concerned' },
+            { text: 'Key red flags to watch: fake sender domain, urgency pressure, suspicious links. Review each email carefully before deciding.', state: 'speaking' }
           ];
         }
       }
@@ -389,11 +389,11 @@ function submitReport(isPhishing) {
           messages = [
             ...messages,
             {
-              text: "Great work submitting your first email! 📒 Your live Mission Checklist in Sticky Notes is now active with your investigation tasks.",
+              text: "Good work on your first email! Your live Mission Checklist in Sticky Notes is now active with your investigation tasks.",
               state: 'speaking'
             },
             {
-              text: "Keep an eye on your Sticky Notes checklist as you investigate the incoming emails!",
+              text: "Keep an eye on your Sticky Notes checklist as you go through the rest of the emails.",
               state: 'success'
             }
           ];
@@ -401,11 +401,11 @@ function submitReport(isPhishing) {
           messages = [
             ...messages,
             {
-              text: "Great work submitting your first email! 📒 Now that the next incoming emails have arrived, notice your Sticky Notes on the desktop — I've highlighted it for you.",
+              text: "Good work on your first email! The next incoming emails have arrived. Check your Sticky Notes on the desktop, I highlighted it for you.",
               state: 'speaking'
             },
             {
-              text: "Open your Sticky Notes to check your live Mission Checklist progress before opening the next email!",
+              text: "Open your Sticky Notes to check your live Mission Checklist before opening the next email.",
               state: 'success'
             }
           ];
@@ -484,8 +484,8 @@ function showRyanExplanation(email, correctDecision) {
   if (!tutor) {
     // Fallback generic message if no ryanTutor defined
     const fallback = correctDecision
-      ? [{ text: '\u2705 ' + (email.phishing ? 'Correct — that was a phishing email!' : 'Correct — that was a legitimate email!'), state: 'success' }]
-      : [{ text: '\u26a0\ufe0f ' + (email.phishing ? 'That was actually a phishing email. Always check the sender domain and look for urgency pressure.' : 'That was actually a legitimate email. Verify the sender domain before deciding.'), state: 'concerned' }];
+      ? [{ text: '✅ ' + (email.phishing ? 'That was a phishing email, and you got it right.' : 'That was a legitimate email and you called it correctly.'), state: 'success' }]
+      : [{ text: '⚠️ ' + (email.phishing ? 'That was actually a phishing email. Always check the sender domain and look for urgency pressure.' : 'That was actually a legitimate email. Verify the sender domain before deciding.'), state: 'concerned' }];
     RyanGuide.speak(fallback, { onDone: nextEmail });
     return;
   }
@@ -500,13 +500,13 @@ function showRyanExplanationBrief(email, correctDecision, playerSaidPhishing) {
   let text, state;
   if (correctDecision) {
     text = playerSaidPhishing
-      ? `✅ Correct! That was a phishing email. The domain "${email.sender ? email.sender.address : ''}" is fake. Good detective work!`
-      : `✅ Correct! That was a clean, legitimate email — no phishing indicators found. Well spotted!`;
+      ? `Nice catch! That was a phishing email. The domain "${email.sender ? email.sender.address : ''}" is fake.`
+      : `Right call! That was a clean, legitimate email with no phishing indicators.`;
     state = 'success';
   } else {
     text = playerSaidPhishing
-      ? `⚠️ That was actually a legitimate email. The sender "${email.sender ? email.sender.address : ''}" is real. Check the domain carefully next time.`
-      : `⚠️ That was actually a phishing email! Always verify the sender domain and look for urgency pressure or mismatched links.`;
+      ? `That was actually a legitimate email. The sender "${email.sender ? email.sender.address : ''}" is real. Check the domain carefully next time.`
+      : `That was actually a phishing email. Always verify the sender domain and look for urgency or mismatched links.`;
     state = 'concerned';
   }
   RyanGuide.speak([{ text, state }]);
@@ -670,15 +670,15 @@ function nextEmail() {
       if (typeof RyanGuide !== 'undefined') {
         const waveMessages = {
           2: [
-            { text: "Great work on that first email! Now more messages have arrived in your inbox. Remember to check every sender address carefully — legitimate companies always use their official domains.", state: 'speaking' },
-            { text: "This wave includes a mix of real and fake emails. Your job is to investigate each one. Stop, Check, and Verify!", state: 'thinking' }
+            { text: "Nice work on that first email. More messages have arrived in your inbox. Remember to check every sender address carefully. Legit companies always use their official domains.", state: 'speaking' },
+            { text: "This wave has a mix of real and fake emails. Investigate each one. Stop, Check, and Verify!", state: 'thinking' }
           ],
           3: [
-            { text: "You're building strong instincts! A new email just arrived from the Technical Solutions Team. Check it carefully — is it genuine or another trick?", state: 'speaking' }
+            { text: "You are building good instincts! A new email just arrived from the Technical Solutions Team. Check it carefully. Is it real or another trick?", state: 'speaking' }
           ],
           4: [
-            { text: "You've reached the final challenge! These last emails are a true test. Some are obvious, some are sophisticated fakes. Use everything you've learned!", state: 'success' },
-            { text: "Examine each sender, look for urgency pressure, and hover over every link before deciding. You've got this!", state: 'thinking' }
+            { text: "You have reached the final challenge! These last emails are a real test. Some are obvious, some are clever fakes. Use everything you have learned.", state: 'success' },
+            { text: "Look at each sender, watch for urgency pressure, and check every link before deciding. You can do this!", state: 'thinking' }
           ]
         };
         const msgs = waveMessages[nextWave];
@@ -737,7 +737,7 @@ function nextEmail() {
   }, 200);
 
   const remaining = EMAILS.length - gameState.emailResults.length;
-  showToast(`📧 Next email is waiting — ${remaining} case${remaining !== 1 ? 's' : ''} remaining.`, 'info');
+  showToast(`📧 Next email is waiting. ${remaining} case${remaining !== 1 ? 's' : ''} remaining.`, 'info');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -794,11 +794,11 @@ function finishMission() {
   const ryanLine = document.getElementById('results-ryan-line');
   if (ryanLine) {
     const ryanMsgs = {
-      S: '\u201cFlawless. You\u2019re thinking like a real security analyst now.\u201d',
-      A: '\u201cGreat work. You caught the threats that matter most \u2014 keep that instinct sharp.\u201d',
-      B: '\u201cSolid investigation. A few near-misses, but your instincts are building.\u201d',
-      C: '\u201cGood start. Every mistake is a lesson \u2014 review the ones you missed and try again.\u201d',
-      D: '\u201cDon\u2019t worry. Phishing is tricky by design. That\u2019s exactly why we practice.\u201d'
+      S: '"Flawless. You are thinking like a real security analyst now."',
+      A: '"Great work. You caught the threats that matter most. Keep that instinct sharp."',
+      B: '"Solid investigation. A few near-misses, but your instincts are getting there."',
+      C: '"Good start. Every mistake is a lesson. Review the ones you missed and try again."',
+      D: '"Do not worry. Phishing is tricky by design. That is exactly why we practice."'
     };
     ryanLine.textContent = ryanMsgs[rank] || ryanMsgs['B'];
   }
@@ -863,15 +863,15 @@ function finishMission() {
   if (typeof RyanGuide !== 'undefined') {
     RyanGuide.speak([
       {
-        text: `🎉 Outstanding job! Congratulations on completing all email investigations for Chapter 1 with Rank ${rank}!`,
+        text: `You did it! You finished all the email investigations for Chapter 1 with Rank ${rank}.`,
         state: 'success'
       },
       {
-        text: `You investigated all ${EMAILS.length} emails with ${Math.round(pct * 100)}% accuracy and earned the Phishing Investigator Achievement Trophy!`,
+        text: `You went through all ${EMAILS.length} emails with ${Math.round(pct * 100)}% accuracy and earned the Phishing Investigator Achievement Trophy.`,
         state: 'speaking'
       },
       {
-        text: "Your final Mission Results, task progress, and achievements are displayed right here on your Sticky Note and taskbar.",
+        text: "Your final Mission Results, task progress, and achievements are all right here on your Sticky Note and taskbar.",
         state: 'success'
       }
     ]);

@@ -65,14 +65,14 @@ const EMAILS = [
     },
     ryanTutor: {
       correct: [
-        { text: '✅ Outstanding catch! This was a classic prize scam phishing email. The sender domain is "paypa1.com" — notice the number "1" instead of the letter "l"! Attackers register look-alike typosquat domains to deceive you.', state: 'success' },
-        { text: 'The "You won ₱1,000,000 Pesos" lure and "30-minute forfeiture deadline" are false urgency tactics — dangling huge sums of money with artificial pressure so you panic and act without thinking.', state: 'speaking' },
-        { text: 'The "Claim Now" button directs to "paypa1.com" — a counterfeit phishing site created to harvest your PayPal login credentials. Always hover over links to inspect the actual web address!', state: 'thinking' }
+        { text: '✅ Nice catch! That was a classic prize scam. Look at the sender: "paypa1.com" uses the number "1" instead of the letter "l". Attackers register fake lookalike domains like this to trick you.', state: 'success' },
+        { text: 'The "You won ₱1,000,000" promise and the 30-minute deadline are both pressure tricks. They want you to panic and click without thinking. Real companies never work like that.', state: 'speaking' },
+        { text: 'That "Claim Now" button goes to "paypa1.com" which is a fake site built to steal your login. Always check where a link actually goes before you click!', state: 'thinking' }
       ],
       wrong: [
-        { text: '⚠️ That was actually a phishing email! Look closely at the sender: "rewards-claim@paypa1.com". The domain uses the number "1" instead of the letter "l" — a deceptive typosquat!', state: 'concerned' },
-        { text: 'Unsolicited emails claiming you won ₱1,000,000 Pesos with a 30-minute countdown are always phishing scams. Real organizations never give away money out of the blue or set panic ultimatums.', state: 'speaking' },
-        { text: 'The "Claim Now" link pointed to "paypa1.com" to harvest your PayPal account credentials. Remember: Stop, Check, and Verify before trusting any links!', state: 'thinking' }
+        { text: '⚠️ That was a phishing email. Take a closer look at the sender: "rewards-claim@paypa1.com" has a "1" instead of "l" in PayPal. Easy to miss, but that is the whole point.', state: 'concerned' },
+        { text: 'Any email saying you won a million pesos with a 30-minute countdown is always a scam. Legit companies do not give away money like that or threaten to take it back in minutes.', state: 'speaking' },
+        { text: 'The link goes to "paypa1.com" which is a fake site meant to steal your PayPal password. Stop, Check, and Verify before trusting any link!', state: 'thinking' }
       ]
     }
   },
@@ -97,12 +97,12 @@ const EMAILS = [
     capybaraAnalysis: {},
     ryanTutor: {
       correct: [
-        { text: '\u2705 Correct! This was a legitimate HR email. The sender \"hr@business.com\" uses the company\'s own official domain \u2014 that\'s a trusted, verified source.', state: 'success' },
-        { text: 'It contained no urgency pressure, no suspicious external links, and no requests for your password. It simply informed you about benefits and directed you to the official internal HR portal. That\'s how real internal emails behave.', state: 'speaking' }
+        { text: '\u2705 Good call! That HR email was real. "hr@business.com" is the company\'s own official domain, so that sender checks out.', state: 'success' },
+        { text: 'No weird urgency, no links asking for your password, nothing suspicious at all. It just told you about a benefits update. That is exactly how a normal internal email looks.', state: 'speaking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was actually a legitimate email! The sender \"hr@business.com\" uses the company\'s real domain \u2014 \"business.com\". That\'s a verified, trusted source.', state: 'concerned' },
-        { text: 'It contained no urgency tactics, no external links asking for passwords, and no threats. It simply informed you of a benefits update. Not every email is a threat \u2014 always verify the sender\'s domain first before deciding.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That one was actually a real email. "hr@business.com" is on the company\'s own domain, which is a verified trusted sender.', state: 'concerned' },
+        { text: 'It had no pressure, no scary deadlines, no links asking for your password. It just shared a benefits update. Not every email is a threat. Always check the sender domain first.', state: 'speaking' }
       ]
     }
   },
@@ -153,13 +153,13 @@ const EMAILS = [
     },
     ryanTutor: {
       correct: [
-        { text: '\u2705 Well spotted! This was a phishing email. Look closely at the sender: \"m1crosoft-support.com\" \u2014 that\'s the digit \"1\" (one) instead of the letter \"i\". This is called a typosquat attack.', state: 'success' },
-        { text: 'Real Microsoft emails only ever come from \"@microsoft.com\". The 60-minute lockout threat is manufactured urgency \u2014 real Microsoft security alerts let you review activity at your own pace.', state: 'speaking' },
-        { text: 'The link also went to \"m1crosoft-account-verify.com\" \u2014 same fake typosquat domain. Always read email addresses character by character. One digit difference can mean the difference between real and fake!', state: 'thinking' }
+        { text: '\u2705 Good eye! That was a phishing email. The sender says "m1crosoft-support.com" but look at it closely. That is a "1" (the number one) instead of the letter "i" in Microsoft. Classic typosquatting.', state: 'success' },
+        { text: 'Real Microsoft emails only ever come from "@microsoft.com". And that 60-minute lockout threat? That is just pressure tactics to stop you from thinking it through. Microsoft does not do that.', state: 'speaking' },
+        { text: 'The link also went to "m1crosoft-account-verify.com", same fake domain. Always read email addresses character by character because one digit swapped out can make a fake look real!', state: 'thinking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was actually a phishing email! Look at the sender: \"m1crosoft-support.com\" \u2014 that\'s the digit \"1\" (one) instead of the letter \"i\" in Microsoft. This typosquat trick is designed to fool you at a quick glance.', state: 'concerned' },
-        { text: 'Always read email addresses character by character. Real Microsoft emails only come from \"@microsoft.com\". The 60-minute lockout was manufactured pressure to stop you from thinking clearly.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was a phishing email. Look at the sender: "m1crosoft-support.com" has a "1" (the number one) instead of the letter "i". That kind of swap is designed to fool you at a quick glance.', state: 'concerned' },
+        { text: 'Read email addresses one character at a time. Real Microsoft emails only come from "@microsoft.com". That 60-minute lockout warning was just pressure to make you click without thinking.', state: 'speaking' }
       ]
     }
   },
@@ -184,12 +184,12 @@ const EMAILS = [
     capybaraAnalysis: {},
     ryanTutor: {
       correct: [
-        { text: '\u2705 Correct! This was a legitimate IT maintenance notice from \"it-support@business.com\" \u2014 the company\'s official IT domain.', state: 'success' },
-        { text: 'It made no requests for your credentials, had no suspicious external links, and applied no pressure. It simply informed you of planned downtime. Real IT notices never ask for passwords during maintenance.', state: 'speaking' }
+        { text: '\u2705 That is right! That IT maintenance email was real. "it-support@business.com" is on the company\'s own official domain, so it checks out.', state: 'success' },
+        { text: 'It did not ask for your password, had no sketchy links, and put zero pressure on you. It just told you about planned downtime. Real IT notices never ask for passwords during maintenance.', state: 'speaking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was a legitimate IT maintenance email! The sender \"it-support@business.com\" is on the company\'s real official domain \"business.com\".', state: 'concerned' },
-        { text: 'It asked for nothing from you \u2014 no passwords, no clicks on external links, no urgent action. Legitimate IT notices just inform you of planned downtime. When an email only informs and asks for nothing, and the sender is on the official domain \u2014 it\'s legitimate.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was actually a real IT maintenance email. "it-support@business.com" is on the company\'s real domain, so that sender is legit.', state: 'concerned' },
+        { text: 'It asked absolutely nothing from you. No passwords, no links to click, no scary deadlines. When an email just informs you and asks for nothing, and the sender is on the official domain, it is almost always safe.', state: 'speaking' }
       ]
     }
   },
@@ -214,12 +214,12 @@ const EMAILS = [
     capybaraAnalysis: {},
     ryanTutor: {
       correct: [
-        { text: '\u2705 Good judgment! This was a legitimate system maintenance notification from \"technical.solutions@business.com\" \u2014 a verified official company address.', state: 'success' },
-        { text: 'It reported completed maintenance work, made no credential requests, had no suspicious links, and directed any issues to official support channels. That\'s exactly how real IT update notifications look.', state: 'speaking' }
+        { text: '\u2705 Well done! That was a legit maintenance email from "technical.solutions@business.com", which is on the company\'s real domain.', state: 'success' },
+        { text: 'It told you what work was done, did not ask for any credentials, had no suspicious links, and pointed you to official support if needed. That is exactly what a real IT update looks like.', state: 'speaking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was actually a legitimate email! \"technical.solutions@business.com\" is an official company address on the real domain \"business.com\".', state: 'concerned' },
-        { text: 'The email simply reported completed maintenance \u2014 no links to click, no passwords to enter, no threats. When an email only informs you without asking for anything, and the sender is on the official domain, it is almost always legitimate.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was a legitimate email. "technical.solutions@business.com" is on the real company domain "business.com", so that sender is verified.', state: 'concerned' },
+        { text: 'The email just told you maintenance was done. No links to click, no passwords to give, no threats at all. When an email only gives you information and asks for nothing back, and the sender is on the official domain, that is a safe email.', state: 'speaking' }
       ]
     }
   },
@@ -243,12 +243,12 @@ const EMAILS = [
     capybaraAnalysis: {},
     ryanTutor: {
       correct: [
-        { text: '\u2705 Correct! This payroll confirmation from \"payroll@business.com\" is legitimate. It uses the company\'s official domain and requires nothing from you.', state: 'success' },
-        { text: 'It simply confirms salary processing and refers you to the internal HR portal \u2014 no credentials to submit, no suspicious links, no urgency pressure. That\'s normal, routine business communication.', state: 'speaking' }
+        { text: '\u2705 Right call! That payroll email from "payroll@business.com" was real. Official domain, and it did not ask you to do anything at all.', state: 'success' },
+        { text: 'It just confirmed your salary was processed and pointed you to the HR portal if you had questions. No weird links, no password requests, no pressure. That is normal business email.', state: 'speaking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was actually a legitimate payroll email! \"payroll@business.com\" is on the company\'s real domain. It simply confirms your salary was processed \u2014 no action required from you.', state: 'concerned' },
-        { text: 'Payroll confirmation emails are routine business notifications. They inform \u2014 they don\'t pressure. Ask yourself: Is the sender on the official domain? Does it ask for credentials or links? If no to both \u2014 it\'s legitimate.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was a real payroll email. "payroll@business.com" is on the company\'s real domain, and it just told you your salary was processed. Nothing suspicious about it.', state: 'concerned' },
+        { text: 'Payroll emails just inform you. They do not pressure you or ask for anything. Quick check: Is the sender on the official domain? Does it ask for a password or link click? If the answer is no to both, it is almost certainly safe.', state: 'speaking' }
       ]
     }
   },
@@ -299,13 +299,13 @@ const EMAILS = [
     },
     ryanTutor: {
       correct: [
-        { text: '\u2705 Caught it! The sender \"urgent-alert@bankng-secure-verify.xyz\" misspells \"banking\" as \"bankng\" and uses a \".xyz\" domain. No real bank ever uses \".xyz\" for official communications.', state: 'success' },
-        { text: '\"FINAL WARNING\" in all caps with a 15-MINUTE countdown to freeze your funds is extreme social engineering. Real banks never send 15-minute ultimatums via email or threaten to permanently freeze your money.', state: 'speaking' },
-        { text: 'The link went to \"bankng-secure-verify.xyz\" \u2014 the same fake domain as the sender. When the sender and link share the same non-official domain, it always confirms a phishing attack.', state: 'thinking' }
+        { text: '\u2705 Good catch! The sender is "urgent-alert@bankng-secure-verify.xyz". Two red flags right there: "bankng" misspells "banking", and real banks never use a ".xyz" domain for anything official.', state: 'success' },
+        { text: '"FINAL WARNING" in all caps and a 15-minute countdown are extreme pressure tactics. No real bank sends you a 15-minute ultimatum by email or threatens to freeze your money like that.', state: 'speaking' },
+        { text: 'The link goes to the same fake domain as the sender. When the sender and the link match and neither is a real bank domain, you are looking at a phishing attack.', state: 'thinking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was a phishing email! The sender \"urgent-alert@bankng-secure-verify.xyz\" misspells \"banking\" as \"bankng\" and uses a \".xyz\" domain \u2014 no real bank ever uses that.', state: 'concerned' },
-        { text: '\"FINAL WARNING\" and a 15-MINUTE threat to freeze your funds is extreme social engineering designed to cause panic. Stop and always ask: would my real bank actually send this? The answer is always no.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was a phishing email. The sender "urgent-alert@bankng-secure-verify.xyz" spells "banking" as "bankng" and uses ".xyz". No real bank uses that kind of domain.', state: 'concerned' },
+        { text: '"FINAL WARNING" and a 15-minute threat to freeze your money are just scare tactics to make you act without thinking. Ask yourself: would my actual bank ever send an email like this? The answer is no.', state: 'speaking' }
       ]
     }
   },
@@ -357,14 +357,14 @@ const EMAILS = [
     },
     ryanTutor: {
       correct: [
-        { text: '\u2705 Excellent! This was a sophisticated phishing attempt \u2014 one of the hardest to catch. The sender \"security-ops@business-it-support.com\" looks official, but the domain is \"business-it-support.com\", NOT \"business.com\".', state: 'success' },
-        { text: 'This is an advanced attack using a plausible domain. The \"Friday 5 PM deadline\" sounds like a real compliance notice \u2014 but real compliance updates are always announced through multiple official channels, not a single urgent email.', state: 'speaking' },
-        { text: 'The compliance portal link also used \"business-it-support.com\" \u2014 same fake domain as the sender. Rule: always compare the sender domain against your company\'s REAL domain. Even one extra word in the domain makes it fake.', state: 'thinking' }
+        { text: '\u2705 That one was tricky and you got it! The sender "security-ops@business-it-support.com" looks like it could be IT, but the domain is "business-it-support.com", not "business.com".', state: 'success' },
+        { text: 'This is an advanced attack that uses a convincing-sounding domain. The "Friday 5 PM deadline" sounds real but real compliance requirements are announced through multiple official channels, never just one urgent email.', state: 'speaking' },
+        { text: 'The link also used "business-it-support.com", same fake domain as the sender. Always compare the sender domain against your company\'s actual domain. Even one extra word makes it fake.', state: 'thinking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was a sophisticated phishing email \u2014 the hardest kind! The sender used \"business-it-support.com\" which looks like an IT address, but is NOT \"business.com\".', state: 'concerned' },
-        { text: 'Always compare the sender\'s exact domain against your company\'s real official domain. \"business-it-support.com\" vs \"business.com\" \u2014 one extra phrase makes it a fake.', state: 'speaking' },
-        { text: 'The \"Friday deadline\" and \"account suspension\" were pressure tactics. Real compliance requirements are always announced through multiple official channels \u2014 never a single urgent email. When in doubt, verify directly with IT.', state: 'thinking' }
+        { text: '\u26a0\ufe0f That was a tricky phishing email. The sender used "business-it-support.com" which sounds like an IT address, but the company\'s real domain is "business.com". Those are two different things.', state: 'concerned' },
+        { text: 'Always compare the exact sender domain with your company\'s real one. "business-it-support.com" versus "business.com". One extra phrase in the domain and it is fake.', state: 'speaking' },
+        { text: 'The Friday deadline and account suspension talk were just pressure to make you act fast. Real compliance notices come through official channels, not a single urgent email. When in doubt, call IT directly.', state: 'thinking' }
       ]
     }
   },
@@ -388,12 +388,12 @@ const EMAILS = [
     capybaraAnalysis: {},
     ryanTutor: {
       correct: [
-        { text: '\u2705 Correct! This IT ticket confirmation from \"helpdesk@business.com\" is legitimate. It uses the company\'s official domain and simply notifies you of a resolved support ticket.', state: 'success' },
-        { text: 'No credentials were requested, no suspicious external links, and no urgency threats. Automated ticket notifications are normal business processes. You verified correctly \u2014 well done!', state: 'speaking' }
+        { text: '\u2705 Right! That IT help desk email from "helpdesk@business.com" was real. It is on the company\'s official domain and just told you a ticket was resolved.', state: 'success' },
+        { text: 'No passwords needed, no suspicious links, no pressure at all. Automated ticket emails are totally normal. You spotted it correctly, nice work!', state: 'speaking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was a legitimate IT Help Desk notification! \"helpdesk@business.com\" uses the company\'s official domain \"business.com\". It simply confirms a support ticket was resolved.', state: 'concerned' },
-        { text: 'Ticket notifications are routine automated emails. No credential requests, no urgency threats. The key check: is the sender on the official domain, and does it ask for anything? If no to both \u2014 it\'s legitimate.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was a real IT Help Desk email. "helpdesk@business.com" is on the company\'s actual domain and it just let you know a support ticket was closed.', state: 'concerned' },
+        { text: 'Ticket confirmation emails are just routine automated messages. No credential requests, no pressure. Quick check: is the sender on the official domain, and does it ask for anything from you? If the answer is no to both, it is almost certainly legit.', state: 'speaking' }
       ]
     }
   },
@@ -445,14 +445,14 @@ const EMAILS = [
     },
     ryanTutor: {
       correct: [
-        { text: '🎯 Outstanding observation! This was an extremely dangerous phishing email carrying a malicious file attachment!', state: 'success' },
-        { text: 'Notice the double extension on "Scholarship_Grant_Form.pdf.exe"? Attackers disguise dangerous executable files as harmless PDFs to trick people into running malware.', state: 'speaking' },
-        { text: 'Also notice the fake sender domain "northfield-scholarship.com" instead of the official school domain, paired with a panic-inducing 24-hour deadline. You caught all the red flags!', state: 'success' }
+        { text: '✅ Really good catch on that one! That was a dangerous phishing email with a malicious file attached.', state: 'success' },
+        { text: 'See the file name: "Scholarship_Grant_Form.pdf.exe"? That double extension is the giveaway. It looks like a PDF but it is actually an executable program. Open it and you are installing malware.', state: 'speaking' },
+        { text: 'The sender domain "northfield-scholarship.com" is not the school\'s real domain either, and the 24-hour panic deadline is classic pressure tactics. You spotted all of it, great work.', state: 'success' }
       ],
       wrong: [
-        { text: '⚠️ Watch out! That was a high-risk phishing attack carrying malware disguised as a scholarship application!', state: 'concerned' },
-        { text: 'The attachment looked like a PDF, but its real extension was ".pdf.exe" — an executable program that installs malware onto the computer when opened.', state: 'speaking' },
-        { text: 'Combined with the fake domain "northfield-scholarship.com" and extreme 24-hour urgency, this is a classic spear-phishing attack. Always check file extensions before opening attachments!', state: 'thinking' }
+        { text: '⚠️ That was a high-risk phishing email with malware hiding in the attachment. Be careful with this one.', state: 'concerned' },
+        { text: 'The file was named "Scholarship_Grant_Form.pdf.exe". That ".exe" at the end means it is a program, not a PDF. Running it would install malware on the computer.', state: 'speaking' },
+        { text: 'The sender domain was fake and the 24-hour deadline was designed to make you panic and open the file without thinking. Always look at the full file extension before opening any attachment.', state: 'thinking' }
       ]
     }
   }

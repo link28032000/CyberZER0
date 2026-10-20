@@ -5,15 +5,15 @@
 /* Proper sizing for settings windows to match Windows 11 */
 #win-wifi-settings {
   width: 920px;
-  max-width: calc(100vw - 40px);
-  height: min(620px, calc(100vh - 60px));
-  max-height: calc(100vh - 60px);
+  max-width: 100vw;
+  height: min(620px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 #win-security-settings {
   width: 920px;
-  max-width: calc(100vw - 40px);
-  height: min(620px, calc(100vh - 60px));
-  max-height: calc(100vh - 60px);
+  max-width: 100vw;
+  height: min(620px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
 }
 
 .wifi-settings-body {
