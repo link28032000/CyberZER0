@@ -48,6 +48,13 @@
   max-height: calc(100vh - 48px);
 }
 
+#win-taskmanager {
+  width: 760px;
+  max-width: 100vw;
+  height: min(480px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+}
+
 #win-antivirus {
   width: 720px;
   max-width: 100vw;

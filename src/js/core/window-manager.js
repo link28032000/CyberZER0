@@ -138,6 +138,10 @@ function openApp(appName) {
     if (typeof renderPhoneLinkApp === 'function') renderPhoneLinkApp();
   }
 
+  if (appName === 'taskmanager') {
+    if (typeof initTaskManager === 'function') initTaskManager();
+  }
+
   // Always center window on screen when opened
   centerWindow(appName);
   state.hasBeenPositioned = true;
