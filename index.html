@@ -1791,6 +1791,21 @@
     </div>
     <div class="taskbar-tray">
 
+      <button type="button" class="tray-btn" id="tray-fullscreen-btn"
+              onclick="toggleMainMenuFullscreen()"
+              title="Toggle Fullscreen [F11]"
+              aria-label="Toggle fullscreen mode">
+        <span class="tray-icon">
+          <!-- Enter fullscreen icon -->
+          <svg class="tray-fs-enter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>
+          </svg>
+          <!-- Exit fullscreen icon -->
+          <svg class="tray-fs-exit" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+            <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5"/>
+          </svg>
+        </span>
+      </button>
       <button type="button" class="tray-btn" id="tray-volume-btn" onclick="toggleVolumeFlyout(event)" title="🔊 Sound &amp; Audio Volume Settings" aria-label="Speakers / Sound Settings">
         <span id="tray-volume-icon" class="tray-icon"><img src="assets/icons/networks/audio.svg" alt="Sound" class="taskbar-icon-img"></span>
       </button>
