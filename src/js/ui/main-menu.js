@@ -678,6 +678,78 @@ function closeMainMenuExit() {
 }
 
 // ════════════════════════════════════════════════════════════
+//  START / CONTINUE BUTTON LOGIC
+// ════════════════════════════════════════════════════════════
+
+/**
+ * Chapter name map for display in the sublabel.
+ * Keys match CATEGORIES id values.
+ */
+const _CHAPTER_LABELS = {
+  phishing:           'Ch.1 · The First Day',
+  malware:            'Ch.2 · The Digital Trap',
+  social_engineering: 'Ch.3 · The System Collapse',
+  ransomware:         'Ch.4 · The Last Login'
+};
+
+/**
+ * Detects whether the player has any saved progress in localStorage,
+ * then updates the Start button to show "Continue" (with chapter hint)
+ * or "New Game" for a fresh slate.
+ */
+function updateStartButton() {
+  const labelEl    = document.getElementById('mm-start-label');
+  const subEl      = document.getElementById('mm-start-sublabel');
+  const wrapEl     = subEl && subEl.closest('.mm-btn-label-wrap');
+  const iconNew    = document.querySelector('.mm-start-icon-new');
+  const iconCont   = document.querySelector('.mm-start-icon-continue');
+
+  if (!labelEl) return;
+
+  // Detect saved progress
+  let savedCatId = null;
+  try {
+    const raw = localStorage.getItem('cyberzero_categories');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) {
+        // Find the furthest unlocked (but not yet completed) chapter, or last completed
+        const order = ['phishing', 'malware', 'social_engineering', 'ransomware'];
+        let best = null;
+        order.forEach(id => {
+          const entry = data.find(c => c.id === id);
+          if (entry && (entry.unlocked || entry.completed)) best = id;
+        });
+        savedCatId = best;
+      }
+    }
+  } catch(e) { /* ignore */ }
+
+  if (savedCatId) {
+    // Has save data — show Continue
+    labelEl.textContent = 'Continue';
+    if (subEl) {
+      subEl.textContent = _CHAPTER_LABELS[savedCatId] || savedCatId;
+      if (wrapEl) wrapEl.classList.add('has-sublabel');
+    }
+    if (iconNew)  iconNew.style.display  = 'none';
+    if (iconCont) iconCont.style.display = '';
+    // Store the chapter to resume so mainMenuStart() can use it
+    window._continueChapterId = savedCatId;
+  } else {
+    // No save — show New Game
+    labelEl.textContent = 'New Game';
+    if (subEl) {
+      subEl.textContent = '';
+      if (wrapEl) wrapEl.classList.remove('has-sublabel');
+    }
+    if (iconNew)  iconNew.style.display  = '';
+    if (iconCont) iconCont.style.display = 'none';
+    window._continueChapterId = null;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 //  FULLSCREEN TOGGLE
 // ════════════════════════════════════════════════════════════
 
@@ -722,13 +794,6 @@ function _syncFullscreenState() {
   if (btn) {
     btn.setAttribute('aria-label', isFs ? 'Exit fullscreen mode' : 'Enter fullscreen mode');
     btn.title = isFs ? 'Exit Fullscreen [F11]' : 'Toggle Fullscreen [F11]';
-    const label = btn.querySelector('.mm-fs-label');
-    if (label) label.textContent = isFs ? 'Exit' : 'Fullscreen';
-  }
-
-  // Toast notification (subtle)
-  if (typeof showToast === 'function') {
-    showToast(isFs ? '⛶  Fullscreen — Press F11 or Esc to exit' : '⊡  Exited fullscreen', 'info');
   }
 }
 
