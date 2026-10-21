@@ -1589,8 +1589,8 @@
   <div id="win-taskmanager" class="app-window hidden" data-app="taskmanager">
     <div class="win-titlebar" id="titlebar-taskmanager">
       <div class="win-title">
-        <span class="win-icon">📊</span>
-        <span>Task Manager — Processes</span>
+        <span class="win-icon"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="TM" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></span>
+        <span>Task Manager</span>
       </div>
       <div class="win-controls">
         <button type="button" class="win-btn win-minimize" onclick="minimizeApp('taskmanager')" title="Minimize">─</button>
@@ -1599,22 +1599,97 @@
       </div>
     </div>
     <div class="win-body tm-body">
+
+      <!-- TM Nav Tabs -->
       <div class="tm-tabs">
-        <span class="tm-tab active">Processes</span>
-        <span class="tm-tab">Performance</span>
-        <span class="tm-tab">Details</span>
+        <span class="tm-tab active" id="tm-tab-processes" onclick="tmSwitchTab('processes')">Processes</span>
+        <span class="tm-tab" id="tm-tab-performance" onclick="tmSwitchTab('performance')">Performance</span>
+        <span class="tm-tab" id="tm-tab-details" onclick="tmSwitchTab('details')">Details</span>
+        <div class="tm-status-bar-right">
+          <span id="tm-cpu-status">CPU <strong>--</strong></span>
+          <span id="tm-mem-status">Memory <strong>--</strong></span>
+        </div>
       </div>
-      <div class="tm-process-header">
-        <span class="tm-col-name">Name</span>
-        <span class="tm-col-cpu">CPU</span>
-        <span class="tm-col-mem">Memory</span>
-        <span class="tm-col-status">Status</span>
+
+      <!-- ── PROCESSES TAB ── -->
+      <div id="tm-panel-processes" class="tm-panel">
+        <!-- Sticky column header -->
+        <div class="tm-process-header">
+          <span class="tm-col-name">Name</span>
+          <span class="tm-col-cpu">CPU</span>
+          <span class="tm-col-mem">Memory</span>
+          <span class="tm-col-disk">Disk</span>
+          <span class="tm-col-net">Network</span>
+          <span class="tm-col-action"></span>
+        </div>
+        <!-- Single unified scroll container -->
+        <div class="tm-scroll-body">
+          <div class="tm-group-header" id="tm-group-apps">Apps (8)</div>
+          <div id="tm-process-list"></div>
+          <div class="tm-group-header" id="tm-group-bg">Background processes (12)</div>
+          <div id="tm-bg-list"></div>
+        </div>
       </div>
-      <div id="tm-process-list" class="tm-process-list">
-        <!-- Rendered by JS -->
+
+      <!-- ── PERFORMANCE TAB ── -->
+      <div id="tm-panel-performance" class="tm-panel hidden">
+        <div class="tm-perf-layout">
+          <!-- Left sidebar -->
+          <div class="tm-perf-sidebar">
+            <div class="tm-perf-sidebar-item active" onclick="tmPerfSelect('cpu', this)">
+              <div class="tm-perf-label">CPU</div>
+              <canvas class="tm-mini-graph" id="tm-mini-cpu" width="120" height="40"></canvas>
+              <div class="tm-perf-value" id="tm-perf-cpu-pct">--</div>
+            </div>
+            <div class="tm-perf-sidebar-item" onclick="tmPerfSelect('mem', this)">
+              <div class="tm-perf-label">Memory</div>
+              <canvas class="tm-mini-graph" id="tm-mini-mem" width="120" height="40"></canvas>
+              <div class="tm-perf-value" id="tm-perf-mem-pct">--</div>
+            </div>
+            <div class="tm-perf-sidebar-item" onclick="tmPerfSelect('disk', this)">
+              <div class="tm-perf-label">Disk 0 (C:)</div>
+              <canvas class="tm-mini-graph" id="tm-mini-disk" width="120" height="40"></canvas>
+              <div class="tm-perf-value" id="tm-perf-disk-pct">--</div>
+            </div>
+            <div class="tm-perf-sidebar-item" onclick="tmPerfSelect('net', this)">
+              <div class="tm-perf-label">Ethernet</div>
+              <canvas class="tm-mini-graph" id="tm-mini-net" width="120" height="40"></canvas>
+              <div class="tm-perf-value" id="tm-perf-net-pct">--</div>
+            </div>
+          </div>
+
+          <!-- Main graph area -->
+          <div class="tm-perf-main" id="tm-perf-main">
+            <div class="tm-perf-main-header">
+              <div class="tm-perf-main-title" id="tm-perf-main-title">CPU</div>
+              <div class="tm-perf-main-sub" id="tm-perf-main-sub">Intel Core i5-12400F · 6 Cores, 12 Logical processors</div>
+            </div>
+            <canvas class="tm-main-graph" id="tm-main-graph" width="500" height="200"></canvas>
+            <div class="tm-perf-stats-grid" id="tm-perf-stats">
+              <div class="tm-stat-block"><div class="tm-stat-label">Utilization</div><div class="tm-stat-val" id="tm-stat-util">--%</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Speed</div><div class="tm-stat-val" id="tm-stat-speed">-- GHz</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Processes</div><div class="tm-stat-val">18</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Threads</div><div class="tm-stat-val">214</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Handles</div><div class="tm-stat-val">7,482</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Up time</div><div class="tm-stat-val" id="tm-stat-uptime">0:00:00</div></div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- ── DETAILS TAB ── -->
+      <div id="tm-panel-details" class="tm-panel hidden">
+        <div class="tm-process-header" style="grid-template-columns: 2fr .7fr .7fr 1.5fr 1fr;">
+          <span>Name</span><span>PID</span><span>Status</span><span>User name</span><span>CPU</span>
+        </div>
+        <div class="tm-scroll-body">
+          <div class="tm-process-list" id="tm-details-list"></div>
+        </div>
+      </div>
+
     </div>
   </div>
+
 
   <!-- ── SECURITY SCANNER WINDOW (Group 4 — Stage 5 Infection) ── -->
   <div id="win-scanner" class="app-window hidden" data-app="scanner">
@@ -4025,6 +4100,7 @@
 <script src="src/js/story/awareness-video.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/wifi-security.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/phone-link.js"></script>
+<script src="src/js/apps/task-manager.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/infection.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/comms-feed.js"></script>
 <script src="src/js/chapters/ch4-ransomware/ransomware.js"></script>
