@@ -2229,6 +2229,20 @@
   <!-- Animated scanline overlay -->
   <div class="mm-scanlines"></div>
 
+  <!-- ── Fullscreen Toggle Button (Top-Left Corner) ── -->
+  <button type="button" class="mm-fullscreen-btn" id="mm-fullscreen-btn"
+          onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
+          aria-label="Toggle fullscreen mode">
+    <!-- Enter Fullscreen icon (default) -->
+    <svg class="mm-fs-icon mm-fs-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <!-- Exit Fullscreen icon (shown when fullscreen active) -->
+    <svg class="mm-fs-icon mm-fs-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
   <!-- ── Signed-In User Profile (Top Corner, Main Menu Only) ── -->
   <div class="mm-user-bar" id="mm-user-bar" hidden>
     <div class="mm-user-avatar" id="mm-user-avatar" aria-hidden="true">
