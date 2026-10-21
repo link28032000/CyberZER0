@@ -50,6 +50,11 @@ function startMission(openGmail = false) {
   updateAppLockStates();
   if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications('phishing', false);
 
+  // Always hide Ch2-only desktop icons during Chapter 1
+  document.querySelectorAll('.ch2-only').forEach(el => {
+    el.style.setProperty('display', 'none', 'important');
+  });
+
   const hudEl = document.getElementById('hud');
   if (hudEl) hudEl.classList.remove('hidden');
 
@@ -235,4 +240,10 @@ function openChapterDesktopDirect(chapterId) {
   // Keep Chapter profile in sync
   updateLoginScreenForChapter(chapterId);
   if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications(chapterId, false);
+
+  // Show Ch2-only desktop icons in Chapter 2+, hide them in Chapter 1
+  const isCh2Plus = (chapterId === 'malware' || chapterId === 'social-engineering' || chapterId === 'ransomware');
+  document.querySelectorAll('.ch2-only').forEach(el => {
+    el.style.setProperty('display', isCh2Plus ? 'flex' : 'none', 'important');
+  });
 }

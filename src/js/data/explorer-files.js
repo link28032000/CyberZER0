@@ -223,6 +223,27 @@ const EXPLORER_ADDITIONAL_FILES = {
   ],
   usb: [],
   network: [],
+  downloads: [
+    {
+      id: 'dl_games_folder',
+      name: 'Games',
+      fakeExt: 'dir',
+      realExt: 'dir',
+      subFolderKey: 'games',
+      type: 'File Folder',
+      size: '0 KB',
+      date: '9/1/2026 08:00 AM',
+      icon: '<img src="assets/icons/Chapter 2 new apps/games_folder.svg" alt="Games" />',
+      isMalware: false,
+      threatName: 'Safe Folder',
+      threatCategory: 'SAFE',
+      hash: 'DOWNLOADS-GAMES-SUBFOLDER',
+      analysis: '✅ Local Games folder. Contains Ethan\'s installed game shortcuts.',
+      quarantined: false,
+      scanned: true
+    }
+  ],
+  games: [],               // Ethan's Games folder — empty
   thispc: [
     {
       id: 'pc_perflogs',

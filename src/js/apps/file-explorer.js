@@ -22,12 +22,9 @@ function getScholarshipGrantFileDef() {
 }
 
 function getExplorerCurrentFiles() {
+  // 'downloads' shows only its static folder entries (e.g. Games subfolder)
   if (currentExplorerFolder === 'downloads') {
-    const isPhishingChapter = (window._currentChapterCategory || activeCategoryStory || 'phishing') === 'phishing';
-    if (isPhishingChapter) {
-      return window.ch1DownloadsList || [];
-    }
-    return FOLDER_FILES;
+    return EXPLORER_ADDITIONAL_FILES['downloads'] || [];
   }
   // thispc_contents shows the actual C: folder list
   if (currentExplorerFolder === 'thispc_contents') {
@@ -285,7 +282,7 @@ function switchExplorerFolder(folderKey) {
   const activeSidebarItem = document.getElementById(`sidebar-folder-${_sidebarKey}`) || document.getElementById(`sidebar-folder-${folderKey}`);
   if (activeSidebarItem) activeSidebarItem.classList.add('active');
 
-  // Update downloads badge count
+  // Update downloads badge count (Ch2 malware files)
   const dlBadge = document.getElementById('downloads-badge');
   if (dlBadge) {
     dlBadge.textContent = FOLDER_FILES.length;
@@ -307,7 +304,7 @@ function switchExplorerFolder(folderKey) {
   const searchInput = document.getElementById('folder-search-input');
 
   const folderNames = {
-    downloads: 'Suspicious_Transfers',
+    downloads:             'Downloads',
     documents: 'Documents',
     pictures: 'Pictures',
     videos: 'Videos',
@@ -318,6 +315,7 @@ function switchExplorerFolder(folderKey) {
     usb: 'USB Drive (E:)',
     usb_contents: 'USB Drive (E:)',
     network: 'Network',
+    games: 'Games',
     // Windows C sub-folders
     dir_perflogs:   'PerfLogs',
     dir_progfiles:  'Program Files',
@@ -334,7 +332,8 @@ function switchExplorerFolder(folderKey) {
     dir_users:      'thispc_contents',
     dir_windows:    'thispc_contents',
     thispc_contents: 'thispc',
-    usb_contents:   'thispc'
+    usb_contents:   'thispc',
+    games:          'downloads'
   };
   const parentKey = subFolderParent[folderKey] || null;
 

@@ -4,7 +4,7 @@
 #overlay-lock-paused {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  z-index: 200000;
   cursor: pointer;
   user-select: none;
   overflow: hidden;

@@ -95,7 +95,7 @@ function showPhoneInAppScreen(app) {
   phoneContent.innerHTML = `
     <div class="pl-phone-inapp-view">
       <div class="pl-phone-inapp-header">
-        <button type="button" class="pl-phone-screen-back" onclick="returnPhoneHome()" title="Home Screen">‹ Home</button>
+        <button type="button" class="pl-phone-screen-back" onclick="returnPhoneHome()" title="Home Screen">‹</button>
         <span class="pl-phone-screen-title">${title}</span>
         <span style="width:36px"></span>
       </div>
@@ -103,7 +103,7 @@ function showPhoneInAppScreen(app) {
         <div class="pl-phone-screen-empty-icon">${icon}</div>
         <div class="pl-phone-screen-empty-title">${emptyTitle}</div>
         <div class="pl-phone-screen-empty-desc">${emptyDesc}</div>
-        <button type="button" class="pl-phone-screen-home-btn" onclick="returnPhoneHome()">Home Screen</button>
+        <button type="button" class="pl-phone-screen-home-btn" onclick="returnPhoneHome()">⌂</button>
       </div>
     </div>
   `;
