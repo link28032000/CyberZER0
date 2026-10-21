@@ -1754,6 +1754,17 @@
 
     <!-- Clean Tile Grid -->
     <div class="start-apps-grid" id="start-apps-grid">
+      <!-- Ch2 Only: This PC & Task Manager pinned tiles -->
+      <div class="start-app-tile ch2-only" onclick="openApp('folder'); switchExplorerFolder('thispc_contents'); closeStartMenu();" id="start-app-thispc" title="This PC — Windows C: Drive">
+        <div class="start-tile-icon"><img src="assets/icons/Chapter 2 new apps/This PC.svg" alt="This PC" class="start-tile-img"></div>
+        <div class="start-tile-name">This PC</div>
+      </div>
+
+      <div class="start-app-tile ch2-only" onclick="startMenuOpenApp('taskmanager')" id="start-app-taskmanager" title="Task Manager">
+        <div class="start-tile-icon"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="Task Manager" class="start-tile-img"></div>
+        <div class="start-tile-name">Task Manager</div>
+      </div>
+
       <div class="start-app-tile" onclick="startMenuOpenApp('gmail')" id="start-app-gmail" title="Open Zmail">
         <div class="start-tile-icon"><img src="assets/icons/apps/mail.svg" alt="Zmail" class="start-tile-img"></div>
         <div class="start-tile-name">Zmail</div>
@@ -1791,6 +1802,19 @@
       <span class="start-all-apps-label">Available Apps</span>
     </div>
     <div class="start-recommended-list" id="start-recommended-list">
+      <!-- Ch2 Only: This PC & Task Manager recommended items -->
+      <div class="start-recommended-item ch2-only" onclick="openApp('folder'); switchExplorerFolder('thispc_contents'); closeStartMenu();" title="This PC — Windows C: Drive" id="rec-app-thispc">
+        <div class="rec-file-icon"><img src="assets/icons/Chapter 2 new apps/This PC.svg" alt="This PC" class="rec-icon-img"></div>
+        <div class="rec-file-info">
+          <div class="rec-file-name">This PC</div>
+        </div>
+      </div>
+      <div class="start-recommended-item ch2-only" onclick="startMenuOpenApp('taskmanager')" title="Task Manager" id="rec-app-taskmanager">
+        <div class="rec-file-icon"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="Task Manager" class="rec-icon-img"></div>
+        <div class="rec-file-info">
+          <div class="rec-file-name">Task Manager</div>
+        </div>
+      </div>
       <div class="start-recommended-item" onclick="startMenuOpenApp('gmail')" title="Open Zmail">
         <div class="rec-file-icon"><img src="assets/icons/apps/mail.svg" alt="Zmail" class="rec-icon-img"></div>
         <div class="rec-file-info">
