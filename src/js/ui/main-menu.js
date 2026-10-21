@@ -676,3 +676,71 @@ function closeMainMenuExit() {
   const modal = document.getElementById('mm-exit-modal');
   if (modal) modal.classList.add('hidden');
 }
+
+// ════════════════════════════════════════════════════════════
+//  FULLSCREEN TOGGLE
+// ════════════════════════════════════════════════════════════
+
+/** Toggle browser fullscreen mode. Works from the main menu fullscreen button or F11. */
+function toggleMainMenuFullscreen() {
+  const isFs = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+
+  if (!isFs) {
+    // Enter fullscreen
+    const el = document.documentElement;
+    if (el.requestFullscreen)            el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.mozRequestFullScreen)    el.mozRequestFullScreen();
+    else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+  } else {
+    // Exit fullscreen
+    if (document.exitFullscreen)            document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.mozCancelFullScreen)  document.mozCancelFullScreen();
+    else if (document.msExitFullscreen)     document.msExitFullscreen();
+  }
+}
+
+/** Sync the fullscreen button icon & body class whenever fullscreen state changes */
+function _syncFullscreenState() {
+  const isFs = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+
+  document.body.classList.toggle('is-fullscreen', isFs);
+
+  // Update button label for screen readers
+  const btn = document.getElementById('mm-fullscreen-btn');
+  if (btn) {
+    btn.setAttribute('aria-label', isFs ? 'Exit fullscreen mode' : 'Enter fullscreen mode');
+    btn.title = isFs ? 'Exit Fullscreen [F11]' : 'Toggle Fullscreen [F11]';
+    const label = btn.querySelector('.mm-fs-label');
+    if (label) label.textContent = isFs ? 'Exit' : 'Fullscreen';
+  }
+
+  // Toast notification (subtle)
+  if (typeof showToast === 'function') {
+    showToast(isFs ? '⛶  Fullscreen — Press F11 or Esc to exit' : '⊡  Exited fullscreen', 'info');
+  }
+}
+
+// Listen for all fullscreen change events (cross-browser)
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
+  .forEach(ev => document.addEventListener(ev, _syncFullscreenState));
+
+// F11 keyboard shortcut — intercept and use our own fullscreen logic
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F11') {
+    e.preventDefault(); // prevent the browser's native F11 behaviour
+    toggleMainMenuFullscreen();
+  }
+});
+
