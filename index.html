@@ -77,6 +77,11 @@
         <div class="icon-img"><img src="assets/icons/apps/note.svg" alt="Notes"></div>
         <span>Sticky Notes</span>
       </div>
+      <!-- Ch2 Only: hidden in Ch1, visible in Ch2 malware phase -->
+      <div class="desktop-icon ch2-only" id="icon-this-pc" ondblclick="openApp('folder'); switchExplorerFolder('thispc_contents');" onclick="openApp('folder'); switchExplorerFolder('thispc_contents');" title="This PC — Windows C: Drive">
+        <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/This PC.svg" alt="This PC"></div>
+        <span>This PC</span>
+      </div>
     </div>
 
     <!-- Column 2: Threat Progression / Locked Apps -->
@@ -92,6 +97,27 @@
       <div class="desktop-icon" id="icon-comms" onclick="openApp('comms')" title="Phone Link">
         <div class="icon-img"><img src="assets/icons/apps/Smartphone.svg" alt="Phone Link"></div>
         <span>Phone Link</span>
+      </div>
+      <!-- Ch2 Only: hidden in Ch1, visible in Ch2 malware phase -->
+      <div class="desktop-icon ch2-only" id="icon-taskmanager" onclick="openApp('taskmanager')" title="Task Manager">
+        <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="Task Manager"></div>
+        <span>Task Manager</span>
+      </div>
+    </div>
+
+    <!-- Column 3: Ch2 Only — Ethan's Gaming Apps (hidden until Ch2 malware phase) -->
+    <div class="desktop-icons-col ch2-only" id="desktop-col-ch2">
+      <div class="desktop-icon" id="icon-steam" title="Steam — Game Library">
+        <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/steam.svg" alt="Steam"></div>
+        <span>Steam</span>
+      </div>
+      <div class="desktop-icon" id="icon-gta6" title="GTA 6 — Action Game">
+        <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/GTA6.svg" alt="GTA 6"></div>
+        <span>GTA 6</span>
+      </div>
+      <div class="desktop-icon" id="icon-games-folder" onclick="openApp('folder'); switchExplorerFolder('games');" title="Games Folder">
+        <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/games_folder.svg" alt="Games"></div>
+        <span>Games</span>
       </div>
     </div>
   </div>
@@ -314,11 +340,9 @@
         <div class="explorer-address-bar">
           <span class="address-icon">📁</span>
           <div class="explorer-breadcrumbs" id="explorer-breadcrumbs">
-            <span class="bc-item" onclick="switchExplorerFolder('thispc')">This PC</span>
+            <span class="bc-item" onclick="switchExplorerFolder('thispc_contents')">This PC</span>
             <span class="bc-sep">›</span>
-            <span class="bc-item" onclick="switchExplorerFolder('downloads')">Downloads</span>
-            <span class="bc-sep">›</span>
-            <span class="bc-item current" id="folder-active-path">Suspicious_Transfers</span>
+            <span class="bc-item current" id="folder-active-path">Downloads</span>
           </div>
         </div>
         <!-- Search Box -->
@@ -338,11 +362,12 @@
             <span class="sb-icon">🖥️</span>
             <span class="sb-label">Desktop</span>
           </div>
-          <div class="sidebar-item active" id="sidebar-folder-downloads" onclick="switchExplorerFolder('downloads')">
+          <!-- Downloads: empty folder -->
+          <div class="sidebar-item" id="sidebar-folder-downloads" onclick="switchExplorerFolder('downloads')">
             <span class="sb-icon">⬇️</span>
             <span class="sb-label">Downloads</span>
-            <span class="sb-badge hidden-init" id="downloads-badge">0</span>
           </div>
+
           <div class="sidebar-item" id="sidebar-folder-documents" onclick="switchExplorerFolder('documents')">
             <span class="sb-icon">📄</span>
             <span class="sb-label">Documents</span>
@@ -362,7 +387,7 @@
 
           <div class="sidebar-divider"></div>
           <div class="sidebar-section-title">This PC</div>
-          <div class="sidebar-item" id="sidebar-folder-thispc" onclick="switchExplorerFolder('thispc')">
+          <div class="sidebar-item" id="sidebar-folder-thispc" onclick="switchExplorerFolder('thispc_contents')">
             <span class="sb-icon">💻</span>
             <span class="sb-label">Windows (C:)</span>
           </div>
@@ -3341,9 +3366,7 @@
           <div class="folder-breadcrumb">
             <span>📁 This PC</span>
             <span class="breadcrumb-sep">›</span>
-            <span>Downloads</span>
-            <span class="breadcrumb-sep">›</span>
-            <span class="folder-active-path">Suspicious_Transfers</span>
+            <span class="folder-active-path">Downloads</span>
           </div>
           <div class="gdemo-folder-tag">4 Files Listed</div>
         </div>
