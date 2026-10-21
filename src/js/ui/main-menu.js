@@ -789,12 +789,16 @@ function _syncFullscreenState() {
 
   document.body.classList.toggle('is-fullscreen', isFs);
 
-  // Update button label for screen readers
+  // ── Main menu corner button ──
   const btn = document.getElementById('mm-fullscreen-btn');
   if (btn) {
     btn.setAttribute('aria-label', isFs ? 'Exit fullscreen mode' : 'Enter fullscreen mode');
     btn.title = isFs ? 'Exit Fullscreen [F11]' : 'Toggle Fullscreen [F11]';
   }
+
+  // ── Taskbar tray icon swap ──
+  document.querySelectorAll('.tray-fs-enter').forEach(el => el.style.display = isFs ? 'none' : '');
+  document.querySelectorAll('.tray-fs-exit').forEach(el  => el.style.display = isFs ? ''     : 'none');
 }
 
 // Listen for all fullscreen change events (cross-browser)
