@@ -2244,6 +2244,9 @@
   <!-- Animated scanline overlay -->
   <div class="mm-scanlines"></div>
 
+  <!-- Background Music Audio Element -->
+  <audio id="mm-bg-audio" src="assets/sounds/Background.mp3" loop preload="auto"></audio>
+
   <!-- ── Fullscreen Toggle Button (Top-Left Corner) ── -->
   <button type="button" class="mm-fullscreen-btn" id="mm-fullscreen-btn"
           onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
@@ -2257,6 +2260,7 @@
       <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
+
 
   <!-- ── Signed-In User Profile (Top Corner, Main Menu Only) ── -->
   <div class="mm-user-bar" id="mm-user-bar" hidden>
@@ -2278,6 +2282,25 @@
       <span class="mm-signout-label">Sign out</span>
     </button>
   </div>
+
+  <!-- 🔊 Background Sound Toggle Button (Bottom-Right Corner) -->
+  <button type="button" class="mm-sound-btn" id="mm-sound-btn"
+          onclick="toggleMMBgMusic()" title="Toggle Background Music"
+          aria-label="Toggle background music">
+    <!-- Sound ON icon -->
+    <svg class="mm-sound-icon mm-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+      <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M19.07 4.93a10 10 0 010 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <!-- Sound OFF icon -->
+    <svg class="mm-sound-icon mm-sound-off" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+      <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+
+  </button>
 
 
   <!-- Center Content -->
@@ -2756,6 +2779,22 @@
   </div><!-- /.ss-content -->
 </div><!-- /#overlay-story-select -->
 
+<!-- ── STORY SELECT FULLSCREEN BUTTON
+     Placed OUTSIDE the overlay (same reason as #login-fs-btn):
+     the overlay's transform:scale() would trap position:fixed children.
+     JS toggles .ss-fs-visible when this overlay is active.
+── -->
+<button type="button" id="story-fs-btn" class="story-fs-btn"
+        onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
+        aria-label="Toggle fullscreen mode">
+  <svg class="story-fs-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <svg class="story-fs-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
 <!-- ── CHAPTER TITLE CARD (Cinematic Mission Intro) ── -->
 <div id="overlay-chapter-card" class="overlay" style="display:none;" aria-live="polite">
   <div class="cc-container">
@@ -2774,6 +2813,7 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     BACK
   </button>
+
 
   <!-- Login Panel (left-center aligned like Windows 10) -->
   <div class="ls-center-panel">
@@ -2837,9 +2877,23 @@
     </div>
   </div>
 
-</div>
+</div><!-- /overlay-title-menu -->
 
-
+<!-- ── LOGIN PAGE FULLSCREEN BUTTON
+     Placed OUTSIDE the overlay so the overlay's transform:scale()
+     does NOT create a containing block that hides this button.
+     Shown/hidden by JS via the 'ls-fs-visible' class.
+── -->
+<button type="button" id="login-fs-btn" class="login-fs-btn"
+        onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
+        aria-label="Toggle fullscreen mode">
+  <svg class="login-fs-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <svg class="login-fs-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
 
 <!-- ── GAME INTRO BRIEFING MODAL (Narrator Introduction) ── -->
 <div id="overlay-game-intro" class="overlay">

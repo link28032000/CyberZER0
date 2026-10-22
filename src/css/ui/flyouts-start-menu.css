@@ -23,6 +23,23 @@
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
 }
 
+/* ── Taskbar fullscreen button: same height & icon size as sound/wifi buttons ── */
+#tray-fullscreen-btn {
+  height: 34px;       /* matches tray-volume-btn / tray-wifi-btn */
+  padding: 0 6px;
+}
+#tray-fullscreen-btn .tray-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#tray-fullscreen-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+
 .volume-flyout {
   position: fixed;
   bottom: 56px;

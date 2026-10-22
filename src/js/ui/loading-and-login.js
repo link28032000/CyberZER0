@@ -125,9 +125,7 @@ function lsShowError() {
   const hint = document.getElementById('ls-signin-hint');
   const errorBtn = document.getElementById('ls-win10-error-btn');
 
-  if (typeof AudioManager !== 'undefined' && AudioManager.playWrong) {
-    AudioManager.playWrong();
-  }
+
 
   if (inputWrap) inputWrap.style.display = 'none';
   if (hint) hint.style.display = 'none';
@@ -210,7 +208,7 @@ function lsSignIn() {
       if (titleEl) titleEl.textContent = 'Just a moment...';
       ls.classList.remove('ls-leaving');
       ls.classList.add('ls-active');
-      _playLoadingBeep(320, 0.12, 0);
+      // (login beep removed)
 
       const DURATION = 10000;
       const noteEl = document.getElementById('win-loading-note-text');
@@ -231,9 +229,7 @@ function lsSignIn() {
 
       setTimeout(() => {
         clearTimeout(midTimer);
-        _playLoadingBeep(440, 0.12, 0);
-        _playLoadingBeep(660, 0.12, 0.12);
-        _playLoadingBeep(880, 0.18, 0.24);
+        // (login complete beeps removed)
 
         // Reveal desktop then dismiss loading
         const desktop = document.getElementById('desktop');
@@ -383,9 +379,6 @@ function _doStartFromTitleMenu() {
   document.querySelectorAll('.overlay').forEach(o => o.classList.remove('active'));
   document.getElementById('overlay-backdrop') && document.getElementById('overlay-backdrop').classList.remove('active');
 
-  if (typeof AudioManager !== 'undefined') {
-    AudioManager.playNotification();
-  }
 }
 
 

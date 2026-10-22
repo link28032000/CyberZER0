@@ -354,7 +354,7 @@ function _comicKeyHandlerCh2(e) {
   }
 }
 
-/** Open Chapter 2 Comic Strip Viewer and start automatic playback */
+/** Open Chapter 2 Comic Strip Viewer */
 function showComicStripCh2() {
   const overlay = document.getElementById('overlay-comic-strip-ch2');
   if (!overlay) {
@@ -366,12 +366,16 @@ function showComicStripCh2() {
   const desktop = document.getElementById('desktop');
   if (desktop) desktop.style.visibility = 'hidden';
 
-  // Deactivate any other overlays cleanly
+  // Deactivate all overlays and clear any inline display overrides
   document.querySelectorAll('.overlay').forEach(o => {
     o.classList.remove('active');
-    if (o.id !== 'overlay-comic-strip-ch2') o.style.display = 'none';
+    o.style.display = '';   // clear any inline display:none so CSS controls it
   });
-  overlay.style.display = 'flex';
+
+  // Force the Ch2 overlay to be visible — clear inline style, then activate
+  overlay.style.display = '';
+  // eslint-disable-next-line no-unused-expressions
+  overlay.offsetHeight;     // force reflow so transition fires
   overlay.classList.add('active');
 
   // Clear any existing timer
@@ -414,7 +418,7 @@ function showComicStripCh2() {
   comicStripCh2ShowPanel(0);
 }
 
-/** Show a specific Chapter 2 comic panel (0-indexed: 0 to 4) and schedule next panel */
+/** Show a specific Chapter 2 comic panel (0-indexed: 0 to 4) — NO auto-advance, user must tap */
 function comicStripCh2ShowPanel(index) {
   if (index < 0 || index >= COMIC_CH2_PANEL_COUNT) return;
   comicStateCh2.panel = index;
@@ -435,30 +439,23 @@ function comicStripCh2ShowPanel(index) {
   // Play audio chime
   _playComicPanelSound(index);
 
+  // Clear any lingering timer
   if (comicStateCh2.autoTimer) {
     clearTimeout(comicStateCh2.autoTimer);
     comicStateCh2.autoTimer = null;
   }
 
+  const hint = document.getElementById('comic-tap-hint-ch2');
+
   if (index === COMIC_CH2_PANEL_COUNT - 1) {
-    // Last panel shown: reveal the "Tap to continue" button
+    // Last panel: hide tap hint and reveal the "Tap to continue" finish button
+    if (hint) hint.classList.remove('visible');
     comicStateCh2.autoTimer = setTimeout(() => {
       _showComicCh2FinishButton();
-    }, 900);
+    }, 600);
   } else {
-    // Show tap hint on first panel, hide afterwards
-    const hint = document.getElementById('comic-tap-hint-ch2');
-    if (hint) {
-      if (index === 0) {
-        setTimeout(() => hint.classList.add('visible'), 1200);
-      } else {
-        hint.classList.remove('visible');
-      }
-    }
-    const delay = COMIC_CH2_PANEL_DELAYS[index] || 2600;
-    comicStateCh2.autoTimer = setTimeout(() => {
-      comicStripCh2ShowPanel(index + 1);
-    }, delay);
+    // Show tap hint immediately so user knows to click to advance
+    if (hint) hint.classList.add('visible');
   }
 }
 

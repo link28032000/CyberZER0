@@ -45,6 +45,9 @@ function showMainMenu() {
   if (barShell)  { barShell.classList.remove('loading-complete'); }
   if (statusText){ statusText.classList.remove('loading-complete'); }
   if (loadScreen){ loadScreen.style.display = 'none'; loadScreen.classList.remove('active', 'exiting'); loadScreen.style.opacity = ''; loadScreen.style.filter = ''; }
+
+  // ── Resume/respect background music preference on every return to main menu ──
+  if (typeof startMMBgMusic === 'function') startMMBgMusic();
 }
 
 /** Hide the main menu overlay */
@@ -55,6 +58,8 @@ function hideMainMenu() {
   closeMainMenuAbout();
   closeMainMenuAchievement();
   closeMainMenuExit();
+  // ── Stop background music when leaving the main menu ──
+  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
 }
 
 /** START button — 5s loading, professional wipe transition into Enter Name */
@@ -62,6 +67,8 @@ function mainMenuStart() {
   closeMainMenuAbout();
   closeMainMenuAchievement();
   closeMainMenuExit();
+  // Stop background music when entering the game
+  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
 
   const mm = document.getElementById('overlay-main-menu');
   const mmNav = document.querySelector('.mm-nav');
@@ -224,10 +231,6 @@ function storySelectBack() {
 
 /** Enter Password screen — BACK button: return to Story Selection */
 function lsGoBack() {
-  if (typeof AudioManager !== 'undefined') {
-    try { AudioManager.playClick(); } catch(e) {}
-  }
-
   const tm = document.getElementById('overlay-title-menu');
   const ss = document.getElementById('overlay-story-select');
 
@@ -279,9 +282,6 @@ function selectStoryCard(cardEl, categoryId, chapterNum) {
       cardEl.classList.remove('ss-card-selected');
       void cardEl.offsetWidth;
       cardEl.classList.add('ss-card-selected');
-      if (typeof AudioManager !== 'undefined') {
-        try { AudioManager.playWrong(); } catch(e) {}
-      }
       storySelectLocked(chapterNum);
     } else {
       storySelectPlay(categoryId);
@@ -312,15 +312,9 @@ function selectStoryCard(cardEl, categoryId, chapterNum) {
 
   if (isLocked) {
     // Sound & toast for locked
-    if (typeof AudioManager !== 'undefined') {
-      try { AudioManager.playWrong(); } catch(e) {}
-    }
     storySelectLocked(chapterNum);
   } else {
     // Cyber chime sound for unlocked target lock
-    if (typeof AudioManager !== 'undefined') {
-      try { AudioManager.playChime(); } catch(e) {}
-    }
 
     // Immediately update profile to match the selected chapter
     updateLoginScreenForChapter(categoryId);
@@ -812,4 +806,171 @@ document.addEventListener('keydown', function(e) {
     toggleMainMenuFullscreen();
   }
 });
+
+// ════════════════════════════════════════════════════════════
+//  BACKGROUND MUSIC — Main Menu ONLY
+//  Plays: assets/sounds/Background.mp3  (looping)
+//  Preference: localStorage key 'czBgMusicMuted'
+//
+//  RULE: Music plays ONLY while #overlay-main-menu has .active.
+//        It stops the instant any other screen is shown.
+//        User on/off preference is saved and respected on resume.
+// ════════════════════════════════════════════════════════════
+
+(function initMMBgMusic() {
+  function _audio()  { return document.getElementById('mm-bg-audio'); }
+  function _btn()    { return document.getElementById('mm-sound-btn'); }
+  function _muted()  { return localStorage.getItem('czBgMusicMuted') === 'true'; }
+  function _isMMOn() {
+    const mm = document.getElementById('overlay-main-menu');
+    return !!mm && mm.classList.contains('active');
+  }
+
+  /* ── Sync button icon only (no playback side-effects) ── */
+  function _syncIcon(muted) {
+    const btn = _btn();
+    if (!btn) return;
+    btn.classList.toggle('mm-sound-muted',   muted);
+    btn.classList.toggle('mm-sound-playing', !muted && _isMMOn());
+    btn.title = muted
+      ? 'Background Music: OFF — Click to turn on'
+      : 'Background Music: ON — Click to turn off';
+    btn.setAttribute('aria-label', muted ? 'Turn on background music' : 'Turn off background music');
+    const onIcon  = btn.querySelector('.mm-sound-on');
+    const offIcon = btn.querySelector('.mm-sound-off');
+    if (onIcon)  onIcon.style.display  = muted ? 'none' : '';
+    if (offIcon) offIcon.style.display = muted ? ''     : 'none';
+  }
+
+  /* ── Core: start or stop audio based on current state ── */
+  function _apply() {
+    const audio = _audio();
+    if (!audio) return;
+    const muted = _muted();
+    if (_isMMOn() && !muted) {
+      // Main menu is visible AND user wants music → play
+      audio.play().catch(() => {});
+    } else {
+      // Any other page OR user muted → silence
+      audio.pause();
+    }
+    _syncIcon(muted);
+    localStorage.setItem('czBgMusicMuted', muted ? 'true' : 'false');
+  }
+
+  /* ── Toggle called by the 🔊 button ── */
+  window.toggleMMBgMusic = function () {
+    const audio = _audio();
+    if (!audio) return;
+    const nowMuted = !audio.paused; // playing → mute it; paused → unmute
+    localStorage.setItem('czBgMusicMuted', nowMuted ? 'true' : 'false');
+    _apply();
+  };
+
+  /* ── Called by showMainMenu() when main menu becomes visible ── */
+  window.startMMBgMusic = function () { _apply(); };
+
+  /* ── Called by hideMainMenu(), sign-in, sign-out, etc. ── */
+  window.stopMMBgMusic = function () {
+    const audio = _audio();
+    if (audio) audio.pause();
+    const btn = _btn();
+    if (btn) btn.classList.remove('mm-sound-playing');
+  };
+
+  /* ── Watch #overlay-main-menu .active changes ──────────────
+     This is the SINGLE source of truth for music start/stop.
+     Whenever the main menu gains or loses .active, _apply() runs.
+  ────────────────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', function () {
+    // Sync icon immediately (no playback — user hasn't interacted yet)
+    _syncIcon(_muted());
+
+    const mm = document.getElementById('overlay-main-menu');
+    if (!mm) return;
+
+    /* Browser autoplay policy: we need one user gesture first.
+       We listen once globally; after the gesture _apply() will work. */
+    let _gestureUnlocked = false;
+    function _onGesture() {
+      if (_gestureUnlocked) return;
+      _gestureUnlocked = true;
+      document.removeEventListener('click',   _onGesture, true);
+      document.removeEventListener('keydown', _onGesture, true);
+      _apply(); // now that we have a gesture, start if main menu is active
+    }
+    document.addEventListener('click',   _onGesture, true);
+    document.addEventListener('keydown', _onGesture, true);
+
+    /* MutationObserver on the main menu overlay — fires on every class change */
+    new MutationObserver(function () {
+      if (_gestureUnlocked) _apply();
+      else _syncIcon(_muted()); // just keep icon correct before gesture
+    }).observe(mm, { attributes: true, attributeFilter: ['class'] });
+  });
+})();
+
+
+// ════════════════════════════════════════════════════════════
+//  LOGIN PAGE — FULLSCREEN BUTTON VISIBILITY
+//  #login-fs-btn lives OUTSIDE #overlay-title-menu so the
+//  parent's transform:scale() cannot trap it.
+//  We show/hide it by toggling .ls-fs-visible via a
+//  MutationObserver watching the overlay's class list.
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function () {
+  const titleMenu = document.getElementById('overlay-title-menu');
+  const fsBtn     = document.getElementById('login-fs-btn');
+  if (!titleMenu || !fsBtn) return;
+
+  function _syncLoginFsBtn() {
+    const isActive = titleMenu.classList.contains('active');
+    fsBtn.classList.toggle('ls-fs-visible', isActive);
+  }
+
+  // Sync immediately in case the overlay is already active on load
+  _syncLoginFsBtn();
+
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      if (m.type === 'attributes' && m.attributeName === 'class') {
+        _syncLoginFsBtn();
+      }
+    });
+  }).observe(titleMenu, { attributes: true });
+});
+
+// ════════════════════════════════════════════════════════════
+//  STORY SELECT PAGE — FULLSCREEN BUTTON VISIBILITY
+//  Same pattern: #story-fs-btn is OUTSIDE #overlay-story-select.
+//  The overlay uses both classList.active AND style.display,
+//  so we watch both attribute types.
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function () {
+  const storyOverlay = document.getElementById('overlay-story-select');
+  const storyFsBtn   = document.getElementById('story-fs-btn');
+  if (!storyOverlay || !storyFsBtn) return;
+
+  function _syncStoryFsBtn() {
+    const isActive = storyOverlay.classList.contains('active') ||
+                     storyOverlay.style.display === 'flex';
+    storyFsBtn.classList.toggle('ss-fs-visible', isActive);
+  }
+
+  _syncStoryFsBtn();
+
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      if (m.type === 'attributes' &&
+          (m.attributeName === 'class' || m.attributeName === 'style')) {
+        _syncStoryFsBtn();
+      }
+    });
+  }).observe(storyOverlay, { attributes: true });
+});
+
+
+
+
+
 

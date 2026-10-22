@@ -767,3 +767,146 @@
   }
 }
 
+/* ════════════════════════════════════════════════════════════
+   LOGIN PAGE — STANDALONE FULLSCREEN BUTTON
+   Lives OUTSIDE #overlay-title-menu so no parent transform
+   can act as a containing block and hide/clip it.
+   JS toggles .ls-fs-visible when the login overlay is active.
+════════════════════════════════════════════════════════════ */
+#login-fs-btn {
+  position: fixed;
+  top: 20px;
+  right: 22px;
+  z-index: 9999;          /* always on top */
+  display: none;          /* hidden until login page is active */
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(4, 14, 40, 0.72);
+  border: 1px solid rgba(0, 229, 255, 0.30);
+  color: rgba(0, 229, 255, 0.90);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(0, 229, 255, 0.07);
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.18s ease,
+    box-shadow 0.22s ease,
+    transform 0.15s ease;
+  animation: loginFsBtnIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Show when JS adds this class */
+#login-fs-btn.ls-fs-visible {
+  display: flex;
+}
+
+@keyframes loginFsBtnIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#login-fs-btn:hover {
+  background: rgba(0, 229, 255, 0.13);
+  border-color: rgba(0, 229, 255, 0.60);
+  color: #00f8ff;
+  box-shadow:
+    0 4px 22px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(0, 229, 255, 0.20);
+}
+
+#login-fs-btn:active {
+  transform: scale(0.93);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+}
+
+/* Fullscreen icon swap */
+.login-fs-exit { display: none; }
+body.is-fullscreen .login-fs-enter { display: none; }
+body.is-fullscreen .login-fs-exit  { display: block; }
+
+/* Icon scale on hover */
+#login-fs-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+#login-fs-btn:hover svg {
+  transform: scale(1.15);
+}
+
+/* ════════════════════════════════════════════════════════════
+   STORY SELECT PAGE — STANDALONE FULLSCREEN BUTTON
+   Same pattern as #login-fs-btn: lives outside the overlay so
+   the overlay's transform:scale() cannot trap it.
+════════════════════════════════════════════════════════════ */
+#story-fs-btn {
+  position: fixed;
+  top: 20px;
+  right: 22px;
+  z-index: 9999;
+  display: none;          /* hidden until story select is active */
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(4, 14, 40, 0.72);
+  border: 1px solid rgba(0, 229, 255, 0.30);
+  color: rgba(0, 229, 255, 0.90);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(0, 229, 255, 0.07);
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.18s ease,
+    box-shadow 0.22s ease,
+    transform 0.15s ease;
+  animation: loginFsBtnIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#story-fs-btn.ss-fs-visible {
+  display: flex;
+}
+
+#story-fs-btn:hover {
+  background: rgba(0, 229, 255, 0.13);
+  border-color: rgba(0, 229, 255, 0.60);
+  color: #00f8ff;
+  box-shadow:
+    0 4px 22px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(0, 229, 255, 0.20);
+}
+
+#story-fs-btn:active {
+  transform: scale(0.93);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+}
+
+/* Fullscreen icon swap */
+.story-fs-exit { display: none; }
+body.is-fullscreen .story-fs-enter { display: none; }
+body.is-fullscreen .story-fs-exit  { display: block; }
+
+#story-fs-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+#story-fs-btn:hover svg {
+  transform: scale(1.15);
+}
+
+
+
+

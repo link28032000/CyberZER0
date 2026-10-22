@@ -472,6 +472,8 @@
 
   /** Step 1: Google Sign-In */
   window.czSignInWithGoogle = async function () {
+    // Stop background music immediately when user initiates Google sign-in
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
     if (!auth) {
       setGoogleMsg('Authentication service not available. Check the setup.');
       return;
@@ -571,6 +573,8 @@
 
   /** Sign out — clears OTP state and Firebase session */
   window.czSignOut = async function () {
+    // Stop background music when user signs out (returns to landing page)
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
     if (!auth) return;
     const user = auth.currentUser;
     clearOtpVerified(user && user.uid);

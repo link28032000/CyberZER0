@@ -21,7 +21,7 @@
       rgba(3, 12, 40, 0.70) 45%,
       rgba(1,  8, 28, 0.84) 100%
     ),
-    url('../../../assets/background/main_menu_bg.jpg') no-repeat center center;
+    url('../../../assets/background/main_menu_bg.png') no-repeat center center;
   background-size: cover;
   opacity: 0;
   visibility: hidden;
@@ -74,7 +74,7 @@
       rgba(3, 12, 40, 0.70) 45%,
       rgba(1,  8, 28, 0.84) 100%
     ),
-    url('../../../assets/background/main_menu_bg.jpg') no-repeat center center;
+    url('../../../assets/background/main_menu_bg.png') no-repeat center center;
   background-size: cover;
 }
 
