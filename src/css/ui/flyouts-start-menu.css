@@ -39,6 +39,13 @@
   display: block;
 }
 
+/* Hide taskbar fullscreen button in fullscreen mode */
+body.is-fullscreen #tray-fullscreen-btn,
+:fullscreen #tray-fullscreen-btn,
+:-webkit-full-screen #tray-fullscreen-btn {
+  display: none !important;
+}
+
 
 .volume-flyout {
   position: fixed;

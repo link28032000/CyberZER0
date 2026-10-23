@@ -23,6 +23,13 @@ function showStickyNote() {
 
   if (icon) icon.classList.remove('hidden');
 
+  // Dismiss taskbar pulse highlight immediately when player opens the note
+  window._stickyNotesHighlightDismissed = true;
+  const tbNotes = document.getElementById('taskbar-notes');
+  if (tbNotes) {
+    tbNotes.classList.remove('btn-pulse-highlight');
+  }
+
   // Dismiss the icon attention glow when player opens the note
   if (typeof IconAttention !== 'undefined') IconAttention.hide('notes');
 
@@ -48,17 +55,11 @@ function showStickyNote() {
     return;
   }
 
-  // ── Show checklist only after first email is completed ──
-  if (gameState.emailResults && gameState.emailResults.length >= 1) {
-    if (!document.getElementById('sn-checklist-section')) {
-      scrollEl.innerHTML = '<div id="sn-checklist-section"></div>';
-    }
-    updateStickyChecklist();
-    return;
+  // ── Always show the live 4-task checklist based on email interaction ──
+  if (!document.getElementById('sn-checklist-section')) {
+    scrollEl.innerHTML = '<div id="sn-checklist-section"></div>';
   }
-
-  // ── Default: open with empty body (no tasks, no locked message) ──
-  scrollEl.innerHTML = '';
+  updateStickyChecklist();
 }
 
 
@@ -67,6 +68,10 @@ function closeStickyNote() {
   if (note) {
     note.classList.add('hidden');
     note.classList.remove('highlight-attention');
+  }
+  const tbNotes = document.getElementById('taskbar-notes');
+  if (tbNotes) {
+    tbNotes.classList.remove('btn-pulse-highlight');
   }
   if (typeof IconAttention !== 'undefined') IconAttention.hide('notes');
 }
@@ -110,60 +115,76 @@ function toggleStickyNoteCollapse() {
 // ─── Phishing Investigation Task Achievements ────────────────────────────────
 // Helper: count correctly flagged & reported phishing emails
 function _countCorrectPhishing() {
+  if (!gameState || !gameState.emailResults) return 0;
   return gameState.emailResults.filter(r =>
-    r.isPhishing === true && r.playerDecision === true && r.correctDecision === true && r.savedFlags && r.savedFlags.length > 0
+    r.isPhishing === true && r.playerDecision === true && r.correctDecision === true
   ).length;
 }
 
-// Helper: count investigated emails where required evidence/verification was submitted
-function _countInvestigatedWithEvidence() {
-  return gameState.emailResults.filter(r => {
-    if (r.isPhishing) {
-      return r.correctDecision === true && r.savedFlags && r.savedFlags.length > 0;
-    } else {
-      return r.correctDecision === true && !r.isPhishing;
-    }
-  }).length;
+// Helper: count correctly verified & approved clean / legitimate emails
+function _countCorrectLegitimate() {
+  if (!gameState || !gameState.emailResults) return 0;
+  return gameState.emailResults.filter(r =>
+    r.isPhishing === false && r.playerDecision === false && r.correctDecision === true
+  ).length;
 }
 
-// Helper: count emails where player flagged fake_sender
+// Helper: count emails where player flagged fake_sender (live user interaction + saved cases)
 function _countFakeSenderFound() {
-  return gameState.emailResults.filter(r =>
+  if (!gameState) return 0;
+  const completed = (gameState.emailResults || []).filter(r =>
     r.isPhishing === true && r.correctDecision === true && r.savedFlags && r.savedFlags.some(f => f.type === 'fake_sender')
   ).length;
+
+  const detailViewEl = document.getElementById('email-detail-view');
+  const isDetailView = Boolean(detailViewEl && detailViewEl.classList.contains('active'));
+  const curEmail = (typeof ch1InboxEmails !== 'undefined' && typeof gameState.currentEmail === 'number') ? ch1InboxEmails[gameState.currentEmail] : null;
+  const isCurrentUnsubmitted = isDetailView && curEmail && !(gameState.emailResults || []).some(r => r.emailId === curEmail.id);
+  const hasActiveFakeSender = isCurrentUnsubmitted && (curEmail.phishing === true) && (gameState.currentEmailFlags || []).some(f => f.type === 'fake_sender');
+
+  return Math.min(5, completed + (hasActiveFakeSender ? 1 : 0));
 }
 
-// Helper: count phishing emails where player flagged false_urgency OR suspicious_link
+// Helper: count phishing emails where player flagged false_urgency OR suspicious_link (live user interaction + saved cases)
 function _countIndicatorsFound() {
-  return gameState.emailResults.filter(r =>
+  if (!gameState) return 0;
+  const completed = (gameState.emailResults || []).filter(r =>
     r.isPhishing === true && r.correctDecision === true && r.savedFlags && r.savedFlags.some(f => f.type === 'false_urgency' || f.type === 'suspicious_link' || f.type === 'malicious_attachment')
   ).length;
+
+  const detailViewEl = document.getElementById('email-detail-view');
+  const isDetailView = Boolean(detailViewEl && detailViewEl.classList.contains('active'));
+  const curEmail = (typeof ch1InboxEmails !== 'undefined' && typeof gameState.currentEmail === 'number') ? ch1InboxEmails[gameState.currentEmail] : null;
+  const isCurrentUnsubmitted = isDetailView && curEmail && !(gameState.emailResults || []).some(r => r.emailId === curEmail.id);
+  const hasActiveIndicator = isCurrentUnsubmitted && (curEmail.phishing === true) && (gameState.currentEmailFlags || []).some(f => f.type === 'false_urgency' || f.type === 'suspicious_link' || f.type === 'malicious_attachment');
+
+  return Math.min(5, completed + (hasActiveIndicator ? 1 : 0));
 }
 
-const PHISHING_TASK_GOALS = { t1: 5, t2: 10, t3: 5, t4: 5, t5_total: 10 };
+const PHISHING_TASK_GOALS = { t1: 5, t2: 5, t3: 5, t4: 5 };
 
 const SN_ACHIEVEMENTS = [
   {
     id: 'task_report_phishing',
     icon: '🚩',
     label: 'Task 1: Report Phishing Emails',
-    desc: 'Report at least 5 confirmed phishing emails.',
+    desc: 'Correctly identify and report 5 phishing emails.',
     check: () => _countCorrectPhishing() >= PHISHING_TASK_GOALS.t1,
     progress: () => `${Math.min(_countCorrectPhishing(), PHISHING_TASK_GOALS.t1)}/${PHISHING_TASK_GOALS.t1} phishing emails reported`
   },
   {
-    id: 'task_collect_evidence',
-    icon: '🔍',
-    label: 'Task 2: Collect Investigation Evidence',
-    desc: 'Complete at least 10 investigations with supporting evidence.',
-    check: () => _countInvestigatedWithEvidence() >= PHISHING_TASK_GOALS.t2,
-    progress: () => `${Math.min(_countInvestigatedWithEvidence(), PHISHING_TASK_GOALS.t2)}/${PHISHING_TASK_GOALS.t2} investigations completed`
+    id: 'task_verify_legit',
+    icon: '🛡️',
+    label: 'Task 2: Verify Clean Emails',
+    desc: 'Correctly identify and confirm 5 safe, legitimate emails.',
+    check: () => _countCorrectLegitimate() >= PHISHING_TASK_GOALS.t2,
+    progress: () => `${Math.min(_countCorrectLegitimate(), PHISHING_TASK_GOALS.t2)}/${PHISHING_TASK_GOALS.t2} clean emails verified`
   },
   {
     id: 'task_fake_sender',
     icon: '🌐',
-    label: 'Task 3: Identify Fake Sender Domains',
-    desc: 'Identify and document suspicious sender addresses or domains.',
+    label: 'Task 3: Document Fake Sender Domains',
+    desc: 'Identify and flag 5 suspicious sender addresses or domains.',
     check: () => _countFakeSenderFound() >= PHISHING_TASK_GOALS.t3,
     progress: () => `${Math.min(_countFakeSenderFound(), PHISHING_TASK_GOALS.t3)}/${PHISHING_TASK_GOALS.t3} fake senders documented`
   },
@@ -171,40 +192,94 @@ const SN_ACHIEVEMENTS = [
     id: 'task_phish_indicators',
     icon: '⚠️',
     label: 'Task 4: Identify Phishing Indicators',
-    desc: 'Identify and document phishing indicators.',
+    desc: 'Identify and flag 5 phishing indicators (urgency, links, attachments).',
     check: () => _countIndicatorsFound() >= PHISHING_TASK_GOALS.t4,
     progress: () => `${Math.min(_countIndicatorsFound(), PHISHING_TASK_GOALS.t4)}/${PHISHING_TASK_GOALS.t4} indicators recorded`
-  },
-  {
-    id: 'task_all_complete',
-    icon: '🏆',
-    label: 'Task 5: Complete All Investigations',
-    desc: 'Submit the required investigation evidence and reports.',
-    check: () => _countCorrectPhishing() >= PHISHING_TASK_GOALS.t1 &&
-                 _countInvestigatedWithEvidence() >= PHISHING_TASK_GOALS.t2 &&
-                 _countFakeSenderFound() >= PHISHING_TASK_GOALS.t3 &&
-                 _countIndicatorsFound() >= PHISHING_TASK_GOALS.t4 &&
-                 gameState.emailResults.length >= PHISHING_TASK_GOALS.t5_total,
-    progress: () => `${Math.min(gameState.emailResults.length, PHISHING_TASK_GOALS.t5_total)}/${PHISHING_TASK_GOALS.t5_total} evidence submissions completed`
   }
 ];
 
 const _achievementUnlocked = new Set();
 let _trophyUnlockedDate = null;
+let _phishingEarnedAward = null;
+
+// ─── 3 Achievement Tiers Based on the 4 Tasks ──────────────────────────────
+const PHISHING_ACHIEVEMENT_TIERS = {
+  trophy: {
+    id: 'phish_trophy_master',
+    tier: 'trophy',
+    rank: '1st Place',
+    icon: '🏆',
+    title: 'Phishing Master Trophy',
+    badge: '🏆 HIGHEST ACHIEVEMENT · 1ST PLACE',
+    label: 'PHISHING MASTER',
+    sub: '4/4 Tasks Completed · Flawless Investigation',
+    desc: 'Exceptional mastery! You successfully completed all 4 investigation tasks with complete precision — detecting threats, verifying clean emails, documenting fake domains, and uncovering critical indicators.',
+    requiredTasks: 4
+  },
+  medal: {
+    id: 'phish_medal_investigator',
+    tier: 'medal',
+    rank: '2nd Place',
+    icon: '🥈',
+    title: 'Phishing Investigator Medal',
+    badge: '🥈 SECOND PLACE ACHIEVEMENT · 2ND PLACE',
+    label: 'PHISHING INVESTIGATOR',
+    sub: '2–3 Tasks Completed · Distinguished Detective',
+    desc: 'Impressive detective performance! You completed key investigation tasks with sharp cybersecurity instincts, isolating deceptive emails and collecting vital threat evidence.',
+    requiredTasks: 2
+  },
+  ribbon: {
+    id: 'phish_ribbon_sentinel',
+    tier: 'ribbon',
+    rank: 'Lower Tier',
+    icon: '🎖️',
+    title: 'Phishing Security Ribbon',
+    badge: '🎖️ RECOGNITION OF MERIT · SECURITY RIBBON',
+    label: 'PHISHING SENTINEL',
+    sub: 'Investigation Completed · Awareness Merit',
+    desc: 'Email investigation completed! You analyzed real-world scam indicators, practiced threat verification, and built essential cyber defense skills.',
+    requiredTasks: 1
+  }
+};
+
+function getCompletedTasksCount() {
+  if (!Array.isArray(SN_ACHIEVEMENTS)) return 0;
+  return SN_ACHIEVEMENTS.filter(ach => typeof ach.check === 'function' && ach.check()).length;
+}
+
+function getPhishingEarnedTier(count) {
+  if (typeof count !== 'number') count = getCompletedTasksCount();
+  if (count >= 4) return PHISHING_ACHIEVEMENT_TIERS.trophy;
+  if (count >= 2) return PHISHING_ACHIEVEMENT_TIERS.medal;
+  return PHISHING_ACHIEVEMENT_TIERS.ribbon;
+}
+
+function getPhishingEarnedAward() {
+  if (_phishingEarnedAward) return _phishingEarnedAward;
+  const count = getCompletedTasksCount();
+  const tierObj = getPhishingEarnedTier(count);
+  return {
+    tier: tierObj.tier,
+    title: tierObj.title,
+    icon: tierObj.icon,
+    badge: tierObj.badge,
+    label: tierObj.label,
+    rank: tierObj.rank,
+    sub: tierObj.sub,
+    desc: tierObj.desc,
+    tasksCompleted: count,
+    unlockedDate: _trophyUnlockedDate || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+  };
+}
 
 function savePhishingProgress() {
   try {
-    const isTrophyUnlocked = _achievementUnlocked.has('task_all_complete') ||
-      (_countCorrectPhishing() >= PHISHING_TASK_GOALS.t1 &&
-       _countInvestigatedWithEvidence() >= PHISHING_TASK_GOALS.t2 &&
-       _countFakeSenderFound() >= PHISHING_TASK_GOALS.t3 &&
-       _countIndicatorsFound() >= PHISHING_TASK_GOALS.t4 &&
-       gameState.emailResults.length >= PHISHING_TASK_GOALS.t5_total);
-
+    const isTrophyUnlocked = isPhishingTrophyUnlocked();
     const data = {
       unlockedAchievements: Array.from(_achievementUnlocked),
       trophyUnlocked: isTrophyUnlocked,
-      unlockedDate: _trophyUnlockedDate || (isTrophyUnlocked ? new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : null)
+      earnedAward: _phishingEarnedAward,
+      unlockedDate: _trophyUnlockedDate || (_phishingEarnedAward ? _phishingEarnedAward.unlockedDate : (isTrophyUnlocked ? new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : null))
     };
     localStorage.setItem('cyberzero_phishing_progress', JSON.stringify(data));
   } catch(e) {}
@@ -218,21 +293,28 @@ function loadPhishingProgress() {
       if (Array.isArray(data.unlockedAchievements)) {
         data.unlockedAchievements.forEach(id => _achievementUnlocked.add(id));
       }
+      if (data.earnedAward) {
+        _phishingEarnedAward = data.earnedAward;
+      }
       if (data.trophyUnlocked) {
         _achievementUnlocked.add('task_all_complete');
         _trophyUnlockedDate = data.unlockedDate || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+      } else if (data.unlockedDate) {
+        _trophyUnlockedDate = data.unlockedDate;
       }
     }
   } catch(e) {}
 }
 
 function isPhishingTrophyUnlocked() {
-  return _achievementUnlocked.has('task_all_complete') ||
-    (SN_ACHIEVEMENTS && SN_ACHIEVEMENTS[4] && SN_ACHIEVEMENTS[4].check());
+  return _achievementUnlocked.has('phish_trophy_master') ||
+    _achievementUnlocked.has('phish_trophy_unlocked') ||
+    _achievementUnlocked.has('task_all_complete') ||
+    (Array.isArray(SN_ACHIEVEMENTS) && SN_ACHIEVEMENTS.length === 4 && SN_ACHIEVEMENTS.every(ach => ach.check()));
 }
 
 function updateStickyChecklist() {
-  if (gameState.phase !== 'mission' && gameState.phase !== 'results') return;
+  if (gameState.phase !== 'mission' && gameState.phase !== 'results' && gameState.phase !== 'phishing') return;
   const section = document.getElementById('sn-checklist-section');
   if (!section) return;
 
@@ -279,48 +361,42 @@ function updateStickyChecklist() {
   });
 
   html += '</ul>';
-  section.innerHTML = html;
 
-  // Update trophy tip in Sticky Note if present
-  const trophyTip = document.getElementById('sn-trophy-tip');
-  if (trophyTip) {
-    const isUnlocked = isPhishingTrophyUnlocked();
-    if (isUnlocked) {
-      trophyTip.style.borderLeft = '3px solid #16a34a';
-      trophyTip.style.background = 'rgba(34, 197, 94, 0.12)';
-      trophyTip.style.color = '#14532d';
-      trophyTip.innerHTML = `<span>🏆 <strong>Phishing Investigator Trophy:</strong> <span style="color:#16a34a; font-weight:800;">UNLOCKED</span></span><button type="button" class="sn-trophy-btn" onclick="showPhishingInvestigatorTrophy()" style="background:#f59e0b; color:#000; border:none; border-radius:4px; padding:3px 8px; font-size:10px; font-weight:800; cursor:pointer; margin-left:6px;">VIEW 🏆</button>`;
-    } else {
-      trophyTip.style.borderLeft = '3px solid #f59e0b';
-      trophyTip.style.background = 'rgba(245, 158, 11, 0.08)';
-      trophyTip.style.color = '#78350f';
-      trophyTip.innerHTML = `🏆 <strong>Goal:</strong> Complete all 5 Investigation Tasks to unlock the <em>Phishing Investigator</em> trophy! (${completedCount}/${totalGoals} Complete)`;
-    }
+  // Achievement goals tip in Sticky Note during investigation
+  const isUnlocked = isPhishingTrophyUnlocked();
+  if (isUnlocked) {
+    html += `
+      <div class="sticky-note-tip" id="sn-trophy-tip" style="border-left: 3px solid #16a34a; background: rgba(34, 197, 94, 0.12); color: #14532d; margin-top: 6px;">
+        <span>🏆 <strong>Phishing Master Trophy:</strong> <span style="color:#16a34a; font-weight:800;">4/4 TASKS COMPLETE</span></span>
+        <button type="button" class="sn-trophy-btn" onclick="showPhishingAchievementModal()" style="background:#f59e0b; color:#000; border:none; border-radius:4px; padding:3px 8px; font-size:10px; font-weight:800; cursor:pointer; margin-left:6px;">VIEW 🏆</button>
+      </div>`;
+  } else {
+    html += `
+      <div class="sticky-note-tip" id="sn-trophy-tip" style="border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.08); color: #78350f; margin-top: 6px;">
+        🎯 <strong>3 Achievements (4 Tasks):</strong> 🏆 4 = Master Trophy | 🥈 2–3 = Medal | 🎖️ 1 = Ribbon (${completedCount}/${totalGoals} Complete)
+      </div>`;
   }
+
+  section.innerHTML = html;
 }
 
 function showAchievementToast(ach) {
-  // Task 5 (all complete) gets the full trophy modal
-  if (ach.id === 'task_all_complete') {
-    _trophyUnlockedDate = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-    savePhishingProgress();
-    setTimeout(() => showPhishingInvestigatorTrophy(), 600);
-    return;
-  }
-
   const existing = document.getElementById('achievement-toast');
   if (existing) existing.remove();
 
   const toast = document.createElement('div');
   toast.id = 'achievement-toast';
   toast.className = 'achievement-toast';
+  const toastTitle = ach.isAwardToast ? '🏆 Achievement Award Unlocked!' : '🎯 Task Completed!';
+  const toastDesc = typeof ach.progress === 'function' ? ach.progress() : (ach.desc || '');
+
   toast.innerHTML = `
     <div class="ach-toast-glow"></div>
     <div class="ach-toast-icon">${ach.icon}</div>
     <div class="ach-toast-body">
-      <div class="ach-toast-title">🎯 Task Completed!</div>
+      <div class="ach-toast-title">${toastTitle}</div>
       <div class="ach-toast-name">${ach.label}</div>
-      <div class="ach-toast-desc">${ach.progress()}</div>
+      <div class="ach-toast-desc">${toastDesc}</div>
     </div>
   `;
   document.body.appendChild(toast);
@@ -332,56 +408,144 @@ function showAchievementToast(ach) {
   setTimeout(() => {
     toast.classList.remove('ach-toast-show');
     setTimeout(() => toast.remove(), 400);
-  }, 4000);
+  }, 4500);
 
   if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
     AudioManager.playCorrect();
   }
 }
 
-// ─── Phishing Investigator Trophy Modal ──────────────────────────────────────
-function showPhishingInvestigatorTrophy() {
-  if (document.getElementById('phish-trophy-modal')) return;
+// ─── Phishing Achievement Modal (Dynamic: Trophy, Medal, Ribbon) ─────────────
+function showPhishingAchievementModal(customAward, customCount) {
+  const existing = document.getElementById('phish-trophy-modal');
+  if (existing) existing.remove();
 
-  const dateStr = _trophyUnlockedDate || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+  const count = typeof customCount === 'number' ? customCount : getCompletedTasksCount();
+  const award = customAward || getPhishingEarnedAward();
+  const tier = award.tier || 'ribbon';
+  const dateStr = award.unlockedDate || _trophyUnlockedDate || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Evaluation of the 4 tasks
+  const t1Done = SN_ACHIEVEMENTS[0] ? SN_ACHIEVEMENTS[0].check() : false;
+  const t2Done = SN_ACHIEVEMENTS[1] ? SN_ACHIEVEMENTS[1].check() : false;
+  const t3Done = SN_ACHIEVEMENTS[2] ? SN_ACHIEVEMENTS[2].check() : false;
+  const t4Done = SN_ACHIEVEMENTS[3] ? SN_ACHIEVEMENTS[3].check() : false;
+
+  const t1Prog = SN_ACHIEVEMENTS[0] ? SN_ACHIEVEMENTS[0].progress() : '';
+  const t2Prog = SN_ACHIEVEMENTS[1] ? SN_ACHIEVEMENTS[1].progress() : '';
+  const t3Prog = SN_ACHIEVEMENTS[2] ? SN_ACHIEVEMENTS[2].progress() : '';
+  const t4Prog = SN_ACHIEVEMENTS[3] ? SN_ACHIEVEMENTS[3].progress() : '';
+
+  const accuracyPct = gameState && typeof gameState.correctDecisions === 'number' && typeof EMAILS !== 'undefined' && EMAILS.length > 0
+    ? Math.round((gameState.correctDecisions / EMAILS.length) * 100)
+    : 100;
+  const correctDecisions = gameState && typeof gameState.correctDecisions === 'number'
+    ? gameState.correctDecisions
+    : (typeof EMAILS !== 'undefined' ? EMAILS.length : 10);
+  const totalEmailsCount = typeof EMAILS !== 'undefined' ? EMAILS.length : 10;
 
   const modal = document.createElement('div');
   modal.id = 'phish-trophy-modal';
   modal.className = 'phish-trophy-modal';
   modal.innerHTML = `
     <div class="ptm-backdrop" onclick="closePhishingTrophy()"></div>
-    <div class="ptm-card">
+    <div class="ptm-card ptm-tier-${tier}">
       <div class="ptm-glow-ring"></div>
       <div class="ptm-header">
-        <div class="ptm-trophy-icon">🏆</div>
+        <div class="ptm-trophy-icon">${award.icon}</div>
         <div class="ptm-confetti" id="ptm-confetti"></div>
       </div>
       <div class="ptm-body">
-        <div class="ptm-badge">🔓 ACHIEVEMENT UNLOCKED</div>
-        <h2 class="ptm-title">Phishing Investigator</h2>
-        <p class="ptm-desc">Congratulations! You have completed all phishing investigation tasks, identified suspicious emails, collected evidence, and submitted your reports.</p>
-        <div class="ptm-date">🗓️ Completed: ${dateStr}</div>
+        <div class="ptm-badge">${award.badge}</div>
+        <h2 class="ptm-title">${award.title}</h2>
+        <div class="ptm-subtitle" style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">
+          ${award.sub || (tier === 'trophy' ? '1st Place Honor · 4/4 Tasks' : tier === 'medal' ? '2nd Place Honor · 2–3/4 Tasks' : 'Lower Tier · Awareness Ribbon')}
+        </div>
+        <p class="ptm-desc">${award.desc}</p>
+        <div class="ptm-date">🗓️ Awarded: ${dateStr}</div>
+
+        <!-- 3-Tier Achievement Ladder -->
+        <div class="ptm-tier-ladder">
+          <div class="ptm-tier-ladder-step ${tier === 'ribbon' ? 'earned' : ''}">
+            <span class="ptm-tls-icon">🎖️</span>
+            <span class="ptm-tls-name">Ribbon</span>
+            <span class="ptm-tls-req">1 Task (Lower)</span>
+            ${tier === 'ribbon' ? '<span class="ptm-tls-badge">EARNED</span>' : ''}
+          </div>
+          <div class="ptm-tier-ladder-divider"></div>
+          <div class="ptm-tier-ladder-step ${tier === 'medal' ? 'earned' : ''}">
+            <span class="ptm-tls-icon">🥈</span>
+            <span class="ptm-tls-name">Medal</span>
+            <span class="ptm-tls-req">2–3 Tasks (2nd Place)</span>
+            ${tier === 'medal' ? '<span class="ptm-tls-badge">EARNED</span>' : ''}
+          </div>
+          <div class="ptm-tier-ladder-divider"></div>
+          <div class="ptm-tier-ladder-step ${tier === 'trophy' ? 'earned' : ''}">
+            <span class="ptm-tls-icon">🏆</span>
+            <span class="ptm-tls-name">Trophy</span>
+            <span class="ptm-tls-req">4 Tasks (Highest)</span>
+            ${tier === 'trophy' ? '<span class="ptm-tls-badge">EARNED</span>' : ''}
+          </div>
+        </div>
+
+        <!-- Quick Stats Overview -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 11px;">
+          <div style="background: rgba(15,23,42,0.6); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase;">Tasks Completed</div>
+            <div style="font-size: 14px; font-weight: 900; color: #f8fafc;">${count} / 4</div>
+          </div>
+          <div style="background: rgba(15,23,42,0.6); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase;">Accuracy</div>
+            <div style="font-size: 14px; font-weight: 900; color: #f8fafc;">${accuracyPct}%</div>
+          </div>
+          <div style="background: rgba(15,23,42,0.6); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase;">Decisions</div>
+            <div style="font-size: 14px; font-weight: 900; color: #f8fafc;">${correctDecisions} / ${totalEmailsCount}</div>
+          </div>
+        </div>
+
+        <!-- 4 Tasks Summary -->
         <div class="ptm-tasks-summary">
-          <div class="ptm-task-row"><span class="ptm-task-icon">🚩</span><span>5 Phishing Emails Correctly Reported</span><span class="ptm-task-check">✓</span></div>
-          <div class="ptm-task-row"><span class="ptm-task-icon">🔍</span><span>10 Emails Investigated with Evidence</span><span class="ptm-task-check">✓</span></div>
-          <div class="ptm-task-row"><span class="ptm-task-icon">🌐</span><span>Fake Sender Domains Identified</span><span class="ptm-task-check">✓</span></div>
-          <div class="ptm-task-row"><span class="ptm-task-icon">⚠️</span><span>Phishing Indicators Flagged</span><span class="ptm-task-check">✓</span></div>
-          <div class="ptm-task-row"><span class="ptm-task-icon">📋</span><span>All Investigations Submitted</span><span class="ptm-task-check">✓</span></div>
+          <div class="ptm-task-row ${t1Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
+            <span class="ptm-task-icon">🚩</span>
+            <span>Task 1: Report Phishing Emails (${t1Prog})</span>
+            <span class="ptm-task-check">${t1Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
+          </div>
+          <div class="ptm-task-row ${t2Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
+            <span class="ptm-task-icon">🛡️</span>
+            <span>Task 2: Verify Clean Emails (${t2Prog})</span>
+            <span class="ptm-task-check">${t2Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
+          </div>
+          <div class="ptm-task-row ${t3Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
+            <span class="ptm-task-icon">🌐</span>
+            <span>Task 3: Document Fake Senders (${t3Prog})</span>
+            <span class="ptm-task-check">${t3Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
+          </div>
+          <div class="ptm-task-row ${t4Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
+            <span class="ptm-task-icon">⚠️</span>
+            <span>Task 4: Identify Phishing Indicators (${t4Prog})</span>
+            <span class="ptm-task-check">${t4Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
+          </div>
         </div>
       </div>
       <div class="ptm-footer">
-        <button class="ptm-close-btn" onclick="closePhishingTrophy()">🎉 Claim Trophy &amp; Continue</button>
+        <button class="ptm-close-btn" onclick="closePhishingTrophy()">🎉 Claim ${award.title} &amp; Continue</button>
       </div>
     </div>
   `;
   document.body.appendChild(modal);
 
   const confettiEl = modal.querySelector('#ptm-confetti');
-  const colors = ['#ffd700','#ff6b6b','#4fc3f7','#69db7c','#f9ca24','#ff9ff3'];
+  const palette = tier === 'trophy'
+    ? ['#ffd700', '#facc15', '#f59e0b', '#ffffff', '#fbbf24']
+    : tier === 'medal'
+    ? ['#e2e8f0', '#38bdf8', '#0ea5e9', '#ffffff', '#94a3b8']
+    : ['#f59e0b', '#fbbf24', '#cd7f32', '#10b981', '#ffffff'];
+
   for (let i = 0; i < 40; i++) {
     const p = document.createElement('div');
     p.className = 'ptm-particle';
-    p.style.cssText = `left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*1.2}s;animation-duration:${1.2+Math.random()*1.2}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'};`;
+    p.style.cssText = `left:${Math.random()*100}%;background:${palette[Math.floor(Math.random()*palette.length)]};animation-delay:${Math.random()*1.2}s;animation-duration:${1.2+Math.random()*1.2}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'};`;
     confettiEl.appendChild(p);
   }
 
@@ -394,13 +558,101 @@ function showPhishingInvestigatorTrophy() {
   }
 }
 
+// Backward-compat alias:
+function showPhishingInvestigatorTrophy() {
+  showPhishingAchievementModal();
+}
+
 function closePhishingTrophy() {
   const modal = document.getElementById('phish-trophy-modal');
   if (!modal) return;
   modal.classList.remove('ptm-show');
   savePhishingProgress();
   setTimeout(() => modal.remove(), 400);
+
+  // Trigger post-achievement dialogue: onboarding to team & Phone Link Group Chat
+  setTimeout(() => {
+    triggerPostAchievementPhoneLinkInvite();
+  }, 450);
 }
+
+// ─── Post-Achievement Dialogue: Onboarding to Team & Phone Link Group Chat ────
+function triggerPostAchievementPhoneLinkInvite() {
+  const gcState = (typeof loadNewbieGcState === 'function') ? loadNewbieGcState() : { invited: false, accepted: false };
+  const award = (typeof getPhishingEarnedAward === 'function') ? getPhishingEarnedAward() : null;
+  const awardTitle = award ? award.title : 'Phishing Investigation Award';
+  const awardIcon = award ? award.icon : '🏆';
+  const completedCount = award ? (award.tasksCompleted || 0) : getCompletedTasksCount();
+
+  // Mark invite pending in Phone Link and highlight the desktop / taskbar icon
+  if (typeof setNewbieGcInvitePending === 'function') {
+    setNewbieGcInvitePending(true);
+  }
+
+  // Mentor dialogue with Ryan welcoming to the team and instructing to open Phone Link
+  if (typeof RyanGuide === 'undefined') {
+    if (typeof showToast === 'function') {
+      showToast('📱 New team invite received! Open Phone Link to join "Business Inc. — Newbie Squad 🚀"', 'info');
+    }
+    return;
+  }
+
+  if (!gcState.accepted) {
+    RyanGuide.speak([
+      {
+        text: `Outstanding work on the email investigation, Alex! You completed ${completedCount}/4 investigation tasks and earned the ${awardIcon} ${awardTitle}!`,
+        state: 'success'
+      },
+      {
+        text: "The security team was watching your results, Alex. You've officially proven you're ready — you are now part of our Cyber Defense Team!",
+        state: 'success'
+      },
+      {
+        text: "I just sent an invite to your Phone Link for our company newbie group chat: Business Inc. — Newbie Squad 🚀.",
+        state: 'speaking'
+      },
+      {
+        text: "Open your Phone Link app now to accept the invite, Alex! Ethan, Pia, and I are all inside waiting to welcome you to the squad.",
+        state: 'thinking'
+      }
+    ], {
+      onDone: () => {
+        if (typeof RyanGuide.ask === 'function') {
+          RyanGuide.ask(
+            "Ready to join the company newbie squad?",
+            [
+              { text: "📱 Open Phone Link Now", value: 'open' },
+              { text: "I'll open it later", value: 'later' }
+            ],
+            function(choice) {
+              if (choice === 'open') {
+                if (typeof openApp === 'function') openApp('comms');
+                if (typeof openNewbieGcConversation === 'function') {
+                  setTimeout(() => openNewbieGcConversation(), 250);
+                }
+                if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+                  AudioManager.playClick();
+                }
+              } else {
+                if (typeof showToast === 'function') {
+                  showToast('📱 You can open Phone Link on your desktop or taskbar anytime to accept your team invite!', 'info');
+                }
+              }
+            }
+          );
+        }
+      }
+    });
+  } else {
+    RyanGuide.speak([
+      {
+        text: "You're an active member of Business Inc. — Newbie Squad, Alex! Keep checking your apps as you advance in your training!",
+        state: 'success'
+      }
+    ]);
+  }
+}
+
 
 
 function toggleStickyNote() {
@@ -426,14 +678,18 @@ function toggleStickyNote() {
 }
 
 // ─── Render Investigation Results and Tasks inside Sticky Note ────────────────
-function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total) {
+function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total, earnedTier, completedTasksCount) {
   const note = document.getElementById('sticky-note');
   const titleEl = document.getElementById('sticky-note-title');
   const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
   if (!note || !scrollEl) return;
 
+  const count = typeof completedTasksCount === 'number' ? completedTasksCount : getCompletedTasksCount();
+  const award = earnedTier || getPhishingEarnedAward();
+  const tier = award.tier || 'ribbon';
+
   if (titleEl) {
-    titleEl.innerHTML = '🏆 <span>Investigation Complete — Results</span>';
+    titleEl.innerHTML = `${award.icon} <span>Investigation Complete — Results</span>`;
   }
 
   // Ensure note is visible, not collapsed
@@ -441,17 +697,17 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
   note.style.zIndex = '4600';
 
   const totalGoals = SN_ACHIEVEMENTS.length;
-  const totalEvidence = EMAILS.reduce((sum, e) => sum + e.evidence.length, 0);
+  const totalEvidence = (typeof EMAILS !== 'undefined') ? EMAILS.reduce((sum, e) => sum + e.evidence.length, 0) : 0;
 
   let html = `
     <!-- Task Progress Bar Card -->
     <div class="sn-progress-card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.08); margin-bottom: 10px;">
       <div class="sn-progress-header">
-        <span class="sn-progress-title" style="color: #15803d; font-weight: 800;">✅ Investigation Tasks Complete</span>
-        <span class="sn-progress-count" style="color: #15803d; font-weight: 800;">${totalGoals}/${totalGoals} (100%)</span>
+        <span class="sn-progress-title" style="color: #15803d; font-weight: 800;">✅ Investigation Tasks</span>
+        <span class="sn-progress-count" style="color: #15803d; font-weight: 800;">${count}/${totalGoals} (${Math.round((count/totalGoals)*100)}%)</span>
       </div>
       <div class="sn-progress-bar-track" style="background: rgba(34, 197, 94, 0.2);">
-        <div class="sn-progress-bar-fill" style="width: 100%; background: linear-gradient(90deg, #22c55e, #10b981);"></div>
+        <div class="sn-progress-bar-fill" style="width: ${Math.round((count/totalGoals)*100)}%; background: linear-gradient(90deg, #22c55e, #10b981);"></div>
       </div>
     </div>
 
@@ -476,22 +732,23 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
         </div>
         <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
           <div style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase;">Evidence Found</div>
-          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${gameState.evidenceFoundTotal || 0} / ${totalEvidence}</div>
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${(gameState && gameState.evidenceFoundTotal) || 0} / ${totalEvidence}</div>
         </div>
         <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
           <div style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase;">Phish / Clean</div>
-          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${gameState.phishingDetected || 0} / ${gameState.legitimateDetected || 0}</div>
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${(gameState && gameState.phishingDetected) || 0} / ${(gameState && gameState.legitimateDetected) || 0}</div>
         </div>
       </div>
     </div>
 
-    <!-- Achievement Trophy Banner -->
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1.5px solid #f59e0b; border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: center;">
-      <div style="font-size: 22px; margin-bottom: 2px;">🏆</div>
-      <div style="font-size: 10px; font-weight: 800; color: #92400e; letter-spacing: 0.5px;">ACHIEVEMENT UNLOCKED</div>
-      <div style="font-size: 13px; font-weight: 900; color: #78350f; margin-bottom: 6px;">Phishing Investigator</div>
-      <button type="button" onclick="showPhishingInvestigatorTrophy()" style="width: 100%; background: #f59e0b; color: #000; font-size: 11px; font-weight: 800; border: none; border-radius: 6px; padding: 7px 10px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        🏆 Open Trophy &amp; Badge
+    <!-- Achievement Earned Banner (Dynamic: Trophy, Medal, Ribbon) -->
+    <div class="sn-ach-banner sn-ach-banner-${tier}">
+      <div style="font-size: 26px; margin-bottom: 2px;">${award.icon}</div>
+      <div class="sn-ach-banner-tag">${award.badge}</div>
+      <div class="sn-ach-banner-title">${award.title}</div>
+      <div class="sn-ach-banner-sub">${count}/4 Tasks Completed · ${award.rank}</div>
+      <button type="button" onclick="showPhishingAchievementModal()" class="sn-ach-banner-btn">
+        ${award.icon} View ${award.title}
       </button>
     </div>
   `;
@@ -540,22 +797,9 @@ function updateStickyNoteForPhase(phase) {
     }
 
     if (titleEl) titleEl.textContent = "📒 Phishing Investigation Tasks";
-    const isFirstEmailCompleted = Boolean(gameState.emailResults && gameState.emailResults.length >= 1);
-    if (!isFirstEmailCompleted && gameState.phase === 'mission') {
-      scrollEl.innerHTML = `
-        <div class="sn-locked-container">
-          <div class="sn-locked-icon-bubble">🔒</div>
-          <div class="sn-locked-title">Tasks Locked</div>
-          <div class="sn-locked-desc">
-            Complete your first email investigation in Zmail to unlock your live <strong>Mission Task List</strong>.
-          </div>
-          <div class="sn-locked-hint">
-            👉 <span>Inspect email #1 to unlock tracking</span>
-          </div>
-        </div>`;
-      return;
+    if (!document.getElementById('sn-checklist-section')) {
+      scrollEl.innerHTML = `<div id="sn-checklist-section"></div>`;
     }
-    scrollEl.innerHTML = `<div id="sn-checklist-section"></div>`;
     updateStickyChecklist();
     return;
   }

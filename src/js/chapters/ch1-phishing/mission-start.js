@@ -31,6 +31,8 @@ function startMission(openGmail = false) {
   if (tbNotesInit) {
     tbNotesInit.classList.remove('btn-pulse-highlight');
   }
+  window._stickyNotesHighlightDismissed = false;
+  window._phoneLinkHighlightDismissed = false;
   window._ryanFirstEmailSpoken = false;
 
   // ── Clear any saved pretest result so it always runs fresh ──
@@ -242,7 +244,7 @@ function openChapterDesktopDirect(chapterId) {
   if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications(chapterId, false);
 
   // Show Ch2-only desktop icons in Chapter 2+, hide them in Chapter 1
-  const isCh2Plus = (chapterId === 'malware' || chapterId === 'social-engineering' || chapterId === 'ransomware');
+  const isCh2Plus = (chapterId === 'malware' || chapterId === 'social-engineering' || chapterId === 'social_engineering' || chapterId === 'ransomware');
   document.querySelectorAll('.ch2-only').forEach(el => {
     el.style.setProperty('display', isCh2Plus ? 'flex' : 'none', 'important');
   });

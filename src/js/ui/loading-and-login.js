@@ -183,15 +183,6 @@ function lsSignIn() {
 
   applyPlayerName(name, char.img);
 
-  // If entering password for Chapter 2 (malware): show Chapter 2 Comic Strip!
-  if (currentCatId === 'malware') {
-    window._pendingStoryChapter = null;
-    const tm = document.getElementById('overlay-title-menu');
-    if (tm) tm.classList.remove('active');
-    showComicStripCh2();
-    return;
-  }
-
   // If the player came here via Story Selection → Chapter card, show loading then go to chapter (no narrator)
   if (window._pendingStoryChapter) {
     const catId = window._pendingStoryChapter;

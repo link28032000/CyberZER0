@@ -281,6 +281,9 @@
   function openOverlay() {
     buildOverlay();
     root.classList.add('active', 'locked');
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+    const mm = document.getElementById('overlay-main-menu');
+    if (mm) mm.classList.remove('active');
   }
   function closeOverlay() {
     if (root) root.classList.remove('active', 'locked');
@@ -384,8 +387,12 @@
     closeOverlay();
     updateChip(auth.currentUser);
     // Reveal main menu
-    const mm = document.getElementById('overlay-main-menu');
-    if (mm) mm.classList.add('active');
+    if (typeof showMainMenu === 'function') {
+      showMainMenu();
+    } else {
+      const mm = document.getElementById('overlay-main-menu');
+      if (mm) mm.classList.add('active');
+    }
   }
 
   /* ── 12. onAuthStateChanged — single source of truth ── */
@@ -399,6 +406,7 @@
       if (!user) {
         // ── Signed out ──
         updateChip(null);
+        if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
         // If main menu was visible, hide it
         const mm = document.getElementById('overlay-main-menu');
         if (mm) mm.classList.remove('active');
@@ -462,6 +470,9 @@
     // No auth (setup problem) — resolve ready immediately and show problem
     readyResolve();
     initialCheckDone = true;
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+    const mm = document.getElementById('overlay-main-menu');
+    if (mm) mm.classList.remove('active');
     openOverlay();
     setSub('Login unavailable');
     setProblem(setupProblem);
@@ -474,6 +485,8 @@
   window.czSignInWithGoogle = async function () {
     // Stop background music immediately when user initiates Google sign-in
     if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+    const mm = document.getElementById('overlay-main-menu');
+    if (mm) mm.classList.remove('active');
     if (!auth) {
       setGoogleMsg('Authentication service not available. Check the setup.');
       return;
@@ -575,6 +588,8 @@
   window.czSignOut = async function () {
     // Stop background music when user signs out (returns to landing page)
     if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+    const mm = document.getElementById('overlay-main-menu');
+    if (mm) mm.classList.remove('active');
     if (!auth) return;
     const user = auth.currentUser;
     clearOtpVerified(user && user.uid);
@@ -637,8 +652,10 @@
   };
 
   /* ── 16. Loading state: show overlay immediately while Firebase checks ── */
-  // The main menu is already hidden (class="overlay" without "active").
-  // Show auth overlay in loading state immediately.
+  // Ensure background sound is stopped and main menu is inactive during auth loading
+  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+  const initMM = document.getElementById('overlay-main-menu');
+  if (initMM) initMM.classList.remove('active');
   buildOverlay();
   root.classList.add('active', 'locked');
   setSub('Checking session…');

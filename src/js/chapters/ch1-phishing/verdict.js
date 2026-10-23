@@ -807,44 +807,84 @@ function finishMission() {
   updateAppLockStates();
 
   // ── Show Sticky Note with the full Task Bar Results & Progress ──
-  renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
+  // ── 1. Evaluate User's Actual Results on the 4 Tasks ──
+  const t1Done = SN_ACHIEVEMENTS[0] ? SN_ACHIEVEMENTS[0].check() : false;
+  const t2Done = SN_ACHIEVEMENTS[1] ? SN_ACHIEVEMENTS[1].check() : false;
+  const t3Done = SN_ACHIEVEMENTS[2] ? SN_ACHIEVEMENTS[2].check() : false;
+  const t4Done = SN_ACHIEVEMENTS[3] ? SN_ACHIEVEMENTS[3].check() : false;
+
+  if (t1Done) _achievementUnlocked.add(SN_ACHIEVEMENTS[0].id);
+  if (t2Done) _achievementUnlocked.add(SN_ACHIEVEMENTS[1].id);
+  if (t3Done) _achievementUnlocked.add(SN_ACHIEVEMENTS[2].id);
+  if (t4Done) _achievementUnlocked.add(SN_ACHIEVEMENTS[3].id);
+
+  const completedTasksCount = [t1Done, t2Done, t3Done, t4Done].filter(Boolean).length;
+
+  // ── 2. Determine Achievement Tier (Trophy, Medal, Ribbon) based on 4 Tasks ──
+  const earnedTier = getPhishingEarnedTier(completedTasksCount);
+  _achievementUnlocked.add(earnedTier.id);
+  _achievementUnlocked.add(`phish_award_${earnedTier.tier}`);
+  if (earnedTier.tier === 'trophy') {
+    _achievementUnlocked.add('task_all_complete');
+    _achievementUnlocked.add('phish_trophy_unlocked');
+    _achievementUnlocked.add('phish_trophy_master');
+  }
+
+  const dateStr = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+  _trophyUnlockedDate = dateStr;
+  _phishingEarnedAward = {
+    tier: earnedTier.tier,
+    title: earnedTier.title,
+    badge: earnedTier.badge,
+    icon: earnedTier.icon,
+    rank: earnedTier.rank,
+    sub: earnedTier.sub,
+    desc: earnedTier.desc,
+    tasksCompleted: completedTasksCount,
+    unlockedDate: dateStr
+  };
+  savePhishingProgress();
+
+  // ── 3. Show Sticky Note with the full Task Bar Results & Progress ──
+  renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total, earnedTier, completedTasksCount);
   showStickyNote();
 
-  // ── Taskbar updates: highlight Sticky Note & show Results button ──
+  // ── Taskbar updates: show Sticky Note on taskbar ──
   const tbNotes = document.getElementById('taskbar-notes');
   if (tbNotes) {
     tbNotes.classList.remove('hidden');
-    tbNotes.classList.add('open', 'active', 'btn-pulse-highlight');
+    tbNotes.classList.add('open', 'active');
+    const sNote = document.getElementById('sticky-note');
+    const isNoteOpen = sNote && !sNote.classList.contains('hidden');
+    if (!isNoteOpen && !window._stickyNotesHighlightDismissed) {
+      tbNotes.classList.add('btn-pulse-highlight');
+    } else {
+      tbNotes.classList.remove('btn-pulse-highlight');
+    }
   }
 
-  // ── Unlock & Award Phishing Investigator Achievement ──
-  _achievementUnlocked.add('task_report_phishing');
-  _achievementUnlocked.add('task_collect_evidence');
-  _achievementUnlocked.add('task_fake_sender');
-  _achievementUnlocked.add('task_phish_indicators');
-  _achievementUnlocked.add('task_all_complete');
-  _trophyUnlockedDate = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-  savePhishingProgress();
-
+  // ── 4. Show Achievement Toast for earned tier ──
   showAchievementToast({
-    id: 'task_all_complete',
-    label: 'Task 5: Phishing Investigator',
-    icon: '🏆',
-    progress: () => `All ${EMAILS.length} investigations completed!`
+    id: earnedTier.id,
+    label: `${earnedTier.icon} ${earnedTier.title}`,
+    icon: earnedTier.icon,
+    isAwardToast: true,
+    progress: () => `${earnedTier.rank} · ${completedTasksCount}/4 Investigation Tasks Completed!`
   });
 
+  // ── 5. Show Achievement Modal automatically AFTER email investigation ──
   setTimeout(() => {
-    showPhishingInvestigatorTrophy();
+    showPhishingAchievementModal(earnedTier, completedTasksCount);
   }, 1000);
 
   if (typeof addSimulationNotification === 'function') {
     addSimulationNotification({
       id: 'notif-ch1-complete',
       source: 'Mission Control',
-      icon: '🏆',
+      icon: earnedTier.icon,
       iconType: 'shield',
       title: 'Chapter 1 Completed — Rank ' + rank,
-      body: `All ${EMAILS.length} emails analyzed with ${Math.round(pct * 100)}% accuracy. Phishing Investigator Trophy unlocked!`,
+      body: `All ${EMAILS.length} emails analyzed with ${Math.round(pct * 100)}% accuracy. Earned ${earnedTier.title} (${earnedTier.rank})!`,
       time: 'Just now'
     });
   }
@@ -859,23 +899,21 @@ function finishMission() {
 
   if (typeof AudioManager !== 'undefined') AudioManager.playMissionComplete();
 
-  // Show Ryan's congratulatory dialogue for Phishing Knowledge and Awareness mission task
-  if (typeof RyanGuide !== 'undefined') {
-    RyanGuide.speak([
-      {
-        text: `You did it! You finished all the email investigations for Chapter 1 with Rank ${rank}.`,
-        state: 'success'
-      },
-      {
-        text: `You went through all ${EMAILS.length} emails with ${Math.round(pct * 100)}% accuracy and earned the Phishing Investigator Achievement Trophy.`,
-        state: 'speaking'
-      },
-      {
-        text: "Your final Mission Results, task progress, and achievements are all right here on your Sticky Note and taskbar.",
-        state: 'success'
-      }
-    ]);
+  // Pre-arm the Phone Link Newbie Squad invite
+  if (typeof setNewbieGcInvitePending === 'function') {
+    setNewbieGcInvitePending(false);
   }
+
+  // Save final investigation results for reference
+  window._ch1FinalResults = {
+    rank,
+    rankLabel,
+    pct,
+    correct,
+    total: EMAILS.length,
+    earnedTier,
+    completedTasksCount
+  };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -926,6 +964,7 @@ function playAgain(showVN = false) {
   ch1FlaggedLegitWarnedOnce    = false;
   ch1CloserLookWarnedOnce      = false;
   ch1SecondEmailNotesHintDone  = false;
+  if (typeof _phishingEarnedAward !== 'undefined') _phishingEarnedAward = null;
   if (typeof FOLDER_FILES !== 'undefined') {
     FOLDER_FILES.forEach(f => { f.quarantined = false; f.scanned = false; });
   }

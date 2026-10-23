@@ -827,10 +827,12 @@
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
 }
 
-/* Fullscreen icon swap */
-.login-fs-exit { display: none; }
-body.is-fullscreen .login-fs-enter { display: none; }
-body.is-fullscreen .login-fs-exit  { display: block; }
+/* Hide fullscreen button in fullscreen mode */
+body.is-fullscreen #login-fs-btn,
+:fullscreen #login-fs-btn,
+:-webkit-full-screen #login-fs-btn {
+  display: none !important;
+}
 
 /* Icon scale on hover */
 #login-fs-btn svg {
@@ -894,10 +896,12 @@ body.is-fullscreen .login-fs-exit  { display: block; }
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
 }
 
-/* Fullscreen icon swap */
-.story-fs-exit { display: none; }
-body.is-fullscreen .story-fs-enter { display: none; }
-body.is-fullscreen .story-fs-exit  { display: block; }
+/* Hide fullscreen button in fullscreen mode */
+body.is-fullscreen #story-fs-btn,
+:fullscreen #story-fs-btn,
+:-webkit-full-screen #story-fs-btn {
+  display: none !important;
+}
 
 #story-fs-btn svg {
   flex-shrink: 0;
@@ -906,6 +910,32 @@ body.is-fullscreen .story-fs-exit  { display: block; }
 #story-fs-btn:hover svg {
   transform: scale(1.15);
 }
+
+/* ════════════════════════════════════════════════════════════
+   STORY SELECT PAGE — STANDALONE SOUND BUTTON
+   Positioned at bottom-right corner to match Main Menu.
+   Toggled via .ss-sound-visible when Story Selection is active.
+════════════════════════════════════════════════════════════ */
+#story-sound-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: none;
+}
+
+#story-sound-btn.ss-sound-visible {
+  display: flex !important;
+}
+
+@media (max-width: 768px) {
+  #story-sound-btn {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px;
+  }
+}
+
 
 
 

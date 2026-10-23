@@ -255,9 +255,102 @@
   display: none;
 }
 
+.desktop-icon.ch2-only {
   animation: ch2IconsFadeIn 0.45s ease forwards;
 }
 @keyframes ch2IconsFadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ═══════════════════════════════════════════════
+   FULLSCREEN MODE — Desktop Icons Scaling
+   Proportionally larger icons, crisp labels & spacious grid
+═══════════════════════════════════════════════ */
+body.is-fullscreen .desktop-icons,
+:root:fullscreen .desktop-icons {
+  top: 26px;
+  left: 26px;
+  gap: 16px;
+}
+
+body.is-fullscreen .desktop-icons-col,
+:root:fullscreen .desktop-icons-col {
+  gap: 12px;
+}
+
+body.is-fullscreen .desktop-icon,
+:root:fullscreen .desktop-icon {
+  width: 98px;
+  padding: 10px 8px 9px;
+  gap: 7px;
+  border-radius: var(--radius-lg);
+}
+
+body.is-fullscreen .icon-img,
+:root:fullscreen .icon-img {
+  font-size: 46px;
+  filter: drop-shadow(0 3px 10px rgba(79,195,247,0.45));
+}
+
+body.is-fullscreen .icon-img img,
+:root:fullscreen .icon-img img {
+  width: 48px;
+  height: 48px;
+}
+
+body.is-fullscreen .desktop-icon span,
+:root:fullscreen .desktop-icon span {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+}
+
+body.is-fullscreen .desktop-icon.locked::after,
+:root:fullscreen .desktop-icon.locked::after {
+  top: 8px;
+  right: 8px;
+  font-size: 12px;
+  padding: 2px 5px;
+}
+
+@media (display-mode: fullscreen) {
+  .desktop-icons {
+    top: 26px;
+    left: 26px;
+    gap: 16px;
+  }
+  .desktop-icons-col {
+    gap: 12px;
+  }
+  .desktop-icon {
+    width: 98px;
+    padding: 10px 8px 9px;
+    gap: 7px;
+    border-radius: var(--radius-lg);
+  }
+  .icon-img {
+    font-size: 46px;
+    filter: drop-shadow(0 3px 10px rgba(79,195,247,0.45));
+  }
+  .icon-img img {
+    width: 48px;
+    height: 48px;
+  }
+  .desktop-icon span {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    line-height: 1.25;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  }
+  .desktop-icon.locked::after {
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
+    padding: 2px 5px;
+  }
+}
+

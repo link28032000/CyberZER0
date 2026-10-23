@@ -497,7 +497,13 @@ function vnFinish() {
   } else if (activeCategoryStory === 'phishing') {
     // Show the Chapter 1 comic strip before starting the mission
     showComicStrip();
-  } else if (activeCategoryStory === 'malware' || activeCategoryStory === 'social_engineering' || activeCategoryStory === 'ransomware') {
+  } else if (activeCategoryStory === 'social_engineering') {
+    // Show Chapter 3 comic strip before starting the mission
+    showComicStripCh3();
+  } else if (activeCategoryStory === 'ransomware') {
+    // Show Chapter 4 comic strip before starting the mission
+    showComicStripCh4();
+  } else if (activeCategoryStory === 'malware') {
     openChapterDesktopDirect(activeCategoryStory);
   } else if (activeCategoryStory === 'grand_finale') {
     showGrandCertificate();

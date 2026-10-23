@@ -135,6 +135,7 @@ function openApp(appName) {
   }
 
   if (appName === 'comms') {
+    if (typeof unhighlightPhoneLinkApp === 'function') unhighlightPhoneLinkApp();
     if (typeof renderPhoneLinkApp === 'function') renderPhoneLinkApp();
   }
 
@@ -142,24 +143,40 @@ function openApp(appName) {
     if (typeof initTaskManager === 'function') initTaskManager();
   }
 
+  // Clear manual drag tracker so window auto-centers properly
+  delete win.dataset.userDragged;
+
   // Always center window on screen when opened
   centerWindow(appName);
   state.hasBeenPositioned = true;
 }
 
-// Centers a window on the desktop, always using the full available space.
-// The Ryan dialogue floats on top via z-index, so no clearance offset is needed.
+// Centers a window on the desktop, always ensuring it fits within available space.
 function centerWindow(appName) {
   const win = document.getElementById(`win-${appName}`);
   const desktop = document.getElementById('desktop');
   const taskbar = document.getElementById('taskbar');
   if (!win || !desktop || win.classList.contains('maximized')) return;
 
-  const w = win.offsetWidth || 840;
-  const h = win.offsetHeight || 520;
   const viewportW = desktop.clientWidth || window.innerWidth;
   const taskbarH = taskbar ? taskbar.offsetHeight : 48;
   const viewportH = (desktop.clientHeight || window.innerHeight) - taskbarH;
+
+  const maxW = Math.max(320, viewportW - 24);
+  const maxH = Math.max(240, viewportH - 24);
+
+  // If window is wider or taller than available viewport, constrain it
+  if (win.offsetWidth > maxW) {
+    win.style.width = maxW + 'px';
+    win.dataset.autoAdjustedSize = 'true';
+  }
+  if (win.offsetHeight > maxH) {
+    win.style.height = maxH + 'px';
+    win.dataset.autoAdjustedSize = 'true';
+  }
+
+  const w = win.offsetWidth || 840;
+  const h = win.offsetHeight || 520;
 
   const left = Math.max(0, Math.round((viewportW - w) / 2));
   const top  = Math.max(0, Math.round((viewportH - h) / 2));
@@ -167,6 +184,95 @@ function centerWindow(appName) {
   win.style.left = left + 'px';
   win.style.top  = top  + 'px';
 }
+
+/**
+ * Adjusts all open windows dynamically when entering or exiting fullscreen mode,
+ * or when the viewport is resized.
+ */
+function adjustOpenWindowsForScreenChange() {
+  const desktop = document.getElementById('desktop');
+  const taskbar = document.getElementById('taskbar');
+  if (!desktop) return;
+
+  const viewportW = desktop.clientWidth || window.innerWidth;
+  const taskbarH = taskbar ? taskbar.offsetHeight : 48;
+  const viewportH = (desktop.clientHeight || window.innerHeight) - taskbarH;
+
+  const maxW = Math.max(320, viewportW - 24);
+  const maxH = Math.max(240, viewportH - 24);
+
+  document.querySelectorAll('.app-window').forEach(win => {
+    // Only adjust visible, open windows that are not minimized or maximized
+    if (win.classList.contains('hidden') || win.classList.contains('minimized')) return;
+    if (win.classList.contains('maximized')) return;
+
+    const appName = win.dataset.app;
+    const state = (typeof appState !== 'undefined' && appName) ? appState[appName] : null;
+    if (state && (!state.open || state.minimized)) return;
+
+    // Adjust width and height to fit screen
+    if (win.offsetWidth > maxW) {
+      win.style.width = maxW + 'px';
+      win.dataset.autoAdjustedSize = 'true';
+    } else if (win.dataset.autoAdjustedSize === 'true' && !win.dataset.userResized) {
+      // If we previously auto-clamped and now screen is larger, release clamped size
+      win.style.width = '';
+      win.style.height = '';
+      delete win.dataset.autoAdjustedSize;
+    }
+
+    if (win.offsetHeight > maxH) {
+      win.style.height = maxH + 'px';
+      win.dataset.autoAdjustedSize = 'true';
+    }
+
+    const curW = win.offsetWidth;
+    const curH = win.offsetHeight;
+    const maxLeft = Math.max(0, viewportW - curW);
+    const maxTop = Math.max(0, viewportH - curH);
+
+    if (!win.dataset.userDragged) {
+      // Keep un-dragged windows centered
+      if (appName) {
+        centerWindow(appName);
+      } else {
+        win.style.left = Math.max(0, Math.round((viewportW - curW) / 2)) + 'px';
+        win.style.top  = Math.max(0, Math.round((viewportH - curH) / 2)) + 'px';
+      }
+    } else {
+      // For dragged windows, clamp within desktop boundaries so they don't clip offscreen
+      let curLeft = parseInt(win.style.left, 10);
+      let curTop = parseInt(win.style.top, 10);
+      if (isNaN(curLeft)) curLeft = Math.round((viewportW - curW) / 2);
+      if (isNaN(curTop))  curTop  = Math.round((viewportH - curH) / 2);
+
+      win.style.left = Math.max(0, Math.min(maxLeft, curLeft)) + 'px';
+      win.style.top  = Math.max(0, Math.min(maxTop,  curTop))  + 'px';
+    }
+  });
+
+  // Also adjust Sticky Note if visible
+  const sNote = document.getElementById('sticky-note');
+  if (sNote && !sNote.classList.contains('hidden')) {
+    const sW = sNote.offsetWidth || 330;
+    const sH = sNote.offsetHeight || 480;
+    const maxLeft = Math.max(0, viewportW - sW);
+    const maxTop = Math.max(0, viewportH - sH);
+
+    if (sNote.style.left) {
+      const curL = parseInt(sNote.style.left, 10);
+      if (!isNaN(curL)) sNote.style.left = Math.max(0, Math.min(maxLeft, curL)) + 'px';
+    }
+    if (sNote.style.top) {
+      const curT = parseInt(sNote.style.top, 10);
+      if (!isNaN(curT)) sNote.style.top = Math.max(0, Math.min(maxTop, curT)) + 'px';
+    }
+    if (sNote.offsetHeight > viewportH - 24) {
+      sNote.style.maxHeight = Math.max(260, viewportH - 24) + 'px';
+    }
+  }
+}
+window.adjustOpenWindowsForScreenChange = adjustOpenWindowsForScreenChange;
 
 // adjustAppsForDialogue is kept for compatibility but no longer repositions windows.
 // The Ryan dialogue panel (z-index: 100010) always floats on top of all app windows,
@@ -277,6 +383,10 @@ function focusStickyNote() {
 }
 
 function taskbarClick(appName) {
+  if (appName === 'comms' && typeof unhighlightPhoneLinkApp === 'function') {
+    unhighlightPhoneLinkApp();
+  }
+
   if (isAppLocked(appName)) {
     const remaining = EMAILS.length - (gameState.emailResults ? gameState.emailResults.length : 0);
     showToast(`🔒 Locked: Complete all 5 email investigations first (${remaining} remaining) to unlock ${appName === 'folder' ? 'File Explorer' : 'Anti-Virus'}!`, 'warning');
@@ -363,6 +473,9 @@ function updateTaskbar() {
     if (!dragging || !target) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      target.dataset.userDragged = 'true';
+    }
 
     const desktop = document.getElementById('desktop');
     const taskbar = document.getElementById('taskbar');

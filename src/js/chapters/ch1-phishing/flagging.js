@@ -181,6 +181,9 @@ function toggleFlagMode() {
     closeLinkPopup();
     showToast('Flag Mode OFF', '');
   }
+
+  // Live react to Flag Mode toggle on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
 }
 
 function placeFlag(el) {
@@ -221,6 +224,9 @@ function placeFlag(el) {
   if (typeof toggleEvidencePanel === 'function') toggleEvidencePanel(true);
   if (typeof AudioManager !== 'undefined') AudioManager.playFlagChirp();
   showToast(`🚩 Flagged: ${flag.label}`, 'success');
+
+  // Live react to flag placement on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
 
   // ── Notify tutorial of which flag was placed ─────────────────────────────
   if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
@@ -308,6 +314,9 @@ function removeFlag(flagType) {
     }
   }
   showToast(`🗑 Unflagged: ${removed.label}`, '');
+
+  // Live react to flag removal on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
 
   // ── Update verdict button highlight (may need to remove glow if flags cleared) ─
   if (typeof PhishTutorial !== 'undefined') {
@@ -580,6 +589,9 @@ function returnToInbox() {
   if (gmailBody) gmailBody.classList.remove('flag-mode-active');
   renderEmailList();
   updateHUD();
+
+  // Live react to returning to inbox on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
 
   // If in mission and all emails in current inbox are reviewed, trigger next wave!
   if (gameState.phase === 'mission' && ch1InboxEmails.length > 0) {

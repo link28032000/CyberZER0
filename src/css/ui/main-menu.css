@@ -842,6 +842,23 @@
   box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
 }
 
+/* Medal card variant — silver/sky accent */
+.mm-ach-item.ach-medal {
+  border-color: rgba(148, 163, 184, 0.7);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.7) 100%);
+  box-shadow: 0 0 12px rgba(148, 163, 184, 0.15);
+}
+
+.mm-ach-item.ach-medal .mm-ach-award-badge {
+  background: rgba(148, 163, 184, 0.18);
+  border: 1.5px solid rgba(148, 163, 184, 0.6);
+}
+
+.mm-ach-item.ach-medal:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 0 20px rgba(148, 163, 184, 0.35);
+}
+
 /* Trophy card variant — gold accent */
 .mm-ach-item.ach-trophy {
   border-color: rgba(255, 215, 0, 0.6);
@@ -900,6 +917,13 @@
   color: #00f8ff;
   border: 1px solid rgba(0, 229, 255, 0.55);
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+.mm-ach-award-tag.award-medal {
+  background: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.65);
+  box-shadow: 0 0 8px rgba(148, 163, 184, 0.25);
 }
 
 .mm-ach-award-tag.award-trophy {
@@ -1222,13 +1246,12 @@
   white-space: nowrap;
 }
 
-/* Icon swap logic — show enter/exit icon based on fullscreen state */
-.mm-fs-exit { display: none; }
-
-body.is-fullscreen .mm-fs-enter { display: none; }
-body.is-fullscreen .mm-fs-exit  { display: block; }
-body.is-fullscreen .mm-fs-label-text::before { content: 'Exit'; }
-.mm-fs-label-text::before { content: 'Fullscreen'; }
+/* When in fullscreen mode, hide fullscreen button entirely (only show in windowed mode) */
+body.is-fullscreen .mm-fullscreen-btn,
+:fullscreen .mm-fullscreen-btn,
+:-webkit-full-screen .mm-fullscreen-btn {
+  display: none !important;
+}
 
 /* ════════════════════════════════════════════════════════════
    BACKGROUND MUSIC TOGGLE BUTTON — Below fullscreen btn, top-left

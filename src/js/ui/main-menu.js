@@ -6,6 +6,13 @@
 
 /** Show the main menu overlay */
 function showMainMenu() {
+  // If Google sign-in auth overlay is active, do not show main menu or start background sound
+  const authEl = document.getElementById('cz-auth');
+  if (authEl && authEl.classList.contains('active')) {
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+    return;
+  }
+
   const mm = document.getElementById('overlay-main-menu');
   if (mm) {
     // Restore any inline styles that were force-set when hiding
@@ -67,8 +74,8 @@ function mainMenuStart() {
   closeMainMenuAbout();
   closeMainMenuAchievement();
   closeMainMenuExit();
-  // Stop background music when entering the game
-  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+  // Keep background music playing through loading into Story Selection
+  if (typeof startMMBgMusic === 'function') startMMBgMusic();
 
   const mm = document.getElementById('overlay-main-menu');
   const mmNav = document.querySelector('.mm-nav');
@@ -336,6 +343,9 @@ function selectStoryCard(cardEl, categoryId, chapterNum) {
 
 /** Story Selection — play unlocked chapter */
 function storySelectPlay(categoryId) {
+  // Stop background music as mission intro begins
+  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+
   const ss = document.getElementById('overlay-story-select');
   if (!ss) return;
 
@@ -371,12 +381,21 @@ function storySelectPlay(categoryId) {
           cc.classList.remove('active');
           cc.style.display = 'none';
 
-          // Proceed to Chapter 1 Comic Strip or sign-in screen
+          // Proceed to Comic Strip or sign-in screen
           window._pendingStoryChapter = categoryId;
           updateLoginScreenForChapter(categoryId);
           if (categoryId === 'phishing') {
-            // Show comic strip first BEFORE Alex enters password!
+            // Show Chapter 1 comic strip first BEFORE Alex enters password!
             showComicStrip();
+          } else if (categoryId === 'malware') {
+            // Show Chapter 2 comic strip first BEFORE Ethan enters password!
+            showComicStripCh2();
+          } else if (categoryId === 'social_engineering' || categoryId === 'social' || categoryId === 'social-engineering') {
+            // Show Chapter 3 comic strip first BEFORE Pia enters password!
+            showComicStripCh3();
+          } else if (categoryId === 'ransomware' || categoryId === 'ch4' || categoryId === 4) {
+            // Show Chapter 4 comic strip first BEFORE Ryan enters password!
+            showComicStripCh4();
           } else {
             const tm = document.getElementById('overlay-title-menu');
             if (tm) {
@@ -396,6 +415,12 @@ function storySelectPlay(categoryId) {
       updateLoginScreenForChapter(categoryId);
       if (categoryId === 'phishing') {
         showComicStrip();
+      } else if (categoryId === 'malware') {
+        showComicStripCh2();
+      } else if (categoryId === 'social_engineering' || categoryId === 'social' || categoryId === 'social-engineering') {
+        showComicStripCh3();
+      } else if (categoryId === 'ransomware' || categoryId === 'ch4' || categoryId === 4) {
+        showComicStripCh4();
       } else {
         const tm = document.getElementById('overlay-title-menu');
         if (tm) {
@@ -582,7 +607,36 @@ function renderMainMenuAchievements() {
     if (typeof CATEGORIES === 'undefined') return;
     const cat = CATEGORIES.find(c => c.id === ach.catId);
     if (cat && cat.completed) {
-      earned.push({ ...ach, score: cat.score || 0, rank: cat.rank || 'S' });
+      let finalAch = { ...ach, score: cat.score || 0, rank: cat.rank || 'S' };
+
+      // Dynamically load the user's earned achievement tier for Chapter 1
+      if (ach.catId === 'phishing') {
+        try {
+          const phishSaved = localStorage.getItem('cyberzero_phishing_progress');
+          if (phishSaved) {
+            const pData = JSON.parse(phishSaved);
+            const aw = pData.earnedAward || (pData.trophyUnlocked ? { tier: 'trophy' } : null);
+            if (aw && aw.tier) {
+              finalAch.awardType = aw.tier;
+              if (aw.tier === 'trophy') {
+                finalAch.awardLabel = 'PHISHING MASTER';
+                finalAch.awardFull  = 'Phishing Master Trophy';
+                finalAch.desc = 'Exposed deceptive emails, completed all 4 investigation tasks, and earned 1st place Master honors.';
+              } else if (aw.tier === 'medal') {
+                finalAch.awardLabel = 'PHISHING INVESTIGATOR';
+                finalAch.awardFull  = 'Phishing Investigator Medal';
+                finalAch.desc = 'Exposed deceptive emails, identified phishing indicators, and earned the 2nd place Investigator Medal.';
+              } else {
+                finalAch.awardLabel = 'PHISHING SENTINEL';
+                finalAch.awardFull  = 'Phishing Security Ribbon';
+                finalAch.desc = 'Completed email investigation, exposed phishing lures, and earned the Security Awareness Ribbon.';
+              }
+            }
+          }
+        } catch(e) {}
+      }
+
+      earned.push(finalAch);
     }
   });
 
@@ -628,10 +682,12 @@ function renderMainMenuAchievements() {
   let html = '';
   earned.forEach(ach => {
     const isGrand   = ach.awardType === 'grand';
-    const isTrophy  = ach.awardType === 'trophy' || isGrand;
-    const awardEmoji = isGrand ? '🌟🏆' : (isTrophy ? '🏆' : '🎖️');
+    const isTrophy  = ach.awardType === 'trophy';
+    const isMedal   = ach.awardType === 'medal';
+    const awardEmoji = isGrand ? '🌟🏆' : (isTrophy ? '🏆' : isMedal ? '🥈' : '🎖️');
     const cardClass  = isGrand ? 'mm-ach-item ach-completed ach-grand'
                      : isTrophy ? 'mm-ach-item ach-completed ach-trophy'
+                     : isMedal  ? 'mm-ach-item ach-completed ach-medal'
                      : 'mm-ach-item ach-completed ach-ribbon';
 
     const rankDisplay = ach.rank ? `Rank <strong>${ach.rank}</strong>` : '';
@@ -649,8 +705,8 @@ function renderMainMenuAchievements() {
           <p class="mm-ach-desc">${ach.desc}</p>
           ${metaLine ? `<div class="mm-ach-meta">${metaLine}</div>` : ''}
         </div>
-        <div class="mm-ach-award-tag ${isGrand ? 'award-grand' : isTrophy ? 'award-trophy' : 'award-ribbon'}">
-          ${isGrand ? '🌟 MASTER' : isTrophy ? '🏆 TROPHY' : '🎖️ RIBBON'}
+        <div class="mm-ach-award-tag ${isGrand ? 'award-grand' : isTrophy ? 'award-trophy' : isMedal ? 'award-medal' : 'award-ribbon'}">
+          ${isGrand ? '🌟 MASTER' : isTrophy ? '🏆 TROPHY' : isMedal ? '🥈 MEDAL' : '🎖️ RIBBON'}
         </div>
       </div>
     `;
@@ -778,26 +834,38 @@ function _syncFullscreenState() {
     document.fullscreenElement ||
     document.webkitFullscreenElement ||
     document.mozFullScreenElement ||
-    document.msFullscreenElement
+    document.msFullscreenElement ||
+    (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches)
   );
 
   document.body.classList.toggle('is-fullscreen', isFs);
 
-  // ── Main menu corner button ──
+  // ── Always keep standard Fullscreen label/title for windowed mode ──
   const btn = document.getElementById('mm-fullscreen-btn');
   if (btn) {
-    btn.setAttribute('aria-label', isFs ? 'Exit fullscreen mode' : 'Enter fullscreen mode');
-    btn.title = isFs ? 'Exit Fullscreen [F11]' : 'Toggle Fullscreen [F11]';
+    btn.setAttribute('aria-label', 'Toggle fullscreen mode');
+    btn.title = 'Fullscreen [F11]';
   }
 
-  // ── Taskbar tray icon swap ──
-  document.querySelectorAll('.tray-fs-enter').forEach(el => el.style.display = isFs ? 'none' : '');
-  document.querySelectorAll('.tray-fs-exit').forEach(el  => el.style.display = isFs ? ''     : 'none');
+  // Adjust all open windows dynamically on fullscreen enter/exit and window resize
+  if (typeof adjustOpenWindowsForScreenChange === 'function') {
+    adjustOpenWindowsForScreenChange();
+    setTimeout(adjustOpenWindowsForScreenChange, 50);
+    setTimeout(adjustOpenWindowsForScreenChange, 200);
+  }
 }
 
 // Listen for all fullscreen change events (cross-browser)
 ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
   .forEach(ev => document.addEventListener(ev, _syncFullscreenState));
+
+window.addEventListener('resize', _syncFullscreenState);
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _syncFullscreenState);
+} else {
+  _syncFullscreenState();
+}
 
 // F11 keyboard shortcut — intercept and use our own fullscreen logic
 document.addEventListener('keydown', function(e) {
@@ -812,34 +880,85 @@ document.addEventListener('keydown', function(e) {
 //  Plays: assets/sounds/Background.mp3  (looping)
 //  Preference: localStorage key 'czBgMusicMuted'
 //
-//  RULE: Music plays ONLY while #overlay-main-menu has .active.
-//        It stops the instant any other screen is shown.
-//        User on/off preference is saved and respected on resume.
+// ════════════════════════════════════════════════════════════
+//  BACKGROUND MUSIC SYSTEM (MAIN MENU, LOADING, STORY SELECT)
+//  Plays during:
+//    - Main Menu (#overlay-main-menu)
+//    - Game Loading Screen (#overlay-loading)
+//    - Story Selection Screen (#overlay-story-select)
+//  Stops when:
+//    - User enters a mission / chapter gameplay / title card
+//    - Google Auth screen is active
+//    - User clicks the mute button (synced across all screens)
 // ════════════════════════════════════════════════════════════
 
 (function initMMBgMusic() {
-  function _audio()  { return document.getElementById('mm-bg-audio'); }
-  function _btn()    { return document.getElementById('mm-sound-btn'); }
-  function _muted()  { return localStorage.getItem('czBgMusicMuted') === 'true'; }
-  function _isMMOn() {
+  function _audio() { return document.getElementById('mm-bg-audio'); }
+  function _btns()  {
+    return [
+      document.getElementById('mm-sound-btn'),
+      document.getElementById('story-sound-btn')
+    ].filter(Boolean);
+  }
+  function _muted() { return localStorage.getItem('czBgMusicMuted') === 'true'; }
+
+  function _isBgmActive() {
+    // Background sound must NEVER play while the Google sign-in auth overlay is open
+    const authEl = document.getElementById('cz-auth');
+    if (authEl && authEl.classList.contains('active')) return false;
+
+    // Never play during gameplay overlays (chapter title card, comic strips, login screen, etc.)
+    const gameOverlays = [
+      'overlay-chapter-card',
+      'overlay-comic-strip',
+      'overlay-comic-strip-ch2',
+      'overlay-comic-strip-ch3',
+      'overlay-comic-strip-ch4',
+      'overlay-title-menu'
+    ];
+    for (let i = 0; i < gameOverlays.length; i++) {
+      const el = document.getElementById(gameOverlays[i]);
+      if (el && (el.classList.contains('active') || el.classList.contains('visible') || el.style.display === 'flex')) {
+        return false;
+      }
+    }
+
     const mm = document.getElementById('overlay-main-menu');
-    return !!mm && mm.classList.contains('active');
+    const isMM = !!mm && (mm.classList.contains('active') || mm.style.display === 'flex');
+
+    const loadScreen = document.getElementById('overlay-loading');
+    const isLoading = !!loadScreen && (loadScreen.classList.contains('active') || loadScreen.style.display === 'flex');
+
+    const ss = document.getElementById('overlay-story-select');
+    const isSS = !!ss && (ss.classList.contains('active') || ss.style.display === 'flex');
+
+    return !!(isMM || isLoading || isSS);
+  }
+
+  /* ── Sync Story Selection sound button visibility ── */
+  function _syncStorySoundBtn() {
+    const ss = document.getElementById('overlay-story-select');
+    const btn = document.getElementById('story-sound-btn');
+    if (!ss || !btn) return;
+    const isActive = ss.classList.contains('active') || ss.style.display === 'flex';
+    btn.classList.toggle('ss-sound-visible', isActive);
   }
 
   /* ── Sync button icon only (no playback side-effects) ── */
   function _syncIcon(muted) {
-    const btn = _btn();
-    if (!btn) return;
-    btn.classList.toggle('mm-sound-muted',   muted);
-    btn.classList.toggle('mm-sound-playing', !muted && _isMMOn());
-    btn.title = muted
-      ? 'Background Music: OFF — Click to turn on'
-      : 'Background Music: ON — Click to turn off';
-    btn.setAttribute('aria-label', muted ? 'Turn on background music' : 'Turn off background music');
-    const onIcon  = btn.querySelector('.mm-sound-on');
-    const offIcon = btn.querySelector('.mm-sound-off');
-    if (onIcon)  onIcon.style.display  = muted ? 'none' : '';
-    if (offIcon) offIcon.style.display = muted ? ''     : 'none';
+    const isPlaying = !muted && _isBgmActive();
+    _btns().forEach(btn => {
+      btn.classList.toggle('mm-sound-muted',   muted);
+      btn.classList.toggle('mm-sound-playing', isPlaying);
+      btn.title = muted
+        ? 'Background Music: OFF — Click to turn on'
+        : 'Background Music: ON — Click to turn off';
+      btn.setAttribute('aria-label', muted ? 'Turn on background music' : 'Turn off background music');
+      const onIcon  = btn.querySelector('.mm-sound-on');
+      const offIcon = btn.querySelector('.mm-sound-off');
+      if (onIcon)  onIcon.style.display  = muted ? 'none' : '';
+      if (offIcon) offIcon.style.display = muted ? ''     : 'none';
+    });
   }
 
   /* ── Core: start or stop audio based on current state ── */
@@ -847,66 +966,118 @@ document.addEventListener('keydown', function(e) {
     const audio = _audio();
     if (!audio) return;
     const muted = _muted();
-    if (_isMMOn() && !muted) {
-      // Main menu is visible AND user wants music → play
+    if (_isBgmActive() && !muted) {
+      // Main menu, Loading, or Story selection is active AND user wants music → play
       audio.play().catch(() => {});
     } else {
-      // Any other page OR user muted → silence
+      // Any other page, Google Sign-in screen, gameplay, OR user muted → silence
       audio.pause();
     }
     _syncIcon(muted);
+    _syncStorySoundBtn();
     localStorage.setItem('czBgMusicMuted', muted ? 'true' : 'false');
   }
 
-  /* ── Toggle called by the 🔊 button ── */
+  /* ── Toggle called by the 🔊 button (Main Menu & Story Selection) ── */
   window.toggleMMBgMusic = function () {
     const audio = _audio();
     if (!audio) return;
-    const nowMuted = !audio.paused; // playing → mute it; paused → unmute
+    const currentMuted = _muted();
+    const nowMuted = !currentMuted;
     localStorage.setItem('czBgMusicMuted', nowMuted ? 'true' : 'false');
     _apply();
   };
 
-  /* ── Called by showMainMenu() when main menu becomes visible ── */
-  window.startMMBgMusic = function () { _apply(); };
-
-  /* ── Called by hideMainMenu(), sign-in, sign-out, etc. ── */
-  window.stopMMBgMusic = function () {
-    const audio = _audio();
-    if (audio) audio.pause();
-    const btn = _btn();
-    if (btn) btn.classList.remove('mm-sound-playing');
+  /* ── Called by showMainMenu(), mainMenuStart(), etc. ── */
+  window.startMMBgMusic = function () {
+    const authEl = document.getElementById('cz-auth');
+    if (authEl && authEl.classList.contains('active')) {
+      const audio = _audio();
+      if (audio) audio.pause();
+      return;
+    }
+    _apply();
   };
 
-  /* ── Watch #overlay-main-menu .active changes ──────────────
-     This is the SINGLE source of truth for music start/stop.
-     Whenever the main menu gains or loses .active, _apply() runs.
+  /* ── Called by hideMainMenu(), storySelectPlay(), sign-in, etc. ── */
+  window.stopMMBgMusic = function () {
+    const audio = _audio();
+    if (audio) {
+      audio.pause();
+      try { audio.currentTime = 0; } catch (e) {}
+    }
+    _btns().forEach(btn => btn.classList.remove('mm-sound-playing'));
+  };
+
+  /* ── Watch overlay active changes & Google auth overlay ──
+     Music plays while Main Menu, Loading, or Story Selection is active and auth is NOT active.
   ────────────────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
-    // Sync icon immediately (no playback — user hasn't interacted yet)
+    _syncStorySoundBtn();
     _syncIcon(_muted());
 
     const mm = document.getElementById('overlay-main-menu');
-    if (!mm) return;
+    const loadScreen = document.getElementById('overlay-loading');
+    const ss = document.getElementById('overlay-story-select');
+    const cc = document.getElementById('overlay-chapter-card');
 
-    /* Browser autoplay policy: we need one user gesture first.
-       We listen once globally; after the gesture _apply() will work. */
     let _gestureUnlocked = false;
     function _onGesture() {
+      const authEl = document.getElementById('cz-auth');
+      if (authEl && authEl.classList.contains('active')) {
+        return;
+      }
+
       if (_gestureUnlocked) return;
       _gestureUnlocked = true;
       document.removeEventListener('click',   _onGesture, true);
       document.removeEventListener('keydown', _onGesture, true);
-      _apply(); // now that we have a gesture, start if main menu is active
+      _apply();
     }
     document.addEventListener('click',   _onGesture, true);
     document.addEventListener('keydown', _onGesture, true);
 
-    /* MutationObserver on the main menu overlay — fires on every class change */
-    new MutationObserver(function () {
+    function _syncAllState() {
+      _syncStorySoundBtn();
       if (_gestureUnlocked) _apply();
-      else _syncIcon(_muted()); // just keep icon correct before gesture
-    }).observe(mm, { attributes: true, attributeFilter: ['class'] });
+      else _syncIcon(_muted());
+    }
+
+    [mm, loadScreen, ss, cc].filter(Boolean).forEach(el => {
+      new MutationObserver(_syncAllState).observe(el, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+    });
+
+    /* MutationObserver on Google Sign-In auth overlay — stops sound immediately on auth */
+    function _attachAuthObserver(authEl) {
+      if (!authEl) return;
+      if (authEl.classList.contains('active')) {
+        window.stopMMBgMusic();
+      }
+      new MutationObserver(function () {
+        if (authEl.classList.contains('active')) {
+          window.stopMMBgMusic();
+        } else if (_gestureUnlocked) {
+          _apply();
+        }
+      }).observe(authEl, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    const authEl = document.getElementById('cz-auth');
+    if (authEl) {
+      _attachAuthObserver(authEl);
+    } else {
+      const bodyObs = new MutationObserver(function () {
+        const el = document.getElementById('cz-auth');
+        if (el) {
+          _attachAuthObserver(el);
+          bodyObs.disconnect();
+        }
+      });
+      bodyObs.observe(document.body, { childList: true });
+    }
   });
 })();
 

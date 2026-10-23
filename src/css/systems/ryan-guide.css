@@ -343,3 +343,224 @@
   }
 }
 
+/* ══════════════════════════════════════════════════════════
+   FULLSCREEN MODE — Ryan Guide System Scaling
+   Proportionally larger avatar, dialogue box, and readable text
+══════════════════════════════════════════════════════════ */
+body.is-fullscreen .ryan-guide-overlay,
+:root:fullscreen .ryan-guide-overlay {
+  bottom: 66px;
+  width: min(720px, calc(100vw - 48px));
+  gap: 18px;
+}
+
+body.is-fullscreen .ryan-portrait-wrap,
+:root:fullscreen .ryan-portrait-wrap,
+body.is-fullscreen .ryan-portrait,
+:root:fullscreen .ryan-portrait {
+  width: 106px;
+  height: 106px;
+}
+
+body.is-fullscreen .ryan-portrait,
+:root:fullscreen .ryan-portrait {
+  border-width: 3.5px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 6px 24px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.28);
+}
+
+body.is-fullscreen .ryan-portrait-ring,
+:root:fullscreen .ryan-portrait-ring {
+  inset: -5px;
+  border-width: 3px;
+}
+
+body.is-fullscreen .ryan-dialogue-box,
+:root:fullscreen .ryan-dialogue-box {
+  min-height: 118px;
+  padding: 16px 22px 14px;
+  border-radius: 16px;
+  border-width: 1.5px;
+}
+
+body.is-fullscreen .ryan-dialogue-box::before,
+:root:fullscreen .ryan-dialogue-box::before {
+  left: -10px;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  border-right: 10px solid rgba(56, 189, 248, 0.4);
+}
+
+body.is-fullscreen .ryan-dialogue-box::after,
+:root:fullscreen .ryan-dialogue-box::after {
+  left: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 9px solid rgba(10, 16, 34, 0.96);
+}
+
+body.is-fullscreen .ryan-name-row,
+:root:fullscreen .ryan-name-row {
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+body.is-fullscreen .ryan-name,
+:root:fullscreen .ryan-name {
+  font-size: 13px;
+  letter-spacing: 2.2px;
+}
+
+body.is-fullscreen .ryan-role,
+:root:fullscreen .ryan-role {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+}
+
+body.is-fullscreen .ryan-text,
+:root:fullscreen .ryan-text {
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 52px;
+  margin-bottom: 10px;
+}
+
+body.is-fullscreen .ryan-choices,
+:root:fullscreen .ryan-choices {
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+body.is-fullscreen .ryan-choice-btn,
+:root:fullscreen .ryan-choice-btn {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  border-radius: 9px;
+}
+
+body.is-fullscreen .ryan-continue-btn,
+:root:fullscreen .ryan-continue-btn {
+  font-size: 11.5px;
+  letter-spacing: 1.4px;
+  gap: 8px;
+}
+
+body.is-fullscreen .ryan-continue-btn svg,
+:root:fullscreen .ryan-continue-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+body.is-fullscreen .ryan-results-card,
+:root:fullscreen .ryan-results-card {
+  padding: 16px 22px;
+  gap: 20px;
+  border-radius: 14px;
+}
+
+body.is-fullscreen .ryan-results-portrait,
+:root:fullscreen .ryan-results-portrait {
+  width: 90px;
+  height: 90px;
+}
+
+body.is-fullscreen .ryan-results-quote,
+:root:fullscreen .ryan-results-quote {
+  font-size: 14.5px;
+}
+
+body.is-fullscreen .ryan-results-mantra,
+:root:fullscreen .ryan-results-mantra {
+  font-size: 13px;
+}
+
+@media (display-mode: fullscreen) {
+  .ryan-guide-overlay {
+    bottom: 66px;
+    width: min(720px, calc(100vw - 48px));
+    gap: 18px;
+  }
+  .ryan-portrait-wrap,
+  .ryan-portrait {
+    width: 106px;
+    height: 106px;
+  }
+  .ryan-portrait {
+    border-width: 3.5px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 6px 24px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.28);
+  }
+  .ryan-portrait-ring {
+    inset: -5px;
+    border-width: 3px;
+  }
+  .ryan-dialogue-box {
+    min-height: 118px;
+    padding: 16px 22px 14px;
+    border-radius: 16px;
+    border-width: 1.5px;
+  }
+  .ryan-dialogue-box::before {
+    left: -10px;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-right: 10px solid rgba(56, 189, 248, 0.4);
+  }
+  .ryan-dialogue-box::after {
+    left: -8px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 9px solid rgba(10, 16, 34, 0.96);
+  }
+  .ryan-name-row {
+    gap: 10px;
+    margin-bottom: 7px;
+  }
+  .ryan-name {
+    font-size: 13px;
+    letter-spacing: 2.2px;
+  }
+  .ryan-role {
+    font-size: 11px;
+    letter-spacing: 1.2px;
+  }
+  .ryan-text {
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 52px;
+    margin-bottom: 10px;
+  }
+  .ryan-choices {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .ryan-choice-btn {
+    padding: 10px 16px;
+    font-size: 13.5px;
+    border-radius: 9px;
+  }
+  .ryan-continue-btn {
+    font-size: 11.5px;
+    letter-spacing: 1.4px;
+    gap: 8px;
+  }
+  .ryan-continue-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  .ryan-results-card {
+    padding: 16px 22px;
+    gap: 20px;
+    border-radius: 14px;
+  }
+  .ryan-results-portrait {
+    width: 90px;
+    height: 90px;
+  }
+  .ryan-results-quote {
+    font-size: 14.5px;
+  }
+  .ryan-results-mantra {
+    font-size: 13px;
+  }
+}
+
+

@@ -83,8 +83,11 @@ window.addEventListener('DOMContentLoaded', () => {
   initTitleParticles();
   initPreAssessment();
   initSimulationNotifications();
-  // Show main menu first (before name input)
-  showMainMenu();
+  // Show main menu only if not gated by Google Sign-In auth
+  const authEl = document.getElementById('cz-auth');
+  if (!authEl || !authEl.classList.contains('active')) {
+    showMainMenu();
+  }
   renderEmailList();
   initStickyNote();
   updateAppLockStates();

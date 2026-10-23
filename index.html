@@ -1793,16 +1793,12 @@
 
       <button type="button" class="tray-btn" id="tray-fullscreen-btn"
               onclick="toggleMainMenuFullscreen()"
-              title="Toggle Fullscreen [F11]"
+              title="Fullscreen [F11]"
               aria-label="Toggle fullscreen mode">
         <span class="tray-icon">
-          <!-- Enter fullscreen icon -->
+          <!-- Fullscreen icon -->
           <svg class="tray-fs-enter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/>
-          </svg>
-          <!-- Exit fullscreen icon -->
-          <svg class="tray-fs-exit" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
-            <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5"/>
           </svg>
         </span>
       </button>
@@ -2236,6 +2232,9 @@
   </div>
 </div>
 
+<!-- Background Music Audio Element (Global for Main Menu, Loading, and Story Selection) -->
+<audio id="mm-bg-audio" src="assets/sounds/Background.mp3" loop preload="auto"></audio>
+
 <!-- ── CYBERZERO MAIN MENU (Shows First) ── -->
 <div id="overlay-main-menu" class="overlay">
   <!-- Background image -->
@@ -2244,20 +2243,13 @@
   <!-- Animated scanline overlay -->
   <div class="mm-scanlines"></div>
 
-  <!-- Background Music Audio Element -->
-  <audio id="mm-bg-audio" src="assets/sounds/Background.mp3" loop preload="auto"></audio>
-
   <!-- ── Fullscreen Toggle Button (Top-Left Corner) ── -->
   <button type="button" class="mm-fullscreen-btn" id="mm-fullscreen-btn"
-          onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
+          onclick="toggleMainMenuFullscreen()" title="Fullscreen [F11]"
           aria-label="Toggle fullscreen mode">
-    <!-- Enter Fullscreen icon (default) -->
+    <!-- Fullscreen icon -->
     <svg class="mm-fs-icon mm-fs-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <!-- Exit Fullscreen icon (shown when fullscreen active) -->
-    <svg class="mm-fs-icon mm-fs-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
 
@@ -2785,15 +2777,34 @@
      JS toggles .ss-fs-visible when this overlay is active.
 ── -->
 <button type="button" id="story-fs-btn" class="story-fs-btn"
-        onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
+        onclick="toggleMainMenuFullscreen()" title="Fullscreen [F11]"
         aria-label="Toggle fullscreen mode">
   <svg class="story-fs-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
-  <svg class="story-fs-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</button>
+
+<!-- ── STORY SELECT BACKGROUND SOUND BUTTON
+     Standalone toggle button for Story Selection (bottom-right corner).
+     Synced with Main Menu background audio state.
+── -->
+<button type="button" id="story-sound-btn" class="mm-sound-btn story-sound-btn"
+        onclick="toggleMMBgMusic()" title="Toggle Background Music"
+        aria-label="Toggle background music">
+  <!-- Sound ON icon -->
+  <svg class="mm-sound-icon mm-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+    <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M19.07 4.93a10 10 0 010 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <!-- Sound OFF icon -->
+  <svg class="mm-sound-icon mm-sound-off" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none">
+    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+    <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
   </svg>
 </button>
+
 
 <!-- ── CHAPTER TITLE CARD (Cinematic Mission Intro) ── -->
 <div id="overlay-chapter-card" class="overlay" style="display:none;" aria-live="polite">
@@ -2885,13 +2896,10 @@
      Shown/hidden by JS via the 'ls-fs-visible' class.
 ── -->
 <button type="button" id="login-fs-btn" class="login-fs-btn"
-        onclick="toggleMainMenuFullscreen()" title="Toggle Fullscreen [F11]"
+        onclick="toggleMainMenuFullscreen()" title="Fullscreen [F11]"
         aria-label="Toggle fullscreen mode">
   <svg class="login-fs-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <svg class="login-fs-exit" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 </button>
 
@@ -3150,7 +3158,7 @@
 
   <!-- Comic strip stage: clean, scrollable viewport with full comic layout -->
   <div class="comic-stage" id="comic-stage" onclick="comicStripAdvance(event)">
-    <div class="comic-strip-container" id="comic-strip-container">
+    <div class="comic-strip-container comic-strip-container-ch1" id="comic-strip-container">
 
       <!-- Row 1: Panel 1 (Wide panel - Alex arrives at TechSolutions) -->
       <div class="comic-row comic-row-wide comic-row-1">
@@ -3270,6 +3278,162 @@
     <div class="comic-tap-hint" id="comic-tap-hint-ch2">Tap anywhere to advance ▶</div>
   </div>
 </div>
+
+<!-- ── CHAPTER 3 COMIC STRIP VIEWER ── -->
+<div id="overlay-comic-strip-ch3" class="overlay comic-strip-overlay">
+  <!-- Deep cinematic black background with subtle comic vignette -->
+  <div class="comic-bg-black"></div>
+
+  <!-- Comic strip stage: clean, scrollable viewport with full comic layout -->
+  <div class="comic-stage" id="comic-stage-ch3" onclick="comicStripCh3Advance(event)">
+    <div class="comic-strip-container comic-strip-container-ch3" id="comic-strip-container-ch3">
+
+      <!-- Row 1: Panel 1 (Left: Pia social media enthusiast), Panel 2 (Center: Pia posting everything), Panel 3 (Right: Work selfies) -->
+      <div class="comic-row comic-row-3col comic-row-ch3-1">
+        <div class="comic-panel-card panel-col-1" id="comic-panel-ch3-0" data-panel="0">
+          <img src="assets/Chapter3/Panel1.png" alt="Panel 1" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel1')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-2" id="comic-panel-ch3-1" data-panel="1">
+          <img src="assets/Chapter3/Panel2.png" alt="Panel 2" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel2')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-3" id="comic-panel-ch3-2" data-panel="2">
+          <img src="assets/Chapter3/Panel3.png" alt="Panel 3" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel3')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+      </div>
+
+      <!-- Row 2: Panel 4 (Left: Chasing likes & followers), Panel 5 (Center: Followers connecting dots), Panel 6 (Right: Creepy personal messages) -->
+      <div class="comic-row comic-row-3col comic-row-ch3-2">
+        <div class="comic-panel-card panel-col-1" id="comic-panel-ch3-3" data-panel="3">
+          <img src="assets/Chapter3/Panel4.png" alt="Panel 4" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel4')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-2" id="comic-panel-ch3-4" data-panel="4">
+          <img src="assets/Chapter3/Panel5.png" alt="Panel 5" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel5')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-3" id="comic-panel-ch3-5" data-panel="5">
+          <img src="assets/Chapter3/Panel6.png" alt="Panel 6" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel6')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+      </div>
+
+      <!-- Row 3: Panel 7 (Wide panel - Pia realizes danger & Cyberstalker hacker surveillance) -->
+      <div class="comic-row comic-row-wide comic-row-ch3-3">
+        <div class="comic-panel-card" id="comic-panel-ch3-6" data-panel="6">
+          <img src="assets/Chapter3/Panel7.png" alt="Panel 7" class="comic-panel-img" draggable="false" onerror="comicPanelCh3Fallback(this, 'Panel7')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Finish Action: Shown ONLY after all panels finish revealing -->
+    <div class="comic-finish-wrap" id="comic-finish-wrap-ch3">
+      <button type="button" class="comic-tap-continue-btn" id="comic-tap-continue-btn-ch3" onclick="event.stopPropagation(); comicStripCh3Finish()">
+        <svg class="comic-desktop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span>Tap to continue</span>
+      </button>
+    </div>
+
+    <!-- Tap hint: bottom-center, fades in after first panel -->
+    <div class="comic-tap-hint" id="comic-tap-hint-ch3">Tap anywhere to advance ▶</div>
+</div>
+</div>
+
+<!-- ── CHAPTER 4 COMIC STRIP VIEWER ── -->
+<div id="overlay-comic-strip-ch4" class="overlay comic-strip-overlay">
+  <!-- Deep cinematic black background with subtle comic vignette -->
+  <div class="comic-bg-black"></div>
+
+  <!-- Comic strip stage: clean, scrollable viewport with full comic layout -->
+  <div class="comic-stage" id="comic-stage-ch4" onclick="comicStripCh4Advance(event)">
+    <div class="comic-strip-container comic-strip-container-ch4" id="comic-strip-container-ch4">
+
+      <!-- Row 1: Panel 1 (Left: Team discovers locked systems), Panel 2 (Center: Ransomware lock screen), Panel 3 (Right: Team panic & accusations) -->
+      <div class="comic-row comic-row-3col comic-row-ch4-1">
+        <div class="comic-panel-card panel-col-1" id="comic-panel-ch4-0" data-panel="0">
+          <img src="assets/Chapter4/Panel1.png" alt="Panel 1" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel1')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-2" id="comic-panel-ch4-1" data-panel="1">
+          <img src="assets/Chapter4/Panel2.png" alt="Panel 2" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel2')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-3" id="comic-panel-ch4-2" data-panel="2">
+          <img src="assets/Chapter4/Panel3.png" alt="Panel 3" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel3')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+      </div>
+
+      <!-- Row 2: Panel 4 (Left: Blaming Ryan), Panel 5 (Center: Ethan & Ryan urging calm), Panel 6 (Right: Alex defending herself) -->
+      <div class="comic-row comic-row-3col comic-row-ch4-2">
+        <div class="comic-panel-card panel-col-1" id="comic-panel-ch4-3" data-panel="3">
+          <img src="assets/Chapter4/Panel4.png" alt="Panel 4" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel4')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-2" id="comic-panel-ch4-4" data-panel="4">
+          <img src="assets/Chapter4/Panel5.png" alt="Panel 5" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel5')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-3" id="comic-panel-ch4-5" data-panel="5">
+          <img src="assets/Chapter4/Panel6.png" alt="Panel 6" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel6')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+      </div>
+
+      <!-- Row 3: Panel 7 (Left: Alex & Pia realize logs are gone), Panel 8 (Center: Office PCs infected), Panel 9 (Right: Hacker mastermind) -->
+      <div class="comic-row comic-row-3col comic-row-ch4-3">
+        <div class="comic-panel-card panel-col-1" id="comic-panel-ch4-6" data-panel="6">
+          <img src="assets/Chapter4/Panel7.png" alt="Panel 7" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel7')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-2" id="comic-panel-ch4-7" data-panel="7">
+          <img src="assets/Chapter4/Panel8.png" alt="Panel 8" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel8')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+        <div class="comic-panel-card panel-col-3" id="comic-panel-ch4-8" data-panel="8">
+          <img src="assets/Chapter4/Panel9.png" alt="Panel 9" class="comic-panel-img" draggable="false" onerror="comicPanelCh4Fallback(this, 'Panel9')">
+          <div class="comic-panel-highlight-border"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Finish Action: Shown ONLY after all panels finish revealing -->
+    <div class="comic-finish-wrap" id="comic-finish-wrap-ch4">
+      <button type="button" class="comic-tap-continue-btn" id="comic-tap-continue-btn-ch4" onclick="event.stopPropagation(); comicStripCh4Finish()">
+        <svg class="comic-desktop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span>Tap to continue</span>
+      </button>
+    </div>
+
+    <!-- Tap hint: bottom-center, fades in after first panel -->
+    <div class="comic-tap-hint" id="comic-tap-hint-ch4">Tap anywhere to advance ▶</div>
+  </div>
+</div>
+
+<!-- ── COMIC STRIP FULLSCREEN BUTTON
+     Placed outside the overlays so transform:scale() cannot trap it.
+     Matches #story-fs-btn in Story Selection.
+── -->
+<button type="button" id="comic-fs-btn" class="story-fs-btn comic-fs-btn"
+        onclick="event.stopPropagation(); toggleMainMenuFullscreen()" title="Fullscreen [F11]"
+        aria-label="Toggle fullscreen mode">
+  <svg class="story-fs-enter" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
 
 <!-- ── TRAINING SLIDES ── -->
 <div id="overlay-training" class="overlay">

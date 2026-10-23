@@ -470,6 +470,11 @@ function openEmail(idx) {
     const flagBtn = document.getElementById('flag-mode-btn');
     if (flagBtn) flagBtn.classList.remove('btn-pulse-highlight', 'tutorial-flag-blink');
   }
+
+  // Live react to opening an email on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') {
+    updateStickyChecklist();
+  }
 }
 
 function renderEmailContent(email) {
@@ -485,7 +490,7 @@ function renderEmailContent(email) {
     const verdictClass = isCorrect ? 'correct' : 'wrong';
     const banner = document.createElement('div');
     banner.className = `case-closed-banner ${verdictClass}`;
-    banner.innerHTML = `🔒 <strong>CASE CLOSED</strong> — ${verdictText}: ${actualType}. You can review this email, but verdicts can only be submitted once.`;
+    banner.innerHTML = `🔒 ${verdictText}: ${actualType}. You can review this email, but verdicts can only be submitted once.`;
     content.appendChild(banner);
   } else {
     content.classList.remove('case-closed-reviewed');
