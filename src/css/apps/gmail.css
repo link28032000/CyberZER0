@@ -761,6 +761,7 @@
   overflow: hidden;
 }
 .bdt-progress-fill {
+  width: 0%;
   height: 100%;
   background: linear-gradient(90deg, #06b6d4, #38bdf8);
   border-radius: 3px;

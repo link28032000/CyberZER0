@@ -912,11 +912,11 @@ body.is-fullscreen #story-fs-btn,
 }
 
 /* ════════════════════════════════════════════════════════════
-   STORY SELECT PAGE — STANDALONE SOUND BUTTON
+   STORY SELECT PAGE — BACKGROUND SOUND WIDGET
    Positioned at bottom-right corner to match Main Menu.
    Toggled via .ss-sound-visible when Story Selection is active.
 ════════════════════════════════════════════════════════════ */
-#story-sound-btn {
+#story-sound-widget {
   position: fixed;
   bottom: 24px;
   right: 24px;
@@ -924,15 +924,14 @@ body.is-fullscreen #story-fs-btn,
   display: none;
 }
 
-#story-sound-btn.ss-sound-visible {
+#story-sound-widget.ss-sound-visible {
   display: flex !important;
 }
 
 @media (max-width: 768px) {
-  #story-sound-btn {
+  #story-sound-widget {
     bottom: 16px;
     right: 16px;
-    padding: 10px;
   }
 }
 

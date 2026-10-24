@@ -109,6 +109,8 @@
 .ws-toggle-btn { padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8; }
 /* Section header with top margin */
 .settings-section-header-mt { margin-top: 16px; }
+.settings-desc { color: #64748b; font-size: 13px; padding: 12px 0; }
+.ws-status-row-mt { margin-top: 10px; }
 /* Bluetooth device rows */
 .bt-device-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .bt-device-row-connected { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); }

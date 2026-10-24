@@ -276,7 +276,7 @@ function lsGoBack() {
  */
 let _selectedStoryCard = null;
 
-function selectStoryCard(cardEl, categoryId, chapterNum) {
+function selectStoryCard(cardEl, categoryId, chapterNum, playSound = true) {
   if (!cardEl) return;
 
   const isAlreadySelected = cardEl.classList.contains('ss-card-selected');
@@ -322,6 +322,14 @@ function selectStoryCard(cardEl, categoryId, chapterNum) {
     storySelectLocked(chapterNum);
   } else {
     // Cyber chime sound for unlocked target lock
+    if (playSound && typeof AudioManager !== 'undefined') {
+      AudioManager.unlock();
+      if (typeof AudioManager.playMissionSelect === 'function') {
+        AudioManager.playMissionSelect();
+      } else {
+        AudioManager.playChime(true);
+      }
+    }
 
     // Immediately update profile to match the selected chapter
     updateLoginScreenForChapter(categoryId);
@@ -343,6 +351,10 @@ function selectStoryCard(cardEl, categoryId, chapterNum) {
 
 /** Story Selection — play unlocked chapter */
 function storySelectPlay(categoryId) {
+  if (typeof AudioManager !== 'undefined') {
+    AudioManager.unlock();
+    AudioManager.playMouseClick();
+  }
   // Stop background music as mission intro begins
   if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
 
@@ -438,6 +450,10 @@ function storySelectPlay(categoryId) {
 
 /** Story Selection — clicked a locked chapter */
 function storySelectLocked(chapterNum) {
+  if (typeof AudioManager !== 'undefined') {
+    AudioManager.unlock();
+    AudioManager.playWrong();
+  }
   const messages = {
     2: '🔒 Complete Chapter 1 first to unlock Chapter 2!',
     3: '🔒 Complete Chapters 1–2 first to unlock Chapter 3!',
@@ -516,7 +532,7 @@ function refreshStorySelectLocks() {
     }
 
     if (targetCard) {
-      selectStoryCard(targetCard, targetCatId, targetChapterNum);
+      selectStoryCard(targetCard, targetCatId, targetChapterNum, false);
     }
   } else if (_selectedStoryCard && _selectedStoryCard.categoryId) {
     updateLoginScreenForChapter(_selectedStoryCard.categoryId);
@@ -900,7 +916,44 @@ document.addEventListener('keydown', function(e) {
       document.getElementById('story-sound-btn')
     ].filter(Boolean);
   }
+  function _widgets() {
+    return [
+      document.getElementById('mm-sound-widget'),
+      document.getElementById('story-sound-widget')
+    ].filter(Boolean);
+  }
   function _muted() { return localStorage.getItem('czBgMusicMuted') === 'true'; }
+
+  function _volume() {
+    const saved = localStorage.getItem('czBgMusicVolume');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) return parsed;
+    }
+    return 70; // 70% default
+  }
+
+  function _syncVolumeSliders(val) {
+    const sliders = [
+      document.getElementById('mm-volume-slider'),
+      document.getElementById('story-volume-slider')
+    ].filter(Boolean);
+
+    const labels = [
+      document.getElementById('mm-volume-val'),
+      document.getElementById('story-volume-val')
+    ].filter(Boolean);
+
+    const isMuted = _muted();
+    sliders.forEach(slider => {
+      slider.value = val;
+      slider.style.setProperty('--fill-pct', `${val}%`);
+    });
+
+    labels.forEach(label => {
+      label.textContent = isMuted ? 'Muted' : `${val}%`;
+    });
+  }
 
   function _isBgmActive() {
     // Background sound must NEVER play while the Google sign-in auth overlay is open
@@ -939,9 +992,11 @@ document.addEventListener('keydown', function(e) {
   function _syncStorySoundBtn() {
     const ss = document.getElementById('overlay-story-select');
     const btn = document.getElementById('story-sound-btn');
-    if (!ss || !btn) return;
+    const widget = document.getElementById('story-sound-widget');
+    if (!ss) return;
     const isActive = ss.classList.contains('active') || ss.style.display === 'flex';
-    btn.classList.toggle('ss-sound-visible', isActive);
+    if (btn) btn.classList.toggle('ss-sound-visible', isActive);
+    if (widget) widget.classList.toggle('ss-sound-visible', isActive);
   }
 
   /* ── Sync button icon only (no playback side-effects) ── */
@@ -959,6 +1014,10 @@ document.addEventListener('keydown', function(e) {
       if (onIcon)  onIcon.style.display  = muted ? 'none' : '';
       if (offIcon) offIcon.style.display = muted ? ''     : 'none';
     });
+    _widgets().forEach(w => {
+      w.classList.toggle('mm-sound-muted', muted);
+    });
+    _syncVolumeSliders(_volume());
   }
 
   /* ── Core: start or stop audio based on current state ── */
@@ -966,6 +1025,11 @@ document.addEventListener('keydown', function(e) {
     const audio = _audio();
     if (!audio) return;
     const muted = _muted();
+    const vol = _volume();
+    try {
+      audio.volume = muted ? 0 : (vol / 100);
+    } catch (e) {}
+
     if (_isBgmActive() && !muted) {
       // Main menu, Loading, or Story selection is active AND user wants music → play
       audio.play().catch(() => {});
@@ -975,8 +1039,43 @@ document.addEventListener('keydown', function(e) {
     }
     _syncIcon(muted);
     _syncStorySoundBtn();
+    _syncVolumeSliders(vol);
     localStorage.setItem('czBgMusicMuted', muted ? 'true' : 'false');
   }
+
+  /* ── Volume Slider Change Handler ── */
+  window.setMMBgMusicVolume = function (val) {
+    const audio = _audio();
+    const num = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+    localStorage.setItem('czBgMusicVolume', num);
+
+    if (num === 0) {
+      localStorage.setItem('czBgMusicMuted', 'true');
+      if (audio) {
+        try { audio.volume = 0; } catch (e) {}
+      }
+      _syncIcon(true);
+    } else {
+      const wasMuted = _muted();
+      if (wasMuted) {
+        localStorage.setItem('czBgMusicMuted', 'false');
+        _syncIcon(false);
+      }
+      if (audio) {
+        try {
+          audio.volume = num / 100;
+          if (wasMuted && _isBgmActive()) {
+            audio.play().catch(() => {});
+          }
+        } catch (e) {}
+      }
+    }
+
+    _syncVolumeSliders(num);
+    if (typeof AudioManager !== 'undefined') {
+      try { AudioManager.playSliderTick(); } catch (e) {}
+    }
+  };
 
   /* ── Toggle called by the 🔊 button (Main Menu & Story Selection) ── */
   window.toggleMMBgMusic = function () {
@@ -985,6 +1084,10 @@ document.addEventListener('keydown', function(e) {
     const currentMuted = _muted();
     const nowMuted = !currentMuted;
     localStorage.setItem('czBgMusicMuted', nowMuted ? 'true' : 'false');
+    if (!nowMuted && _volume() === 0) {
+      localStorage.setItem('czBgMusicVolume', '70');
+      _syncVolumeSliders(70);
+    }
     _apply();
   };
 
@@ -1015,6 +1118,14 @@ document.addEventListener('keydown', function(e) {
   document.addEventListener('DOMContentLoaded', function () {
     _syncStorySoundBtn();
     _syncIcon(_muted());
+    _syncVolumeSliders(_volume());
+
+    // Dismiss active mobile slider if touched outside
+    document.addEventListener('pointerdown', function (e) {
+      if (!e.target.closest('.mm-sound-widget')) {
+        _widgets().forEach(w => w.classList.remove('active'));
+      }
+    });
 
     const mm = document.getElementById('overlay-main-menu');
     const loadScreen = document.getElementById('overlay-loading');
@@ -1126,6 +1237,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const isActive = storyOverlay.classList.contains('active') ||
                      storyOverlay.style.display === 'flex';
     storyFsBtn.classList.toggle('ss-fs-visible', isActive);
+    const storySoundWidget = document.getElementById('story-sound-widget');
+    if (storySoundWidget) {
+      storySoundWidget.classList.toggle('ss-sound-visible', isActive);
+    }
   }
 
   _syncStoryFsBtn();

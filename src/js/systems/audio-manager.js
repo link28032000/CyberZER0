@@ -517,6 +517,67 @@ const AudioManager = (() => {
     } catch (e) {}
   }
 
+  // Mission Card Target Lock / Selection Sound — Sci-Fi Holographic Ping
+  function playMissionSelect() {
+    const effGain = getEffectiveSfxGain();
+    if (effGain <= 0.001) return;
+    const ac = getContext();
+    if (!ac) return;
+
+    try {
+      const now = ac.currentTime;
+
+      // 1. Crisp transient snap (digital click)
+      const clickOsc = ac.createOscillator();
+      const clickGain = ac.createGain();
+      clickOsc.type = 'triangle';
+      clickOsc.frequency.setValueAtTime(2800, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(450, now + 0.012);
+      clickGain.gain.setValueAtTime(0.25 * effGain, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.014);
+      clickOsc.connect(clickGain);
+      clickGain.connect(ac.destination);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.016);
+
+      // 2. Rising dual cyber chime arpeggio (target lock-on)
+      const tones = [
+        { freq: 659.25, time: 0.01, dur: 0.12, vol: 0.18 }, // E5
+        { freq: 987.77, time: 0.055, dur: 0.16, vol: 0.22 }, // B5
+        { freq: 1318.51, time: 0.105, dur: 0.24, vol: 0.25 }  // E6
+      ];
+
+      tones.forEach(t => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(t.freq, now + t.time);
+
+        gain.gain.setValueAtTime(0.0001, now + t.time);
+        gain.gain.linearRampToValueAtTime(t.vol * effGain, now + t.time + 0.006);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + t.time + t.dur);
+
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(now + t.time);
+        osc.stop(now + t.time + t.dur + 0.02);
+      });
+
+      // 3. Low resonant body thump for tactile weight
+      const thump = ac.createOscillator();
+      const thumpGain = ac.createGain();
+      thump.type = 'triangle';
+      thump.frequency.setValueAtTime(140, now);
+      thump.frequency.exponentialRampToValueAtTime(50, now + 0.05);
+      thumpGain.gain.setValueAtTime(0.18 * effGain, now);
+      thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+      thump.connect(thumpGain);
+      thumpGain.connect(ac.destination);
+      thump.start(now);
+      thump.stop(now + 0.06);
+    } catch (e) {}
+  }
+
   // ── Pre-test sound set (calm, friendly, synthesized) ───────────────
   function _tone(ac, o) {
     const osc = ac.createOscillator();
@@ -659,6 +720,7 @@ const AudioManager = (() => {
     playConfettiPop,
     playPerfectFanfare,
     playResultGood,
-    playResultEncourage
+    playResultEncourage,
+    playMissionSelect
   };
 })();

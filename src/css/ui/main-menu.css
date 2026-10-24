@@ -1254,42 +1254,21 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 /* ════════════════════════════════════════════════════════════
-   BACKGROUND MUSIC TOGGLE BUTTON — Below fullscreen btn, top-left
+   BACKGROUND MUSIC WIDGET & VERTICAL SLIDER (Main Menu & Story Selection)
 ════════════════════════════════════════════════════════════ */
-.mm-sound-btn {
+.mm-sound-widget {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  top: auto;
-  left: auto;
   z-index: 9999;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 13px;
-  border-radius: 999px;
-  background: rgba(4, 14, 40, 0.80);
-  border: 1px solid rgba(0, 229, 255, 0.35);
-  color: rgba(0, 229, 255, 0.90);
-  cursor: pointer;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.55),
-    0 0 16px rgba(0, 229, 255, 0.10),
-    inset 0 1px 0 rgba(255,255,255,0.06);
-  font-size: 11px;
-  font-family: inherit;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 600;
+  justify-content: flex-end;
+  width: 48px;
+  height: 48px;
+  user-select: none;
   animation: mmSoundBtnIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  transition:
-    background 0.22s ease,
-    border-color 0.22s ease,
-    color 0.18s ease,
-    box-shadow 0.22s ease,
-    transform 0.15s ease;
 }
 
 @keyframes mmSoundBtnIn {
@@ -1297,50 +1276,91 @@ body.is-fullscreen .mm-fullscreen-btn,
   to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
 
-.mm-sound-btn:hover {
-  background: rgba(0, 229, 255, 0.13);
-  border-color: rgba(0, 229, 255, 0.60);
-  color: #00f8ff;
+/* ── Sound Button (Original Standalone Circular Cyber UI) ── */
+.mm-sound-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(4, 14, 40, 0.80);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  color: rgba(0, 229, 255, 0.90);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  outline: none;
   box-shadow:
-    0 4px 22px rgba(0, 0, 0, 0.55),
-    0 0 22px rgba(0, 229, 255, 0.20);
+    0 4px 20px rgba(0, 0, 0, 0.50),
+    0 0 12px rgba(0, 229, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.2s ease,
+    box-shadow 0.25s ease,
+    transform 0.15s ease;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.mm-sound-btn:hover {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: #00f8ff;
+  color: #ffffff;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.60),
+    0 0 20px rgba(0, 229, 255, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  transform: scale(1.08);
 }
 
 .mm-sound-btn:active {
-  transform: scale(0.93);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+  transform: scale(0.95);
 }
 
-/* Muted state — dimmed, amber tint */
+/* Muted state for button */
 .mm-sound-btn.mm-sound-muted {
-  color: rgba(255, 160, 80, 0.70);
-  border-color: rgba(255, 160, 80, 0.30);
+  color: rgba(255, 160, 80, 0.85);
+  background: rgba(255, 140, 60, 0.10);
+  border-color: rgba(255, 160, 80, 0.35);
   box-shadow:
-    0 2px 14px rgba(0, 0, 0, 0.45),
-    0 0 8px rgba(255, 160, 80, 0.10);
+    0 2px 12px rgba(0, 0, 0, 0.40),
+    0 0 8px rgba(255, 160, 80, 0.12);
 }
 
 .mm-sound-btn.mm-sound-muted:hover {
-  background: rgba(255, 140, 60, 0.12);
-  border-color: rgba(255, 160, 80, 0.55);
-  color: #ffb060;
+  background: rgba(255, 140, 60, 0.20);
+  border-color: #ff9f43;
+  color: #ffffff;
   box-shadow:
-    0 4px 22px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(255, 140, 60, 0.22);
+    0 4px 18px rgba(0, 0, 0, 0.50),
+    0 0 16px rgba(255, 140, 60, 0.35);
 }
 
-/* Subtle pulse animation when music is playing */
+/* Pulse animation when music is playing */
 .mm-sound-btn.mm-sound-playing {
-  animation: mmUserBarIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both,
-             mmSoundPulse 3s ease-in-out 0.6s infinite;
+  animation: mmSoundPulse 3s ease-in-out infinite;
 }
 
 @keyframes mmSoundPulse {
-  0%, 100% { box-shadow: 0 2px 14px rgba(0,0,0,0.45), 0 0 12px rgba(0,229,255,0.07); }
-  50%       { box-shadow: 0 2px 14px rgba(0,0,0,0.45), 0 0 20px rgba(0,229,255,0.28); }
+  0%, 100% {
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.50),
+      0 0 12px rgba(0, 229, 255, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.55),
+      0 0 22px rgba(0, 229, 255, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
 }
 
-/* Icon sizing */
 .mm-sound-icon {
   flex-shrink: 0;
   width: 18px;
@@ -1350,6 +1370,205 @@ body.is-fullscreen .mm-fullscreen-btn,
 
 .mm-sound-btn:hover .mm-sound-icon {
   transform: scale(1.15);
+}
+
+/* ── Vertical Slider Popup Panel (Floats directly above the button) ── */
+.mm-sound-slider-panel {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px 8px 6px;
+  width: 44px;
+  border-radius: 22px;
+  background: rgba(4, 14, 40, 0.90);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.65),
+    0 0 16px rgba(0, 229, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.22s,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+  z-index: 10;
+}
+
+/* Invisible bridge so mouse hover doesn't break between button and panel */
+.mm-sound-slider-panel::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -8px;
+  right: -8px;
+  height: 16px;
+}
+
+/* Reveal slider panel on hover, focus-within, or active state */
+.mm-sound-widget:hover .mm-sound-slider-panel,
+.mm-sound-widget:focus-within .mm-sound-slider-panel,
+.mm-sound-widget.active .mm-sound-slider-panel {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Muted state panel theme */
+.mm-sound-widget.mm-sound-muted .mm-sound-slider-panel {
+  border-color: rgba(255, 160, 80, 0.35);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.65),
+    0 0 14px rgba(255, 160, 80, 0.15);
+}
+
+/* Volume Percentage Label */
+.mm-volume-val {
+  font-family: 'Orbitron', monospace, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #00f0ff;
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+  line-height: 1;
+  user-select: none;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.mm-sound-widget.mm-sound-muted .mm-volume-val {
+  color: #ffb060;
+  text-shadow: 0 0 8px rgba(255, 176, 96, 0.6);
+}
+
+/* Slider Track Wrapper */
+.mm-slider-track-wrap {
+  position: relative;
+  width: 32px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom Cyber Range Input rotated -90deg (vertical, fills from bottom to top) */
+.mm-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  background: linear-gradient(to right, #00f0ff 0%, #00f0ff var(--fill-pct, 70%), rgba(255, 255, 255, 0.16) var(--fill-pct, 70%), rgba(255, 255, 255, 0.16) 100%);
+  transition: background 0.08s ease;
+  margin: 0;
+}
+
+.mm-sound-widget.mm-sound-muted .mm-volume-slider {
+  background: linear-gradient(to right, #ff9f43 0%, #ff9f43 var(--fill-pct, 70%), rgba(255, 255, 255, 0.14) var(--fill-pct, 70%), rgba(255, 255, 255, 0.14) 100%);
+}
+
+.mm-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.85);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mm-sound-widget.mm-sound-muted .mm-volume-slider::-webkit-slider-thumb {
+  border-color: #ff9f43;
+  box-shadow: 0 0 10px rgba(255, 159, 67, 0.8);
+}
+
+.mm-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 1);
+}
+
+.mm-volume-slider::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+  background: #00f0ff;
+}
+
+.mm-volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.85);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mm-sound-widget.mm-sound-muted .mm-volume-slider::-moz-range-thumb {
+  border-color: #ff9f43;
+  box-shadow: 0 0 10px rgba(255, 159, 67, 0.8);
+}
+
+.mm-volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 1);
+}
+
+/* Subtle speaker icon at bottom of slider panel */
+.mm-slider-bottom-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 229, 255, 0.50);
+  line-height: 1;
+}
+
+.mm-sound-widget.mm-sound-muted .mm-slider-bottom-icon {
+  color: rgba(255, 160, 80, 0.50);
+}
+
+@media (max-width: 768px) {
+  .mm-sound-widget {
+    bottom: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+  .mm-sound-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .mm-sound-slider-panel {
+    width: 42px;
+    padding: 8px 4px 6px 4px;
+  }
+  .mm-slider-track-wrap {
+    height: 90px;
+    width: 28px;
+  }
+  .mm-volume-slider {
+    width: 82px;
+  }
 }
 
 
