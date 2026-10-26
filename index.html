@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="src/css/story/story-select.css">
   <link rel="stylesheet" href="src/css/systems/ryan-guide.css">
   <link rel="stylesheet" href="src/css/systems/ryan-pretest.css">
+  <link rel="stylesheet" href="src/css/systems/ryan-posttest.css">
   <link rel="stylesheet" href="src/css/chapters/ch1-phishing-ui.css">
   <link rel="stylesheet" href="src/css/ui/auth.css">
 </head>
@@ -261,6 +262,10 @@
             <input type="text" class="browser-url-bar" id="browser-url-input" value="" placeholder="Search Google, cyber threat intel, or enter URL..." autocomplete="off" spellcheck="false" onkeydown="handleBrowserUrlKey(event)" onfocus="this.select()">
             <button type="button" class="browser-go-btn" onclick="submitBrowserUrl()" title="Navigate / Search">➔</button>
           </div>
+          <div class="browser-actions-strip">
+            <button type="button" class="browser-action-icon-btn" onclick="toggleBrowserBookmark()" title="Bookmark this tab">⭐</button>
+            <button type="button" class="browser-action-icon-btn" onclick="showToast('🧩 Extensions: CyberShield Active', 'info')" title="Extensions">🧩</button>
+          </div>
         </div>
       </div>
 
@@ -269,7 +274,8 @@
           <div class="google-logo"><span class="gl-blue">G</span><span class="gl-red">o</span><span class="gl-yellow">o</span><span class="gl-blue">g</span><span class="gl-green">l</span><span class="gl-red">e</span></div>
           <div class="google-search-box">
             <span class="google-search-icon">🔍</span>
-            <input type="text" id="browser-home-search" class="google-search-input" placeholder="Search Google or type a URL (e.g. malware, phishing, cisa.gov)" autocomplete="off" spellcheck="false" onkeydown="handleHomeSearchKey(event)">
+            <input type="text" id="browser-home-search" class="google-search-input" placeholder="Search Google or type a URL (e.g. malware, phishing, cisa.gov)" autocomplete="off" spellcheck="false" onkeydown="handleHomeSearchKey(event)" oninput="handleHomeSearchInput(this)">
+            <button type="button" class="google-search-clear" id="browser-home-search-clear" style="display:none;" onclick="clearHomeSearch()" title="Clear">✕</button>
           </div>
           <div class="google-search-actions">
             <button type="button" class="google-btn" onclick="submitHomeSearch()">Google Search</button>
@@ -1022,7 +1028,7 @@
             </div>
           </div>
           <!-- Notification badge -->
-          <div class="pl-notif-badge hidden" id="pl-notif-badge">!</div>
+          <div class="pl-notif-badge hidden" id="pl-notif-badge" style="display: none !important;">!</div>
         </div>
         <div class="pl-device-label" title="Mobile Phone Connected">
           <span class="pl-device-name">📱 Mobile Phone</span>
@@ -2426,7 +2432,6 @@
           </span>
           <span class="mm-btn-divider" aria-hidden="true"></span>
           <span class="mm-btn-label">Achievement</span>
-          <span class="mm-ach-claim-badge hidden" id="mm-ach-claim-badge">CLAIM</span>
         </div>
       </button>
 
@@ -4317,7 +4322,7 @@
 <!-- ════════════════════════════════════════════════════════
      RYAN PRE-TEST — 20-Question Cybersecurity Baseline
 ════════════════════════════════════════════════════════ -->
-<div id="ryan-pretest-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Cybersecurity Pre-Test">
+<div id="ryan-pretest-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Pre-Test">
   <div id="ryan-pretest-panel">
 
     <!-- Header: Ryan portrait + title -->
@@ -4330,7 +4335,7 @@
       </div>
       <div class="rpt-title-block">
         <div class="rpt-label">Ryan &middot; IT Support Mentor</div>
-        <div class="rpt-title">Cybersecurity Pre-Test</div>
+        <div class="rpt-title">Pre-Test</div>
         <div class="rpt-subtitle" id="rpt-subtitle">Take your time. There&#39;s no pressure, just answer honestly.</div>
       </div>
     </div>
@@ -4348,6 +4353,73 @@
 
     <!-- Dynamic question body (rendered by JS) -->
     <div id="rpt-body"></div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     RYAN POST-TEST CONFIRMATION MODAL ("Are you sure?")
+════════════════════════════════════════════════════════ -->
+<div id="ryan-posttest-confirm-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Confirm Post-Test">
+  <div class="rpost-confirm-card">
+    <div class="rpost-confirm-glow"></div>
+    <div class="rpost-confirm-badge">📝 ASSESSMENT</div>
+    <div class="rpost-confirm-icon-wrap">📝</div>
+    <h3 class="rpost-confirm-title">Begin Post-Test?</h3>
+    <p class="rpost-confirm-subtitle">Answer 20 multiple-choice questions based on what you learned.</p>
+    
+    <div class="rpost-confirm-info-box">
+      <div class="rpost-confirm-info-item">
+        <span class="rpost-confirm-info-icon">📋</span>
+        <span>20 Multiple-Choice Questions</span>
+      </div>
+      <div class="rpost-confirm-info-item">
+        <span class="rpost-confirm-info-icon">⏱️</span>
+        <span>Self-paced &middot; No time limit</span>
+      </div>
+    </div>
+
+    <div class="rpost-confirm-actions">
+      <button type="button" class="rpost-confirm-btn rpost-confirm-btn-no" id="rpost-confirm-no-btn">✕ Review Later</button>
+      <button type="button" class="rpost-confirm-btn rpost-confirm-btn-yes" id="rpost-confirm-yes-btn">✓ Begin Post-Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     RYAN POST-TEST — 20-Question Assessment
+════════════════════════════════════════════════════════ -->
+<div id="ryan-posttest-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Post-Test">
+  <div id="ryan-posttest-panel">
+
+    <!-- Header: Ryan portrait + title -->
+    <div class="rpost-header">
+      <div class="rpost-portrait-wrap">
+        <div class="rpost-portrait-ring"></div>
+        <div class="rpost-portrait">
+          <img src="assets/Character/Ryan.png" alt="Ryan, IT Support Mentor">
+        </div>
+      </div>
+      <div class="rpost-title-block">
+        <div class="rpost-label">Ryan &middot; IT Support Mentor</div>
+        <div class="rpost-title">Post-Test</div>
+        <div class="rpost-subtitle" id="rpost-subtitle">Inspect each question carefully and apply what you learned.</div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="rpost-progress-wrap">
+      <div class="rpost-progress-row">
+        <span class="rpost-q-counter" id="rpost-q-counter">Question 1 / 20</span>
+        <span class="rpost-q-total">Post-Test &middot; 20 Questions</span>
+      </div>
+      <div class="rpost-progress-bar">
+        <div class="rpost-progress-fill" id="rpost-progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Dynamic question body (rendered by JS) -->
+    <div id="rpost-body"></div>
 
   </div>
 </div>
@@ -4408,6 +4480,7 @@
 <script src="src/js/systems/phish-tutorial.js"></script>
 <script src="src/js/systems/ryan-guide.js"></script>
 <script src="src/js/systems/ryan-pretest.js"></script>
+<script src="src/js/systems/ryan-posttest.js"></script>
 <script src="src/js/systems/runtime-patches.js"></script>
 <script src="src/js/systems/ryan-welcome.js"></script>
 <script src="src/js/apps/settings-about.js"></script>
