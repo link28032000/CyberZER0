@@ -919,8 +919,6 @@ function toggleStickyPostTestItem(event) {
     else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
     else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
     renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
-  } else {
-    updateStickyChecklist();
   }
 }
 
