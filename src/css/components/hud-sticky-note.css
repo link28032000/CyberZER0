@@ -41,41 +41,42 @@
   right: 24px;
   width: 330px;
   max-width: calc(100vw - 32px);
-  height: 480px;
-  max-height: min(560px, calc(100vh - 80px));
+  height: 390px;
+  max-height: min(520px, calc(100vh - 84px));
   display: flex;
   flex-direction: column;
   z-index: 4500;
-  background: linear-gradient(175deg, #fffbc8 0%, #fff176 28%, #ffee55 70%, #fcd34d 100%);
-  color: #1e293b;
-  border: 1px solid rgba(234, 179, 8, 0.45);
-  border-radius: 6px 6px 12px 12px;
-  padding: 18px 14px 14px;
+  background: #fff49c; /* Exact Microsoft Sticky Notes body yellow */
+  color: #262626;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0px; /* Sharp Windows 10 rectangle */
+  padding: 0;
   box-sizing: border-box;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28), 0 4px 12px rgba(161, 98, 7, 0.18), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.20), 0 2px 8px rgba(0, 0, 0, 0.12);
   transform: none;
-  font-family: var(--font-primary, 'Inter', sans-serif);
-  transition: box-shadow 200ms ease, opacity 180ms ease;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
+  transition: box-shadow 180ms ease, opacity 180ms ease;
   user-select: none;
+  overflow: hidden;
 }
 .sticky-note:hover {
-  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.32), 0 5px 14px rgba(161, 98, 7, 0.22), 0 1px 0 rgba(255, 255, 255, 0.95) inset;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24), 0 4px 12px rgba(0, 0, 0, 0.14);
 }
 .sticky-note.hidden { display: none; }
 .sticky-note.dragging {
   transition: none;
-  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.42), 0 4px 12px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30), 0 6px 16px rgba(0, 0, 0, 0.16);
   cursor: grabbing;
-  transform: scale(1.02);
 }
 
 .sticky-note.collapsed {
   height: auto !important;
-  max-height: fit-content !important;
-  padding-bottom: 8px;
+  max-height: 34px !important;
+  padding: 0 !important;
 }
-.sticky-note.collapsed .sticky-note-scroll {
-  display: none;
+.sticky-note.collapsed .sticky-note-scroll,
+.sticky-note.collapsed .sticky-note-footer {
+  display: none !important;
 }
 
 .sticky-note.sticky-note-pop {
@@ -86,105 +87,154 @@
   outline: none !important;
 }
 
+/* PC Sticky Notes has no physical scotch tape */
 .sticky-note-tape {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-1.5deg);
-  width: 76px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(2px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  cursor: grab;
-  border-radius: 2px;
-  z-index: 2;
+  display: none !important;
 }
-.sticky-note.dragging .sticky-note-tape,
-.sticky-note.dragging .sticky-note-header { cursor: grabbing; }
 
+/* Windows Microsoft Sticky Notes Header (Darker Yellow Top Band from screenshot) */
 .sticky-note-header {
+  height: 34px;
+  padding: 0 4px 0 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1.5px solid rgba(161, 98, 7, 0.28);
+  background: #fae272; /* Exact Microsoft Sticky Notes header band */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   cursor: grab;
   flex-shrink: 0;
+  box-sizing: border-box;
+  user-select: none;
+}
+.sticky-note-header:active,
+.sticky-note.dragging .sticky-note-header {
+  cursor: grabbing;
+}
+
+.sn-header-center {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
 }
 
 .sticky-note-title-text {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  color: #713f12;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b4b4b;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
 }
 
 .sticky-note-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 1px;
 }
 
-.sticky-note-btn {
-  width: 22px;
-  height: 22px;
-  border: 1px solid rgba(161, 98, 7, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #713f12;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
+/* Windows Header Action Buttons (+ on left, ··· and ✕ on right) */
+.sn-hdr-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  color: #4b4b4b;
+  font-size: 13px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 160ms ease;
+  transition: background 120ms ease, color 120ms ease;
   padding: 0;
+  line-height: 1;
 }
-.sticky-note-btn:hover {
-  background: #fff;
-  border-color: rgba(161, 98, 7, 0.55);
-  color: #451a03;
-  transform: scale(1.05);
+.sn-hdr-btn.sn-hdr-plus {
+  font-size: 20px;
+  font-weight: 300;
+  color: #4b4b4b;
 }
-.sticky-note-btn-close:hover {
-  background: #fee2e2;
-  border-color: #f87171;
-  color: #b91c1c;
+.sn-hdr-btn.sn-hdr-more {
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #4b4b4b;
+}
+.sn-hdr-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #171717;
+}
+.sn-hdr-btn.sn-hdr-close:hover {
+  background: #e81123 !important;
+  color: #ffffff !important;
 }
 
+/* Note Body Scroll Area */
 .sticky-note-scroll {
   overflow-y: auto;
   overflow-x: hidden;
   flex: 1 1 auto;
   min-height: 0;
-  padding-right: 4px;
-  padding-bottom: 4px;
+  padding: 12px 16px 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  box-sizing: border-box;
+  background: #fff49c;
 }
 .sticky-note-scroll::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 .sticky-note-scroll::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 4px;
+  background: transparent;
 }
 .sticky-note-scroll::-webkit-scrollbar-thumb {
-  background: rgba(180, 83, 9, 0.22);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 2px;
 }
 .sticky-note-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(180, 83, 9, 0.38);
+  background: rgba(0, 0, 0, 0.32);
+}
+
+/* Windows Microsoft Sticky Notes Bottom Formatting Toolbar (Matching Screenshot) */
+.sticky-note-footer {
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff49c;
+  border-top: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.sn-tool-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  border-radius: 2px;
+  color: #4b4b4b;
+  font-size: 13px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: background 120ms ease;
+  padding: 0;
+}
+.sn-tool-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #171717;
+}
+.sn-tool-btn.active {
+  background: rgba(0, 0, 0, 0.07);
+  color: #171717;
 }
 
 /* Locked State — Fills the sticky note keeping its full dimensions */

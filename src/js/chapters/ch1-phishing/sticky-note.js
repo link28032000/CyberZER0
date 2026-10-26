@@ -34,7 +34,7 @@ function showStickyNote() {
   if (typeof IconAttention !== 'undefined') IconAttention.hide('notes');
 
   const titleEl = document.getElementById('sticky-note-title');
-  if (titleEl) titleEl.textContent = '📝 Sticky Notes';
+  if (titleEl) titleEl.textContent = 'Sticky Notes';
 
   const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
   if (!scrollEl) return;
@@ -167,33 +167,41 @@ const SN_ACHIEVEMENTS = [
   {
     id: 'task_report_phishing',
     icon: '🚩',
-    label: 'Task 1: Report Phishing Emails',
-    desc: 'Correctly identify and report 5 phishing emails.',
+    label: 'Report Phishing Emails',
+    desc: 'Correctly identify & report 5 phishing emails.',
     check: () => _countCorrectPhishing() >= PHISHING_TASK_GOALS.t1,
+    currentCount: () => Math.min(_countCorrectPhishing(), PHISHING_TASK_GOALS.t1),
+    goal: 5,
     progress: () => `${Math.min(_countCorrectPhishing(), PHISHING_TASK_GOALS.t1)}/${PHISHING_TASK_GOALS.t1} phishing emails reported`
   },
   {
     id: 'task_verify_legit',
     icon: '🛡️',
-    label: 'Task 2: Verify Clean Emails',
-    desc: 'Correctly identify and confirm 5 safe, legitimate emails.',
+    label: 'Verify Clean Emails',
+    desc: 'Correctly identify & confirm 5 safe emails.',
     check: () => _countCorrectLegitimate() >= PHISHING_TASK_GOALS.t2,
+    currentCount: () => Math.min(_countCorrectLegitimate(), PHISHING_TASK_GOALS.t2),
+    goal: 5,
     progress: () => `${Math.min(_countCorrectLegitimate(), PHISHING_TASK_GOALS.t2)}/${PHISHING_TASK_GOALS.t2} clean emails verified`
   },
   {
     id: 'task_fake_sender',
     icon: '🌐',
-    label: 'Task 3: Document Fake Sender Domains',
-    desc: 'Identify and flag 5 suspicious sender addresses or domains.',
+    label: 'Document Fake Senders',
+    desc: 'Identify & flag 5 suspicious sender addresses.',
     check: () => _countFakeSenderFound() >= PHISHING_TASK_GOALS.t3,
+    currentCount: () => Math.min(_countFakeSenderFound(), PHISHING_TASK_GOALS.t3),
+    goal: 5,
     progress: () => `${Math.min(_countFakeSenderFound(), PHISHING_TASK_GOALS.t3)}/${PHISHING_TASK_GOALS.t3} fake senders documented`
   },
   {
     id: 'task_phish_indicators',
     icon: '⚠️',
-    label: 'Task 4: Identify Phishing Indicators',
-    desc: 'Identify and flag 5 phishing indicators (urgency, links, attachments).',
+    label: 'Flag Threat Indicators',
+    desc: 'Flag 5 clues (urgency, bad links, attachments).',
     check: () => _countIndicatorsFound() >= PHISHING_TASK_GOALS.t4,
+    currentCount: () => Math.min(_countIndicatorsFound(), PHISHING_TASK_GOALS.t4),
+    goal: 5,
     progress: () => `${Math.min(_countIndicatorsFound(), PHISHING_TASK_GOALS.t4)}/${PHISHING_TASK_GOALS.t4} indicators recorded`
   }
 ];
@@ -328,8 +336,8 @@ function updateStickyChecklist() {
   let html = `
     <div class="sn-progress-card">
       <div class="sn-progress-header">
-        <span class="sn-progress-title">Awareness Checklist</span>
-        <span class="sn-progress-count">${completedCount}/${totalGoals} (${progressPercent}%)</span>
+        <span class="sn-progress-title">📋 Checklist</span>
+        <span class="sn-progress-count">${completedCount} of ${totalGoals} Done</span>
       </div>
       <div class="sn-progress-bar-track">
         <div class="sn-progress-bar-fill" style="width: ${progressPercent}%;"></div>
@@ -339,14 +347,17 @@ function updateStickyChecklist() {
 
   SN_ACHIEVEMENTS.forEach(ach => {
     const done = ach.check();
-    const prog = ach.progress();
+    const curr = typeof ach.currentCount === 'function' ? ach.currentCount() : 0;
+    const goal = ach.goal || 5;
+    const progBadge = done ? `${goal} / ${goal} ✓` : `${curr} / ${goal}`;
+    const progFull = ach.progress();
     html += `
       <li class="sn-ach-item ${done ? 'sn-ach-done' : ''}">
         <div class="sn-checkbox ${done ? 'checked' : ''}" aria-hidden="true">${done ? '✓' : ''}</div>
         <div class="sn-ach-body">
           <div class="sn-ach-header-row">
             <span class="sn-ach-label">${ach.icon} ${ach.label}</span>
-            <span class="sn-ach-prog-badge ${done ? 'done' : ''}" title="${prog}">${prog}</span>
+            <span class="sn-ach-prog-badge ${done ? 'done' : ''}" title="${progFull}">${progBadge}</span>
           </div>
           <div class="sn-ach-desc">${ach.desc}</div>
         </div>
@@ -362,21 +373,7 @@ function updateStickyChecklist() {
 
   html += '</ul>';
 
-  // Achievement goals tip in Sticky Note during investigation
-  const isUnlocked = isPhishingTrophyUnlocked();
-  if (isUnlocked) {
-    html += `
-      <div class="sticky-note-tip" id="sn-trophy-tip" style="border-left: 3px solid #16a34a; background: rgba(34, 197, 94, 0.12); color: #14532d; margin-top: 6px;">
-        <span>🏆 <strong>Phishing Master Trophy:</strong> <span style="color:#16a34a; font-weight:800;">4/4 TASKS COMPLETE</span></span>
-        <button type="button" class="sn-trophy-btn" onclick="showPhishingAchievementModal()" style="background:#f59e0b; color:#000; border:none; border-radius:4px; padding:3px 8px; font-size:10px; font-weight:800; cursor:pointer; margin-left:6px;">VIEW 🏆</button>
-      </div>`;
-  } else {
-    html += `
-      <div class="sticky-note-tip" id="sn-trophy-tip" style="border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.08); color: #78350f; margin-top: 6px;">
-        🎯 <strong>3 Achievements (4 Tasks):</strong> 🏆 4 = Master Trophy | 🥈 2–3 = Medal | 🎖️ 1 = Ribbon (${completedCount}/${totalGoals} Complete)
-      </div>`;
-  }
-
+  // Bottom "3 Achievements (4 Tasks)" text removed per user request for a simple, clean design
   section.innerHTML = html;
 }
 
@@ -796,7 +793,7 @@ function updateStickyNoteForPhase(phase) {
       return;
     }
 
-    if (titleEl) titleEl.textContent = "📒 Phishing Investigation Tasks";
+    if (titleEl) titleEl.textContent = "Sticky Notes";
     if (!document.getElementById('sn-checklist-section')) {
       scrollEl.innerHTML = `<div id="sn-checklist-section"></div>`;
     }

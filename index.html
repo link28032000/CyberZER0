@@ -122,17 +122,29 @@
     </div>
   </div>
 
-  <!-- Sticky Note: Scoring Rules & Mission Checklist — draggable, high contrast, prominent checklist -->
+  <!-- Sticky Note: Microsoft Sticky Notes replica from user screenshot -->
   <div id="sticky-note" class="sticky-note hidden">
-    <div class="sticky-note-tape" id="sticky-note-drag-handle" title="Drag to move note"></div>
     <div class="sticky-note-header" id="sticky-note-drag-handle-2" title="Drag to move note">
-      <span id="sticky-note-title" class="sticky-note-title-text">📝 Sticky Notes</span>
+      <button type="button" class="sn-hdr-btn sn-hdr-plus" title="New note" aria-label="New note" onclick="showStickyNote()">+</button>
+      <div class="sn-header-center">
+        <span id="sticky-note-title" class="sticky-note-title-text sr-only">Sticky Notes</span>
+      </div>
       <div class="sticky-note-actions">
-        <button type="button" class="sticky-note-btn" onclick="toggleStickyNoteCollapse()" title="Minimize / Expand note">─</button>
-        <button type="button" class="sticky-note-btn sticky-note-btn-close" onclick="closeStickyNote()" title="Close note">✕</button>
+        <button type="button" class="sn-hdr-btn sn-hdr-more" onclick="toggleStickyNoteCollapse()" title="Options / Minimize" aria-label="Options">···</button>
+        <button type="button" class="sn-hdr-btn sn-hdr-close sticky-note-btn-close" onclick="closeStickyNote()" title="Close note" aria-label="Close">✕</button>
       </div>
     </div>
     <div class="sticky-note-scroll">
+    </div>
+    <!-- Windows PC Sticky Note formatting toolbar matching user screenshot -->
+    <div class="sticky-note-footer" aria-hidden="true">
+      <button type="button" class="sn-tool-btn" title="Bold"><b>B</b></button>
+      <button type="button" class="sn-tool-btn" title="Italic"><i>I</i></button>
+      <button type="button" class="sn-tool-btn" title="Underline"><u>U</u></button>
+      <button type="button" class="sn-tool-btn" title="Strikethrough"><span style="text-decoration:line-through; font-size:11.5px; font-weight:500;">abc</span></button>
+      <button type="button" class="sn-tool-btn active" title="List / Checklist">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
     </div>
   </div>
 
@@ -2414,6 +2426,7 @@
           </span>
           <span class="mm-btn-divider" aria-hidden="true"></span>
           <span class="mm-btn-label">Achievement</span>
+          <span class="mm-ach-claim-badge hidden" id="mm-ach-claim-badge">CLAIM</span>
         </div>
       </button>
 
@@ -2548,7 +2561,7 @@
 
       <!-- Trophy Header Block -->
       <div class="mm-ach-header">
-        <div class="mm-ach-trophy-ring">
+        <div class="mm-ach-trophy-ring" onclick="toggleDevAchievements()" style="cursor: pointer;" title="Toggle Preview / Dev Unlock">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <path d="M8 5 H24 V13 C24 17.4 20.4 21 16 21 C11.6 21 8 17.4 8 13 Z" fill="#ffd700"/>
             <path d="M8 8 H5 C3.9 8 3 8.9 3 10 V11.5 C3 14 5.2 15.8 7.8 16.2 L8 16.3" stroke="#ffd700" stroke-width="2" stroke-linecap="round"/>
@@ -2563,7 +2576,7 @@
             <line x1="0" y1="3" x2="360" y2="3" stroke="#00f8ff" stroke-width="3" opacity="0.4"/>
           </svg>
         </div>
-        <p class="mm-ach-sub">Detective accolades, threat masteries &amp; honors</p>
+        <div class="mm-ach-stats" id="mm-ach-stats"></div>
       </div>
 
       <!-- Achievements Scrollable List -->
@@ -4349,6 +4362,7 @@
 <script src="src/js/story/pre-assessment.js"></script>
 <script src="src/js/story/category-hub.js"></script>
 <script src="src/js/story/visual-novel.js"></script>
+<script src="src/js/story/comic-audio.js"></script>
 <script src="src/js/story/comic-strips.js"></script>
 <script src="src/js/story/training.js"></script>
 <script src="src/js/chapters/ch1-phishing/guided-demo.js"></script>

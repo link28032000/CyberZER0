@@ -240,6 +240,9 @@ function completeCategory(catId, score, rank) {
   saveCategoriesProgress();
   updateAppLockStates();
   refreshStorySelectLocks(); // keep Story Selection screen in sync
+  if (typeof updateAchievementNotificationBadge === 'function') {
+    updateAchievementNotificationBadge();
+  }
 }
 
 /** Save CATEGORIES completion state to localStorage */

@@ -55,6 +55,9 @@ function showMainMenu() {
 
   // ── Resume/respect background music preference on every return to main menu ──
   if (typeof startMMBgMusic === 'function') startMMBgMusic();
+  if (typeof updateAchievementNotificationBadge === 'function') {
+    updateAchievementNotificationBadge();
+  }
 }
 
 /** Hide the main menu overlay */
@@ -552,6 +555,898 @@ function closeMainMenuAbout() {
   if (modal) modal.classList.add('hidden');
 }
 
+// ════════════════════════════════════════════════════════════
+//  MISSION ACHIEVEMENTS ENGINE (4 CHAPTER MEDALS + 1 TROPHY)
+// ════════════════════════════════════════════════════════════
+
+const ACH_CLAIMED_STORAGE_KEY = 'cyberzero_claimed_achievements';
+
+/**
+ * The 5 Core Mission Achievements:
+ * - 4 Chapter Threat Medals (Phishing, Malware, Safe Online, Ransomware)
+ * - 1 Grand Master Trophy for clearing all 4 Chapters
+ */
+const MISSION_ACHIEVEMENTS = [
+  {
+    id: 'ach_phishing',
+    catId: 'phishing',
+    type: 'medal',
+    num: 1,
+    chapterTag: 'CHAPTER 1 · PHISHING DEFENSE',
+    threatCategory: 'PHISHING',
+    title: 'Phishing Sentinel Medal',
+    objective: 'Awarded for detecting spoofed domains, identifying deceptive email traps, and securing credentials.',
+    iconSymbol: '🎣',
+    tiers: {
+      gold: {
+        label: 'Gold Medal',
+        tag: '🥇 GOLD MEDAL',
+        badgeTitle: 'Gold Phishing Sentinel',
+        detail: 'Rank S · Flawless Phishing Detection'
+      },
+      silver: {
+        label: 'Silver Medal',
+        tag: '🥈 SILVER MEDAL',
+        badgeTitle: 'Silver Phishing Sentinel',
+        detail: 'Rank A/B · Commended Threat Triage'
+      },
+      bronze: {
+        label: 'Bronze Medal',
+        tag: '🥉 BRONZE MEDAL',
+        badgeTitle: 'Bronze Phishing Sentinel',
+        detail: 'Cleared · Threat Traps Reported'
+      }
+    }
+  },
+  {
+    id: 'ach_malware',
+    catId: 'malware',
+    type: 'medal',
+    num: 2,
+    chapterTag: 'CHAPTER 2 · MALWARE PROTECTION',
+    threatCategory: 'MALWARE',
+    title: 'Malware Hunter Medal',
+    objective: 'Awarded for scanning suspicious payloads, executing antivirus sweeps, and quarantining infections.',
+    iconSymbol: '🛡️',
+    tiers: {
+      gold: {
+        label: 'Gold Medal',
+        tag: '🥇 GOLD MEDAL',
+        badgeTitle: 'Gold Malware Hunter',
+        detail: 'Rank S · Zero False Positives'
+      },
+      silver: {
+        label: 'Silver Medal',
+        tag: '🥈 SILVER MEDAL',
+        badgeTitle: 'Silver Malware Hunter',
+        detail: 'Rank A/B · Precision Quarantine'
+      },
+      bronze: {
+        label: 'Bronze Medal',
+        tag: '🥉 BRONZE MEDAL',
+        badgeTitle: 'Bronze Malware Hunter',
+        detail: 'Cleared · Payloads Neutralized'
+      }
+    }
+  },
+  {
+    id: 'ach_safe_online',
+    catId: 'social_engineering',
+    type: 'medal',
+    num: 3,
+    chapterTag: 'CHAPTER 3 · SAFE ONLINE BROWSING',
+    threatCategory: 'SAFE ONLINE',
+    title: 'Safe Online Guardian Medal',
+    objective: 'Awarded for securing public Wi-Fi traffic, blocking network sniffing, and resisting pretexting scams.',
+    iconSymbol: '🌐',
+    tiers: {
+      gold: {
+        label: 'Gold Medal',
+        tag: '🥇 GOLD MEDAL',
+        badgeTitle: 'Gold Safe Online Guardian',
+        detail: 'Rank S · Flawless Cyber Hygiene'
+      },
+      silver: {
+        label: 'Silver Medal',
+        tag: '🥈 SILVER MEDAL',
+        badgeTitle: 'Silver Safe Online Guardian',
+        detail: 'Rank A/B · Safe Decisions Executed'
+      },
+      bronze: {
+        label: 'Bronze Medal',
+        tag: '🥉 BRONZE MEDAL',
+        badgeTitle: 'Bronze Safe Online Guardian',
+        detail: 'Cleared · Network Secured'
+      }
+    }
+  },
+  {
+    id: 'ach_ransomware',
+    catId: 'ransomware',
+    type: 'medal',
+    num: 4,
+    chapterTag: 'CHAPTER 4 · RANSOMWARE RESPONSE',
+    threatCategory: 'RANSOMWARE',
+    title: 'Ransomware Vanguard Medal',
+    objective: 'Awarded for containing crypto-locking attack vectors, refusing extortion, and restoring storage nodes from clean backups.',
+    iconSymbol: '🔒',
+    tiers: {
+      gold: {
+        label: 'Gold Medal',
+        tag: '🥇 GOLD MEDAL',
+        badgeTitle: 'Gold Ransomware Vanguard',
+        detail: 'Rank S · 100% Data Recovery Without Ransom'
+      },
+      silver: {
+        label: 'Silver Medal',
+        tag: '🥈 SILVER MEDAL',
+        badgeTitle: 'Silver Ransomware Vanguard',
+        detail: 'Rank A/B · Storage Volumes Restored'
+      },
+      bronze: {
+        label: 'Bronze Medal',
+        tag: '🥉 BRONZE MEDAL',
+        badgeTitle: 'Bronze Ransomware Vanguard',
+        detail: 'Cleared · Critical Files Salvaged'
+      }
+    }
+  },
+  {
+    id: 'ach_trophy_master',
+    catId: null,
+    type: 'trophy',
+    num: 5,
+    chapterTag: 'MASTER ACCOLADE · ALL CHAPTERS',
+    threatCategory: 'ALL THREATS',
+    title: 'Cyber Defense Master Trophy',
+    objective: 'Awarded for mastering all four threat defense operations—Phishing, Malware, Safe Online, and Ransomware.',
+    iconSymbol: '🏆',
+    tiers: {
+      gold: {
+        label: 'Gold Grand Trophy',
+        tag: '🏆🥇 GOLD GRAND TROPHY',
+        badgeTitle: 'Apex Cyber Legend Trophy',
+        detail: 'All Gold Medals Across All 4 Chapters'
+      },
+      silver: {
+        label: 'Silver Grand Trophy',
+        tag: '🏆🥈 SILVER GRAND TROPHY',
+        badgeTitle: 'Senior Cyber Investigator Trophy',
+        detail: 'Silver or Higher Medals in All Chapters'
+      },
+      bronze: {
+        label: 'Bronze Grand Trophy',
+        tag: '🏆🥉 BRONZE GRAND TROPHY',
+        badgeTitle: 'Accredited Cyber Specialist Trophy',
+        detail: 'All 4 Chapters Successfully Completed'
+      }
+    }
+  }
+];
+
+/** Evaluate chapter medal tier (Bronze, Silver, Gold, or null if locked) */
+function getChapterMedalTier(cat) {
+  if (!cat || !cat.completed) return null;
+
+  // Chapter 1 check for saved award tier in localStorage
+  if (cat.id === 'phishing') {
+    try {
+      const phishSaved = localStorage.getItem('cyberzero_phishing_progress');
+      if (phishSaved) {
+        const pData = JSON.parse(phishSaved);
+        const aw = pData.earnedAward || (pData.trophyUnlocked ? { tier: 'trophy' } : null);
+        if (aw && aw.tier) {
+          if (aw.tier === 'trophy') return 'gold';
+          if (aw.tier === 'medal') return 'silver';
+          return 'bronze';
+        }
+      }
+    } catch(e) {}
+  }
+
+  const rank = (cat.rank || '').toUpperCase();
+  if (rank === 'S') return 'gold';
+  if (rank === 'A' || rank === 'B') return 'silver';
+  return 'bronze';
+}
+
+/** Evaluate 3 kinds of Master Trophy based on medals earned across all 4 chapters */
+function getMasterTrophyTier(allCategories) {
+  if (!Array.isArray(allCategories) || allCategories.length < 4) return null;
+  const allDone = allCategories.every(c => c && c.completed);
+  if (!allDone) return null;
+
+  const medalTiers = allCategories.map(c => getChapterMedalTier(c));
+  if (medalTiers.some(t => !t)) return null;
+
+  // 1. Gold Trophy: All 4 medals are Gold
+  if (medalTiers.every(t => t === 'gold')) {
+    return 'gold';
+  }
+  // 2. Silver Trophy: All 4 medals are at least Silver (Gold or Silver)
+  if (medalTiers.every(t => t === 'gold' || t === 'silver')) {
+    return 'silver';
+  }
+  // 3. Bronze Trophy: All 4 chapters completed (with at least Bronze medals)
+  return 'bronze';
+}
+
+/** Claimed achievements stored in localStorage */
+function getClaimedAchievementsMap() {
+  try {
+    const raw = localStorage.getItem(ACH_CLAIMED_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveClaimedAchievementsMap(map) {
+  try {
+    localStorage.setItem(ACH_CLAIMED_STORAGE_KEY, JSON.stringify(map));
+  } catch (e) {}
+}
+
+function isAchievementClaimed(achId) {
+  const map = getClaimedAchievementsMap();
+  return !!(map && map[achId]);
+}
+
+/**
+ * Claim a completed achievement
+ */
+function claimAchievement(achId) {
+  if (typeof AudioManager !== 'undefined') {
+    try { AudioManager.playClick(); } catch (e) {}
+  }
+
+  const ach = MISSION_ACHIEVEMENTS.find(a => a.id === achId);
+  if (!ach) return;
+
+  if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress();
+  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+  let currentTier = null;
+  if (ach.catId) {
+    const cat = cats.find(c => c.id === ach.catId);
+    currentTier = getChapterMedalTier(cat);
+  } else {
+    currentTier = getMasterTrophyTier(cats);
+  }
+
+  if (!currentTier) {
+    if (typeof showToast === 'function') {
+      const msg = ach.catId
+        ? `Complete Chapter ${ach.num} to claim this medal!`
+        : 'Complete all 4 Chapters to claim the Master Trophy!';
+      showToast(`🎯 ${msg}`, 'warning');
+    }
+    return;
+  }
+
+  const map = getClaimedAchievementsMap();
+  map[achId] = {
+    tier: currentTier,
+    claimedAt: Date.now(),
+    claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  };
+  saveClaimedAchievementsMap(map);
+
+  // Audio fanfare
+  if (typeof AudioManager !== 'undefined') {
+    try {
+      if (typeof AudioManager.playPerfectFanfare === 'function') {
+        AudioManager.playPerfectFanfare();
+      } else if (typeof AudioManager.playMissionComplete === 'function') {
+        AudioManager.playMissionComplete();
+      }
+      if (typeof AudioManager.playChime === 'function') {
+        setTimeout(() => AudioManager.playChime(true), 320);
+      }
+    } catch (e) {}
+  }
+
+  // Particle burst animation on the card
+  const cardEl = document.querySelector(`[data-ach-id="${achId}"]`);
+  if (cardEl) {
+    spawnAchParticles(cardEl, currentTier);
+  }
+
+  // Toast notification
+  const tierData = ach.tiers[currentTier];
+  const medalEmoji = currentTier === 'gold' ? '🥇' : currentTier === 'silver' ? '🥈' : '🥉';
+  const awardType = ach.type === 'trophy' ? 'Trophy' : 'Medal';
+  if (typeof showToast === 'function') {
+    showToast(`🎉 Claimed ${medalEmoji} ${tierData.badgeTitle}! Reward secured!`, 'success');
+  }
+
+  // Smoothly update UI
+  setTimeout(() => {
+    renderMainMenuAchievements();
+    updateAchievementNotificationBadge();
+  }, 250);
+}
+
+/**
+ * Claim all available completed achievements at once
+ */
+function claimAllAchievements() {
+  if (typeof AudioManager !== 'undefined') {
+    try { AudioManager.playClick(); } catch (e) {}
+  }
+
+  if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress();
+  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+  const map = getClaimedAchievementsMap();
+  let newlyClaimed = 0;
+
+  MISSION_ACHIEVEMENTS.forEach(ach => {
+    let tier = null;
+    if (ach.catId) {
+      const cat = cats.find(c => c.id === ach.catId);
+      tier = getChapterMedalTier(cat);
+    } else {
+      tier = getMasterTrophyTier(cats);
+    }
+    if (tier && !map[ach.id]) {
+      map[ach.id] = {
+        tier: tier,
+        claimedAt: Date.now(),
+        claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      };
+      newlyClaimed++;
+    }
+  });
+
+  if (newlyClaimed === 0) return;
+
+  saveClaimedAchievementsMap(map);
+
+  if (typeof AudioManager !== 'undefined') {
+    try {
+      if (typeof AudioManager.playPerfectFanfare === 'function') {
+        AudioManager.playPerfectFanfare();
+      } else if (typeof AudioManager.playMissionComplete === 'function') {
+        AudioManager.playMissionComplete();
+      }
+    } catch (e) {}
+  }
+
+  // Particle bursts across cards
+  document.querySelectorAll('.mm-ach-item.ach-unclaimed').forEach(card => {
+    spawnAchParticles(card, 'gold');
+  });
+
+  if (typeof showToast === 'function') {
+    showToast(`🌟 Claimed all ${newlyClaimed} unlocked threat achievements! Outstanding detective work!`, 'success');
+  }
+
+  setTimeout(() => {
+    renderMainMenuAchievements();
+    updateAchievementNotificationBadge();
+  }, 300);
+}
+
+/**
+ * Update the notification badge on the Achievement button in Main Menu
+ */
+function updateAchievementNotificationBadge() {
+  const badgeEl = document.getElementById('mm-ach-claim-badge');
+  if (!badgeEl) return;
+
+  if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress();
+  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+  const map = getClaimedAchievementsMap();
+
+  let unclaimedCount = 0;
+  MISSION_ACHIEVEMENTS.forEach(ach => {
+    let tier = null;
+    if (ach.catId) {
+      const cat = cats.find(c => c.id === ach.catId);
+      tier = getChapterMedalTier(cat);
+    } else {
+      tier = getMasterTrophyTier(cats);
+    }
+    if (tier && !map[ach.id]) {
+      unclaimedCount++;
+    }
+  });
+
+  if (unclaimedCount > 0) {
+    badgeEl.textContent = `${unclaimedCount} CLAIM`;
+    badgeEl.classList.remove('hidden');
+  } else {
+    badgeEl.classList.add('hidden');
+  }
+}
+
+/**
+ * Particle burst celebration on achievement claim
+ */
+function spawnAchParticles(container, tier) {
+  if (!container) return;
+  const colors = tier === 'gold'
+    ? ['#ffd700', '#fff3a8', '#ffb700', '#00f0ff', '#ffffff']
+    : tier === 'silver'
+    ? ['#ffffff', '#cbd5e1', '#94a3b8', '#00f0ff', '#e0f2fe']
+    : ['#cd7f32', '#fbd38d', '#b87333', '#ffffff', '#ffedd5'];
+
+  const particleBox = document.createElement('div');
+  particleBox.className = 'mm-ach-particles-wrap';
+  container.appendChild(particleBox);
+
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'mm-ach-particle';
+    const angle = (i / 24) * 2 * Math.PI + (Math.random() - 0.5) * 0.3;
+    const distance = 35 + Math.random() * 75;
+    const destX = Math.cos(angle) * distance;
+    const destY = Math.sin(angle) * distance;
+    const size = 4 + Math.random() * 5;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    p.style.setProperty('--dest-x', `${destX}px`);
+    p.style.setProperty('--dest-y', `${destY}px`);
+    p.style.backgroundColor = color;
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+    p.style.boxShadow = `0 0 10px ${color}`;
+
+    particleBox.appendChild(p);
+  }
+
+  setTimeout(() => {
+    if (particleBox && particleBox.parentNode) {
+      particleBox.parentNode.removeChild(particleBox);
+    }
+  }, 1200);
+}
+
+/**
+ * Generate vector SVG badge for Medals (Bronze, Silver, Gold, or Locked)
+ */
+function renderAchMedalSVG(tier, iconSymbol, achId) {
+  if (!tier) {
+    // Locked Medal
+    return `
+      <svg class="mm-ach-badge-svg" viewBox="0 0 76 92" width="62" height="74" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="lockL-${achId}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </linearGradient>
+        </defs>
+        <path d="M26 4 L38 22 L22 22 Z" fill="#334155" opacity="0.6"/>
+        <path d="M50 4 L38 22 L54 22 Z" fill="#334155" opacity="0.6"/>
+        <circle cx="38" cy="52" r="30" fill="url(#lockL-${achId})" stroke="#475569" stroke-width="2" stroke-dasharray="4 3"/>
+        <circle cx="38" cy="52" r="23" fill="#090d16" stroke="#334155" stroke-width="1.5"/>
+        <path d="M32 49 V44 C32 40.7 34.7 38 38 38 C41.3 38 44 40.7 44 44 V49 M29 49 H47 V63 H29 Z" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="38" cy="55" r="1.8" fill="#64748b"/>
+      </svg>
+    `;
+  }
+
+  const isGold   = tier === 'gold';
+  const isSilver = tier === 'silver';
+
+  // Palette tokens
+  const rimGradStart = isGold ? '#fff4a3' : isSilver ? '#ffffff' : '#fbd38d';
+  const rimGradMid   = isGold ? '#ffd700' : isSilver ? '#cbd5e1' : '#cd7f32';
+  const rimGradEnd   = isGold ? '#b37400' : isSilver ? '#64748b' : '#6d3007';
+
+  const coreGradStart = isGold ? '#ffe066' : isSilver ? '#f1f5f9' : '#df9b58';
+  const coreGradEnd   = isGold ? '#784400' : isSilver ? '#334155' : '#4a1e05';
+
+  const strokeColor = isGold ? '#ffd700' : isSilver ? '#e2e8f0' : '#d97706';
+  const ribbonL = isGold ? '#00b4f0' : isSilver ? '#38bdf8' : '#0284c7';
+  const ribbonR = isGold ? '#ffd700' : isSilver ? '#94a3b8' : '#cd7f32';
+
+  return `
+    <svg class="mm-ach-badge-svg tier-${tier}" viewBox="0 0 76 92" width="62" height="74" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="medRim-${achId}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${rimGradStart}"/>
+          <stop offset="50%" stop-color="${rimGradMid}"/>
+          <stop offset="100%" stop-color="${rimGradEnd}"/>
+        </linearGradient>
+        <linearGradient id="medCore-${achId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${coreGradStart}"/>
+          <stop offset="100%" stop-color="${coreGradEnd}"/>
+        </linearGradient>
+      </defs>
+      <!-- Top Chevron Ribbon -->
+      <path d="M26 3 L38 23 L20 23 Z" fill="${ribbonL}"/>
+      <path d="M50 3 L38 23 L56 23 Z" fill="${ribbonR}"/>
+      <path d="M33 3 L38 18 L43 3 Z" fill="#ffffff" opacity="0.75"/>
+      <!-- Outer Metal Rim -->
+      <circle cx="38" cy="52" r="30" fill="url(#medRim-${achId})" stroke="${strokeColor}" stroke-width="2.5"/>
+      <!-- Inner Sunken Core -->
+      <circle cx="38" cy="52" r="23" fill="url(#medCore-${achId})" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+      <!-- Center Emblem Backdrop -->
+      <circle cx="38" cy="52" r="17" fill="rgba(0, 15, 30, 0.45)"/>
+      <!-- Central Threat Symbol -->
+      <text x="38" y="58" text-anchor="middle" font-size="18">${iconSymbol}</text>
+      <!-- Specular Arc Highlight -->
+      <path d="M22 40 A 24 24 0 0 1 54 40" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    </svg>
+  `;
+}
+
+/**
+ * Generate vector SVG badge for Trophies (Bronze, Silver, Gold, or Locked)
+ */
+function renderAchTrophySVG(tier, achId) {
+  if (!tier) {
+    // Locked Trophy
+    return `
+      <svg class="mm-ach-badge-svg" viewBox="0 0 80 94" width="66" height="78" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="lockTr-${achId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0b1120"/>
+          </linearGradient>
+        </defs>
+        <!-- Wireframe Cup -->
+        <path d="M22 18 H58 V40 C58 50 49 58 40 58 C31 58 22 50 22 40 Z" fill="url(#lockTr-${achId})" stroke="#475569" stroke-width="2" stroke-dasharray="4 3"/>
+        <!-- Handles -->
+        <path d="M22 25 H14 C11 25 9 27 9 30 V34 C9 41 15 46 22 47" stroke="#475569" stroke-width="2" stroke-dasharray="3 3"/>
+        <path d="M58 25 H66 C69 25 71 27 71 30 V34 C71 41 65 46 58 47" stroke="#475569" stroke-width="2" stroke-dasharray="3 3"/>
+        <!-- Stem & Base -->
+        <path d="M40 58 V70 M26 70 H54 V78 H26 Z" stroke="#475569" stroke-width="2"/>
+        <!-- Padlock in Cup -->
+        <path d="M35 34 V31 C35 28.5 37 26.5 40 26.5 C43 26.5 45 28.5 45 31 V34 M32 34 H48 V44 H32 Z" stroke="#64748b" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    `;
+  }
+
+  const isGold   = tier === 'gold';
+  const isSilver = tier === 'silver';
+
+  const goldStart = isGold ? '#fff4a3' : isSilver ? '#ffffff' : '#fbd38d';
+  const goldMid   = isGold ? '#ffd700' : isSilver ? '#cbd5e1' : '#cd7f32';
+  const goldEnd   = isGold ? '#996300' : isSilver ? '#475569' : '#5c2306';
+  const strokeCol = isGold ? '#ffd700' : isSilver ? '#e2e8f0' : '#f59e0b';
+  const starCol   = isGold ? '#fff59d' : isSilver ? '#f8fafc' : '#fed7aa';
+
+  return `
+    <svg class="mm-ach-badge-svg tier-${tier}" viewBox="0 0 80 94" width="66" height="78" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="trGrad-${achId}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${goldStart}"/>
+          <stop offset="45%" stop-color="${goldMid}"/>
+          <stop offset="100%" stop-color="${goldEnd}"/>
+        </linearGradient>
+      </defs>
+      <!-- Trophy Cup Outer Shell -->
+      <path d="M22 16 H58 V38 C58 49 49.5 57 40 57 C30.5 57 22 49 22 38 Z" fill="url(#trGrad-${achId})" stroke="${strokeCol}" stroke-width="2.2"/>
+      <!-- Handles -->
+      <path d="M22 22 H14 C11 22 9 24 9 27 V32 C9 39 15 44 22 45" stroke="url(#trGrad-${achId})" stroke-width="3" stroke-linecap="round"/>
+      <path d="M58 22 H66 C69 22 71 24 71 27 V32 C71 39 65 44 58 45" stroke="url(#trGrad-${achId})" stroke-width="3" stroke-linecap="round"/>
+      <!-- Stem & Plinth Base -->
+      <path d="M37 57 H43 V70 H37 Z" fill="url(#trGrad-${achId})" stroke="${strokeCol}" stroke-width="1.5"/>
+      <polygon points="24,70 56,70 60,82 20,82" fill="url(#trGrad-${achId})" stroke="${strokeCol}" stroke-width="1.8"/>
+      <!-- Plaque Label -->
+      <rect x="28" y="73" width="24" height="6" rx="2" fill="#0b1120" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <circle cx="40" cy="76" r="1.5" fill="${strokeCol}"/>
+      <!-- Cup Laurels / Star -->
+      <path d="M40 23 L42.5 28.5 L48 29.5 L44 33.5 L45 39 L40 36 L35 39 L36 33.5 L32 29.5 L37.5 28.5 Z" fill="${starCol}" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/>
+      <!-- Top Specular Highlight -->
+      <path d="M26 19 H54" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity="0.75"/>
+    </svg>
+  `;
+}
+
+// Track currently selected achievement in showcase (defaults to 'ach_phishing')
+let _selectedAchId = 'ach_phishing';
+
+function selectAchCard(achId, event) {
+  if (event && event.target && event.target.closest('.mm-ach-nav-claim-btn')) {
+    return; // Don't interrupt direct claim action
+  }
+  if (typeof AudioManager !== 'undefined') {
+    try { AudioManager.playClick(); } catch (e) {}
+  }
+  _selectedAchId = achId;
+  renderMainMenuAchievements();
+}
+window.selectAchCard = selectAchCard;
+
+/**
+ * Render list of chapter and master achievements.
+ * Professional Master-Detail Layout:
+ * - Left: Sleek dossier navigation list (all 5 achievements with medals and tiers)
+ * - Right: High-fidelity selected medal showcase with objective, criteria, and claim button
+ */
+function renderMainMenuAchievements() {
+  const listEl = document.getElementById('mm-ach-list');
+  if (!listEl) return;
+
+  // Ensure latest chapter completion data is loaded
+  if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress();
+  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+  const claimedMap = getClaimedAchievementsMap();
+
+  let completedCount = 0;
+  let claimedCount = 0;
+  let unclaimedCount = 0;
+
+  // Process data for all 5 achievements
+  const renderedItems = MISSION_ACHIEVEMENTS.map(ach => {
+    let earnedTier = null;
+    let score = 0;
+    let rank = null;
+
+    if (ach.catId) {
+      const cat = cats.find(c => c.id === ach.catId);
+      if (cat && cat.completed) {
+        earnedTier = getChapterMedalTier(cat);
+        score = cat.score || 0;
+        rank = cat.rank || 'S';
+      }
+    } else {
+      // Grand Master Trophy (All 4 Chapters)
+      earnedTier = getMasterTrophyTier(cats);
+      if (earnedTier) {
+        score = cats.reduce((sum, c) => sum + (c.score || 0), 0);
+        rank = 'S';
+      }
+    }
+
+    const isCompleted = !!earnedTier;
+    if (isCompleted) completedCount++;
+
+    const isClaimed = isCompleted && !!claimedMap[ach.id];
+    if (isClaimed) claimedCount++;
+    if (isCompleted && !isClaimed) unclaimedCount++;
+
+    return {
+      ach,
+      isCompleted,
+      earnedTier,
+      isClaimed,
+      claimedData: claimedMap[ach.id] || null,
+      score,
+      rank
+    };
+  });
+
+  // ── Render Stats Header Bar (No MISSION PTS, Clean Game Progress Bar) ──
+  const statsEl = document.getElementById('mm-ach-stats');
+  if (statsEl) {
+    const pct = Math.round((completedCount / 5) * 100);
+    const claimAllBtnHtml = unclaimedCount >= 1
+      ? `<button type="button" class="mm-ach-claim-all-btn" onclick="claimAllAchievements()">✨ CLAIM ALL (${unclaimedCount})</button>`
+      : '';
+
+    statsEl.innerHTML = `
+      <div class="mm-ach-stat-row">
+        <div class="mm-ach-stat-pill">
+          <span class="mm-ach-stat-label">COMPLETED</span>
+          <span class="mm-ach-stat-val ${completedCount > 0 ? 'highlight-cyan' : ''}">${completedCount} / 5</span>
+        </div>
+        <div class="mm-ach-progress-wrap" title="${pct}% Completed">
+          <div class="mm-ach-progress-track">
+            <div class="mm-ach-progress-fill" style="width: ${pct}%;"></div>
+          </div>
+          <span class="mm-ach-progress-pct">${pct}%</span>
+        </div>
+        <div class="mm-ach-stat-pill">
+          <span class="mm-ach-stat-label">CLAIMED</span>
+          <span class="mm-ach-stat-val ${claimedCount > 0 ? 'highlight-gold' : ''}">${claimedCount} / 5</span>
+        </div>
+      </div>
+      ${claimAllBtnHtml}
+    `;
+  }
+
+  // Ensure valid selection for right-hand showcase
+  let selectedItem = renderedItems.find(item => item.ach.id === _selectedAchId);
+  if (!selectedItem) {
+    selectedItem = renderedItems[0];
+    _selectedAchId = selectedItem.ach.id;
+  }
+
+  // ── Render Left Navigation Column ──
+  const navListHtml = renderedItems.map(item => {
+    const ach = item.ach;
+    const isCompleted = item.isCompleted;
+    const tier = item.earnedTier;
+    const isClaimed = item.isClaimed;
+    const isTrophy = ach.type === 'trophy';
+    const isSelected = ach.id === _selectedAchId;
+
+    const tierData = tier ? ach.tiers[tier] : null;
+    const tierTag = tier ? tierData.tag : 'LOCKED';
+    const cardTitle = tier ? tierData.badgeTitle : ach.title;
+
+    // Small SVG for nav item
+    const miniSvg = isTrophy
+      ? renderAchTrophySVG(tier, 'nav-' + ach.id)
+      : renderAchMedalSVG(tier, ach.iconSymbol, 'nav-' + ach.id);
+
+    // Status Badge in Nav item
+    let statusBadge = '';
+    if (!isCompleted) {
+      statusBadge = `<span class="mm-ach-nav-pill is-locked" title="Mission Locked"></span>`;
+    } else if (!isClaimed) {
+      statusBadge = `
+        <button type="button" class="mm-ach-nav-claim-btn" onclick="claimAchievement('${ach.id}')" title="Claim reward">
+          CLAIM
+        </button>
+      `;
+    } else {
+      statusBadge = `<span class="mm-ach-nav-pill is-claimed" title="Reward Claimed">✓</span>`;
+    }
+
+    const itemClasses = [
+      'mm-ach-nav-item',
+      isTrophy ? 'is-trophy' : 'is-medal',
+      isCompleted ? 'is-completed' : 'is-locked',
+      tier ? `tier-${tier}` : 'tier-locked',
+      isSelected ? 'is-selected' : ''
+    ].filter(Boolean).join(' ');
+
+    return `
+      <div class="${itemClasses}" onclick="selectAchCard('${ach.id}', event)" role="button" tabindex="0">
+        <div class="mm-ach-nav-visual">
+          ${miniSvg}
+        </div>
+        <div class="mm-ach-nav-info">
+          <div class="mm-ach-nav-title">${cardTitle}</div>
+          <div class="mm-ach-nav-meta">
+            <span class="mm-ach-nav-tier ${tier ? 'tag-' + tier : 'tag-locked'}">${tierTag}</span>
+            <span class="mm-ach-nav-chap">${ach.threatCategory}</span>
+          </div>
+        </div>
+        <div class="mm-ach-nav-right">
+          ${statusBadge}
+          <span class="mm-ach-nav-arrow ${isSelected ? 'active' : ''}">›</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // ── Render Right Showcase Column ──
+  const selAch = selectedItem.ach;
+  const selTier = selectedItem.earnedTier;
+  const selTierData = selTier ? selAch.tiers[selTier] : null;
+  const selIsCompleted = selectedItem.isCompleted;
+  const selIsClaimed = selectedItem.isClaimed;
+  const selIsTrophy = selAch.type === 'trophy';
+
+  // Large SVG emblem for showcase
+  const showcaseSvg = selIsTrophy
+    ? renderAchTrophySVG(selTier, 'dossier-' + selAch.id)
+    : renderAchMedalSVG(selTier, selAch.iconSymbol, 'dossier-' + selAch.id);
+
+  // Performance Meta Line
+  let performanceHtml = '';
+  if (selIsCompleted) {
+    const parts = [`<span class="mm-ach-dossier-pill tier-pill">🎯 ${selTierData.detail}</span>`];
+    if (selectedItem.rank) parts.push(`<span class="mm-ach-dossier-pill rank-pill">Rank <strong>${selectedItem.rank}</strong></span>`);
+    if (selectedItem.score) parts.push(`<span class="mm-ach-dossier-pill score-pill">Score <strong>${selectedItem.score.toLocaleString()} pts</strong></span>`);
+    if (selectedItem.claimedData && selectedItem.claimedData.claimedDate) {
+      parts.push(`<span class="mm-ach-dossier-pill date-pill">Claimed on ${selectedItem.claimedData.claimedDate}</span>`);
+    }
+    performanceHtml = parts.join('');
+  } else {
+    const unlockHint = selAch.catId
+      ? `Complete Chapter ${selAch.num} with Rank C (Bronze), Rank A/B (Silver), or Rank S (Gold)`
+      : `Complete all 4 Chapters with detective honors to unlock Trophy`;
+    performanceHtml = `<span class="mm-ach-dossier-pill lock-pill">Requirement: ${unlockHint}</span>`;
+  }
+
+  // Showcase Action Button
+  let showcaseActionHtml = '';
+  if (!selIsCompleted) {
+    showcaseActionHtml = `
+      <button type="button" class="mm-ach-showcase-btn is-unready" onclick="claimAchievement('${selAch.id}')" title="Complete mission to claim">
+        CLAIM REWARD
+      </button>
+    `;
+  } else if (!selIsClaimed) {
+    showcaseActionHtml = `
+      <button type="button" class="mm-ach-showcase-btn is-ready" onclick="claimAchievement('${selAch.id}')" title="Claim your ${selTier.toUpperCase()} reward!">
+        ✨ CLAIM ${selTier.toUpperCase()} REWARD
+      </button>
+    `;
+  } else {
+    showcaseActionHtml = `
+      <div class="mm-ach-showcase-claimed">
+        <span class="claimed-check">✓</span> REWARD SECURED & RECORDED ${selectedItem.claimedData && selectedItem.claimedData.claimedDate ? '· ' + selectedItem.claimedData.claimedDate : ''}
+      </div>
+    `;
+  }
+
+  // Inject Two-Panel Master-Detail Layout
+  listEl.innerHTML = `
+    <div class="mm-ach-master-detail-wrap">
+      <!-- Left Column: Navigation Index -->
+      <div class="mm-ach-nav-col">
+        <div class="mm-ach-nav-col-header">
+          <span>THREAT DOSSIER INDEX</span>
+          <span class="mm-ach-nav-count">${completedCount} / 5</span>
+        </div>
+        <div class="mm-ach-nav-scroll">
+          ${navListHtml}
+        </div>
+      </div>
+
+      <!-- Right Column: Detailed Showcase -->
+      <div class="mm-ach-showcase-col ${selTier ? 'tier-' + selTier : 'tier-locked'}">
+        <!-- Showcase Header -->
+        <div class="mm-ach-showcase-top">
+          <div class="mm-ach-showcase-visual">
+            ${showcaseSvg}
+          </div>
+          <div class="mm-ach-showcase-header-info">
+            <div class="mm-ach-showcase-tags">
+              <span class="mm-ach-chapter-tag">${selAch.chapterTag}</span>
+              <span class="mm-ach-threat-pill">${selAch.threatCategory || (selIsTrophy ? 'ALL THREATS' : 'THREAT')}</span>
+            </div>
+            <h3 class="mm-ach-showcase-title">${selTier ? selTierData.badgeTitle : selAch.title}</h3>
+            <div class="mm-ach-showcase-tier-row">
+              <span class="mm-ach-tier-tag ${selTier ? 'tag-' + selTier : 'tag-locked'}">
+                ${selTier ? selTierData.tag : 'CHAPTER UNLOCKED ON MISSION CLEAR'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mm-ach-showcase-divider"></div>
+
+        <!-- Medal Purpose & Objective Box -->
+        <div class="mm-ach-showcase-block">
+          <div class="mm-ach-block-label">MEDAL PURPOSE & OBJECTIVE</div>
+          <p class="mm-ach-showcase-objective">${selAch.objective}</p>
+        </div>
+
+        <!-- Detective Standing & Criteria -->
+        <div class="mm-ach-showcase-block">
+          <div class="mm-ach-block-label">STATUS & RECORD</div>
+          <div class="mm-ach-performance-row">
+            ${performanceHtml}
+          </div>
+        </div>
+
+        <!-- 3-Tier Criteria Matrix -->
+        <div class="mm-ach-showcase-block">
+          <div class="mm-ach-block-label">TIER REQUIREMENTS & HONORS</div>
+          <div class="mm-ach-tier-matrix-row">
+            <div class="mm-ach-tier-card ${selTier === 'bronze' ? 'is-current-tier' : ''}">
+              <div class="mm-ach-tier-card-head">
+                <span class="matrix-tag tag-bronze">🥉 BRONZE</span>
+                ${selTier === 'bronze' ? '<span class="matrix-current-badge">EARNED</span>' : ''}
+              </div>
+              <div class="mm-ach-tier-card-desc">${selAch.tiers.bronze.detail}</div>
+            </div>
+
+            <div class="mm-ach-tier-card ${selTier === 'silver' ? 'is-current-tier' : ''}">
+              <div class="mm-ach-tier-card-head">
+                <span class="matrix-tag tag-silver">🥈 SILVER</span>
+                ${selTier === 'silver' ? '<span class="matrix-current-badge">EARNED</span>' : ''}
+              </div>
+              <div class="mm-ach-tier-card-desc">${selAch.tiers.silver.detail}</div>
+            </div>
+
+            <div class="mm-ach-tier-card ${selTier === 'gold' ? 'is-current-tier' : ''}">
+              <div class="mm-ach-tier-card-head">
+                <span class="matrix-tag tag-gold">🥇 GOLD</span>
+                ${selTier === 'gold' ? '<span class="matrix-current-badge">EARNED</span>' : ''}
+              </div>
+              <div class="mm-ach-tier-card-desc">${selAch.tiers.gold.detail}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Showcase Footer Action -->
+        <div class="mm-ach-showcase-footer">
+          ${showcaseActionHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 /** ACHIEVEMENT button — show the Achievements modal */
 function mainMenuAchievement() {
   if (typeof AudioManager !== 'undefined') {
@@ -569,167 +1464,61 @@ function closeMainMenuAchievement() {
   }
   const modal = document.getElementById('mm-achievement-modal');
   if (modal) modal.classList.add('hidden');
+  updateAchievementNotificationBadge();
 }
 
-/** Render list of chapter and master achievements.
- *  Empty state when nothing completed; ribbon/trophy cards for each completed chapter. */
-function renderMainMenuAchievements() {
-  const listEl = document.getElementById('mm-ach-list');
-  if (!listEl) return;
+/**
+ * Dev utility functions to test achievement tiers and claims in console
+ */
+window.devUnlockAchievements = function(targetTier = 'gold') {
+  if (typeof CATEGORIES === 'undefined') return;
+  const rank = targetTier === 'gold' ? 'S' : targetTier === 'silver' ? 'A' : 'C';
+  const score = targetTier === 'gold' ? 500 : targetTier === 'silver' ? 350 : 200;
 
-  // Achievement definitions — maps CATEGORIES ids to award metadata
-  const achData = [
-    {
-      catId: 'phishing',
-      icon: '🎣',
-      awardType: 'ribbon',           // ribbon = 🎖️ | trophy = 🏆
-      awardLabel: 'PHISHING SENTINEL',
-      awardFull:  'Phishing Sentinel Ribbon',
-      chapter: 'Chapter 1 · The First Day',
-      desc: 'Exposed deceptive emails, identified fraudulent sender addresses, and reported all phishing traps.'
-    },
-    {
-      catId: 'malware',
-      icon: '🛡️',
-      awardType: 'trophy',
-      awardLabel: 'MALWARE HUNTER',
-      awardFull:  'Malware Hunter Trophy',
-      chapter: 'Chapter 2 · The Digital Trap',
-      desc: 'Isolated disguised executable payloads, ran anti-virus sweeps, and secured the quarantine chamber.'
-    },
-    {
-      catId: 'social_engineering',
-      icon: '🎭',
-      awardType: 'ribbon',
-      awardLabel: 'SOCIAL SHIELD',
-      awardFull:  'Social Shield Ribbon',
-      chapter: 'Chapter 3 · The System Collapse',
-      desc: 'Defended against pretexting, vishing, and credential harvesting schemes.'
-    },
-    {
-      catId: 'ransomware',
-      icon: '🔒',
-      awardType: 'trophy',
-      awardLabel: 'VAULT GUARDIAN',
-      awardFull:  'Vault Guardian Trophy',
-      chapter: 'Chapter 4 · The Last Login',
-      desc: 'Isolated ransomware vectors, recovered encrypted project nodes, and restored all backups.'
-    }
-  ];
-
-  // Collect completed chapter achievements
-  const earned = [];
-  achData.forEach(ach => {
-    if (typeof CATEGORIES === 'undefined') return;
-    const cat = CATEGORIES.find(c => c.id === ach.catId);
-    if (cat && cat.completed) {
-      let finalAch = { ...ach, score: cat.score || 0, rank: cat.rank || 'S' };
-
-      // Dynamically load the user's earned achievement tier for Chapter 1
-      if (ach.catId === 'phishing') {
-        try {
-          const phishSaved = localStorage.getItem('cyberzero_phishing_progress');
-          if (phishSaved) {
-            const pData = JSON.parse(phishSaved);
-            const aw = pData.earnedAward || (pData.trophyUnlocked ? { tier: 'trophy' } : null);
-            if (aw && aw.tier) {
-              finalAch.awardType = aw.tier;
-              if (aw.tier === 'trophy') {
-                finalAch.awardLabel = 'PHISHING MASTER';
-                finalAch.awardFull  = 'Phishing Master Trophy';
-                finalAch.desc = 'Exposed deceptive emails, completed all 4 investigation tasks, and earned 1st place Master honors.';
-              } else if (aw.tier === 'medal') {
-                finalAch.awardLabel = 'PHISHING INVESTIGATOR';
-                finalAch.awardFull  = 'Phishing Investigator Medal';
-                finalAch.desc = 'Exposed deceptive emails, identified phishing indicators, and earned the 2nd place Investigator Medal.';
-              } else {
-                finalAch.awardLabel = 'PHISHING SENTINEL';
-                finalAch.awardFull  = 'Phishing Security Ribbon';
-                finalAch.desc = 'Completed email investigation, exposed phishing lures, and earned the Security Awareness Ribbon.';
-              }
-            }
-          }
-        } catch(e) {}
-      }
-
-      earned.push(finalAch);
-    }
+  CATEGORIES.forEach(cat => {
+    cat.completed = true;
+    cat.unlocked = true;
+    cat.rank = rank;
+    cat.score = score;
   });
+  if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
+  renderMainMenuAchievements();
+  updateAchievementNotificationBadge();
+  console.log(`%c[ACHIEVEMENT DEV] All chapters set to ${targetTier.toUpperCase()} (${rank} Rank, ${score} pts)`, 'color:#00f0ff; font-weight:bold;');
+};
 
-  // Check grand master (all 4 done)
-  const allDone = typeof CATEGORIES !== 'undefined' && CATEGORIES.every(c => c.completed);
-  if (allDone) {
-    earned.push({
-      catId: null,
-      icon: '🌟',
-      awardType: 'grand',
-      awardLabel: 'GRAND DETECTIVE',
-      awardFull:  'CyberZerØ Grand Detective Trophy',
-      chapter: 'Grand Finale Accolade',
-      desc: 'All threat scenarios cleared with distinguished detective honors. Master Certificate awarded.',
-      score: CATEGORIES.reduce((s, c) => s + (c.score || 0), 0),
-      rank: 'S'
+window.devResetAchievements = function() {
+  localStorage.removeItem(ACH_CLAIMED_STORAGE_KEY);
+  if (typeof CATEGORIES !== 'undefined') {
+    CATEGORIES.forEach((c, idx) => {
+      c.completed = false;
+      c.unlocked = (idx === 0);
+      c.rank = null;
+      c.score = 0;
     });
+    if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
   }
+  renderMainMenuAchievements();
+  updateAchievementNotificationBadge();
+  console.log('%c[ACHIEVEMENT DEV] All achievements & chapter progress reset.', 'color:#ffd700; font-weight:bold;');
+};
 
-  // ── Empty state ──
-  if (earned.length === 0) {
-    listEl.innerHTML = `
-      <div class="mm-ach-empty-state">
-        <div class="mm-ach-empty-icon">
-          <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-            <path d="M14 9 H42 V23 C42 31.8 35.7 38 28 38 C20.3 38 14 31.8 14 23 Z"
-                  fill="none" stroke="#00b4f0" stroke-width="2.5" stroke-dasharray="5 3"/>
-            <path d="M14 15 H9 C6.8 15 5 16.8 5 19 V21.5 C5 26.5 8.5 30.5 13.5 31"
-                  stroke="#00b4f0" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/>
-            <path d="M42 15 H47 C49.2 15 51 16.8 51 19 V21.5 C51 26.5 47.5 30.5 42.5 31"
-                  stroke="#00b4f0" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/>
-            <path d="M28 38 V46 M18 46 H38" stroke="#00b4f0" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 3"/>
-          </svg>
-        </div>
-        <div class="mm-ach-empty-title">NO ACHIEVEMENTS YET</div>
-        <div class="mm-ach-empty-sub">Complete mission chapters to earn honorary ribbons and trophies</div>
-      </div>
-    `;
-    return;
+window.toggleDevAchievements = function() {
+  if (typeof CATEGORIES === 'undefined') return;
+  const isAllGold = CATEGORIES.length > 0 && CATEGORIES.every(c => c.completed && c.rank === 'S');
+  if (isAllGold) {
+    window.devResetAchievements();
+    if (typeof showToast === 'function') showToast('Achievements Reset to Locked State', 'info');
+  } else {
+    window.devUnlockAchievements('gold');
+    if (typeof showToast === 'function') showToast('🏆 All Gold Accolades Unlocked!', 'success');
   }
+};
 
-  // ── Render earned award cards ──
-  let html = '';
-  earned.forEach(ach => {
-    const isGrand   = ach.awardType === 'grand';
-    const isTrophy  = ach.awardType === 'trophy';
-    const isMedal   = ach.awardType === 'medal';
-    const awardEmoji = isGrand ? '🌟🏆' : (isTrophy ? '🏆' : isMedal ? '🥈' : '🎖️');
-    const cardClass  = isGrand ? 'mm-ach-item ach-completed ach-grand'
-                     : isTrophy ? 'mm-ach-item ach-completed ach-trophy'
-                     : isMedal  ? 'mm-ach-item ach-completed ach-medal'
-                     : 'mm-ach-item ach-completed ach-ribbon';
-
-    const rankDisplay = ach.rank ? `Rank <strong>${ach.rank}</strong>` : '';
-    const scoreDisplay = ach.score ? `${ach.score.toLocaleString()} pts` : '';
-    const metaLine = [rankDisplay, scoreDisplay].filter(Boolean).join(' &nbsp;·&nbsp; ');
-
-    html += `
-      <div class="${cardClass}">
-        <div class="mm-ach-award-badge" title="${ach.awardFull}">${awardEmoji}</div>
-        <div class="mm-ach-info">
-          <div class="mm-ach-name-row">
-            <span class="mm-ach-name">${ach.awardLabel}</span>
-            <span class="mm-ach-badge">${ach.chapter}</span>
-          </div>
-          <p class="mm-ach-desc">${ach.desc}</p>
-          ${metaLine ? `<div class="mm-ach-meta">${metaLine}</div>` : ''}
-        </div>
-        <div class="mm-ach-award-tag ${isGrand ? 'award-grand' : isTrophy ? 'award-trophy' : isMedal ? 'award-medal' : 'award-ribbon'}">
-          ${isGrand ? '🌟 MASTER' : isTrophy ? '🏆 TROPHY' : isMedal ? '🥈 MEDAL' : '🎖️ RIBBON'}
-        </div>
-      </div>
-    `;
-  });
-
-  listEl.innerHTML = html;
-}
+window.claimAchievement = claimAchievement;
+window.claimAllAchievements = claimAllAchievements;
+window.renderMainMenuAchievements = renderMainMenuAchievements;
+window.updateAchievementNotificationBadge = updateAchievementNotificationBadge;
 
 /** EXIT button — show exit confirmation modal */
 function mainMenuExit() {
@@ -1244,6 +2033,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   _syncStoryFsBtn();
+  if (typeof updateAchievementNotificationBadge === 'function') {
+    updateAchievementNotificationBadge();
+  }
 
   new MutationObserver(function (mutations) {
     mutations.forEach(function (m) {

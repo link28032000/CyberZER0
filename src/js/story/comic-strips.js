@@ -188,6 +188,9 @@ function showComicStrip(chapter) {
 
   // Reveal the first panel automatically
   comicStripShowPanel(0);
+
+  // Start Chapter 1 background music — "Office Infiltration" (Phishing suspense)
+  if (typeof ComicAudio !== 'undefined') ComicAudio.play('ch1');
 }
 
 /** Show a specific comic panel (0-indexed: 0 to 5) and schedule the next panel automatically */
@@ -290,6 +293,9 @@ function comicStripAdvance(e) {
 
 /** Finish comic strip and proceed to Alex password sign-in */
 function comicStripFinish() {
+  // Stop Chapter 1 comic background music
+  if (typeof ComicAudio !== 'undefined') ComicAudio.stop();
+
   if (comicState.autoTimer) {
     clearTimeout(comicState.autoTimer);
     comicState.autoTimer = null;
@@ -437,6 +443,9 @@ function showComicStripCh2() {
 
   // Reveal the first panel automatically
   comicStripCh2ShowPanel(0);
+
+  // Start Chapter 2 background music — "System Breach" (Malware dark-tech)
+  if (typeof ComicAudio !== 'undefined') ComicAudio.play('ch2');
 }
 
 /** Show a specific Chapter 2 comic panel (0-indexed: 0 to 4) and schedule the next panel automatically */
@@ -531,6 +540,9 @@ function comicStripCh2Advance(e) {
 
 /** Finish Chapter 2 comic strip and launch Chapter 2 mission */
 function comicStripCh2Finish() {
+  // Stop Chapter 2 comic background music
+  if (typeof ComicAudio !== 'undefined') ComicAudio.stop();
+
   if (comicStateCh2.autoTimer) {
     clearTimeout(comicStateCh2.autoTimer);
     comicStateCh2.autoTimer = null;
@@ -705,6 +717,9 @@ function showComicStripCh3() {
 
   // Reveal the first panel automatically
   comicStripCh3ShowPanel(0);
+
+  // Start Chapter 3 background music — "Digital Shadows" (Social engineering)
+  if (typeof ComicAudio !== 'undefined') ComicAudio.play('ch3');
 }
 
 /** Show a specific Chapter 3 comic panel (0-indexed: 0 to 6) and schedule the next panel automatically */
@@ -797,6 +812,9 @@ function comicStripCh3Advance(e) {
 
 /** Finish Chapter 3 comic strip and proceed to Pia password login screen */
 function comicStripCh3Finish() {
+  // Stop Chapter 3 comic background music
+  if (typeof ComicAudio !== 'undefined') ComicAudio.stop();
+
   if (comicStateCh3.autoTimer) {
     clearTimeout(comicStateCh3.autoTimer);
     comicStateCh3.autoTimer = null;
@@ -971,6 +989,9 @@ function showComicStripCh4() {
 
   // Reveal the first panel automatically
   comicStripCh4ShowPanel(0);
+
+  // Start Chapter 4 background music — "Encrypted Nightmare" (Ransomware horror)
+  if (typeof ComicAudio !== 'undefined') ComicAudio.play('ch4');
 }
 
 /** Show a specific Chapter 4 comic panel (0-indexed: 0 to 8) and schedule the next panel automatically */
@@ -1063,6 +1084,9 @@ function comicStripCh4Advance(e) {
 
 /** Finish Chapter 4 comic strip and proceed to Ryan password login screen */
 function comicStripCh4Finish() {
+  // Stop Chapter 4 comic background music
+  if (typeof ComicAudio !== 'undefined') ComicAudio.stop();
+
   if (comicStateCh4.autoTimer) {
     clearTimeout(comicStateCh4.autoTimer);
     comicStateCh4.autoTimer = null;
