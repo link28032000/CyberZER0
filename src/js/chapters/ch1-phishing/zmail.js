@@ -453,11 +453,12 @@ function openEmail(idx) {
     }
   }
 
-  // ── Highlight Flag Mode btn ONLY on first email ──────
+  // ── Highlight Flag Mode btn ONLY once on first email ──────
   const isFirstEmail = (email.id === 1 && gameState.currentEmail === 0 && (!gameState.emailResults || gameState.emailResults.length === 0));
-  if (isFirstEmail && !existingResult && gameState.phase === 'mission') {
+  if (!gameState.flagBtnFirstEmailBlinked && isFirstEmail && !existingResult && gameState.phase === 'mission') {
+    gameState.flagBtnFirstEmailBlinked = true;
     setTimeout(function() {
-      // Pulse the Flag Mode button to guide the player on first email
+      // Pulse the Flag Mode button once to guide the player on first email
       const flagBtn = document.getElementById('flag-mode-btn');
       if (flagBtn) {
         flagBtn.classList.remove('btn-pulse-highlight');

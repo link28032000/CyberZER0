@@ -70,8 +70,9 @@ function updateAppLockStates() {
 }
 
 function openApp(appName) {
-  // ── Block all apps while the pretest is running ──
+  // ── Block all apps while the pretest or posttest is running ──
   const pretestRunning = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
+  const posttestRunning = typeof RyanPosttest !== 'undefined' && RyanPosttest.isRunning && RyanPosttest.isRunning();
   const ryanIntroActive = typeof RyanGuide !== 'undefined' && RyanGuide.isActive && RyanGuide.isActive()
                           && gameState.phase === 'mission' && ch1InboxEmails.length === 0;
   if (pretestRunning || ryanIntroActive) {
@@ -83,6 +84,14 @@ function openApp(appName) {
     if (bd && pretestRunning) {
       bd.style.zIndex = '99999';
     }
+    return;
+  }
+  if (posttestRunning) {
+    if (typeof showToast === 'function') {
+      showToast('Please complete your post-test before opening other apps.', 'warning');
+    }
+    const pbd = document.getElementById('ryan-posttest-backdrop');
+    if (pbd) pbd.style.zIndex = '99999';
     return;
   }
 

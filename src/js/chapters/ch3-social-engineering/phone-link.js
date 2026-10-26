@@ -3,27 +3,27 @@
 // ── PHONELINK APP ─────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════════════
-// NEWBIE GROUP CHAT: "Business Inc. — Newbie Squad 🚀"
+// NEW INTERN GROUP CHAT: "new intern team 2027"
 // ═══════════════════════════════════════════════════════════════
 
 const NEWBIE_GC_STORAGE_KEY = 'cyberzero_newbie_gc_state';
 
 const NEWBIE_GC_INFO = {
   id: 'business_newbie_gc',
-  name: 'Business Inc. — Newbie Squad 🚀',
+  name: 'new intern team 2027',
   company: 'Business Inc.',
-  subtitle: 'Official Company Onboarding & Cyber Defense Team',
-  inviter: {
+  subtitle: 'Group created by Ryan · 4 members',
+  creator: {
     name: 'Ryan',
-    role: 'IT Support Mentor & Group Admin',
+    role: 'IT Support Mentor & Group Creator',
     avatar: 'assets/Character/Ryan.png'
   },
   members: [
     {
       id: 'ryan',
       name: 'Ryan',
-      role: 'IT Support Mentor & Admin',
-      roleTag: 'MENTOR',
+      role: 'IT Support Mentor & Group Creator',
+      roleTag: 'CREATOR',
       roleClass: 'pl-gc-role-mentor',
       avatar: 'assets/Character/Ryan.png',
       status: 'Online'
@@ -57,48 +57,8 @@ const NEWBIE_GC_INFO = {
       status: 'Active Now'
     }
   ],
-  defaultMessages: [
-    {
-      id: 'm1',
-      from: 'ryan',
-      author: 'Ryan',
-      roleTag: 'MENTOR',
-      roleClass: 'pl-gc-role-mentor',
-      avatar: 'assets/Character/Ryan.png',
-      time: '10:45 AM',
-      text: "Welcome to the team, Alex! 🎉 Everyone, our newest IT support trainee Alex just passed the email threat assessment with flying colors! 🏆"
-    },
-    {
-      id: 'm2',
-      from: 'ethan',
-      author: 'Ethan',
-      roleTag: 'SYSADMIN',
-      roleClass: 'pl-gc-role-sysadmin',
-      avatar: 'assets/Character/Ethan.png',
-      time: '10:46 AM',
-      text: "Welcome aboard, Alex! 💻 I've set up your security credentials and workstation access. Remember: strong passwords, check your certificates, and don't download unverified executables!"
-    },
-    {
-      id: 'm3',
-      from: 'pia',
-      author: 'Pia',
-      roleTag: 'ANALYST',
-      roleClass: 'pl-gc-role-analyst',
-      avatar: 'assets/Character/Pia.png',
-      time: '10:47 AM',
-      text: "Welcome Alex! 🛡️ Always great having you on the squad. If you spot weird links, urgent requests, or suspicious sender domains, drop them here anytime."
-    },
-    {
-      id: 'm4',
-      from: 'ryan',
-      author: 'Ryan',
-      roleTag: 'MENTOR',
-      roleClass: 'pl-gc-role-mentor',
-      avatar: 'assets/Character/Ryan.png',
-      time: '10:48 AM',
-      text: "Make yourself at home in the chat, Alex! Introduce yourself to Ethan and Pia below. 💬"
-    }
-  ]
+  // Real messaging app experience: no pre-filled fake messages, starts clean with creation event
+  defaultMessages: []
 };
 
 function loadNewbieGcState() {
@@ -110,8 +70,8 @@ function loadNewbieGcState() {
     }
   } catch (e) {}
   return {
-    invited: false,
-    accepted: false,
+    created: false,
+    joined: false,
     hasUnread: false,
     playerMessages: []
   };
@@ -125,7 +85,7 @@ function saveNewbieGcState(state) {
 
 function isNewbieGcActive() {
   const state = loadNewbieGcState();
-  if (state.invited || state.accepted) return true;
+  if (state.created || state.joined || state.invited || state.accepted) return true;
   // If player already completed Chapter 1 or unlocked an achievement
   try {
     const phishProgress = localStorage.getItem('cyberzero_phishing_progress');
@@ -139,12 +99,12 @@ function isNewbieGcActive() {
   return false;
 }
 
-function setNewbieGcInvitePending(andHighlight = true) {
+function setNewbieGcCreated(andHighlight = true) {
   const state = loadNewbieGcState();
-  state.invited = true;
-  if (!state.accepted) {
-    state.hasUnread = true;
-  }
+  state.created = true;
+  state.joined = true;
+  state.accepted = true;
+  state.hasUnread = true;
   saveNewbieGcState(state);
   updatePhoneLinkBadges();
   if (andHighlight) {
@@ -152,50 +112,57 @@ function setNewbieGcInvitePending(andHighlight = true) {
   }
 }
 
+// Backward-compatibility alias
+function setNewbieGcInvitePending(andHighlight = true) {
+  setNewbieGcCreated(andHighlight);
+}
+
 function highlightPhoneLinkApp() {
-  if (window._phoneLinkHighlightDismissed) return;
   const commsWin = document.getElementById('win-comms');
   if (commsWin && !commsWin.classList.contains('hidden')) return;
 
+  // Highlight Phone Link ONLY on desktop app icon with blinking attention border
   const icon = document.getElementById('icon-comms');
   if (icon) {
-    icon.classList.add('pl-icon-pulse');
+    icon.classList.remove('pl-icon-pulse');
+    icon.classList.add('icon-attention');
     icon.setAttribute('data-badge', '1');
-    icon.title = 'Phone Link — 1 Team Invitation Waiting!';
+    icon.title = 'Phone Link — Added to "new intern team 2027"!';
   }
   const taskbarBtn = document.getElementById('taskbar-comms');
   if (taskbarBtn) {
-    taskbarBtn.classList.add('pl-icon-pulse');
+    taskbarBtn.classList.remove('icon-attention', 'pl-icon-pulse');
+  }
+  if (typeof IconAttention !== 'undefined') {
+    IconAttention.show('comms');
   }
   updatePhoneLinkBadges();
 }
 
 function unhighlightPhoneLinkApp() {
   window._phoneLinkHighlightDismissed = true;
+  if (typeof IconAttention !== 'undefined') {
+    IconAttention.hide('comms');
+  }
   const icon = document.getElementById('icon-comms');
   if (icon) {
-    icon.classList.remove('pl-icon-pulse');
+    icon.classList.remove('icon-attention', 'pl-icon-pulse');
     icon.removeAttribute('data-badge');
     icon.title = 'Phone Link';
   }
   const taskbarBtn = document.getElementById('taskbar-comms');
   if (taskbarBtn) {
-    taskbarBtn.classList.remove('pl-icon-pulse');
+    taskbarBtn.classList.remove('icon-attention', 'pl-icon-pulse');
   }
 }
 
 function updatePhoneLinkBadges() {
   const state = loadNewbieGcState();
-  const hasUnread = state.hasUnread || (state.invited && !state.accepted);
+  const hasUnread = !!state.hasUnread;
 
   const phoneBadge = document.getElementById('pl-notif-badge');
   if (phoneBadge) {
-    if (hasUnread) {
-      phoneBadge.textContent = '1';
-      phoneBadge.classList.remove('hidden');
-    } else {
-      phoneBadge.classList.add('hidden');
-    }
+    phoneBadge.classList.add('hidden');
   }
 
   const tabBadge = document.getElementById('pl-msg-badge');
@@ -232,7 +199,246 @@ let g4ActiveConvo = null;
 let g4PiaInspected = false;
 let g4GroupChecked = false;
 let g4PhoneScreenView = 'home'; // 'home' | 'messages' | 'calls'
+// g4ActiveTab declared in data.js
 g4ActiveTab = 'messages';
+
+// ── CONNECTION STATUS HELPERS ─────────────────────────────────
+
+function getPhoneLinkConnectionStatus() {
+  if (typeof networkSettings === 'undefined') {
+    return { isBluetoothConnected: true, isInternetConnected: true, isAirplane: false };
+  }
+  const isAirplane = !!networkSettings.airplane;
+  const isBtOn = !!(networkSettings.bluetooth && !isAirplane);
+  const isWifiOn = !!(networkSettings.wifi && !isAirplane && networkSettings.currentSsid && !networkSettings.noInternet);
+  return {
+    isBluetoothConnected: isBtOn,
+    isInternetConnected: isWifiOn,
+    isAirplane: isAirplane
+  };
+}
+
+function turnOnBluetoothFromPhoneLink() {
+  if (typeof networkSettings !== 'undefined') {
+    if (networkSettings.airplane) {
+      networkSettings.airplane = false;
+    }
+    networkSettings.bluetooth = true;
+    if (typeof updateNetworkUI === 'function') {
+      updateNetworkUI();
+    }
+    if (typeof showToast === 'function') {
+      showToast('📡 Bluetooth turned On • Mobile phone connected.', 'success');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+      AudioManager.playClick();
+    }
+  }
+  updatePhoneLinkConnectionState();
+}
+
+function turnOffAirplaneFromPhoneLink() {
+  if (typeof networkSettings !== 'undefined') {
+    networkSettings.airplane = false;
+    networkSettings.bluetooth = true;
+    networkSettings.wifi = true;
+    if (typeof updateNetworkUI === 'function') {
+      updateNetworkUI();
+    }
+    if (typeof showToast === 'function') {
+      showToast('✈️ Airplane Mode turned off • Wireless restored.', 'success');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+      AudioManager.playClick();
+    }
+  }
+  updatePhoneLinkConnectionState();
+}
+
+function turnOnWifiFromPhoneLink() {
+  if (typeof networkSettings !== 'undefined') {
+    if (networkSettings.airplane) {
+      networkSettings.airplane = false;
+    }
+    networkSettings.wifi = true;
+    if (!networkSettings.currentSsid) {
+      networkSettings.currentSsid = 'HomeNetwork_5G';
+    }
+    networkSettings.noInternet = false;
+    if (typeof updateNetworkUI === 'function') {
+      updateNetworkUI();
+    }
+    if (typeof showToast === 'function') {
+      showToast('📶 Connected to ' + networkSettings.currentSsid + ' • Internet connection restored.', 'success');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+      AudioManager.playClick();
+    }
+  }
+  updatePhoneLinkConnectionState();
+}
+
+function renderDisconnectedHeroView(isAirplane) {
+  const reasonTitle = isAirplane
+    ? "Airplane Mode is turned on"
+    : "We can't connect to your phone";
+  const reasonDesc = isAirplane
+    ? "All wireless communication including Bluetooth is currently suspended by Airplane Mode. Turn off Airplane Mode to restore connection with your phone."
+    : "Bluetooth is turned off on your PC. Phone Link requires Bluetooth to link with your mobile phone, sync conversations, and receive live notifications.";
+  const primaryBtnText = isAirplane ? "✈️ Turn off Airplane Mode" : "📡 Turn on Bluetooth";
+  const primaryAction = isAirplane ? "turnOffAirplaneFromPhoneLink()" : "turnOnBluetoothFromPhoneLink()";
+
+  return `
+    <div class="pl-disconnected-main-view">
+      <div class="pl-dc-hero-graphic">
+        <div class="pl-dc-circle-pulse"></div>
+        <div class="pl-dc-hero-icon">📱⃠</div>
+      </div>
+      <h2 class="pl-dc-title">${reasonTitle}</h2>
+      <p class="pl-dc-desc">${reasonDesc}</p>
+      <div class="pl-dc-actions">
+        <button type="button" class="pl-dc-btn-primary" onclick="${primaryAction}">
+          ${primaryBtnText}
+        </button>
+        <button type="button" class="pl-dc-btn-secondary" onclick="openWifiSettingsFromFlyout()">
+          ⚙️ Network &amp; Bluetooth Settings
+        </button>
+      </div>
+      <div class="pl-dc-troubleshoot-hint">
+        💡 <strong>Quick Fix:</strong> Check the Windows taskbar tray icon in the bottom right corner to verify Bluetooth is enabled.
+      </div>
+    </div>
+  `;
+}
+
+function renderNoInternetBannerHtml() {
+  return `
+    <div class="pl-no-internet-banner" id="pl-no-internet-banner">
+      <div class="pl-no-internet-content">
+        <span class="pl-no-internet-icon">⚠️</span>
+        <div class="pl-no-internet-text">
+          <strong>No internet connection</strong> — Messages can't be sent or synced right now. Check your Wi-Fi connection.
+        </div>
+      </div>
+      <button type="button" class="pl-no-internet-btn" onclick="turnOnWifiFromPhoneLink()">
+        Turn on Wi-Fi
+      </button>
+    </div>
+  `;
+}
+
+function updatePhoneLinkConnectionState() {
+  const conn = getPhoneLinkConnectionStatus();
+
+  // 1. Device status label in left sidebar
+  const statusEl = document.getElementById('pl-device-status');
+  const labelEl = document.querySelector('.pl-device-label');
+  if (statusEl) {
+    if (conn.isBluetoothConnected) {
+      statusEl.textContent = '🟢 Connected';
+      statusEl.className = 'pl-device-status pl-status-connected';
+      if (labelEl) labelEl.title = 'Mobile Phone connected via Bluetooth';
+    } else {
+      statusEl.textContent = '🔴 Disconnected';
+      statusEl.className = 'pl-device-status pl-status-disconnected';
+      if (labelEl) labelEl.title = conn.isAirplane ? 'Disconnected (Airplane Mode active)' : 'Disconnected (Bluetooth is off)';
+    }
+  }
+
+  // 2. Status bar signal icon inside left phone screen
+  const signalEl = document.getElementById('pl-phone-signal');
+  if (signalEl) {
+    if (!conn.isBluetoothConnected) {
+      signalEl.textContent = '📵';
+      signalEl.title = 'Bluetooth disconnected';
+    } else if (!conn.isInternetConnected) {
+      signalEl.textContent = '⚠️';
+      signalEl.title = 'Connected via Bluetooth, but No internet connection';
+    } else {
+      signalEl.textContent = '📶';
+      signalEl.title = 'Wi-Fi & Bluetooth Connected';
+    }
+  }
+
+  // 3. Left phone screen disconnected overlay
+  const phoneScreen = document.getElementById('pl-phone-screen');
+  if (phoneScreen) {
+    let overlay = document.getElementById('pl-phone-disconnected-overlay');
+    if (!conn.isBluetoothConnected) {
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'pl-phone-disconnected-overlay';
+        overlay.className = 'pl-phone-disconnected-overlay';
+        phoneScreen.appendChild(overlay);
+      }
+      overlay.innerHTML = `
+        <div class="pl-phone-dc-inner">
+          <div class="pl-phone-dc-icon">📡⃠</div>
+          <div class="pl-phone-dc-title">Phone Disconnected</div>
+          <div class="pl-phone-dc-sub">${conn.isAirplane ? 'Airplane Mode active on PC' : 'Turn on Bluetooth to reconnect'}</div>
+          <button type="button" class="pl-phone-dc-btn" onclick="turnOnBluetoothFromPhoneLink()">
+            ${conn.isAirplane ? 'Turn Off Airplane' : 'Connect'}
+          </button>
+        </div>
+      `;
+      overlay.style.display = 'flex';
+    } else {
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+  }
+
+  // 4. Main Right Panel
+  const content = document.getElementById('pl-tab-content');
+  if (!content) return;
+
+  if (!conn.isBluetoothConnected) {
+    content.innerHTML = renderDisconnectedHeroView(conn.isAirplane);
+    return;
+  }
+
+  // Bluetooth is connected:
+  const isShowingDcHero = content.querySelector('.pl-disconnected-main-view');
+  if (isShowingDcHero) {
+    // Was showing disconnected hero screen, now restore active view
+    if (g4ActiveTab === 'calls') {
+      switchPhoneTab('calls');
+    } else {
+      if (g4ActiveConvo === 'business_newbie_gc') {
+        openNewbieGcConversation();
+      } else if (g4ActiveConvo) {
+        openPhoneConversation(g4ActiveConvo);
+      } else {
+        switchPhoneTab('messages');
+      }
+    }
+  } else {
+    // Re-sync no internet banner if already viewing messages or group chat
+    if (g4ActiveTab === 'messages') {
+      const bannerExists = !!content.querySelector('.pl-no-internet-banner');
+      if (!conn.isInternetConnected && !bannerExists) {
+        // Needs banner
+        if (g4ActiveConvo === 'business_newbie_gc') {
+          openNewbieGcConversation();
+        } else if (g4ActiveConvo) {
+          openPhoneConversation(g4ActiveConvo);
+        } else {
+          renderPhoneMessages(content);
+        }
+      } else if (conn.isInternetConnected && bannerExists) {
+        // Needs banner removed
+        if (g4ActiveConvo === 'business_newbie_gc') {
+          openNewbieGcConversation();
+        } else if (g4ActiveConvo) {
+          openPhoneConversation(g4ActiveConvo);
+        } else {
+          renderPhoneMessages(content);
+        }
+      }
+    }
+  }
+}
 
 function renderPhoneLinkApp() {
   unhighlightPhoneLinkApp();
@@ -240,6 +446,10 @@ function renderPhoneLinkApp() {
   showPhoneHomeScreen();
   updatePhoneLinkBadges();
   switchPhoneTab('messages');
+  if (typeof isNewbieGcActive === 'function' && isNewbieGcActive()) {
+    openNewbieGcConversation();
+  }
+  updatePhoneLinkConnectionState();
 }
 
 function renderPhoneFrame() {
@@ -302,7 +512,11 @@ function showPhoneInAppScreen(app) {
 
   if (isMsg && isNewbieGcActive()) {
     const gcState = loadNewbieGcState();
-    const isPending = !gcState.accepted;
+    const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
+    const lastMsgPreview = hasPlayerMsgs
+      ? gcState.playerMessages[gcState.playerMessages.length - 1].text
+      : 'Ryan added you';
+
     phoneContent.innerHTML = `
       <div class="pl-phone-inapp-view">
         <div class="pl-phone-inapp-header">
@@ -311,14 +525,13 @@ function showPhoneInAppScreen(app) {
           <span style="width:36px"></span>
         </div>
         <div class="pl-phone-inapp-body" style="padding:8px;justify-content:flex-start;">
-          <div style="background:rgba(255,255,255,0.06);border:1px solid ${isPending ? 'rgba(245,158,11,0.5)' : 'rgba(56,189,248,0.3)'};border-radius:10px;padding:8px 10px;cursor:pointer;width:100%;box-sizing:border-box;text-align:left;" onclick="openNewbieGcConversation()">
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:8px 10px;cursor:pointer;width:100%;box-sizing:border-box;text-align:left;" onclick="openNewbieGcConversation()">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
               <span style="font-size:13px;">👥</span>
-              <span style="font-size:10px;font-weight:800;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Newbie Squad</span>
-              ${isPending ? '<span style="font-size:7px;background:#f59e0b;color:#000;font-weight:900;padding:1px 3px;border-radius:3px;">INVITE</span>' : ''}
+              <span style="font-size:10px;font-weight:800;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">new intern team 2027</span>
             </div>
             <div style="font-size:8.5px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              ${isPending ? "Ryan: Alex, you're invited to join..." : 'Business Inc. Team Chat'}
+              ${lastMsgPreview}
             </div>
           </div>
           <button type="button" class="pl-phone-screen-home-btn" onclick="returnPhoneHome()" style="margin-top:auto;">⌂</button>
@@ -350,12 +563,21 @@ function showPhoneInAppScreen(app) {
 }
 
 function clickPhoneScreenApp(app) {
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isBluetoothConnected) {
+    if (typeof showToast === 'function') {
+      showToast('🔴 Phone disconnected. Turn on Bluetooth on your PC to interact with phone.', 'warning');
+    }
+    return;
+  }
   if (typeof AudioManager !== 'undefined' && typeof AudioManager.playClick === 'function') AudioManager.playClick();
   showPhoneInAppScreen(app);
   switchPhoneTab(app);
 }
 
 function returnPhoneHome() {
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isBluetoothConnected) return;
   if (typeof AudioManager !== 'undefined' && typeof AudioManager.playClick === 'function') AudioManager.playClick();
   showPhoneHomeScreen();
 }
@@ -370,6 +592,12 @@ function switchPhoneTab(tab) {
 
   const content = document.getElementById('pl-tab-content');
   if (!content) return;
+
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isBluetoothConnected) {
+    updatePhoneLinkConnectionState();
+    return;
+  }
 
   if (tab === 'messages') {
     renderPhoneMessages(content);
@@ -394,29 +622,30 @@ function renderPhoneMessages(container) {
   updatePhoneLinkBadges();
   const gcActive = isNewbieGcActive();
   const gcState = loadNewbieGcState();
+  const conn = getPhoneLinkConnectionStatus();
 
-  let html = '<div class="pl-contacts-list">';
+  let bannerHtml = '';
+  if (!conn.isInternetConnected) {
+    bannerHtml = renderNoInternetBannerHtml();
+  }
+
+  let html = bannerHtml + '<div class="pl-contacts-list">';
 
   // 1. Group Chat Row (Pinned at top if active)
   if (gcActive) {
-    const isPending = !gcState.accepted;
-    const tagHtml = isPending
-      ? `<span class="pl-gc-tag-invite">📩 INVITE PENDING</span>`
-      : `<span class="pl-gc-tag-active">👥 4 MEMBERS</span>`;
-    const preview = isPending
-      ? `Ryan: Alex, you've been invited to join the team group chat!`
-      : (gcState.playerMessages && gcState.playerMessages.length > 0
-          ? `Alex: ${gcState.playerMessages[gcState.playerMessages.length - 1].text}`
-          : `Ryan: Make yourself at home in the chat, Alex!`);
+    const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
+    const preview = hasPlayerMsgs
+      ? `${gcState.playerMessages[gcState.playerMessages.length - 1].author}: ${gcState.playerMessages[gcState.playerMessages.length - 1].text}`
+      : `Ryan added you`;
     const timeStr = '10:49 AM';
 
     html += `
-      <div class="pl-contact-row ${isPending ? 'pl-msg-gc-invite' : ''}" onclick="openNewbieGcConversation()" title="${NEWBIE_GC_INFO.name}">
+      <div class="pl-contact-row" onclick="openNewbieGcConversation()" title="${NEWBIE_GC_INFO.name}">
         <div class="pl-contact-avatar pl-gc-avatar-stack">👥</div>
         <div class="pl-contact-info">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
             <span class="pl-contact-name">${NEWBIE_GC_INFO.name}</span>
-            ${tagHtml}
+            <span class="pl-gc-tag-active">👥 4 MEMBERS</span>
           </div>
           <div class="pl-contact-meta" style="display:flex;justify-content:space-between;align-items:center;">
             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;">${preview}</span>
@@ -452,11 +681,11 @@ function renderPhoneMessages(container) {
   html += '</div>';
 
   if (!gcActive && (!g4State || g4State.stage < 3)) {
-    container.innerHTML = `
+    container.innerHTML = bannerHtml + `
       <div class="pl-empty-state">
         <div class="pl-empty-state-icon">💬</div>
         <div class="pl-empty-state-title">No messages</div>
-        <div class="pl-empty-state-sub">No direct messages yet. New conversations and team invites will appear here.</div>
+        <div class="pl-empty-state-sub">No direct messages yet. New conversations will appear here.</div>
       </div>
     `;
   } else {
@@ -465,6 +694,11 @@ function renderPhoneMessages(container) {
 }
 
 function openNewbieGcConversation() {
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isBluetoothConnected) {
+    updatePhoneLinkConnectionState();
+    return;
+  }
   g4ActiveConvo = 'business_newbie_gc';
   switchPhoneTab('messages');
 
@@ -472,96 +706,30 @@ function openNewbieGcConversation() {
   if (!content) return;
 
   const state = loadNewbieGcState();
-  if (!state.accepted) {
-    renderNewbieGcInvite(content);
-  } else {
-    renderNewbieGcChat(content);
-  }
+  state.hasUnread = false;
+  saveNewbieGcState(state);
+  updatePhoneLinkBadges();
+
+  renderNewbieGcChat(content);
 }
 
+// Backward-compat aliases
 function renderNewbieGcInvite(container) {
-  container.innerHTML = `
-    <div class="pl-gc-invite-view" style="flex:1;display:flex;flex-direction:column;justify-content:center;">
-      <div class="pl-gc-invite-card">
-        <div class="pl-gc-invite-icon-wrap">
-          <span class="pl-gc-invite-badge-icon">👥</span>
-        </div>
-        <h2 class="pl-gc-invite-title">${NEWBIE_GC_INFO.name}</h2>
-        <div class="pl-gc-invite-sub">${NEWBIE_GC_INFO.subtitle}</div>
-
-        <div class="pl-gc-invite-inviter">
-          <img src="${NEWBIE_GC_INFO.inviter.avatar}" class="pl-gc-inviter-avatar" alt="Ryan">
-          <div style="flex:1;">
-            <div class="pl-gc-inviter-name">Invited by ${NEWBIE_GC_INFO.inviter.name}</div>
-            <div class="pl-gc-inviter-role">${NEWBIE_GC_INFO.inviter.role}</div>
-          </div>
-          <span style="font-size:11px;color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.15);padding:3px 8px;border-radius:6px;">TEAM INVITE</span>
-        </div>
-
-        <p class="pl-gc-invite-desc">
-          Outstanding work, Alex! Having demonstrated keen instincts in detecting phishing emails, you are officially welcomed to the <strong>Business Inc. Cyber Defense Team</strong>.
-          Join our group chat to collaborate with Ryan, Ethan, and Pia, share threat intel, and coordinate security operations!
-        </p>
-
-        <!-- Members Box (All Characters Inside) -->
-        <div class="pl-gc-members-box">
-          <div class="pl-gc-members-header">Squad Members (4)</div>
-          <div class="pl-gc-members-grid">
-            ${NEWBIE_GC_INFO.members.map(m => `
-              <div class="pl-gc-member-card ${m.isPlayer ? 'you' : ''}">
-                <img src="${m.avatar}" class="pl-gc-member-avatar ${m.isPlayer ? 'avatar-you' : ''}" alt="${m.name}">
-                <div class="pl-gc-member-info">
-                  <div class="pl-gc-member-name">${m.name}</div>
-                  <div class="pl-gc-member-role">${m.role}</div>
-                </div>
-                <span class="pl-gc-msg-role-tag ${m.roleClass}">${m.roleTag}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="pl-gc-invite-actions">
-          <button type="button" class="pl-gc-btn-accept" onclick="acceptNewbieGcInvite()">
-            🎉 Accept Invite &amp; Join Team
-          </button>
-          <button type="button" class="pl-gc-btn-decline" onclick="switchPhoneTab('messages')">
-            Decide Later
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+  renderNewbieGcChat(container);
 }
 
 function acceptNewbieGcInvite() {
-  const state = loadNewbieGcState();
-  state.invited = true;
-  state.accepted = true;
-  state.hasUnread = false;
-  saveNewbieGcState(state);
-
-  unhighlightPhoneLinkApp();
-  updatePhoneLinkBadges();
-
-  if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
-    AudioManager.playCorrect();
-  }
-
-  if (typeof showToast === 'function') {
-    showToast('🎉 Welcome to the team, Alex! You joined Business Inc. — Newbie Squad', 'success');
-  }
-
-  const content = document.getElementById('pl-tab-content');
-  if (content) {
-    renderNewbieGcChat(content);
-  }
+  openNewbieGcConversation();
 }
 
 function renderNewbieGcChat(container) {
   const state = loadNewbieGcState();
+  const conn = getPhoneLinkConnectionStatus();
+  const isOffline = !conn.isInternetConnected;
+  const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
 
-  // Combine default messages with player messages and any dynamic replies
-  const allMessages = [...NEWBIE_GC_INFO.defaultMessages, ...(state.playerMessages || [])];
+  const playerMessages = state.playerMessages || [];
+  const hasMessages = playerMessages.length > 0;
 
   container.innerHTML = `
     <div class="pl-convo-view" style="display:flex;flex-direction:column;height:100%;background:#090e18;">
@@ -571,17 +739,37 @@ function renderNewbieGcChat(container) {
         <div class="pl-contact-avatar pl-gc-avatar-stack" style="width:34px;height:34px;font-size:16px;">👥</div>
         <div class="pl-gc-header-info">
           <div class="pl-convo-name" style="font-size:13.5px;font-weight:800;color:#ffffff;line-height:1.2;">${NEWBIE_GC_INFO.name}</div>
-          <div class="pl-gc-members-summary">Ryan, Ethan, Pia, Alex (You) (4 members) · <span style="color:#22c55e;">🟢 Online</span></div>
+          <div class="pl-gc-members-summary">Group created by Ryan · 4 members (Ryan, Ethan, Pia, Alex) · <span style="color:${isOffline ? '#f59e0b' : '#22c55e'};">${isOffline ? '⚠️ Offline' : '🟢 Online'}</span></div>
         </div>
       </div>
 
+      <!-- Optional No Internet Banner -->
+      ${bannerHtml}
+
       <!-- Messages Thread -->
       <div class="pl-convo-messages" id="pl-gc-messages-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <div class="pl-gc-system-banner">
-          🎉 Alex (You) accepted Ryan's invitation and joined the group chat!
+        <!-- Real messaging app system events -->
+        <div class="pl-gc-system-events-container">
+          <div class="pl-gc-system-pill">
+            👑 <strong>Ryan</strong> created group <strong>"${NEWBIE_GC_INFO.name}"</strong>
+          </div>
+          <div class="pl-gc-system-pill">
+            👥 <strong>Ryan</strong> added <strong>Ethan</strong> and <strong>Pia</strong>
+          </div>
+          <div class="pl-gc-system-pill pl-gc-pill-you">
+            👋 <strong>Ryan</strong> added <strong>you</strong>
+          </div>
         </div>
 
-        ${allMessages.map(msg => {
+        ${!hasMessages ? `
+          <div class="pl-gc-start-hint">
+            <span style="font-size:22px;">💬</span>
+            <div style="font-weight:700;color:#f1f5f9;">No messages yet</div>
+            <div style="font-size:11px;color:#94a3b8;">Say hi to Ethan, Pia, and Ryan to start the team conversation!</div>
+          </div>
+        ` : ''}
+
+        ${playerMessages.map(msg => {
           const isMine = msg.from === 'player' || msg.from === 'alex' || msg.isPlayer;
           const authorName = isMine ? 'Alex (You)' : msg.author;
           const avatarSrc = isMine ? 'assets/Character/Alex.png' : msg.avatar;
@@ -604,25 +792,24 @@ function renderNewbieGcChat(container) {
       </div>
 
       <!-- Quick Replies & Input Bar -->
-      <div class="pl-gc-input-area">
-        <div class="pl-gc-quick-replies">
-          <button type="button" class="pl-gc-chip" onclick="sendPlayerGcQuickReply('👋 Hey everyone! Alex here, excited to be on the squad!')">
-            👋 Say Hi as Alex
-          </button>
-          <button type="button" class="pl-gc-chip" onclick="sendPlayerGcQuickReply('🛡️ Thanks Ryan! Ready to defend Business Inc. from threats!')">
-            🛡️ Ready to Defend
-          </button>
-          <button type="button" class="pl-gc-chip" onclick="sendPlayerGcQuickReply('💻 Thanks Ethan and Pia! Looking forward to working with you both!')">
-            💻 Ready for Intel
-          </button>
-          <button type="button" class="pl-gc-chip" onclick="sendPlayerGcQuickReply('🚀 Let\\'s protect the company together!')">
-            🚀 Protect Together
-          </button>
-        </div>
-        <div class="pl-gc-input-bar">
-          <input type="text" id="pl-gc-text-input" placeholder="Type a message as Alex..." maxlength="200" onkeydown="if(event.key==='Enter') sendCustomPlayerGcMessage()">
-          <button type="button" class="pl-gc-send-btn" onclick="sendCustomPlayerGcMessage()">Send as Alex 📨</button>
-        </div>
+      <div class="pl-gc-input-area ${isOffline ? 'pl-offline-input-area' : ''}">
+        ${!hasMessages ? `
+          <div class="pl-gc-quick-replies">
+            <button type="button" class="pl-gc-chip ${isOffline ? 'pl-chip-disabled' : ''}" onclick="sendPlayerGcQuickReply('Hello!')" ${isOffline ? 'title="No internet connection"' : ''}>
+              👋 Hello!
+            </button>
+          </div>
+          <div class="pl-gc-input-bar">
+            <input type="text" id="pl-gc-text-input" placeholder="${isOffline ? '⚠️ Offline — Connect to Wi-Fi to send messages...' : 'Say \"Hello\" to greet the team...'}" maxlength="200" onkeydown="if(event.key==='Enter') sendCustomPlayerGcMessage()">
+            <button type="button" class="pl-gc-send-btn ${isOffline ? 'pl-btn-offline' : ''}" onclick="sendCustomPlayerGcMessage()">
+              ${isOffline ? 'Offline ⚠️' : 'Send 📨'}
+            </button>
+          </div>
+        ` : `
+          <div style="padding:4px 8px;text-align:center;">
+            <span style="font-size:12px;color:#86efac;font-weight:600;">✓ You greeted the team! Welcome to the squad, Alex.</span>
+          </div>
+        `}
       </div>
     </div>
   `;
@@ -635,20 +822,40 @@ function renderNewbieGcChat(container) {
 }
 
 function sendPlayerGcQuickReply(text) {
-  sendPlayerGcMessage(text);
+  sendPlayerGcMessage('Hello!');
 }
 
 function sendCustomPlayerGcMessage() {
   const input = document.getElementById('pl-gc-text-input');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  sendPlayerGcMessage(text);
+  if (input) input.value = '';
+  sendPlayerGcMessage('Hello!');
 }
 
 function sendPlayerGcMessage(text) {
   if (!text) return;
+
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isBluetoothConnected) {
+    if (typeof showToast === 'function') {
+      showToast('🔴 Phone disconnected. Turn on Bluetooth on your PC to connect your phone.', 'error');
+    }
+    return;
+  }
+  if (!conn.isInternetConnected) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ No internet connection. Turn on Wi-Fi to send messages.', 'warning');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playAlert) {
+      AudioManager.playAlert();
+    }
+    const input = document.getElementById('pl-gc-text-input');
+    if (input) {
+      input.classList.add('pl-input-error');
+      setTimeout(() => input.classList.remove('pl-input-error'), 600);
+    }
+    return;
+  }
+
   const state = loadNewbieGcState();
   if (!state.playerMessages) state.playerMessages = [];
 
@@ -664,7 +871,7 @@ function sendPlayerGcMessage(text) {
     roleClass: 'pl-gc-role-you',
     avatar: 'assets/Character/Alex.png',
     time: timeStr,
-    text: text
+    text: 'Hello!'
   };
 
   state.playerMessages.push(playerMsg);
@@ -679,81 +886,138 @@ function sendPlayerGcMessage(text) {
     renderNewbieGcChat(content);
   }
 
-  // Teammate dynamic response after 750ms
-  scheduleTeammateResponse(text);
+  // Teammates dynamic multi-step response with typing indicators and notification sounds
+  scheduleTeammateResponse('Hello!');
+}
+
+function showGcTypingIndicator(name) {
+  const list = document.getElementById('pl-gc-messages-list');
+  if (!list) return;
+  const existing = document.getElementById('pl-gc-typing-row');
+  if (existing) existing.remove();
+  const typing = document.createElement('div');
+  typing.id = 'pl-gc-typing-row';
+  typing.className = 'pl-gc-typing-pill';
+  typing.innerHTML = `<span>💬</span> <span>${escapeHtml(name)} is typing...</span>`;
+  list.appendChild(typing);
+  list.scrollTop = list.scrollHeight;
+}
+
+function removeGcTypingIndicator() {
+  const existing = document.getElementById('pl-gc-typing-row');
+  if (existing) existing.remove();
 }
 
 function scheduleTeammateResponse(playerText) {
+  showGcTypingIndicator('Ryan');
+
+  // Step 1: Ryan warmly welcomes Alex to the team
   setTimeout(() => {
+    removeGcTypingIndicator();
     const state = loadNewbieGcState();
     if (!state.playerMessages) state.playerMessages = [];
 
-    const lower = playerText.toLowerCase();
-    let replyObj = null;
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    if (lower.includes('hi') || lower.includes('hey') || lower.includes('happy') || lower.includes('alex')) {
-      replyObj = {
-        id: 'r_' + Date.now(),
-        from: 'pia',
-        author: 'Pia',
-        roleTag: 'ANALYST',
-        roleClass: 'pl-gc-role-analyst',
-        avatar: 'assets/Character/Pia.png',
-        time: timeStr,
-        text: "Hey Alex! ✋ Great to have you with us on the squad. Always remember: if an email sounds too good to be true, it definitely is!"
-      };
-    } else if (lower.includes('defend') || lower.includes('threat') || lower.includes('ready')) {
-      replyObj = {
-        id: 'r_' + Date.now(),
-        from: 'ethan',
-        author: 'Ethan',
-        roleTag: 'SYSADMIN',
-        roleClass: 'pl-gc-role-sysadmin',
-        avatar: 'assets/Character/Ethan.png',
-        time: timeStr,
-        text: "That's the spirit, Alex! 🛡️ Always verify headers, hover over suspicious links, and never run unknown executables."
-      };
-    } else if (lower.includes('ethan') || lower.includes('intel') || lower.includes('work') || lower.includes('pia')) {
-      replyObj = {
-        id: 'r_' + Date.now(),
-        from: 'pia',
-        author: 'Pia',
-        roleTag: 'ANALYST',
-        roleClass: 'pl-gc-role-analyst',
-        avatar: 'assets/Character/Pia.png',
-        time: timeStr,
-        text: "Looking forward to working with you, Alex! I'm tracking incoming phishing reports — feel free to drop anything strange here anytime. 🔍"
-      };
-    } else {
-      replyObj = {
-        id: 'r_' + Date.now(),
-        from: 'ryan',
-        author: 'Ryan',
-        roleTag: 'MENTOR',
-        roleClass: 'pl-gc-role-mentor',
-        avatar: 'assets/Character/Ryan.png',
-        time: timeStr,
-        text: "Great attitude, Alex! Remember our core rule: Stop. Check. Verify. Report. You are going to do great here. 👍"
-      };
-    }
+    const ryanReply = {
+      id: 'r_' + Date.now(),
+      from: 'ryan',
+      author: 'Ryan',
+      roleTag: 'CREATOR',
+      roleClass: 'pl-gc-role-mentor',
+      avatar: 'assets/Character/Ryan.png',
+      time: timeStr,
+      text: "Welcome, new intern! 🎉 So glad you're officially on the team, Alex! You handled those phishing threats like a pro today. Take a quick breather—we're excited to work with you!"
+    };
 
-    state.playerMessages.push(replyObj);
+    state.playerMessages.push(ryanReply);
     saveNewbieGcState(state);
 
-    if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
-      AudioManager.playClick();
+    if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+      AudioManager.playNotification();
     }
 
     const content = document.getElementById('pl-tab-content');
-    if (content) {
-      renderNewbieGcChat(content);
-    }
-  }, 750);
+    if (content) renderNewbieGcChat(content);
+
+    // Step 2: Pia welcomes Alex
+    setTimeout(() => {
+      showGcTypingIndicator('Pia');
+
+      setTimeout(() => {
+        removeGcTypingIndicator();
+        const pState = loadNewbieGcState();
+        if (!pState.playerMessages) pState.playerMessages = [];
+        const pNow = new Date();
+        const pTime = pNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const piaReply = {
+          id: 'r_' + Date.now(),
+          from: 'pia',
+          author: 'Pia',
+          roleTag: 'ANALYST',
+          roleClass: 'pl-gc-role-analyst',
+          avatar: 'assets/Character/Pia.png',
+          time: pTime,
+          text: "Welcome aboard, Alex! 😄 Don't hesitate to reach out if you ever need a second pair of eyes on suspicious links or weird emails. We've got your back!"
+        };
+
+        pState.playerMessages.push(piaReply);
+        saveNewbieGcState(pState);
+
+        if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+          AudioManager.playNotification();
+        }
+
+        const pContent = document.getElementById('pl-tab-content');
+        if (pContent) renderNewbieGcChat(pContent);
+
+        // Step 3: Ethan adds SysAdmin welcome
+        setTimeout(() => {
+          showGcTypingIndicator('Ethan');
+
+          setTimeout(() => {
+            removeGcTypingIndicator();
+            const eState = loadNewbieGcState();
+            if (!eState.playerMessages) eState.playerMessages = [];
+            const eNow = new Date();
+            const eTime = eNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const ethanReply = {
+              id: 'r_' + Date.now(),
+              from: 'ethan',
+              author: 'Ethan',
+              roleTag: 'SYSADMIN',
+              roleClass: 'pl-gc-role-sysadmin',
+              avatar: 'assets/Character/Ethan.png',
+              time: eTime,
+              text: "Welcome to the squad, Alex! 💻 Your security clearance and workstation accounts are all set up. Glad to have you with us!"
+            };
+
+            eState.playerMessages.push(ethanReply);
+            saveNewbieGcState(eState);
+
+            if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+              AudioManager.playNotification();
+            }
+
+            const eContent = document.getElementById('pl-tab-content');
+            if (eContent) renderNewbieGcChat(eContent);
+          }, 850);
+        }, 700);
+      }, 850);
+    }, 700);
+  }, 850);
 }
 
 function openPhoneConversation(contactId) {
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isBluetoothConnected) {
+    updatePhoneLinkConnectionState();
+    return;
+  }
+
   g4ActiveConvo = contactId;
   switchPhoneTab('messages');
 
@@ -761,6 +1025,7 @@ function openPhoneConversation(contactId) {
   if (!content) return;
 
   const contact = G4_CONTACTS.find(c => c.id === contactId);
+  const bannerHtml = !conn.isInternetConnected ? renderNoInternetBannerHtml() : '';
 
   content.innerHTML = `
     <div class="pl-convo-view">
@@ -768,6 +1033,7 @@ function openPhoneConversation(contactId) {
         <button class="pl-back-btn" onclick="switchPhoneTab('messages')">← Back</button>
         <div class="pl-convo-name">${contact?.name || contactId}</div>
       </div>
+      ${bannerHtml}
       <div class="pl-empty-state" style="flex:1;">
         <div class="pl-empty-state-icon">💬</div>
         <div class="pl-empty-state-title">No messages</div>

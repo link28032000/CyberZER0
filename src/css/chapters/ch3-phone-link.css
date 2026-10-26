@@ -294,25 +294,7 @@
 }
 
 .pl-notif-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ef4444;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pl-pulse 1.2s infinite;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
-}
-@keyframes pl-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  display: none !important;
 }
 
 .pl-device-label {
@@ -1188,7 +1170,30 @@
   transform: translateY(-1px);
 }
 
-/* Phone Link Icon Pulse Animation */
+/* Real-time typing indicator */
+.pl-gc-typing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  width: fit-content;
+  align-self: flex-start;
+  margin-top: 4px;
+  animation: plTypingPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes plTypingPulse {
+  0%, 100% { opacity: 0.65; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-1px); }
+}
+
+/* Phone Link Icon Pulse Animation — desktop app icon only */
 @keyframes plIconGlow {
   0%, 100% {
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
@@ -1198,9 +1203,405 @@
   }
 }
 
-.pl-icon-pulse {
+#icon-comms.pl-icon-pulse,
+.desktop-icon#icon-comms.pl-icon-pulse {
   animation: plIconGlow 1.6s infinite !important;
   border-radius: 8px;
 }
 
+#taskbar-comms.pl-icon-pulse,
+.taskbar-app-btn#taskbar-comms.pl-icon-pulse {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHONE LINK REALISTIC BLUETOOTH & WI-FI CONNECTION STATES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Device Status Indicator */
+.pl-device-status.pl-status-connected {
+  color: #4ade80 !important;
+  font-weight: 600;
+}
+
+.pl-device-status.pl-status-disconnected {
+  color: #ef4444 !important;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+}
+
+/* 2. Left Phone Screen Disconnected Overlay */
+.pl-phone-disconnected-overlay {
+  position: absolute;
+  top: 25px; /* below status bar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(9, 14, 24, 0.94);
+  backdrop-filter: blur(6px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  animation: plFadeIn 0.25s ease;
+}
+
+@keyframes plFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.pl-phone-dc-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pl-phone-dc-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.45));
+  animation: plDcPulse 2s infinite ease-in-out;
+}
+
+@keyframes plDcPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+.pl-phone-dc-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: 0.3px;
+}
+
+.pl-phone-dc-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.4;
+  max-width: 140px;
+}
+
+.pl-phone-dc-btn {
+  margin-top: 6px;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pl-phone-dc-btn:hover {
+  background: #38bdf8;
+  color: #0b111e;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+}
+
+/* 3. Main Panel Disconnected Hero View */
+.pl-disconnected-main-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 30px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 35%, rgba(30, 41, 59, 0.7) 0%, #090e18 100%);
+  animation: plFadeIn 0.3s ease;
+  min-height: 380px;
+}
+
+.pl-dc-hero-graphic {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pl-dc-circle-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0) 70%);
+  animation: plCirclePulse 2.4s infinite ease-in-out;
+}
+
+@keyframes plCirclePulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+.pl-dc-hero-icon {
+  font-size: 46px;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
+
+.pl-dc-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
+}
+
+.pl-dc-desc {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #94a3b8;
+  max-width: 440px;
+  margin-bottom: 24px;
+}
+
+.pl-dc-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pl-dc-btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pl-dc-btn-primary:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.45);
+}
+
+.pl-dc-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pl-dc-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.pl-dc-troubleshoot-hint {
+  font-size: 11.5px;
+  color: #64748b;
+  max-width: 420px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  line-height: 1.4;
+}
+
+/* 4. No Internet Banner (amber alert like Windows Phone Link) */
+.pl-no-internet-banner {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.08) 100%);
+  border-top: 1px solid rgba(245, 158, 11, 0.32);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.32);
+  border-left: 4px solid #f59e0b;
+  padding: 9px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: plSlideDown 0.25s ease;
+  flex-shrink: 0;
+}
+
+@keyframes plSlideDown {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.pl-no-internet-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.pl-no-internet-icon {
+  font-size: 16px;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.pl-no-internet-text {
+  font-size: 12px;
+  color: #fde68a;
+  line-height: 1.35;
+}
+
+.pl-no-internet-text strong {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.pl-no-internet-btn {
+  background: #f59e0b;
+  border: none;
+  color: #0b111e;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.pl-no-internet-btn:hover {
+  background: #fbbf24;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+/* Offline state on Group Chat input area */
+.pl-gc-input-area.pl-offline-input-area {
+  opacity: 0.9;
+}
+
+.pl-gc-chip.pl-chip-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.pl-gc-chip.pl-chip-disabled:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: none;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.pl-gc-send-btn.pl-btn-offline {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.pl-gc-send-btn.pl-btn-offline:hover {
+  background: rgba(245, 158, 11, 0.3);
+  transform: none;
+}
+
+/* Input error shake animation */
+@keyframes plInputShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.pl-input-error {
+  animation: plInputShake 0.4s ease;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHONE LINK DESKTOP ICON ATTENTION HIGHLIGHT (BLINKING BORDER)
+   ═══════════════════════════════════════════════════════════════ */
+.desktop-icon#icon-comms.icon-attention {
+  border: 2px solid #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.16) !important;
+  animation: pl-icon-comms-blink 1.25s ease-in-out infinite !important;
+  border-radius: 12px;
+  position: relative;
+  z-index: 5;
+}
+
+@keyframes pl-icon-comms-blink {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.7), 0 0 16px 4px rgba(56, 189, 248, 0.4);
+    border-color: rgba(56, 189, 248, 0.8);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 1), 0 0 28px 8px rgba(56, 189, 248, 0.75);
+    border-color: #38bdf8;
+    transform: scale(1.06);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GROUP CHAT REAL MESSAGING SYSTEM EVENT PILLS
+   ═══════════════════════════════════════════════════════════════ */
+.pl-gc-system-events-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 16px 0;
+}
+
+.pl-gc-system-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 11.5px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.pl-gc-system-pill strong {
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.pl-gc-system-pill.pl-gc-pill-you {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+}
+
+.pl-gc-start-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 13px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin: 8px auto 16px auto;
+  max-width: 380px;
+}
 

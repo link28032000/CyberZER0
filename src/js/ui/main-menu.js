@@ -928,34 +928,13 @@ function claimAllAchievements() {
 
 /**
  * Update the notification badge on the Achievement button in Main Menu
+ * (Claim badge is completely disabled per user request)
  */
 function updateAchievementNotificationBadge() {
   const badgeEl = document.getElementById('mm-ach-claim-badge');
-  if (!badgeEl) return;
-
-  if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress();
-  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
-  const map = getClaimedAchievementsMap();
-
-  let unclaimedCount = 0;
-  MISSION_ACHIEVEMENTS.forEach(ach => {
-    let tier = null;
-    if (ach.catId) {
-      const cat = cats.find(c => c.id === ach.catId);
-      tier = getChapterMedalTier(cat);
-    } else {
-      tier = getMasterTrophyTier(cats);
-    }
-    if (tier && !map[ach.id]) {
-      unclaimedCount++;
-    }
-  });
-
-  if (unclaimedCount > 0) {
-    badgeEl.textContent = `${unclaimedCount} CLAIM`;
-    badgeEl.classList.remove('hidden');
-  } else {
+  if (badgeEl) {
     badgeEl.classList.add('hidden');
+    badgeEl.style.display = 'none';
   }
 }
 
@@ -1194,9 +1173,17 @@ function renderMainMenuAchievements() {
     const isCompleted = !!earnedTier;
     if (isCompleted) completedCount++;
 
-    const isClaimed = isCompleted && !!claimedMap[ach.id];
+    if (isCompleted && !claimedMap[ach.id]) {
+      claimedMap[ach.id] = {
+        tier: earnedTier,
+        claimedAt: Date.now(),
+        claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      };
+      saveClaimedAchievementsMap(claimedMap);
+    }
+
+    const isClaimed = isCompleted;
     if (isClaimed) claimedCount++;
-    if (isCompleted && !isClaimed) unclaimedCount++;
 
     return {
       ach,
@@ -1209,13 +1196,10 @@ function renderMainMenuAchievements() {
     };
   });
 
-  // ── Render Stats Header Bar (No MISSION PTS, Clean Game Progress Bar) ──
+  // ── Render Stats Header Bar (No CLAIM, Clean Game Progress Bar) ──
   const statsEl = document.getElementById('mm-ach-stats');
   if (statsEl) {
     const pct = Math.round((completedCount / 5) * 100);
-    const claimAllBtnHtml = unclaimedCount >= 1
-      ? `<button type="button" class="mm-ach-claim-all-btn" onclick="claimAllAchievements()">✨ CLAIM ALL (${unclaimedCount})</button>`
-      : '';
 
     statsEl.innerHTML = `
       <div class="mm-ach-stat-row">
@@ -1230,11 +1214,10 @@ function renderMainMenuAchievements() {
           <span class="mm-ach-progress-pct">${pct}%</span>
         </div>
         <div class="mm-ach-stat-pill">
-          <span class="mm-ach-stat-label">CLAIMED</span>
-          <span class="mm-ach-stat-val ${claimedCount > 0 ? 'highlight-gold' : ''}">${claimedCount} / 5</span>
+          <span class="mm-ach-stat-label">UNLOCKED</span>
+          <span class="mm-ach-stat-val ${completedCount > 0 ? 'highlight-gold' : ''}">${completedCount} / 5</span>
         </div>
       </div>
-      ${claimAllBtnHtml}
     `;
   }
 
@@ -1250,7 +1233,6 @@ function renderMainMenuAchievements() {
     const ach = item.ach;
     const isCompleted = item.isCompleted;
     const tier = item.earnedTier;
-    const isClaimed = item.isClaimed;
     const isTrophy = ach.type === 'trophy';
     const isSelected = ach.id === _selectedAchId;
 
@@ -1263,18 +1245,12 @@ function renderMainMenuAchievements() {
       ? renderAchTrophySVG(tier, 'nav-' + ach.id)
       : renderAchMedalSVG(tier, ach.iconSymbol, 'nav-' + ach.id);
 
-    // Status Badge in Nav item
+    // Status Badge in Nav item (No claim text)
     let statusBadge = '';
     if (!isCompleted) {
-      statusBadge = `<span class="mm-ach-nav-pill is-locked" title="Mission Locked"></span>`;
-    } else if (!isClaimed) {
-      statusBadge = `
-        <button type="button" class="mm-ach-nav-claim-btn" onclick="claimAchievement('${ach.id}')" title="Claim reward">
-          CLAIM
-        </button>
-      `;
+      statusBadge = `<span class="mm-ach-nav-pill is-locked" title="Mission Locked">🔒</span>`;
     } else {
-      statusBadge = `<span class="mm-ach-nav-pill is-claimed" title="Reward Claimed">✓</span>`;
+      statusBadge = `<span class="mm-ach-nav-pill is-claimed" title="Unlocked">✓</span>`;
     }
 
     const itemClasses = [
@@ -1285,16 +1261,19 @@ function renderMainMenuAchievements() {
       isSelected ? 'is-selected' : ''
     ].filter(Boolean).join(' ');
 
+    const categorySub = isTrophy ? 'ALL 4 CHAPTERS' : ach.threatCategory;
+    const badgeRarity = isTrophy ? (tier ? tierTag : 'GRAND TROPHY') : tierTag;
+
     return `
       <div class="${itemClasses}" onclick="selectAchCard('${ach.id}', event)" role="button" tabindex="0">
         <div class="mm-ach-nav-visual">
           ${miniSvg}
         </div>
         <div class="mm-ach-nav-info">
-          <div class="mm-ach-nav-title">${cardTitle}</div>
+          <div class="mm-ach-nav-title" title="${cardTitle}">${cardTitle}</div>
           <div class="mm-ach-nav-meta">
-            <span class="mm-ach-nav-tier ${tier ? 'tag-' + tier : 'tag-locked'}">${tierTag}</span>
-            <span class="mm-ach-nav-chap">${ach.threatCategory}</span>
+            <span class="mm-ach-nav-tier ${tier ? 'tag-' + tier : (isTrophy ? 'tag-trophy-locked' : 'tag-locked')}">${badgeRarity}</span>
+            <span class="mm-ach-nav-chap">${categorySub}</span>
           </div>
         </div>
         <div class="mm-ach-nav-right">
@@ -1310,7 +1289,6 @@ function renderMainMenuAchievements() {
   const selTier = selectedItem.earnedTier;
   const selTierData = selTier ? selAch.tiers[selTier] : null;
   const selIsCompleted = selectedItem.isCompleted;
-  const selIsClaimed = selectedItem.isClaimed;
   const selIsTrophy = selAch.type === 'trophy';
 
   // Large SVG emblem for showcase
@@ -1325,34 +1303,65 @@ function renderMainMenuAchievements() {
     if (selectedItem.rank) parts.push(`<span class="mm-ach-dossier-pill rank-pill">Rank <strong>${selectedItem.rank}</strong></span>`);
     if (selectedItem.score) parts.push(`<span class="mm-ach-dossier-pill score-pill">Score <strong>${selectedItem.score.toLocaleString()} pts</strong></span>`);
     if (selectedItem.claimedData && selectedItem.claimedData.claimedDate) {
-      parts.push(`<span class="mm-ach-dossier-pill date-pill">Claimed on ${selectedItem.claimedData.claimedDate}</span>`);
+      parts.push(`<span class="mm-ach-dossier-pill date-pill">Unlocked on ${selectedItem.claimedData.claimedDate}</span>`);
     }
     performanceHtml = parts.join('');
   } else {
     const unlockHint = selAch.catId
       ? `Complete Chapter ${selAch.num} with Rank C (Bronze), Rank A/B (Silver), or Rank S (Gold)`
-      : `Complete all 4 Chapters with detective honors to unlock Trophy`;
-    performanceHtml = `<span class="mm-ach-dossier-pill lock-pill">Requirement: ${unlockHint}</span>`;
+      : `Complete all 4 Chapters with detective honors to forge this Trophy`;
+    performanceHtml = `<span class="mm-ach-dossier-pill lock-pill"><span class="lock-pill-icon">🔒</span> Requirement: ${unlockHint}</span>`;
   }
 
-  // Showcase Action Button
+  // Showcase Action Status (No claim buttons)
   let showcaseActionHtml = '';
-  if (!selIsCompleted) {
+  if (selIsCompleted) {
     showcaseActionHtml = `
-      <button type="button" class="mm-ach-showcase-btn is-unready" onclick="claimAchievement('${selAch.id}')" title="Complete mission to claim">
-        CLAIM REWARD
-      </button>
-    `;
-  } else if (!selIsClaimed) {
-    showcaseActionHtml = `
-      <button type="button" class="mm-ach-showcase-btn is-ready" onclick="claimAchievement('${selAch.id}')" title="Claim your ${selTier.toUpperCase()} reward!">
-        ✨ CLAIM ${selTier.toUpperCase()} REWARD
-      </button>
+      <div class="mm-ach-showcase-claimed">
+        <span class="claimed-check">✓</span> DOSSIER COMMENDED &amp; RECORDED ${selectedItem.claimedData && selectedItem.claimedData.claimedDate ? '· ' + selectedItem.claimedData.claimedDate : ''}
+      </div>
     `;
   } else {
     showcaseActionHtml = `
-      <div class="mm-ach-showcase-claimed">
-        <span class="claimed-check">✓</span> REWARD SECURED & RECORDED ${selectedItem.claimedData && selectedItem.claimedData.claimedDate ? '· ' + selectedItem.claimedData.claimedDate : ''}
+      <div class="mm-ach-showcase-claimed is-locked-footer">
+        <span>🔒</span> MISSION INCOMPLETE · COMPLETE OPERATIONS TO FORGE AWARD
+      </div>
+    `;
+  }
+
+  // Clean Threat Display Name (avoids repeating chapter words and keeps layout tight)
+  const threatNameMap = {
+    ach_phishing: 'PHISHING DEFENSE',
+    ach_malware: 'MALWARE PROTECTION',
+    ach_safe_online: 'SAFE BROWSING',
+    ach_ransomware: 'RANSOMWARE RESPONSE',
+    ach_trophy_master: 'ALL 4 OPERATIONS'
+  };
+  const threatDisplayName = threatNameMap[selAch.id] || selAch.threatCategory || 'THREAT DEFENSE';
+  const heroTitle = selTier ? selTierData.badgeTitle : selAch.title;
+  const chapterBadgeText = selAch.catId ? `CHAPTER ${selAch.num}` : 'GRAND ACCOLADE';
+
+  // Status Strip under Title
+  let statusStripHtml = '';
+  if (selIsCompleted) {
+    const tierIcon = selTier === 'gold' ? '🥇' : selTier === 'silver' ? '🥈' : '🥉';
+    statusStripHtml = `
+      <div class="status-strip-inner is-unlocked tier-${selTier}">
+        <span class="status-strip-icon">${tierIcon}</span>
+        <strong class="status-strip-tag">${selTierData.tag}</strong>
+        <span class="status-strip-sep">·</span>
+        <span class="status-strip-desc">${selTierData.detail}</span>
+      </div>
+    `;
+  } else {
+    const reqText = selAch.catId
+      ? `Complete Chapter ${selAch.num} Mission with Detective Honors to forge this Medal`
+      : `Complete all 4 Chapter Operations to forge the Cyber Defense Master Trophy`;
+    statusStripHtml = `
+      <div class="status-strip-inner is-locked">
+        <span class="status-strip-icon">🔒</span>
+        <strong class="status-strip-tag">REQUIREMENT:</strong>
+        <span class="status-strip-desc">${reqText}</span>
       </div>
     `;
   }
@@ -1372,22 +1381,30 @@ function renderMainMenuAchievements() {
       </div>
 
       <!-- Right Column: Detailed Showcase -->
-      <div class="mm-ach-showcase-col ${selTier ? 'tier-' + selTier : 'tier-locked'}">
-        <!-- Showcase Header -->
-        <div class="mm-ach-showcase-top">
-          <div class="mm-ach-showcase-visual">
+      <div class="mm-ach-showcase-col ${selIsTrophy ? 'is-trophy-col' : ''} ${selTier ? 'tier-' + selTier : 'tier-locked'}">
+        <!-- Showcase Hero Header Card -->
+        <div class="mm-ach-hero-card ${selIsTrophy ? 'is-trophy-card' : ''} ${selTier ? 'tier-' + selTier : 'is-locked'}">
+          <div class="mm-ach-hero-visual-podium">
+            <div class="mm-ach-hero-halo"></div>
             ${showcaseSvg}
           </div>
-          <div class="mm-ach-showcase-header-info">
-            <div class="mm-ach-showcase-tags">
-              <span class="mm-ach-chapter-tag">${selAch.chapterTag}</span>
-              <span class="mm-ach-threat-pill">${selAch.threatCategory || (selIsTrophy ? 'ALL THREATS' : 'THREAT')}</span>
-            </div>
-            <h3 class="mm-ach-showcase-title">${selTier ? selTierData.badgeTitle : selAch.title}</h3>
-            <div class="mm-ach-showcase-tier-row">
-              <span class="mm-ach-tier-tag ${selTier ? 'tag-' + selTier : 'tag-locked'}">
-                ${selTier ? selTierData.tag : 'CHAPTER UNLOCKED ON MISSION CLEAR'}
+          <div class="mm-ach-hero-content">
+            <div class="mm-ach-hero-header-bar">
+              <div class="mm-ach-hero-tags-left">
+                <span class="mm-ach-hero-badge chap-badge ${selIsTrophy ? 'trophy-badge' : ''}">
+                  <span class="mm-ach-badge-dot"></span>${chapterBadgeText}
+                </span>
+                <span class="mm-ach-hero-badge threat-badge">
+                  <span class="threat-icon">${selIsTrophy ? '🏆' : (selAch.iconSymbol || '🛡️')}</span>${threatDisplayName}
+                </span>
+              </div>
+              <span class="mm-ach-hero-badge status-badge ${selIsCompleted ? 'is-unlocked tier-' + selTier : 'is-locked'}">
+                ${selIsCompleted ? '✓ UNLOCKED' : '🔒 LOCKED'}
               </span>
+            </div>
+            <h2 class="mm-ach-hero-title" title="${heroTitle}">${heroTitle}</h2>
+            <div class="mm-ach-hero-status-strip">
+              ${statusStripHtml}
             </div>
           </div>
         </div>
@@ -1396,13 +1413,17 @@ function renderMainMenuAchievements() {
 
         <!-- Medal Purpose & Objective Box -->
         <div class="mm-ach-showcase-block">
-          <div class="mm-ach-block-label">MEDAL PURPOSE & OBJECTIVE</div>
+          <div class="mm-ach-block-label">
+            <span class="mm-ach-block-icon">🎯</span> MISSION OBJECTIVE &amp; BRIEFING
+          </div>
           <p class="mm-ach-showcase-objective">${selAch.objective}</p>
         </div>
 
         <!-- Detective Standing & Criteria -->
         <div class="mm-ach-showcase-block">
-          <div class="mm-ach-block-label">STATUS & RECORD</div>
+          <div class="mm-ach-block-label">
+            <span class="mm-ach-block-icon">📋</span> INVESTIGATOR RECORD &amp; STATUS
+          </div>
           <div class="mm-ach-performance-row">
             ${performanceHtml}
           </div>
@@ -1410,28 +1431,30 @@ function renderMainMenuAchievements() {
 
         <!-- 3-Tier Criteria Matrix -->
         <div class="mm-ach-showcase-block">
-          <div class="mm-ach-block-label">TIER REQUIREMENTS & HONORS</div>
+          <div class="mm-ach-block-label">
+            <span class="mm-ach-block-icon">🏆</span> TIER REQUIREMENTS &amp; HONORS
+          </div>
           <div class="mm-ach-tier-matrix-row">
-            <div class="mm-ach-tier-card ${selTier === 'bronze' ? 'is-current-tier' : ''}">
+            <div class="mm-ach-tier-card tier-bronze ${selTier === 'bronze' ? 'is-current-tier' : ''}">
               <div class="mm-ach-tier-card-head">
                 <span class="matrix-tag tag-bronze">🥉 BRONZE</span>
-                ${selTier === 'bronze' ? '<span class="matrix-current-badge">EARNED</span>' : ''}
+                ${selTier === 'bronze' ? '<span class="matrix-current-badge">EARNED</span>' : (selIsCompleted && (selTier === 'silver' || selTier === 'gold') ? '<span class="matrix-current-badge cleared">CLEARED</span>' : '<span class="matrix-lock-badge">🔒</span>')}
               </div>
               <div class="mm-ach-tier-card-desc">${selAch.tiers.bronze.detail}</div>
             </div>
 
-            <div class="mm-ach-tier-card ${selTier === 'silver' ? 'is-current-tier' : ''}">
+            <div class="mm-ach-tier-card tier-silver ${selTier === 'silver' ? 'is-current-tier' : ''}">
               <div class="mm-ach-tier-card-head">
                 <span class="matrix-tag tag-silver">🥈 SILVER</span>
-                ${selTier === 'silver' ? '<span class="matrix-current-badge">EARNED</span>' : ''}
+                ${selTier === 'silver' ? '<span class="matrix-current-badge">EARNED</span>' : (selIsCompleted && selTier === 'gold' ? '<span class="matrix-current-badge cleared">CLEARED</span>' : '<span class="matrix-lock-badge">🔒</span>')}
               </div>
               <div class="mm-ach-tier-card-desc">${selAch.tiers.silver.detail}</div>
             </div>
 
-            <div class="mm-ach-tier-card ${selTier === 'gold' ? 'is-current-tier' : ''}">
+            <div class="mm-ach-tier-card tier-gold ${selTier === 'gold' ? 'is-current-tier' : ''}">
               <div class="mm-ach-tier-card-head">
                 <span class="matrix-tag tag-gold">🥇 GOLD</span>
-                ${selTier === 'gold' ? '<span class="matrix-current-badge">EARNED</span>' : ''}
+                ${selTier === 'gold' ? '<span class="matrix-current-badge gold-badge">EARNED</span>' : '<span class="matrix-lock-badge">🔒</span>'}
               </div>
               <div class="mm-ach-tier-card-desc">${selAch.tiers.gold.detail}</div>
             </div>

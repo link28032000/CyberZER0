@@ -104,8 +104,8 @@ const IconAttention = (() => {
   const _origOpen = window.openApp;
   if (typeof _origOpen === 'function') {
     window.openApp = function(appName) {
-      if (appName === 'gmail') {
-        IconAttention.hide('gmail');
+      if (typeof IconAttention !== 'undefined' && IconAttention.hide) {
+        IconAttention.hide(appName);
       }
       return _origOpen.apply(this, arguments);
     };

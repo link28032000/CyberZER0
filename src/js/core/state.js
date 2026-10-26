@@ -1,5 +1,17 @@
 'use strict';
 
+// Global HTML escaper available to all modules immediately
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+window.escapeHtml = escapeHtml;
+
 // Training slides content — only the demo-ready slide remains (others moved to VN intro)
 const TRAINING_SLIDES = [
   {

@@ -271,7 +271,7 @@ function g4ProceedToStage3() {
     setTimeout(() => {
       showToast('📱 New message from "Pia — New Account". Open Phone Link to investigate.', 'warning');
       const badge = document.getElementById('pl-notif-badge');
-      if (badge) badge.classList.remove('hidden');
+      if (badge) badge.classList.add('hidden');
     }, 600);
   }, 300);
 }

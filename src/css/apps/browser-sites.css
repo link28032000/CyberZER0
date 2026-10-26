@@ -307,103 +307,440 @@
 }
 
 /* Legitimate websites in browser */
+/* ═══════════════════════════════════════════════
+   LEGITIMATE BANKING & SERVICE PORTALS
+   ═══════════════════════════════════════════════ */
 .legitsite {
   min-height: 100%;
-  background: #ffffff;
-  font-family: 'Inter', Arial, sans-serif;
+  background: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #0f172a;
 }
 
 .legitsite-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
+  padding: 16px 32px;
   border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+.legitsite-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.legitsite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
 }
 
 .legitsite-body {
-  max-width: 680px;
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 36px 24px;
+  padding: 32px 24px 60px;
+  box-sizing: border-box;
 }
 
+.legitsite-hero {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
 .legitsite-advisory-banner {
   background: #ecfdf5;
   border: 1px solid #10b981;
+  border-left: 5px solid #059669;
   border-radius: 8px;
   padding: 16px 20px;
   margin-bottom: 24px;
   color: #065f46;
 }
-
 .legitsite-advisory-title {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: 0.5px;
 }
 
+.legitsite-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+.legitsite-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.legitsite-card-icon {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+.legitsite-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.legitsite-card p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #475569;
+  margin: 0;
+}
 
-/* Wikipedia-style mock page (rendered inside browser-content) */
+.legitsite-footer {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+/* ═══════════════════════════════════════════════
+   AUTHENTIC WIKIPEDIA ARTICLE THEME
+   ═══════════════════════════════════════════════ */
 .wikisite {
   min-height: 100%;
-  font-family: 'Linux Libertine', Georgia, 'Times New Roman', serif;
-  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #ffffff;
   color: #202122;
 }
+
 .wikisite-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
+  justify-content: space-between;
+  padding: 12px 28px;
   border-bottom: 1px solid #a2a9b1;
   background: #f8f9fa;
-  font-family: Arial, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
-.wikisite-logo { font-size: 22px; }
-.wikisite-wordmark { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
-.wikisite-tag { font-size: 12px; color: #54595d; }
-.wikisite-body { padding: 28px 32px; max-width: 640px; margin: 0 auto; }
-.wikisite-body h1 { font-size: 26px; font-weight: 400; border-bottom: 1px solid #a2a9b1; padding-bottom: 8px; margin-bottom: 4px; }
-.wikisite-sub { font-size: 13px; color: #54595d; margin-bottom: 12px; }
-.wikisite-body hr { border: none; border-top: 1px solid #eaecf0; margin: 12px 0; }
-.wikisite-body p { font-size: 15px; line-height: 1.7; margin-bottom: 14px; }
-.wikisite-note { font-family: Arial, sans-serif; font-size: 12px; color: #888; font-style: italic; }
-
-/* Generic mock website (rendered inside browser-content) */
-.genericsite {
-  min-height: 100%;
-  font-family: 'Inter', Arial, sans-serif;
-  background: #fff;
+.wikisite-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
 }
-.genericsite-header {
+.wikisite-logo {
+  font-size: 28px;
+}
+.wikisite-wordmark {
+  font-family: "Linux Libertine", Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #000;
+}
+.wikisite-tag {
+  font-size: 11.5px;
+  color: #54595d;
+}
+.wikisite-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 28px;
-  background: #1a1a2e;
-  color: white;
+  font-size: 13px;
+  color: #0645ad;
+}
+.wikisite-actions a {
+  color: #0645ad;
+  text-decoration: none;
+}
+.wikisite-actions a:hover {
+  text-decoration: underline;
+}
+
+.wikisite-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 32px 60px;
+  box-sizing: border-box;
+}
+
+.wikisite-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #a2a9b1;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+.wikisite-title-row h1 {
+  font-family: "Linux Libertine", Georgia, serif;
+  font-size: 32px;
+  font-weight: 400;
+  margin: 0;
+  color: #000000;
+}
+.wikisite-lang-badge {
+  font-size: 12px;
+  color: #54595d;
+  background: #f8f9fa;
+  border: 1px solid #a2a9b1;
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.wikisite-sub {
+  font-size: 13px;
+  color: #54595d;
+  margin: 4px 0 16px;
+}
+
+.wikisite-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 820px) {
+  .wikisite-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wikisite-main p {
+  font-size: 14.5px;
+  line-height: 1.68;
+  color: #202122;
+  margin-bottom: 14px;
+}
+.wikisite-main a {
+  color: #0645ad;
+  text-decoration: none;
+}
+.wikisite-main a:hover {
+  text-decoration: underline;
+}
+.wikisite-main sup {
+  font-size: 10.5px;
+  color: #0645ad;
+  margin: 0 1px;
+}
+
+.wikisite-toc {
+  background: #f8f9fa;
+  border: 1px solid #a2a9b1;
+  border-radius: 2px;
+  padding: 12px 18px;
+  margin: 18px 0 24px;
+  display: inline-block;
+  min-width: 240px;
+}
+.wikisite-toc-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.wikisite-toc ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.wikisite-section-heading {
+  font-family: "Linux Libertine", Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  border-bottom: 1px solid #a2a9b1;
+  padding-bottom: 4px;
+  margin: 28px 0 14px;
+  color: #000;
+}
+
+/* Wikipedia Infobox */
+.wikisite-infobox {
+  background: #f8f9fa;
+  border: 1px solid #a2a9b1;
+  border-radius: 2px;
+  padding: 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.wikisite-infobox-title {
+  background: #eaecf0;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.wikisite-infobox-image {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  text-align: center;
+  font-size: 42px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+.wikisite-infobox-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.wikisite-infobox-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 5px 6px;
+  border-top: 1px solid #eaecf0;
+  width: 38%;
+  color: #202122;
+}
+.wikisite-infobox-table td {
+  padding: 5px 6px;
+  border-top: 1px solid #eaecf0;
+  color: #202122;
+}
+
+/* ═══════════════════════════════════════════════
+   AUTHENTIC ENTERPRISE / GENERIC SSO PORTAL
+   ═══════════════════════════════════════════════ */
+.genericsite {
+  min-height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.genericsite-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: #0f172a;
+  color: #ffffff;
+}
+.genericsite-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .genericsite-logo {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #0070e0;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   font-size: 16px;
-  flex-shrink: 0;
+  color: #fff;
 }
-.genericsite-name { font-size: 17px; font-weight: 700; margin-right: auto; }
-.genericsite-nav { display: flex; gap: 18px; }
-.genericsite-nav a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; }
-.genericsite-nav a:hover { color: #fff; }
-.genericsite-body { padding: 40px 28px; max-width: 480px; margin: 0 auto; text-align: center; }
-.genericsite-body h2 { font-size: 22px; margin-bottom: 10px; color: #1a1a2e; }
-.genericsite-body p { color: #444; margin-bottom: 12px; font-size: 14px; line-height: 1.6; }
-.genericsite-note { font-size: 12px; color: #888; font-style: italic; }
+.genericsite-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.genericsite-status-pill {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.genericsite-nav {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+.genericsite-nav a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.genericsite-nav a:hover {
+  color: #ffffff;
+}
+
+.genericsite-body {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+  box-sizing: border-box;
+}
+
+.genericsite-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+}
+@media (max-width: 820px) {
+  .genericsite-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+.genericsite-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  margin-bottom: 20px;
+}
+.genericsite-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+.genericsite-card p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #475569;
+  margin-bottom: 12px;
+}
+.genericsite-quick-links a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0284c7;
+  margin-bottom: 8px;
+  transition: all 0.15s ease;
+}
+.genericsite-quick-links a:hover {
+  background: #f0f9ff;
+  border-color: #7dd3fc;
+  transform: translateX(3px);
+}
 

@@ -1,5 +1,14 @@
 'use strict';
 
+if (typeof escapeHtml !== 'function') {
+  var escapeHtml = function(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  };
+}
+
 // ═══════════════════════════════════════════════════════════
 // DYNAMIC SIMULATION NOTIFICATION ENGINE
 // ═══════════════════════════════════════════════════════════

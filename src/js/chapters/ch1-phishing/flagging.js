@@ -163,6 +163,7 @@ function toggleFlagMode() {
 
   if (gameState.flagModeActive) {
     btn.classList.add('active');
+    btn.classList.remove('btn-pulse-highlight', 'tutorial-flag-blink');
     body.classList.add('flag-mode-active');
     showToast('🚩 Flag Mode ON — click suspicious elements to flag them.', 'warning');
     // Notify tutorial that flag mode was turned on

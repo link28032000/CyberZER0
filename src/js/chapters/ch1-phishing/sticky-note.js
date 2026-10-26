@@ -255,10 +255,18 @@ function getCompletedTasksCount() {
   return SN_ACHIEVEMENTS.filter(ach => typeof ach.check === 'function' && ach.check()).length;
 }
 
-function getPhishingEarnedTier(count) {
+function getPhishingEarnedTier(count, pct) {
   if (typeof count !== 'number') count = getCompletedTasksCount();
-  if (count >= 4) return PHISHING_ACHIEVEMENT_TIERS.trophy;
-  if (count >= 2) return PHISHING_ACHIEVEMENT_TIERS.medal;
+  const accuracy = (typeof pct === 'number')
+    ? pct
+    : ((gameState && typeof gameState.correctDecisions === 'number' && typeof EMAILS !== 'undefined' && EMAILS.length > 0)
+        ? (gameState.correctDecisions / EMAILS.length)
+        : 0);
+  // 1st Place / Highest: 4 tasks OR >= 90% accuracy
+  if (count >= 4 || accuracy >= 0.90) return PHISHING_ACHIEVEMENT_TIERS.trophy;
+  // 2nd Place / Medal: 2-3 tasks OR >= 70% accuracy
+  if (count >= 2 || accuracy >= 0.70) return PHISHING_ACHIEVEMENT_TIERS.medal;
+  // Merit Ribbon / Medal: 1 task or lower
   return PHISHING_ACHIEVEMENT_TIERS.ribbon;
 }
 
@@ -412,7 +420,7 @@ function showAchievementToast(ach) {
   }
 }
 
-// ─── Phishing Achievement Modal (Dynamic: Trophy, Medal, Ribbon) ─────────────
+// ─── Phishing Achievement Modal (Big Medal + Confetti Celebration) ───────────
 function showPhishingAchievementModal(customAward, customCount) {
   const existing = document.getElementById('phish-trophy-modal');
   if (existing) existing.remove();
@@ -420,113 +428,22 @@ function showPhishingAchievementModal(customAward, customCount) {
   const count = typeof customCount === 'number' ? customCount : getCompletedTasksCount();
   const award = customAward || getPhishingEarnedAward();
   const tier = award.tier || 'ribbon';
-  const dateStr = award.unlockedDate || _trophyUnlockedDate || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  // Evaluation of the 4 tasks
-  const t1Done = SN_ACHIEVEMENTS[0] ? SN_ACHIEVEMENTS[0].check() : false;
-  const t2Done = SN_ACHIEVEMENTS[1] ? SN_ACHIEVEMENTS[1].check() : false;
-  const t3Done = SN_ACHIEVEMENTS[2] ? SN_ACHIEVEMENTS[2].check() : false;
-  const t4Done = SN_ACHIEVEMENTS[3] ? SN_ACHIEVEMENTS[3].check() : false;
-
-  const t1Prog = SN_ACHIEVEMENTS[0] ? SN_ACHIEVEMENTS[0].progress() : '';
-  const t2Prog = SN_ACHIEVEMENTS[1] ? SN_ACHIEVEMENTS[1].progress() : '';
-  const t3Prog = SN_ACHIEVEMENTS[2] ? SN_ACHIEVEMENTS[2].progress() : '';
-  const t4Prog = SN_ACHIEVEMENTS[3] ? SN_ACHIEVEMENTS[3].progress() : '';
-
-  const accuracyPct = gameState && typeof gameState.correctDecisions === 'number' && typeof EMAILS !== 'undefined' && EMAILS.length > 0
-    ? Math.round((gameState.correctDecisions / EMAILS.length) * 100)
-    : 100;
-  const correctDecisions = gameState && typeof gameState.correctDecisions === 'number'
-    ? gameState.correctDecisions
-    : (typeof EMAILS !== 'undefined' ? EMAILS.length : 10);
-  const totalEmailsCount = typeof EMAILS !== 'undefined' ? EMAILS.length : 10;
 
   const modal = document.createElement('div');
   modal.id = 'phish-trophy-modal';
   modal.className = 'phish-trophy-modal';
   modal.innerHTML = `
     <div class="ptm-backdrop" onclick="closePhishingTrophy()"></div>
-    <div class="ptm-card ptm-tier-${tier}">
+    <div class="ptm-confetti-fullscreen" id="ptm-confetti"></div>
+    <div class="ptm-card ptm-tier-${tier} ptm-card-clean">
       <div class="ptm-glow-ring"></div>
-      <div class="ptm-header">
-        <div class="ptm-trophy-icon">${award.icon}</div>
-        <div class="ptm-confetti" id="ptm-confetti"></div>
+      <div class="ptm-big-medal-container">
+        <div class="ptm-big-medal-icon">${award.icon}</div>
       </div>
-      <div class="ptm-body">
-        <div class="ptm-badge">${award.badge}</div>
-        <h2 class="ptm-title">${award.title}</h2>
-        <div class="ptm-subtitle" style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">
-          ${award.sub || (tier === 'trophy' ? '1st Place Honor · 4/4 Tasks' : tier === 'medal' ? '2nd Place Honor · 2–3/4 Tasks' : 'Lower Tier · Awareness Ribbon')}
-        </div>
-        <p class="ptm-desc">${award.desc}</p>
-        <div class="ptm-date">🗓️ Awarded: ${dateStr}</div>
-
-        <!-- 3-Tier Achievement Ladder -->
-        <div class="ptm-tier-ladder">
-          <div class="ptm-tier-ladder-step ${tier === 'ribbon' ? 'earned' : ''}">
-            <span class="ptm-tls-icon">🎖️</span>
-            <span class="ptm-tls-name">Ribbon</span>
-            <span class="ptm-tls-req">1 Task (Lower)</span>
-            ${tier === 'ribbon' ? '<span class="ptm-tls-badge">EARNED</span>' : ''}
-          </div>
-          <div class="ptm-tier-ladder-divider"></div>
-          <div class="ptm-tier-ladder-step ${tier === 'medal' ? 'earned' : ''}">
-            <span class="ptm-tls-icon">🥈</span>
-            <span class="ptm-tls-name">Medal</span>
-            <span class="ptm-tls-req">2–3 Tasks (2nd Place)</span>
-            ${tier === 'medal' ? '<span class="ptm-tls-badge">EARNED</span>' : ''}
-          </div>
-          <div class="ptm-tier-ladder-divider"></div>
-          <div class="ptm-tier-ladder-step ${tier === 'trophy' ? 'earned' : ''}">
-            <span class="ptm-tls-icon">🏆</span>
-            <span class="ptm-tls-name">Trophy</span>
-            <span class="ptm-tls-req">4 Tasks (Highest)</span>
-            ${tier === 'trophy' ? '<span class="ptm-tls-badge">EARNED</span>' : ''}
-          </div>
-        </div>
-
-        <!-- Quick Stats Overview -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 11px;">
-          <div style="background: rgba(15,23,42,0.6); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-            <div style="color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase;">Tasks Completed</div>
-            <div style="font-size: 14px; font-weight: 900; color: #f8fafc;">${count} / 4</div>
-          </div>
-          <div style="background: rgba(15,23,42,0.6); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-            <div style="color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase;">Accuracy</div>
-            <div style="font-size: 14px; font-weight: 900; color: #f8fafc;">${accuracyPct}%</div>
-          </div>
-          <div style="background: rgba(15,23,42,0.6); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-            <div style="color: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase;">Decisions</div>
-            <div style="font-size: 14px; font-weight: 900; color: #f8fafc;">${correctDecisions} / ${totalEmailsCount}</div>
-          </div>
-        </div>
-
-        <!-- 4 Tasks Summary -->
-        <div class="ptm-tasks-summary">
-          <div class="ptm-task-row ${t1Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
-            <span class="ptm-task-icon">🚩</span>
-            <span>Task 1: Report Phishing Emails (${t1Prog})</span>
-            <span class="ptm-task-check">${t1Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
-          </div>
-          <div class="ptm-task-row ${t2Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
-            <span class="ptm-task-icon">🛡️</span>
-            <span>Task 2: Verify Clean Emails (${t2Prog})</span>
-            <span class="ptm-task-check">${t2Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
-          </div>
-          <div class="ptm-task-row ${t3Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
-            <span class="ptm-task-icon">🌐</span>
-            <span>Task 3: Document Fake Senders (${t3Prog})</span>
-            <span class="ptm-task-check">${t3Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
-          </div>
-          <div class="ptm-task-row ${t4Done ? 'ptm-task-done' : 'ptm-task-incomplete'}">
-            <span class="ptm-task-icon">⚠️</span>
-            <span>Task 4: Identify Phishing Indicators (${t4Prog})</span>
-            <span class="ptm-task-check">${t4Done ? '✓ COMPLETED' : '✗ INCOMPLETE'}</span>
-          </div>
-        </div>
-      </div>
-      <div class="ptm-footer">
-        <button class="ptm-close-btn" onclick="closePhishingTrophy()">🎉 Claim ${award.title} &amp; Continue</button>
+      <h2 class="ptm-big-title">${award.title}</h2>
+      <div class="ptm-big-rank">${award.rank || ''}</div>
+      <div class="ptm-footer" style="margin-top: 26px;">
+        <button class="ptm-close-btn" onclick="closePhishingTrophy()">🎉 Claim Award &amp; Continue</button>
       </div>
     </div>
   `;
@@ -534,15 +451,28 @@ function showPhishingAchievementModal(customAward, customCount) {
 
   const confettiEl = modal.querySelector('#ptm-confetti');
   const palette = tier === 'trophy'
-    ? ['#ffd700', '#facc15', '#f59e0b', '#ffffff', '#fbbf24']
+    ? ['#ffd700', '#facc15', '#f59e0b', '#ffffff', '#fbbf24', '#f43f5e', '#10b981']
     : tier === 'medal'
-    ? ['#e2e8f0', '#38bdf8', '#0ea5e9', '#ffffff', '#94a3b8']
-    : ['#f59e0b', '#fbbf24', '#cd7f32', '#10b981', '#ffffff'];
+    ? ['#e2e8f0', '#38bdf8', '#0ea5e9', '#ffffff', '#94a3b8', '#a855f7', '#fbbf24']
+    : ['#f59e0b', '#fbbf24', '#cd7f32', '#10b981', '#ffffff', '#f43f5e', '#38bdf8'];
 
-  for (let i = 0; i < 40; i++) {
+  // Generate 75 festive confetti particles across full screen
+  for (let i = 0; i < 75; i++) {
     const p = document.createElement('div');
-    p.className = 'ptm-particle';
-    p.style.cssText = `left:${Math.random()*100}%;background:${palette[Math.floor(Math.random()*palette.length)]};animation-delay:${Math.random()*1.2}s;animation-duration:${1.2+Math.random()*1.2}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'};`;
+    p.className = 'ptm-confetti-particle';
+    const size = 7 + Math.random() * 9;
+    const isRound = Math.random() > 0.6;
+    const isRibbon = !isRound && Math.random() > 0.5;
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      background: ${palette[Math.floor(Math.random() * palette.length)]};
+      animation-delay: ${Math.random() * 2.5}s;
+      animation-duration: ${2.4 + Math.random() * 2}s;
+      width: ${isRibbon ? size * 0.45 : size}px;
+      height: ${isRibbon ? size * 1.8 : size}px;
+      border-radius: ${isRound ? '50%' : '2px'};
+      opacity: ${0.85 + Math.random() * 0.15};
+    `;
     confettiEl.appendChild(p);
   }
 
@@ -550,7 +480,9 @@ function showPhishingAchievementModal(customAward, customCount) {
     requestAnimationFrame(() => modal.classList.add('ptm-show'));
   });
 
-  if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
+  if (typeof AudioManager !== 'undefined' && AudioManager.playTrophyFanfare) {
+    AudioManager.playTrophyFanfare();
+  } else if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
     AudioManager.playCorrect();
   }
 }
@@ -567,86 +499,173 @@ function closePhishingTrophy() {
   savePhishingProgress();
   setTimeout(() => modal.remove(), 400);
 
-  // Trigger post-achievement dialogue: onboarding to team & Phone Link Group Chat
+  // Trigger post-achievement dialogue: concise reward result + Phishing Post-Test prompt
   setTimeout(() => {
-    triggerPostAchievementPhoneLinkInvite();
+    triggerPostAchievementPostTestPrompt();
   }, 450);
 }
 
-// ─── Post-Achievement Dialogue: Onboarding to Team & Phone Link Group Chat ────
-function triggerPostAchievementPhoneLinkInvite() {
-  const gcState = (typeof loadNewbieGcState === 'function') ? loadNewbieGcState() : { invited: false, accepted: false };
+// ─── Post-Achievement Dialogue: Reward Result + Phishing Post-Test Prompt ────
+function triggerPostAchievementPostTestPrompt() {
   const award = (typeof getPhishingEarnedAward === 'function') ? getPhishingEarnedAward() : null;
-  const awardTitle = award ? award.title : 'Phishing Investigation Award';
-  const awardIcon = award ? award.icon : '🏆';
-  const completedCount = award ? (award.tasksCompleted || 0) : getCompletedTasksCount();
+  const awardTitle = award ? award.title : 'Phishing Security Ribbon';
+  const awardIcon = award ? award.icon : '🎖️';
+  const tier = award ? award.tier : 'ribbon';
 
-  // Mark invite pending in Phone Link and highlight the desktop / taskbar icon
-  if (typeof setNewbieGcInvitePending === 'function') {
-    setNewbieGcInvitePending(true);
+  // If already taken post-test, jump straight to team onboarding
+  if (typeof RyanPosttest !== 'undefined' && RyanPosttest.getResult && RyanPosttest.getResult()) {
+    triggerPostAchievementPhoneLinkInvite();
+    return;
   }
 
-  // Mentor dialogue with Ryan welcoming to the team and instructing to open Phone Link
   if (typeof RyanGuide === 'undefined') {
-    if (typeof showToast === 'function') {
-      showToast('📱 New team invite received! Open Phone Link to join "Business Inc. — Newbie Squad 🚀"', 'info');
+    if (typeof RyanPosttest !== 'undefined') {
+      RyanPosttest.confirmAndLaunch(() => triggerPostAchievementPhoneLinkInvite());
     }
     return;
   }
 
-  if (!gcState.accepted) {
+  // Dismiss any active dialogue first to guarantee a clean slate
+  RyanGuide.dismiss();
+
+  // Congratulate Alex based on the specific medal/award claimed!
+  let congratsIntro = '';
+  if (tier === 'trophy' || (award && award.rank && award.rank.includes('1st'))) {
+    congratsIntro = `Congratulations on claiming your 🏆 <strong>${awardTitle}</strong>! Flawless investigation work, Alex!`;
+  } else if (tier === 'medal' || (award && award.rank && award.rank.includes('2nd'))) {
+    congratsIntro = `Congratulations on claiming your 🥈 <strong>${awardTitle}</strong>! Outstanding effort uncovering email threats, Alex!`;
+  } else {
+    congratsIntro = `Congratulations on claiming your ${awardIcon} <strong>${awardTitle}</strong>! Great job learning email threat indicators, Alex!`;
+  }
+
+  RyanGuide.speak(
+    [
+      {
+        text: congratsIntro,
+        state: 'success',
+        label: 'TAP TO CONTINUE'
+      },
+      {
+        text: "Now that you've claimed your award, you need to take a 20-question multiple-choice Post-Test based on what you learned.",
+        state: 'speaking',
+        label: 'TAP TO CONTINUE'
+      }
+    ],
+    {
+      onDone: function() {
+        if (typeof RyanPosttest !== 'undefined') {
+          RyanPosttest.confirmAndLaunch(
+            function(res) {
+              // On post-test completion, proceed to team group chat on Phone Link
+              setTimeout(() => triggerPostAchievementPhoneLinkInvite(), 500);
+            },
+            function() {
+              triggerPostTestReviewLaterGuide();
+            }
+          );
+        } else {
+          triggerPostAchievementPhoneLinkInvite();
+        }
+      }
+    }
+  );
+}
+
+// ─── Post-Test Review Later Guidance Dialogue ────
+function triggerPostTestReviewLaterGuide() {
+  if (typeof showToast === 'function') {
+    showToast('📝 Post-Test saved. Take your time to review before starting!', 'info');
+  }
+
+  // Highlight Browser and File Explorer icons on desktop to guide review
+  if (typeof IconAttention !== 'undefined') {
+    IconAttention.show('browser');
+    IconAttention.show('folder');
+  }
+
+  // Clear icon highlights after a short period if not clicked
+  setTimeout(() => {
+    if (typeof IconAttention !== 'undefined') {
+      IconAttention.hide('browser');
+      IconAttention.hide('folder');
+    }
+  }, 15000);
+
+  if (typeof RyanGuide !== 'undefined') {
     RyanGuide.speak([
       {
-        text: `Outstanding work on the email investigation, Alex! You completed ${completedCount}/4 investigation tasks and earned the ${awardIcon} ${awardTitle}!`,
-        state: 'success'
-      },
-      {
-        text: "The security team was watching your results, Alex. You've officially proven you're ready — you are now part of our Cyber Defense Team!",
-        state: 'success'
-      },
-      {
-        text: "I just sent an invite to your Phone Link for our company newbie group chat: Business Inc. — Newbie Squad 🚀.",
+        text: "Take your time! Reviewing before the Post-Test is a great idea.",
         state: 'speaking'
       },
       {
-        text: "Open your Phone Link app now to accept the invite, Alex! Ethan, Pia, and I are all inside waiting to welcome you to the squad.",
+        text: "You can open the Browser to search and review phishing clues and concepts.",
         state: 'thinking'
-      }
-    ], {
-      onDone: () => {
-        if (typeof RyanGuide.ask === 'function') {
-          RyanGuide.ask(
-            "Ready to join the company newbie squad?",
-            [
-              { text: "📱 Open Phone Link Now", value: 'open' },
-              { text: "I'll open it later", value: 'later' }
-            ],
-            function(choice) {
-              if (choice === 'open') {
-                if (typeof openApp === 'function') openApp('comms');
-                if (typeof openNewbieGcConversation === 'function') {
-                  setTimeout(() => openNewbieGcConversation(), 250);
-                }
-                if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
-                  AudioManager.playClick();
-                }
-              } else {
-                if (typeof showToast === 'function') {
-                  showToast('📱 You can open Phone Link on your desktop or taskbar anytime to accept your team invite!', 'info');
-                }
-              }
-            }
-          );
-        }
-      }
-    });
-  } else {
-    RyanGuide.speak([
+      },
       {
-        text: "You're an active member of Business Inc. — Newbie Squad, Alex! Keep checking your apps as you advance in your training!",
+        text: "You can also open File Explorer and check the Videos folder to play the short video about phishing.",
+        state: 'speaking'
+      },
+      {
+        text: "Whenever you feel ready, open your Sticky Notes and click Begin Post-Test to start!",
         state: 'success'
       }
     ]);
+  }
+}
+
+// ─── Post-Achievement Dialogue: Onboarding to "new intern team 2027" on Phone Link ────
+function triggerPostAchievementPhoneLinkInvite() {
+  // Play phone notification chime
+  if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+    AudioManager.playNotification();
+  }
+
+  // Create group chat "new intern team 2027" and highlight desktop icon
+  if (typeof setNewbieGcCreated === 'function') {
+    setNewbieGcCreated(true);
+  } else if (typeof setNewbieGcInvitePending === 'function') {
+    setNewbieGcInvitePending(true);
+  }
+
+  if (typeof highlightPhoneLinkApp === 'function') {
+    highlightPhoneLinkApp();
+  }
+  if (typeof IconAttention !== 'undefined') {
+    IconAttention.show('comms');
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('📱 Ding! Ryan created group "new intern team 2027" and added you!', 'info');
+  }
+
+  // Ryan's human, conversational dialogue celebrating post-test finish & guiding to Phone Link
+  if (typeof RyanGuide !== 'undefined') {
+    RyanGuide.speak(
+      [
+        {
+          text: "You did it, Alex! 🎉 Outstanding job completing the Post-Test! You've really mastered spotting deceptive phishing indicators.",
+          state: 'success',
+          label: 'TAP TO CONTINUE'
+        },
+        {
+          text: "I just created a group chat for our new batch called <strong>\"new intern team 2027\"</strong>, and I added you to it, Alex!",
+          state: 'speaking',
+          label: 'TAP TO CONTINUE'
+        },
+        {
+          text: "Open up your <strong>Phone Link</strong> app now so you can meet the team and say hello. Pia and Ethan are already in there!",
+          state: 'speaking',
+          label: 'OPEN PHONE LINK'
+        }
+      ],
+      {
+        onDone: function() {
+          if (typeof openApp === 'function') {
+            openApp('comms');
+          }
+        }
+      }
+    );
   }
 }
 
@@ -683,74 +702,269 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
 
   const count = typeof completedTasksCount === 'number' ? completedTasksCount : getCompletedTasksCount();
   const award = earnedTier || getPhishingEarnedAward();
-  const tier = award.tier || 'ribbon';
 
   if (titleEl) {
-    titleEl.innerHTML = `${award.icon} <span>Investigation Complete — Results</span>`;
+    titleEl.textContent = 'Sticky Notes';
   }
 
   // Ensure note is visible, not collapsed
   note.classList.remove('hidden', 'collapsed');
   note.style.zIndex = '4600';
 
-  const totalGoals = SN_ACHIEVEMENTS.length;
-  const totalEvidence = (typeof EMAILS !== 'undefined') ? EMAILS.reduce((sum, e) => sum + e.evidence.length, 0) : 0;
+  const totalGoals = (Array.isArray(SN_ACHIEVEMENTS) && SN_ACHIEVEMENTS.length) ? SN_ACHIEVEMENTS.length : 4;
+  const calculatedPct = (typeof pct === 'number')
+    ? pct
+    : ((gameState && typeof gameState.correctDecisions === 'number' && typeof EMAILS !== 'undefined' && EMAILS.length > 0)
+        ? (gameState.correctDecisions / EMAILS.length)
+        : 0.6);
+  const accuracyPct = Math.round(calculatedPct * 100);
+  const correctCount = (typeof correct === 'number') ? correct : (gameState && typeof gameState.correctDecisions === 'number' ? gameState.correctDecisions : 6);
+  const totalEmails = (typeof total === 'number') ? total : ((typeof EMAILS !== 'undefined') ? EMAILS.length : 10);
 
+  // 1. Stats row directly on yellow sticky notes paper (no white background)
   let html = `
-    <!-- Task Progress Bar Card -->
-    <div class="sn-progress-card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.08); margin-bottom: 10px;">
-      <div class="sn-progress-header">
-        <span class="sn-progress-title" style="color: #15803d; font-weight: 800;">✅ Investigation Tasks</span>
-        <span class="sn-progress-count" style="color: #15803d; font-weight: 800;">${count}/${totalGoals} (${Math.round((count/totalGoals)*100)}%)</span>
+    <div class="sn-finish-stats">
+      <div class="sn-stat-col">
+        <div class="sn-stat-label">Completed</div>
+        <div class="sn-stat-val">${count} / ${totalGoals}</div>
       </div>
-      <div class="sn-progress-bar-track" style="background: rgba(34, 197, 94, 0.2);">
-        <div class="sn-progress-bar-fill" style="width: ${Math.round((count/totalGoals)*100)}%; background: linear-gradient(90deg, #22c55e, #10b981);"></div>
+      <div class="sn-stat-col">
+        <div class="sn-stat-label">Accuracy</div>
+        <div class="sn-stat-val">${accuracyPct}%</div>
       </div>
-    </div>
-
-    <!-- Final Results Summary Card -->
-    <div style="background: #ffffff; border: 1.5px solid rgba(234, 179, 8, 0.5); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; border-bottom: 1px dashed rgba(234, 179, 8, 0.6); padding-bottom: 8px;">
-        <div class="results-rank-circle ${rankClass}" style="width: 48px; height: 48px; font-size: 24px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">${rank}</div>
-        <div>
-          <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.8px; color: #b45309; text-transform: uppercase;">Final Mission Rank</div>
-          <div style="font-size: 14px; font-weight: 900; color: #1e293b;">${rankLabel}</div>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;">
-        <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase;">Accuracy</div>
-          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${Math.round(pct * 100)}%</div>
-        </div>
-        <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase;">Decisions</div>
-          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${correct} / ${total}</div>
-        </div>
-        <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase;">Evidence Found</div>
-          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${(gameState && gameState.evidenceFoundTotal) || 0} / ${totalEvidence}</div>
-        </div>
-        <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="color: #64748b; font-size: 9px; font-weight: 700; text-transform: uppercase;">Phish / Clean</div>
-          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${(gameState && gameState.phishingDetected) || 0} / ${(gameState && gameState.legitimateDetected) || 0}</div>
-        </div>
+      <div class="sn-stat-col">
+        <div class="sn-stat-label">Decisions</div>
+        <div class="sn-stat-val">${correctCount} / ${totalEmails}</div>
       </div>
     </div>
+  `;
 
-    <!-- Achievement Earned Banner (Dynamic: Trophy, Medal, Ribbon) -->
-    <div class="sn-ach-banner sn-ach-banner-${tier}">
-      <div style="font-size: 26px; margin-bottom: 2px;">${award.icon}</div>
-      <div class="sn-ach-banner-tag">${award.badge}</div>
-      <div class="sn-ach-banner-title">${award.title}</div>
-      <div class="sn-ach-banner-sub">${count}/4 Tasks Completed · ${award.rank}</div>
-      <button type="button" onclick="showPhishingAchievementModal()" class="sn-ach-banner-btn">
-        ${award.icon} View ${award.title}
+  // 2. Big Medal Hero Display (Checklist is hidden after investigations finish)
+  const tier = award.tier || 'ribbon';
+  const rankText = award.rank || (rank ? `Rank ${rank}` : '1st Place');
+
+  html += `
+    <div class="sn-big-medal-card sn-tier-${tier}" onclick="showPhishingAchievementModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPhishingAchievementModal();}" aria-label="View Rewards: ${award.title}" title="Click medal to view rewards">
+      <div class="sn-medal-top-badge">🎖️ INVESTIGATION COMPLETE</div>
+      <div class="sn-big-medal-emblem-wrap">
+        <div class="sn-big-medal-glow"></div>
+        <div class="sn-big-medal-icon">${award.icon}</div>
+      </div>
+      <div class="sn-big-medal-title">${award.title}</div>
+      <div class="sn-big-medal-sub">${rankText} · ${rankLabel || 'CYBER DETECTIVE'}</div>
+      <button type="button" class="sn-big-medal-cta-btn" onclick="event.stopPropagation(); showPhishingAchievementModal();">
+        <span>🏆 Click Medal to View Rewards</span>
+        <span>➔</span>
       </button>
     </div>
   `;
 
+  const postTestDone = typeof RyanPosttest !== 'undefined' && RyanPosttest.getResult && RyanPosttest.getResult();
+  if (!postTestDone) {
+    const isExpanded = window._snPostTestExpanded !== false;
+    html += `
+      <div class="sn-posttest-card-wrap">
+        <div class="sn-posttest-checklist-card">
+          <div class="sn-progress-header" style="margin-bottom:6px;">
+            <span class="sn-progress-title">📋 Next Mission Task</span>
+            <span class="sn-progress-count" style="background:#e0f2fe; color:#0369a1; border-color:rgba(2,132,199,0.3);">20 Questions</span>
+          </div>
+          <div class="sn-ach-item sn-posttest-checklist-item ${isExpanded ? 'expanded' : ''}" onclick="toggleStickyPostTestItem(event)" role="button" tabindex="0" title="Click to show Begin Post-Test">
+            <div class="sn-checkbox" aria-hidden="true"></div>
+            <div class="sn-ach-body">
+              <div class="sn-ach-header-row">
+                <span class="sn-ach-label">📝 Phishing Post-Test</span>
+                <span class="sn-ach-prog-badge ${isExpanded ? 'done' : ''}">${isExpanded ? 'Ready' : 'Click to Begin'}</span>
+              </div>
+              <div class="sn-ach-desc">Click this task to show Begin Post-Test and assess your awareness!</div>
+            </div>
+          </div>
+          <div id="sn-posttest-begin-box" class="sn-posttest-begin-box ${isExpanded ? 'active' : ''}">
+            <div class="sn-posttest-begin-desc">Ready after reviewing? Answer 20 questions to evaluate your cyber defense growth against your pre-test baseline.</div>
+            <button type="button" class="sn-posttest-btn" onclick="startPostTestFromSticky(event)">
+              <span>✓ Begin Post-Test (20 Questions)</span>
+              <span>➔</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    const preResult = (typeof RyanPretest !== 'undefined' && RyanPretest.getResult)
+      ? RyanPretest.getResult()
+      : (typeof gameState !== 'undefined' ? gameState.preTestResult : null);
+    html += renderPostTestComparisonHTML(preResult, postTestDone);
+  }
+
   scrollEl.innerHTML = html;
+}
+
+// ─── Render Pre-Test vs Post-Test Comparison Card in Sticky Notes ────────────
+function renderPostTestComparisonHTML(preResult, postResult) {
+  if (!postResult) return '';
+
+  const preTotal = preResult ? (preResult.total || 20) : 20;
+  const preScore = preResult ? (typeof preResult.score === 'number' ? preResult.score : 0) : 0;
+  const prePct = preResult ? (typeof preResult.percent === 'number' ? preResult.percent : Math.round((preScore / preTotal) * 100)) : 0;
+  const preRank = preResult ? (preResult.rank || 'Recruit') : 'Baseline';
+
+  const postTotal = postResult.total || 20;
+  const postScore = typeof postResult.score === 'number' ? postResult.score : 0;
+  const postPct = typeof postResult.percent === 'number' ? postResult.percent : Math.round((postScore / postTotal) * 100);
+  const postRank = postResult.rank || 'Cyber Sentinel';
+  const postTier = postResult.tier || 'mastery';
+
+  const diff = postPct - prePct;
+  const isGain = diff > 0;
+  const isSame = diff === 0;
+
+  const deltaBadge = isGain
+    ? `<span class="sn-comp-growth-pill gain">▲ +${diff}% Improvement</span>`
+    : (isSame ? `<span class="sn-comp-growth-pill same">★ Baseline Matched</span>` : `<span class="sn-comp-growth-pill review">${diff}% · Keep Training</span>`);
+
+  const tierIcons = { mastery: '🏆', expert: '🥈', competent: '🛡️', developing: '🌱' };
+  const icon = tierIcons[postTier] || '🎯';
+
+  return `
+    <div class="sn-posttest-comp-card">
+      <div class="sn-comp-header">
+        <div class="sn-comp-header-title">
+          <span class="sn-comp-header-icon">📈</span>
+          <span>Pre-Test vs Post-Test</span>
+        </div>
+        ${deltaBadge}
+      </div>
+
+      <!-- 2 Columns: Pre-Test vs Post-Test -->
+      <div class="sn-comp-grid">
+        <div class="sn-comp-col sn-comp-pre">
+          <div class="sn-comp-col-tag">PRE-TEST BASELINE</div>
+          <div class="sn-comp-col-score">
+            <span class="sn-comp-col-num">${preScore}</span>
+            <span class="sn-comp-col-denom">/ ${preTotal}</span>
+          </div>
+          <div class="sn-comp-col-pct">${prePct}%</div>
+          <div class="sn-comp-col-rank" title="${preRank}">🔰 ${preRank}</div>
+        </div>
+
+        <div class="sn-comp-arrow-wrap">
+          <span class="sn-comp-arrow">➔</span>
+          <span class="sn-comp-arrow-delta ${isGain ? 'gain' : ''}">${isGain ? `+${diff}%` : (isSame ? '0%' : `${diff}%`)}</span>
+        </div>
+
+        <div class="sn-comp-col sn-comp-post">
+          <div class="sn-comp-col-tag">POST-TEST FINAL</div>
+          <div class="sn-comp-col-score">
+            <span class="sn-comp-col-num">${postScore}</span>
+            <span class="sn-comp-col-denom">/ ${postTotal}</span>
+          </div>
+          <div class="sn-comp-col-pct">${postPct}%</div>
+          <div class="sn-comp-col-rank" title="${postRank}">${icon} ${postRank}</div>
+        </div>
+      </div>
+
+      <!-- Dual Comparison Bar -->
+      <div class="sn-comp-bars-block">
+        <div class="sn-comp-bar-row">
+          <div class="sn-comp-bar-label">
+            <span>Pre-Test Baseline</span>
+            <span>${prePct}%</span>
+          </div>
+          <div class="sn-comp-track">
+            <div class="sn-comp-fill-pre" style="width: ${Math.max(4, prePct)}%;"></div>
+          </div>
+        </div>
+        <div class="sn-comp-bar-row">
+          <div class="sn-comp-bar-label">
+            <span>Post-Test Growth</span>
+            <span class="sn-comp-bar-val-highlight">${postPct}%</span>
+          </div>
+          <div class="sn-comp-track">
+            <div class="sn-comp-fill-post" style="width: ${Math.max(4, postPct)}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ryan's remark note -->
+      <div class="sn-comp-note">
+        <div class="sn-comp-note-icon">${icon}</div>
+        <div class="sn-comp-note-body">
+          <div class="sn-comp-note-title">${postRank} (${postPct}%)</div>
+          <div class="sn-comp-note-text">${isGain ? `Outstanding progress, Alex! You improved by +${diff}% from your baseline.` : `Post-test completed! You demonstrated sharp phishing detection awareness.`}</div>
+        </div>
+      </div>
+
+      <!-- Action: Retake Post-Test -->
+      <div class="sn-comp-actions">
+        <button type="button" class="sn-comp-retake-btn" onclick="retakePostTestFromSticky(event)">
+          <span>🔄 Retake Post-Test</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Sticky Notes Interactive Post-Test Controllers ──────────────────────────
+function toggleStickyPostTestItem(event) {
+  if (event) event.stopPropagation();
+  window._snPostTestExpanded = !window._snPostTestExpanded;
+  if (gameState && gameState.emailResults && typeof EMAILS !== 'undefined' && gameState.emailResults.length >= EMAILS.length) {
+    const total = EMAILS.length;
+    const correct = gameState.correctDecisions;
+    const pct = total > 0 ? (correct / total) : 0.6;
+    let rank, rankClass, rankLabel;
+    if (pct >= 1.0)       { rank = 'S'; rankClass = 'rank-s'; rankLabel = 'CYBER DETECTIVE'; }
+    else if (pct >= 0.85) { rank = 'A'; rankClass = '';       rankLabel = 'EXCELLENT DETECTIVE'; }
+    else if (pct >= 0.70) { rank = 'B'; rankClass = 'rank-b'; rankLabel = 'GOOD DETECTIVE'; }
+    else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
+    else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
+    renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
+  } else {
+    updateStickyChecklist();
+  }
+}
+
+function startPostTestFromSticky(event) {
+  if (event) event.stopPropagation();
+  if (typeof RyanPosttest !== 'undefined') {
+    RyanPosttest.confirmAndLaunch(
+      function(res) {
+        updateStickyNoteAfterPostTest(res);
+        if (typeof triggerPostAchievementPhoneLinkInvite === 'function') {
+          setTimeout(() => triggerPostAchievementPhoneLinkInvite(), 600);
+        }
+      },
+      function() {
+        if (typeof triggerPostTestReviewLaterGuide === 'function') {
+          triggerPostTestReviewLaterGuide();
+        }
+      }
+    );
+  }
+}
+
+function retakePostTestFromSticky(event) {
+  if (event) event.stopPropagation();
+  if (typeof RyanPosttest !== 'undefined') {
+    RyanPosttest.launch(function(res) {
+      updateStickyNoteAfterPostTest(res);
+    });
+  }
+}
+
+function updateStickyNoteAfterPostTest(res) {
+  window._snPostTestExpanded = true;
+  const total = (typeof EMAILS !== 'undefined') ? EMAILS.length : 10;
+  const correct = (gameState && typeof gameState.correctDecisions === 'number') ? gameState.correctDecisions : 6;
+  const pct = total > 0 ? (correct / total) : 0.6;
+  let rank, rankClass, rankLabel;
+  if (pct >= 1.0)       { rank = 'S'; rankClass = 'rank-s'; rankLabel = 'CYBER DETECTIVE'; }
+  else if (pct >= 0.85) { rank = 'A'; rankClass = '';       rankLabel = 'EXCELLENT DETECTIVE'; }
+  else if (pct >= 0.70) { rank = 'B'; rankClass = 'rank-b'; rankLabel = 'GOOD DETECTIVE'; }
+  else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
+  else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
+  renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
+  showStickyNote();
 }
 
 // ─── Toggle Results Full Overlay from Taskbar or Sticky Note ─────────────────

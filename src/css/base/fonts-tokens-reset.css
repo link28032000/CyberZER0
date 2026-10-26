@@ -61,7 +61,14 @@
 
 /* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; overflow: hidden; font-family: var(--font-main); }
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-main);
+  background-color: #060913;
+  color: var(--text-primary);
+}
 button { cursor: pointer; border: none; outline: none; font-family: inherit; }
 a { text-decoration: none; }
 p { line-height: 1.6; }

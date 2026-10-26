@@ -593,16 +593,8 @@ const RyanPretest = (() => {
     });
     wrap.appendChild(stats);
 
-    const say = _el('div', 'rpt-ryan-say');
-    say.style.setProperty('--s', '0.45s');
-    say.appendChild(_el('span', 'rpt-ryan-say-name', 'Ryan'));
-    say.appendChild(_el('span', 'rpt-ryan-say-text', copy.ryan));
-    wrap.appendChild(say);
-
-
-
     const foot = _el('div', 'rpt-footer rpt-footer-result');
-    const go = _el('button', 'rpt-next rpt-go', 'Continue with Ryan');
+    const go = _el('button', 'rpt-next rpt-go', 'Continue');
     go.type = 'button';
     go.id = 'rpt-continue';
     go.disabled = true;

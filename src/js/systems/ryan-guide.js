@@ -34,12 +34,23 @@ const RyanGuide = (() => {
   const CHAR_DELAY  = 18;  // responsive, smooth typing speed
   const MAX_CHARS   = 1000; // allow full text animation for long coaching messages
 
+  let _animHandler = null;
+
+  function _clearAnimHandler() {
+    const o = el().overlay;
+    if (o && _animHandler) {
+      o.removeEventListener('animationend', _animHandler);
+      _animHandler = null;
+    }
+  }
+
   // Show / hide overlay
   function _show() {
     const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
     if (activeCat !== 'phishing') return; // Only Chapter 1 has mentor guide Ryan
     const o = el().overlay;
     if (!o) return;
+    _clearAnimHandler();
     const toast = document.getElementById('toast');
     if (toast) toast.classList.add('hidden'); // Clear any toast behind Ryan's dialogue
     document.body.classList.add('has-ryan-dialogue');
@@ -47,9 +58,11 @@ const RyanGuide = (() => {
     o.classList.remove('hidden', 'ryan-animate-out');
     void o.offsetHeight; // trigger reflow
     o.classList.add('ryan-animate-in');
-    o.addEventListener('animationend', () => {
+    _animHandler = () => {
       o.classList.remove('ryan-animate-in');
-    }, { once: true });
+      _animHandler = null;
+    };
+    o.addEventListener('animationend', _animHandler, { once: true });
   }
 
   function _hide() {
@@ -60,11 +73,14 @@ const RyanGuide = (() => {
     if (typeof adjustAppsForDialogue === 'function') adjustAppsForDialogue(false);
     const o = el().overlay;
     if (!o || o.classList.contains('hidden')) return;
+    _clearAnimHandler();
     o.classList.add('ryan-animate-out');
-    o.addEventListener('animationend', () => {
+    _animHandler = () => {
       o.classList.add('hidden');
       o.classList.remove('ryan-animate-out', 'ryan-speaking', 'ryan-thinking', 'ryan-concerned', 'ryan-success');
-    }, { once: true });
+      _animHandler = null;
+    };
+    o.addEventListener('animationend', _animHandler, { once: true });
   }
 
   // Portrait state (normal, speaking, thinking, concerned, success)
@@ -83,13 +99,67 @@ const RyanGuide = (() => {
     if (!textEl) return;
     textEl.innerHTML = '';
 
-    if (fullText.length > MAX_CHARS || fullText.includes('<')) {
+    if (fullText.length > MAX_CHARS) {
       textEl.innerHTML = fullText;
       if (onComplete) onComplete();
       return;
     }
 
     _typing = true;
+
+    // Support typewriter animation for HTML-formatted dialogues (e.g. <strong>)
+    if (fullText.includes('<')) {
+      const tokens = [];
+      const regex = /(<[^>]+>|[^<]+)/g;
+      let m;
+      while ((m = regex.exec(fullText)) !== null) {
+        tokens.push({ isTag: m[0].startsWith('<'), text: m[0] });
+      }
+
+      let tIdx = 0;
+      let cIdx = 0;
+      let builtHtml = '';
+
+      _cursorEl = document.createElement('span');
+      _cursorEl.className = 'ryan-cursor';
+      textEl.appendChild(_cursorEl);
+
+      function tickHtml() {
+        if (tIdx >= tokens.length) {
+          _typing = false;
+          textEl.innerHTML = fullText;
+          if (_cursorEl && _cursorEl.parentNode) _cursorEl.parentNode.removeChild(_cursorEl);
+          if (onComplete) onComplete();
+          return;
+        }
+
+        const tok = tokens[tIdx];
+        if (tok.isTag) {
+          builtHtml += tok.text;
+          tIdx++;
+          tickHtml();
+          return;
+        }
+
+        if (cIdx < tok.text.length) {
+          builtHtml += tok.text[cIdx];
+          cIdx++;
+          textEl.innerHTML = builtHtml;
+          textEl.appendChild(_cursorEl);
+          if (cIdx % 2 === 0 && typeof AudioManager !== 'undefined' && AudioManager.playNarratorTyping) {
+            AudioManager.playNarratorTyping();
+          }
+          _typeTimeout = setTimeout(tickHtml, CHAR_DELAY);
+        } else {
+          tIdx++;
+          cIdx = 0;
+          tickHtml();
+        }
+      }
+      tickHtml();
+      return;
+    }
+
     let i = 0;
 
     _cursorEl = document.createElement('span');
@@ -104,6 +174,9 @@ const RyanGuide = (() => {
         return;
       }
       textEl.insertBefore(document.createTextNode(fullText[i]), _cursorEl);
+      if (i % 2 === 0 && typeof AudioManager !== 'undefined' && AudioManager.playNarratorTyping) {
+        AudioManager.playNarratorTyping();
+      }
       i++;
       _typeTimeout = setTimeout(tick, CHAR_DELAY);
     }
@@ -264,8 +337,8 @@ const RyanGuide = (() => {
     }
   }
 
-  function ask(question, choices, callback) {
-    speak([{ text: question, state: 'thinking' }]);
+  function ask(question, choices, callback, state) {
+    speak([{ text: question, state: state || 'thinking' }]);
     const refs = el();
     if (refs.continueBtn) refs.continueBtn.classList.add('hidden');
     if (refs.choices) {
@@ -278,6 +351,7 @@ const RyanGuide = (() => {
         btn.textContent = (c && c.text) ? c.text : c;
         btn.onclick = () => {
           refs.choices.classList.add('hidden');
+          dismiss();
           if (typeof callback === 'function') callback(c && c.value !== undefined ? c.value : c);
         };
         refs.choices.appendChild(btn);

@@ -17,6 +17,7 @@ let browserTabCounter = 0;
 function isPhishingUrl(url) {
   if (!url) return false;
   const lower = url.toLowerCase();
+  if (lower.includes('cisa.gov') || lower.includes('consumer.ftc.gov') || lower.includes('wikipedia.org') || lower.includes('google.com')) return false;
   if (lower.includes('canva-premium-free.example')) return true;
   return typeof getPhishingSiteForUrl === 'function' && getPhishingSiteForUrl(url) !== null;
 }
@@ -237,6 +238,11 @@ function extractHostFromUrl(url) {
 function getPhishingSiteForUrl(url) {
   if (!url) return null;
   const lower = url.toLowerCase();
+
+  // Exclude legitimate government, educational and authenticated portals
+  if (lower.includes('cisa.gov') || lower.includes('consumer.ftc.gov') || lower.includes('wikipedia.org') || lower.includes('google.com')) {
+    return null;
+  }
 
   // 1. Phishing PayPal Claim (Email 1) & Typosquat lookalikes
   if (lower.includes('paypa1') || lower.includes('paypal1')) {
@@ -512,26 +518,53 @@ function renderLegitSite(url) {
   if (host.includes('bpi.com.ph')) {
     return `
       <div class="legitsite">
-        <div class="legitsite-header" style="background:#8a0011;color:white;">
-          <div style="font-size:20px;font-weight:800;">🏦 BPI Online (Official)</div>
-          <div style="font-size:12px;opacity:0.9;">bpi.com.ph • Official Portal</div>
+        <div class="legitsite-header">
+          <div class="legitsite-header-left">
+            <div style="font-size:22px;font-weight:900;color:#8a0011;display:flex;align-items:center;gap:8px;">
+              <span>🏦</span> BPI Online
+            </div>
+            <span class="legitsite-badge">✔ Official Verified Portal</span>
+          </div>
+          <div style="font-size:12.5px;color:#64748b;display:flex;align-items:center;gap:12px;">
+            <span>🔒 TLS 1.3 Verified</span>
+            <span>Regulated by BSP</span>
+          </div>
         </div>
         <div class="legitsite-body">
           <div class="legitsite-advisory-banner">
-            <div class="legitsite-advisory-title">🛡️ OFFICIAL BPI SECURITY ADVISORY</div>
-            <p style="margin:6px 0 0 0;font-size:13.5px;line-height:1.5;">
-              BPI will <strong>NEVER</strong> send emails, SMS, or messages with links asking you to log in, verify your account, or provide your password or One-Time PIN (OTP). The official BPI portal is strictly <strong>bpi.com.ph</strong>.
+            <div class="legitsite-advisory-title">🛡️ OFFICIAL BPI CYBER DEFENSE ADVISORY</div>
+            <p style="margin:6px 0 0;font-size:14px;line-height:1.6;color:#065f46;">
+              BPI will <strong>NEVER</strong> send unsolicited emails, SMS messages, or social links demanding that you verify credentials or enter your One-Time PIN (OTP). The authentic online portal is strictly <strong>bpi.com.ph</strong>.
             </p>
           </div>
-          <h2 style="font-size:22px;color:#1e293b;margin-bottom:12px;">Welcome to Bank of the Philippine Islands</h2>
-          <p style="color:#475569;line-height:1.6;font-size:14px;">This is the legitimate, authentic Bank of the Philippine Islands online banking portal. Notice the secure padlock icon (🔒) and the official domain name in the address bar.</p>
-          <div style="margin-top:20px;padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-            <h4 style="margin:0 0 8px 0;color:#0f172a;">How to Spot Fake BPI Websites:</h4>
-            <ul style="margin:0;padding-left:20px;color:#475569;font-size:13.5px;line-height:1.6;">
-              <li>Look for typos in the domain like <code>bpi-online-security.com</code> or <code>bpi-verify.com</code>.</li>
-              <li>Official BPI domain will always end in <strong>.bpi.com.ph</strong>.</li>
-              <li>Fake sites create false urgency claiming your account will be locked in 30 minutes.</li>
-            </ul>
+          
+          <div class="legitsite-hero">
+            <h2 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 10px;">Welcome to Bank of the Philippine Islands</h2>
+            <p style="color:#475569;font-size:14.5px;line-height:1.65;margin:0 0 16px;">
+              You have navigated to the authentic BPI online portal. Notice the secure padlock icon (🔒) and the exact <code>bpi.com.ph</code> domain in your browser omnibox.
+            </p>
+            <div class="legitsite-cards-grid">
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">🔍</span>
+                <h3>1. Scrutinize the Address Bar</h3>
+                <p>Counterfeit domains use lookalike terms such as <code>bpi-online-security.com</code> or <code>bpi-verify.xyz</code>. Official BPI addresses strictly terminate in <strong>.bpi.com.ph</strong>.</p>
+              </div>
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">⏳</span>
+                <h3>2. Reject Manufactured Panic</h3>
+                <p>Phishing campaigns claim "Account Locked within 30 Minutes" to provoke hasty clicks. BPI never imposes emergency countdowns via email.</p>
+              </div>
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">🔐</span>
+                <h3>3. Protect Your OTP &amp; MPIN</h3>
+                <p>Never disclose your One-Time PIN to anyone—not even someone claiming to be a bank officer. Enter OTPs only inside verified apps.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="intel-footer-nav" style="border-top:1px solid #e2e8f0;padding-top:16px;">
+            <button class="google-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">🛡️ CISA Phishing Defense Guide</button>
+            <button class="google-btn" onclick="browserGoHome()">🏠 Return to Google Home</button>
           </div>
         </div>
       </div>
@@ -540,19 +573,53 @@ function renderLegitSite(url) {
   if (host.includes('paypal.com')) {
     return `
       <div class="legitsite">
-        <div class="legitsite-header" style="background:#003087;color:white;">
-          <div style="font-size:20px;font-weight:800;">🅿️ PayPal (Official)</div>
-          <div style="font-size:12px;opacity:0.9;">paypal.com • Official Site</div>
+        <div class="legitsite-header">
+          <div class="legitsite-header-left">
+            <div style="font-size:22px;font-weight:900;color:#003087;display:flex;align-items:center;gap:8px;">
+              <span>🅿️</span> PayPal
+            </div>
+            <span class="legitsite-badge">✔ Official Security Center</span>
+          </div>
+          <div style="font-size:12.5px;color:#64748b;">
+            <span>🔒 https://www.paypal.com</span>
+          </div>
         </div>
         <div class="legitsite-body">
           <div class="legitsite-advisory-banner">
-            <div class="legitsite-advisory-title">🛡️ OFFICIAL PAYPAL SECURITY NOTICE</div>
-            <p style="margin:6px 0 0 0;font-size:13.5px;line-height:1.5;">
-              Always verify you are on <strong>https://www.paypal.com</strong>. Legitimate PayPal communications will always address you by your real full name, never "Dear Customer" or "Dear User".
+            <div class="legitsite-advisory-title">🛡️ OFFICIAL PAYPAL SECURITY ADVISORY</div>
+            <p style="margin:6px 0 0;font-size:14px;line-height:1.6;color:#065f46;">
+              Legitimate PayPal emails will always address you by your verified full legal name—never "Dear Customer", "Dear User", or "Valued Member". Real PayPal transactions appear automatically in your account dashboard.
             </p>
           </div>
-          <h2 style="font-size:22px;color:#1e293b;margin-bottom:12px;">PayPal Security &amp; Safety Center</h2>
-          <p style="color:#475569;line-height:1.6;font-size:14px;">You have reached the authentic PayPal website. Protection against phishing and identity theft starts with verifying the domain name.</p>
+          
+          <div class="legitsite-hero">
+            <h2 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 10px;">PayPal Official Security &amp; Safety Center</h2>
+            <p style="color:#475569;font-size:14.5px;line-height:1.65;margin:0 0 16px;">
+              Learn how to detect fraudulent PayPal impersonations and counterfeit payment notifications.
+            </p>
+            <div class="legitsite-cards-grid">
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">🚩</span>
+                <h3>Typosquatting Detection</h3>
+                <p>Fraudulent clones replace the letter <strong>l</strong> with the digit <strong>1</strong> (e.g. <code>paypa1.com</code>). Check every character before logging in!</p>
+              </div>
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">🎁</span>
+                <h3>Fake Prize Disbursements</h3>
+                <p>Emails promising "₱1,000,000 Cash Claim" or lottery windfalls are credential harvesters. PayPal does not issue unearned prize transfers.</p>
+              </div>
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">📧</span>
+                <h3>Forwarding Phishing Samples</h3>
+                <p>If you suspect an email impersonating PayPal, forward the full message with headers to <code>spoof@paypal.com</code> for automated analysis.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="intel-footer-nav" style="border-top:1px solid #e2e8f0;padding-top:16px;">
+            <button class="google-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">🛡️ CISA Phishing Defense Guide</button>
+            <button class="google-btn" onclick="browserGoHome()">🏠 Return to Google Home</button>
+          </div>
         </div>
       </div>
     `;
@@ -560,19 +627,53 @@ function renderLegitSite(url) {
   if (host.includes('gcash.com')) {
     return `
       <div class="legitsite">
-        <div class="legitsite-header" style="background:#005cfc;color:white;">
-          <div style="font-size:20px;font-weight:800;">📱 GCash (Official)</div>
-          <div style="font-size:12px;opacity:0.9;">gcash.com • Official Site</div>
+        <div class="legitsite-header">
+          <div class="legitsite-header-left">
+            <div style="font-size:22px;font-weight:900;color:#005cfc;display:flex;align-items:center;gap:8px;">
+              <span>📱</span> GCash
+            </div>
+            <span class="legitsite-badge">✔ Official Trust &amp; Safety</span>
+          </div>
+          <div style="font-size:12.5px;color:#64748b;">
+            <span>🔒 gcash.com</span>
+          </div>
         </div>
         <div class="legitsite-body">
           <div class="legitsite-advisory-banner">
-            <div class="legitsite-advisory-title">🛡️ GCASH TRUST &amp; SECURITY REMINDER</div>
-            <p style="margin:6px 0 0 0;font-size:13.5px;line-height:1.5;">
-              <strong>NEVER share your MPIN or OTP.</strong> GCash will never send SMS or emails with links asking for your 4-digit MPIN or One-Time PIN.
+            <div class="legitsite-advisory-title">🛡️ GCASH TRUST &amp; SECURITY PROTOCOL</div>
+            <p style="margin:6px 0 0;font-size:14px;line-height:1.6;color:#065f46;">
+              <strong>NEVER share your 4-digit MPIN or One-Time PIN.</strong> GCash support representatives will never contact you asking for security codes, passwords, or recovery seeds.
             </p>
           </div>
-          <h2 style="font-size:22px;color:#1e293b;margin-bottom:12px;">GCash Security Center</h2>
-          <p style="color:#475569;line-height:1.6;font-size:14px;">Authentic GCash services are accessed through the official mobile app and <strong>gcash.com</strong>.</p>
+
+          <div class="legitsite-hero">
+            <h2 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 10px;">GCash Customer Protection Center</h2>
+            <p style="color:#475569;font-size:14.5px;line-height:1.65;margin:0 0 16px;">
+              Authentic GCash transactions are strictly processed through the official mobile application and verified <strong>gcash.com</strong> channels.
+            </p>
+            <div class="legitsite-cards-grid">
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">📵</span>
+                <h3>Smishing &amp; Text Scams</h3>
+                <p>Beware of text messages claiming your account was deactivated. Check the sender ID and never click external links in SMS.</p>
+              </div>
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">🔒</span>
+                <h3>Biometrics &amp; MPIN</h3>
+                <p>Enable fingerprint and facial recognition login on your mobile phone to prevent unauthorized physical device access.</p>
+              </div>
+              <div class="legitsite-card">
+                <span class="legitsite-card-icon">🚨</span>
+                <h3>Instant Hotline</h3>
+                <p>Report unauthorized account activity immediately through 2882 or the official Help Center in the GCash app.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="intel-footer-nav" style="border-top:1px solid #e2e8f0;padding-top:16px;">
+            <button class="google-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">🛡️ CISA Phishing Defense Guide</button>
+            <button class="google-btn" onclick="browserGoHome()">🏠 Return to Google Home</button>
+          </div>
         </div>
       </div>
     `;
@@ -600,14 +701,14 @@ function _applyPageToContent(url) {
     return;
   }
 
-  const isGoogleHome = url === 'https://www.google.com' || url === '';
-  const isGoogleSearch = /^https:\/\/www\.google\.com\/search\?q=/i.test(url);
+  const isGoogleHome = url === 'https://www.google.com' || url === '' || url === 'about:blank';
+  const isGoogleSearch = /^https:\/\/www\.google\.com\/search/i.test(url);
 
   // 1. Google Homepage
   if (isGoogleHome) {
     updateBrowserPhishingNotice(false);
     setTabMeta('Google', '🌐', '🔒 Secure', 'secure');
-    content.innerHTML = BROWSER_HOME_HTML;
+    content.innerHTML = renderGoogleHome();
     return;
   }
 
@@ -623,11 +724,24 @@ function _applyPageToContent(url) {
 
   updateBrowserPhishingNotice(false);
 
-  // 3. Google Search Results
+  // 3. Google Search Results with Media Tabs (All, Images, News, Videos)
   if (isGoogleSearch) {
-    const q = decodeURIComponent(url.split('q=')[1] || '');
-    setTabMeta(`${q} — Google Search`, '🔍', '🔒 Secure', 'secure');
-    content.innerHTML = renderGoogleResults(q);
+    let q = '';
+    let tabName = 'all';
+    try {
+      const u = new URL(url);
+      q = u.searchParams.get('q') || '';
+      tabName = u.searchParams.get('tab') || 'all';
+    } catch (e) {
+      const parts = url.split('q=')[1] || '';
+      q = decodeURIComponent(parts.split('&')[0] || '');
+      if (url.includes('tab=')) {
+        tabName = url.split('tab=')[1].split('&')[0];
+      }
+    }
+    const tabSuffix = tabName === 'all' ? '' : ` (${tabName.charAt(0).toUpperCase() + tabName.slice(1)})`;
+    setTabMeta(`${q}${tabSuffix} — Google Search`, '🔍', '🔒 Secure', 'secure');
+    content.innerHTML = renderGoogleResults(q, tabName);
     return;
   }
 
@@ -641,6 +755,12 @@ function _applyPageToContent(url) {
   }
 
   // 5. Official Threat Intel & Cybersecurity Guides
+  if (/recognize-and-report-phishing|secure-our-world/i.test(url)) {
+    setTabMeta('Recognize and Report Phishing | CISA', '🛡️', '🔒 Secure', 'secure');
+    content.innerHTML = renderCisaPhishingSite();
+    return;
+  }
+
   if (/malware|trojan|ransomware|threat-intel/i.test(url)) {
     setTabMeta('Malware Intel & Defense | CISA', '🦠', '🔒 Secure', 'secure');
     content.innerHTML = renderMalwareIntelSite();
@@ -707,10 +827,12 @@ function handlePhishingSubmit(domain, brand) {
 }
 
 function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
+window.escapeHtml = escapeHtml;
 
 // Treat plain text (no scheme, has spaces, or no dot) as a Google search;
 // anything that looks like a domain/URL is navigated to directly.
@@ -738,6 +860,44 @@ function submitHomeSearch() {
   const input = document.getElementById('browser-home-search');
   if (input) browserGo(input.value);
 }
+
+function clearHomeSearch() {
+  const input = document.getElementById('browser-home-search');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  const clearBtn = document.getElementById('browser-home-search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+}
+window.clearHomeSearch = clearHomeSearch;
+
+function handleHomeSearchInput(input) {
+  const clearBtn = document.getElementById('browser-home-search-clear');
+  if (clearBtn) {
+    clearBtn.style.display = (input && input.value.trim().length > 0) ? 'inline-flex' : 'none';
+  }
+}
+window.handleHomeSearchInput = handleHomeSearchInput;
+
+function clearResultsSearch() {
+  const input = document.getElementById('gresults-search-input');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  const clearBtn = document.getElementById('gresults-clear-btn');
+  if (clearBtn) clearBtn.style.display = 'none';
+}
+window.clearResultsSearch = clearResultsSearch;
+
+function handleResultsSearchInput(input) {
+  const clearBtn = document.getElementById('gresults-clear-btn');
+  if (clearBtn) {
+    clearBtn.style.display = (input && input.value.trim().length > 0) ? 'inline-flex' : 'none';
+  }
+}
+window.handleResultsSearchInput = handleResultsSearchInput;
 
 function submitBrowserUrl() {
   const input = document.getElementById('browser-url-input');
@@ -979,7 +1139,7 @@ function renderMalwareIntelSite() {
         </div>
 
         <div class="intel-footer-nav">
-          <button class="google-btn" onclick="browserGo('https://www.google.com/search?q=phishing+defense+guide')">🔍 Search Phishing Intelligence</button>
+          <button class="google-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">🎣 CISA Phishing Guide</button>
           <button class="google-btn" onclick="browserGo('https://www.cisa.gov')">🛡️ CISA Cyber Defense Home</button>
           <button class="google-btn" onclick="browserGoHome()">🏠 Return to Google</button>
         </div>
@@ -1025,7 +1185,7 @@ function renderCisaHomeSite() {
             </div>
             <div class="defense-step">
               <span class="step-num">2</span>
-              <div><strong>Recognize and Report Phishing:</strong> Think before you click. Be suspicious of unsolicited requests for personal info, urgency, and strange sender emails.</div>
+              <div><strong>Recognize and Report Phishing:</strong> Think before you click. Be suspicious of unsolicited requests for personal info, urgency, and strange sender emails. <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'); return false;" style="color:#0284c7;font-weight:700;margin-left:4px;">Read Secure Our World Guide ➔</a></div>
             </div>
             <div class="defense-step">
               <span class="step-num">3</span>
@@ -1041,9 +1201,183 @@ function renderCisaHomeSite() {
         <div class="intel-section">
           <h2>Featured Security Bulletins</h2>
           <ul class="intel-list">
+            <li><strong>Phishing &amp; Social Engineering Advisory (Secure Our World):</strong> <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'); return false;" style="color:#0284c7;font-weight:700;">Recognize and Report Phishing — CISA Official Guide ➔</a></li>
             <li><strong>Malware &amp; Software Dropper Advisory:</strong> <a href="#" onclick="browserGo('https://www.cisa.gov/topics/malware'); return false;" style="color:#0284c7;font-weight:700;">Read the complete Malware Intel &amp; Classification Guide ➔</a></li>
-            <li><strong>Phishing &amp; Social Engineering Trends:</strong> <a href="#" onclick="browserGo('https://www.consumer.ftc.gov/articles/how-recognize-phishing'); return false;" style="color:#0284c7;font-weight:700;">How to identify deceptive phishing domains and fake sender headers ➔</a></li>
+            <li><strong>FTC Consumer Guidance:</strong> <a href="#" onclick="browserGo('https://www.consumer.ftc.gov/articles/how-recognize-phishing'); return false;" style="color:#0284c7;font-weight:700;">How to identify deceptive phishing domains and fake sender headers ➔</a></li>
           </ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── CISA SECURE OUR WORLD: RECOGNIZE AND REPORT PHISHING ──
+function renderCisaPhishingSite() {
+  return `
+    <div class="cisasite">
+      <div class="intel-banner" style="background: linear-gradient(135deg, #091e3a 0%, #173866 100%); border-bottom: 3px solid #00c0f7;">
+        <div class="intel-banner-left">
+          <span class="intel-banner-shield" style="font-size:30px;">🛡️</span>
+          <div>
+            <div class="intel-banner-title" style="letter-spacing:0.8px;font-weight:900;">CYBERSECURITY &amp; INFRASTRUCTURE SECURITY AGENCY</div>
+            <div class="intel-banner-sub" style="color:#7dd3fc;font-weight:600;">AMERICA'S CYBER DEFENSE AGENCY • SECURE OUR WORLD</div>
+          </div>
+        </div>
+        <div class="intel-banner-badge" style="background:rgba(0,192,247,0.18);border:1px solid #00c0f7;color:#e0f2fe;font-weight:700;">
+          SECURE OUR WORLD: PHISHING DEFENSE
+        </div>
+      </div>
+
+      <div class="intel-content">
+        <div class="intel-breadcrumbs">
+          <a href="#" onclick="browserGoHome(); return false;">Home</a> › 
+          <a href="#" onclick="browserGo('https://www.cisa.gov'); return false;">CISA</a> › 
+          <a href="#" onclick="browserGo('https://www.cisa.gov'); return false;">Secure Our World</a> › 
+          <span>Recognize and Report Phishing</span>
+        </div>
+
+        <h1 class="intel-h1" style="font-size:28px;color:#0c2340;margin-bottom:8px;">
+          Recognize and Report Phishing
+        </h1>
+        <div class="intel-meta-bar">
+          <span>🏛️ Official Government Source (cisa.gov)</span>
+          <span>🛡️ Program: Secure Our World</span>
+          <span>⏱️ 4 min read</span>
+          <span class="verified-tag">✔ Verified Cyber Defense Guidance</span>
+        </div>
+
+        <div class="intel-alert-box" style="background:#eff6ff;border-left:4px solid #0284c7;color:#0c4a6e;">
+          <strong>⚠️ The Frontline of Cyber Defense:</strong> More than 90% of successful cyberattacks and organizational security incidents begin with a phishing email. Attackers manipulate emotions—such as fear, urgency, curiosity, or greed—to trick individuals into surrendering login credentials, wire transfers, or downloading destructive malware droppers.
+        </div>
+
+        <div class="intel-section">
+          <h2>1. What is Phishing?</h2>
+          <p>
+            <strong>Phishing</strong> is when cyber criminals send deceptive emails, messages (<em>smishing</em>), or make telephone calls (<em>vishing</em>) attempting to lure victims into clicking malicious links, sharing confidential passwords, or downloading dangerous files.
+          </p>
+          <p>
+            Attackers frequently impersonate legitimate, trusted organizations such as financial institutions, popular software platforms (PayPal, Microsoft 365, Canva), or internal workplace departments (HR, IT Helpdesk). By disguising their identity, they bypass normal skepticism.
+          </p>
+        </div>
+
+        <div class="intel-section">
+          <h2>2. How to Recognize Phishing: The 4 Core Red Flags</h2>
+          <p>CISA urges everyone to slow down and scrutinize incoming messages for these four telltale warning signs:</p>
+          
+          <div class="intel-cards-grid">
+            <div class="intel-threat-card card-trojan">
+              <div class="threat-card-header">
+                <span class="threat-card-name">🚩 1. Suspicious Senders &amp; Typosquatting</span>
+                <span class="threat-card-tag" style="background:#fef3c7;color:#b45309;">Primary Clue</span>
+              </div>
+              <p class="threat-card-desc">
+                Attackers customize display names (e.g., "PayPal Billing" or "IT Support") to seem authentic, but the address behind the @ symbol reveals the fraud. Check for lookalike domains (<strong>typosquatting</strong>), such as substituting the letter "l" with the number "1" (e.g., <code>paypa1.com</code>) or unauthorized webmail domains.
+              </p>
+              <div class="threat-card-case">
+                <strong>In CyberZER0 (Incident 1):</strong> Look closely at the sender header in Zmail. A message claiming a ₱1,000,000 prize originates from <code>paypa1.com</code>, a counterfeit domain!
+              </div>
+            </div>
+
+            <div class="intel-threat-card card-ransom">
+              <div class="threat-card-header">
+                <span class="threat-card-name">⏰ 2. Artificial Urgency &amp; Panic</span>
+                <span class="threat-card-tag" style="background:#fee2e2;color:#b91c1c;">Psychological Tactic</span>
+              </div>
+              <p class="threat-card-desc">
+                Demands instant action under threat of penalty: "Your account will be suspended within 24 hours!", "Urgent payment required immediately!", or "Security alert: unauthorized login detected!". Cyber criminals invent artificial urgency so you act on emotion before your analytical thinking engages.
+              </p>
+              <div class="threat-card-case">
+                <strong>Defense Rule:</strong> Authentic institutions will never demand you verify passwords within minutes to prevent account destruction.
+              </div>
+            </div>
+
+            <div class="intel-threat-card card-spyware">
+              <div class="threat-card-header">
+                <span class="threat-card-name">🔗 3. Mismatched Links &amp; Hidden URLs</span>
+                <span class="threat-card-tag" style="background:#ede9fe;color:#6d28d9;">Technical Trap</span>
+              </div>
+              <p class="threat-card-desc">
+                The visible text in an email can say anything—such as <code>https://www.paypal.com</code> or <code>https://bpi.com.ph</code>. However, hovering your cursor over the link reveals the actual destination URL pointing to a completely unrelated malicious or unverified website.
+              </p>
+              <div class="threat-card-case">
+                <strong>Inspection Method:</strong> Always hover over links before clicking. In Zmail, look at the URL preview bar to inspect destination hosts.
+              </div>
+            </div>
+
+            <div class="intel-threat-card card-worm">
+              <div class="threat-card-header">
+                <span class="threat-card-name">📎 4. Unexpected Attachments &amp; Droppers</span>
+                <span class="threat-card-tag" style="background:#e0f2fe;color:#0369a1;">Payload Risk</span>
+              </div>
+              <p class="threat-card-desc">
+                Unsolicited attachments—such as unexpected invoices, receipts, or job resumes—packaged as <code>.zip</code>, <code>.iso</code>, <code>.exe</code>, <code>.scr</code>, or macro-enabled documents (<code>.docm</code>). Opening these executes malware droppers that infect the operating system.
+              </p>
+              <div class="threat-card-case">
+                <strong>Threat Advisory:</strong> Never open unexpected email attachments without verifying the sender through a separate, trusted channel.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="intel-section">
+          <h2>3. What to Do When You Spot Phishing: CISA Action Plan</h2>
+          <div class="defense-steps-box">
+            <div class="defense-step">
+              <span class="step-num">1</span>
+              <div>
+                <strong>Stop and Think — Do Not Click, Reply, or Enter Data:</strong> If an email feels urgent, strange, or too good to be true, pause. Never enter your credentials, passwords, or One-Time PINs (OTPs) on forms linked from emails.
+              </div>
+            </div>
+            <div class="defense-step">
+              <span class="step-num">2</span>
+              <div>
+                <strong>Verify Through an Independent Channel:</strong> If an email claims your account is locked or asks for payment, navigate directly to the company's authentic website by typing their known domain into your browser, or contact them via a verified telephone number.
+              </div>
+            </div>
+            <div class="defense-step">
+              <span class="step-num">3</span>
+              <div>
+                <strong>Report the Phishing Attempt:</strong>
+                <ul style="margin:6px 0 0;padding-left:18px;line-height:1.6;font-size:13px;">
+                  <li><strong>In CyberZER0:</strong> Activate <strong>Flag Mode</strong> in Zmail to tag red flags, then submit a <strong>Phishing Verdict</strong>.</li>
+                  <li><strong>In the Workplace / School:</strong> Click the "Report Phishing" button in your email client or forward the email to your internal IT Security department.</li>
+                  <li><strong>Government Reporting:</strong> Forward phishing emails to CISA at <code>phishing-report@us-cert.gov</code> and report online scams to the FTC at <code>reportfraud.ftc.gov</code>.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="defense-step">
+              <span class="step-num">4</span>
+              <div>
+                <strong>Immediate Mitigation if Compromised:</strong> If you accidentally entered information on a suspicious website: change your password immediately, revoke active sessions, enable Multi-Factor Authentication (MFA), and inform your IT administrator.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="intel-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1px solid #86efac;">
+          <h2 style="color:#166534;border-bottom-color:#bbf7d0;">🎯 Apply What You Learned in CyberZER0</h2>
+          <p style="color:#14532d;">
+            Ready to test your skills? Return to <strong>Zmail</strong> to inspect the employee inbox and protect the company from unauthorized intrusions:
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;">
+            <div style="background:#fff;padding:12px 16px;border-radius:8px;border:1px solid #bbf7d0;flex:1;min-width:220px;">
+              <strong style="color:#15803d;">1. Inspect the Sender</strong>
+              <p style="margin:4px 0 0;font-size:12.5px;color:#4b5563;">Examine the email address for typosquatting, lookalike letters, or external domains.</p>
+            </div>
+            <div style="background:#fff;padding:12px 16px;border-radius:8px;border:1px solid #bbf7d0;flex:1;min-width:220px;">
+              <strong style="color:#15803d;">2. Activate Flag Mode</strong>
+              <p style="margin:4px 0 0;font-size:12.5px;color:#4b5563;">Click the Flag Mode button in Zmail to tag suspicious headers, body urgency, and URLs.</p>
+            </div>
+            <div style="background:#fff;padding:12px 16px;border-radius:8px;border:1px solid #bbf7d0;flex:1;min-width:220px;">
+              <strong style="color:#15803d;">3. Submit Your Verdict</strong>
+              <p style="margin:4px 0 0;font-size:12.5px;color:#4b5563;">Mark as Phishing or Legitimate to protect the organization and score detective points!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="intel-footer-nav">
+          <button class="google-btn" onclick="browserGo('https://www.cisa.gov')">🛡️ CISA Cyber Defense Home</button>
+          <button class="google-btn" onclick="browserGo('https://www.cisa.gov/topics/malware')">🦠 Malware Intel Guide</button>
+          <button class="google-btn" onclick="browserGoHome()">🏠 Return to Google</button>
         </div>
       </div>
     </div>`;
@@ -1087,6 +1421,7 @@ function renderPhishingGuideSite() {
         </div>
 
         <div class="intel-footer-nav">
+          <button class="google-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">🛡️ CISA Recognize &amp; Report Phishing</button>
           <button class="google-btn" onclick="browserGo('https://www.cisa.gov/topics/malware')">🦠 Learn About Malware Threats</button>
           <button class="google-btn" onclick="browserGoHome()">🏠 Return to Google Home</button>
         </div>
@@ -1094,6 +1429,130 @@ function renderPhishingGuideSite() {
     </div>`;
 }
 
+// ── AUTHENTIC GOOGLE HOMEPAGE RENDERER ──
+function renderGoogleHome() {
+  return `
+    <div class="browser-home">
+      <div class="ghome-topbar">
+        <a class="ghome-link" href="#" onclick="browserGo('https://www.google.com/search?q=phishing'); return false;">Gmail</a>
+        <a class="ghome-link" href="#" onclick="switchGoogleSearchTab('images', 'cybersecurity'); return false;">Images</a>
+        <span class="ghome-app-icon" title="Google Apps" onclick="showToast('Google Apps: Docs, Drive, Mail', 'info')">⠿</span>
+      </div>
+      <div class="ghome-main">
+        <div class="google-logo">
+          <span class="gl-blue">G</span><span class="gl-red">o</span><span class="gl-yellow">o</span><span class="gl-blue">g</span><span class="gl-green">l</span><span class="gl-red">e</span>
+        </div>
+        <div class="google-search-box">
+          <span class="google-search-icon">🔍</span>
+          <input type="text" id="browser-home-search" class="google-search-input" placeholder="Search Google or type a URL (e.g. phishing, malware, cisa.gov)" autocomplete="off" spellcheck="false" onkeydown="handleHomeSearchKey(event)" oninput="handleHomeSearchInput(this)">
+          <button type="button" class="google-search-clear" id="browser-home-search-clear" style="display:none;" onclick="clearHomeSearch()" title="Clear">✕</button>
+          <span class="google-search-mic" title="Search by voice" onclick="showToast('🎤 Voice Search: Listening for cybersecurity queries...', 'info')">🎙️</span>
+          <span class="google-search-lens" title="Search by image" onclick="switchGoogleSearchTab('images', 'phishing red flags')">📷</span>
+        </div>
+        <div class="google-search-actions">
+          <button type="button" class="google-btn" onclick="submitHomeSearch()">Google Search</button>
+          <button type="button" class="google-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">I'm Feeling Lucky (CISA Guide)</button>
+        </div>
+      </div>
+      <div class="ghome-footer">
+        <div class="ghome-footer-top">Philippines</div>
+        <div class="ghome-footer-links">
+          <div>
+            <a href="#" onclick="showToast('Google Search Simulator — CyberZER0 Edition', 'info'); return false;">About</a>
+            <a href="#" onclick="showToast('CyberZER0 Detective Training Module', 'info'); return false;">Advertising</a>
+            <a href="#" onclick="showToast('Enterprise Cyber Defense Solutions', 'info'); return false;">Business</a>
+            <a href="#" onclick="showToast('SafeSearch filtering active locally.', 'info'); return false;">How Search works</a>
+          </div>
+          <div>
+            <a href="#" onclick="showToast('Privacy: Local client sandbox isolation.', 'info'); return false;">Privacy</a>
+            <a href="#" onclick="showToast('Terms: Educational interactive demo.', 'info'); return false;">Terms</a>
+            <a href="#" onclick="showToast('Settings: High-speed local rendering enabled.', 'info'); return false;">Settings</a>
+          </div>
+        </div>
+      </div>
+  `;
+}
+BROWSER_HOME_HTML = renderGoogleHome();
+window.BROWSER_HOME_HTML = BROWSER_HOME_HTML;
+
+// ── TAB SWITCHER FOR GOOGLE SEARCH (All / Images / News / Videos) ──
+function switchGoogleSearchTab(tabName, query) {
+  const cleanQ = (query || 'phishing').trim();
+  const targetUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanQ)}&tab=${encodeURIComponent(tabName)}`;
+  const tab = getActiveTab();
+  if (tab) {
+    renderPageIntoTab(tab, targetUrl);
+  } else {
+    browserGo(targetUrl);
+  }
+}
+window.switchGoogleSearchTab = switchGoogleSearchTab;
+
+// ── BOOKMARK TOGGLE HELPER ──
+function toggleBrowserBookmark() {
+  const tab = getActiveTab();
+  const title = tab ? tab.title : 'Current Website';
+  if (typeof showToast === 'function') {
+    showToast(`⭐ Saved to Bookmarks: ${title}`, 'success');
+  }
+}
+window.toggleBrowserBookmark = toggleBrowserBookmark;
+
+// ── IMAGE PREVIEW LIGHTBOX HELPER ──
+function openImagePreviewModal(title, source, res, icon, desc, link) {
+  const modalId = 'browser-image-preview-modal';
+  let modal = document.getElementById(modalId);
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100050;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    `;
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background:#ffffff;border-radius:14px;max-width:720px;width:100%;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.5);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+      <div style="background:#0f172a;color:#ffffff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">🖼️</span>
+          <strong style="font-size:15px;">Google Images — Detailed Intelligence View</strong>
+        </div>
+        <button onclick="document.getElementById('${modalId}').remove()" style="background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      <div style="padding:28px 24px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;border-bottom:1px solid #e2e8f0;">
+        <div style="font-size:64px;margin-bottom:12px;">${icon || '🛡️'}</div>
+        <div style="font-size:18px;font-weight:800;color:#0f172a;text-align:center;max-width:540px;">${escapeHtml(title)}</div>
+        <div style="margin-top:8px;font-size:12px;color:#64748b;display:flex;gap:12px;">
+          <span>Resolution: <strong>${res || '1200 × 800'}</strong></span>
+          <span>Source: <strong>${source || 'cisa.gov'}</strong></span>
+        </div>
+      </div>
+      <div style="padding:20px 24px;">
+        <p style="font-size:14px;line-height:1.6;color:#334155;margin:0 0 18px;">${desc || 'Official visual diagram illustrating cybersecurity threat vectors, defensive indicators, and red-flag identification techniques.'}</p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button onclick="document.getElementById('${modalId}').remove()" style="padding:8px 18px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:#475569;">Close</button>
+          <button onclick="document.getElementById('${modalId}').remove(); browserGo('${link || 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'}');" style="padding:8px 20px;background:#1a73e8;border:none;border-radius:6px;font-size:13px;font-weight:700;color:#ffffff;cursor:pointer;">Visit Website ➔</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+window.openImagePreviewModal = openImagePreviewModal;
+
+// ── VIDEO PLAY HELPER ──
+function playGoogleVideoDemo(title, channel, duration, link) {
+  if (typeof showToast === 'function') {
+    showToast(`▶️ Playing: "${title}" (${duration})`, 'info');
+  }
+  setTimeout(() => {
+    browserGo(link || 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing');
+  }, 400);
+}
+window.playGoogleVideoDemo = playGoogleVideoDemo;
+
+// ── AUTHENTIC WIKIPEDIA & ENTERPRISE PORTALS ──
 function renderGenericSite(url) {
   let hostname, pathname;
   try {
@@ -1105,188 +1564,818 @@ function renderGenericSite(url) {
     pathname = '/';
   }
 
+  // 1. Wikipedia Article
   if (/(^|\.)wikipedia\.org$/i.test(hostname)) {
     const slug = decodeURIComponent((pathname.split('/wiki/')[1] || 'Phishing').replace(/_/g, ' '));
     const title = slug || 'Phishing';
     return `
       <div class="wikisite">
         <div class="wikisite-header">
-          <span class="wikisite-logo">📖</span>
-          <span class="wikisite-wordmark">WIKIPEDIA</span>
-          <span class="wikisite-tag">The Free Encyclopedia</span>
-        </div>
-        <div class="wikisite-body">
-          <h1>${escapeHtml(title)}</h1>
-          <p class="wikisite-sub">From Wikipedia, the free encyclopedia</p>
-          <hr/>
-          <p><strong>${escapeHtml(title)}</strong> is a prominent subject in cybersecurity and digital forensics. Understanding the anatomy of modern threats allows students and detectives to detect and mitigate unauthorized system intrusions.</p>
-          <p>Key defensive practices include inspecting domain names, verifying SSL certificate validity, and quarantining suspicious attachments in isolated sandboxes.</p>
-          <div style="margin-top:20px;padding:12px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
-            <strong>Related Intelligence:</strong> <a href="#" onclick="browserGo('https://www.cisa.gov/topics/malware'); return false;" style="color:#0284c7;font-weight:700;">Explore CISA Malware &amp; Threat Intelligence ➔</a>
+          <div class="wikisite-brand" onclick="browserGo('https://en.wikipedia.org/wiki/Phishing')">
+            <span class="wikisite-logo">📖</span>
+            <div>
+              <div class="wikisite-wordmark">WIKIPEDIA</div>
+              <div class="wikisite-tag">The Free Encyclopedia</div>
+            </div>
+          </div>
+          <div class="wikisite-actions">
+            <a href="#" onclick="browserGoHome(); return false;">Article</a>
+            <a href="#" onclick="showToast('Discussion page archived.', 'info'); return false;">Talk</a>
+            <a href="#" onclick="showToast('Viewing full edit history.', 'info'); return false;">View history</a>
+            <button class="google-btn" style="padding:4px 10px;font-size:12px;" onclick="browserGoHome()">🏠 Return Home</button>
           </div>
         </div>
-      </div>`;
+
+        <div class="wikisite-body">
+          <div class="wikisite-title-row">
+            <h1>${escapeHtml(title)}</h1>
+            <span class="wikisite-lang-badge">🌐 48 languages</span>
+          </div>
+          <p class="wikisite-sub">From Wikipedia, the free encyclopedia</p>
+
+          <div class="wikisite-layout">
+            <div class="wikisite-main">
+              <p>
+                <strong>${escapeHtml(title)}</strong> is a form of social engineering and cyberattack whereby an attacker masquerades as a trusted entity in an electronic communication, typically an email, SMS message (<em>smishing</em>), or phone call (<em>vishing</em>)<sup>[1]</sup>. The goal is to deceive victims into handing over sensitive information such as usernames, passwords, credit card numbers, or cryptographic keys, or to facilitate malware downloads.
+              </p>
+
+              <div class="wikisite-toc">
+                <div class="wikisite-toc-title">Contents</div>
+                <ul>
+                  <li><a href="#wiki-history">1. History &amp; Origin</a></li>
+                  <li><a href="#wiki-techniques">2. Modern Attack Techniques</a>
+                    <ul>
+                      <li><a href="#wiki-typo">2.1 Typosquatting &amp; Look-Alike Domains</a></li>
+                      <li><a href="#wiki-spear">2.2 Spear Phishing &amp; Whaling</a></li>
+                    </ul>
+                  </li>
+                  <li><a href="#wiki-countermeasures">3. Technical Countermeasures</a></li>
+                  <li><a href="#wiki-references">4. References &amp; Official Agencies</a></li>
+                </ul>
+              </div>
+
+              <h2 class="wikisite-section-heading" id="wiki-history">1. History &amp; Origin</h2>
+              <p>
+                The earliest recorded occurrence of the term "phishing" traces back to 1996, when hacker groups on America Online (AOL) created automated script bots to harvest user account credentials by impersonating AOL customer service representatives<sup>[2]</sup>. As electronic commerce and online banking proliferated in the 2000s, financial institutions became the primary targets.
+              </p>
+
+              <h2 class="wikisite-section-heading" id="wiki-techniques">2. Modern Attack Techniques</h2>
+              <p id="wiki-typo">
+                <strong>Typosquatting:</strong> Adversaries register domain names that are visually identical or slight misspellings of popular legitimate services. For example, replacing the lowercase letter "l" with the numerical digit "1" (e.g. <code>paypa1.com</code> instead of <code>paypal.com</code>) or substituting characters with homoglyphs. Victims visiting these domains encounter counterfeit authentication portals designed to capture keystrokes.
+              </p>
+              <p id="wiki-spear">
+                <strong>Spear Phishing:</strong> Unlike generic mass-market spam, spear phishing attacks involve targeted intelligence gathering on specific employees within an organization. Attackers craft messages referencing internal project codes, upcoming payroll disbursements, or impersonating IT helpdesk personnel.
+              </p>
+
+              <h2 class="wikisite-section-heading" id="wiki-countermeasures">3. Technical Countermeasures</h2>
+              <p>
+                Effective organizational defense incorporates multi-layered security controls:
+              </p>
+              <ul style="padding-left:22px;line-height:1.7;font-size:14px;color:#202122;">
+                <li><strong>Domain Scrutiny:</strong> Inspecting the full URL and verified TLS certificate subject in the browser omnibox before submitting credentials.</li>
+                <li><strong>Multi-Factor Authentication (MFA):</strong> Enforcing FIDO2/WebAuthn hardware keys to render stolen passwords useless.</li>
+                <li><strong>Email Authentication:</strong> Enforcing Sender Policy Framework (SPF), DomainKeys Identified Mail (DKIM), and DMARC policies.</li>
+                <li><strong>Workplace Training:</strong> Interactive flagging drills, such as the detective simulations in CyberZER0, to develop employee vigilance.</li>
+              </ul>
+
+              <h2 class="wikisite-section-heading" id="wiki-references">4. References &amp; Official Agencies</h2>
+              <ol style="padding-left:22px;line-height:1.7;font-size:12.5px;color:#54595d;">
+                <li>Cybersecurity and Infrastructure Security Agency (CISA). "Recognize and Report Phishing". <em>Secure Our World</em>. <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'); return false;">cisa.gov</a></li>
+                <li>Federal Trade Commission (FTC). "How to Recognize and Avoid Phishing Scams". <em>Consumer Advice</em>. <a href="#" onclick="browserGo('https://www.consumer.ftc.gov/articles/how-recognize-phishing'); return false;">consumer.ftc.gov</a></li>
+                <li>Internet Crime Complaint Center (IC3). "2025 Annual Cybercrime Report: Phishing &amp; Business Email Compromise". FBI.</li>
+              </ol>
+            </div>
+
+            <div class="wikisite-infobox">
+              <div class="wikisite-infobox-title">Phishing</div>
+              <div class="wikisite-infobox-image">🎣</div>
+              <table class="wikisite-infobox-table">
+                <tr>
+                  <th>Type</th>
+                  <td>Social engineering, Cybercrime</td>
+                </tr>
+                <tr>
+                  <th>Attack vectors</th>
+                  <td>Email, SMS, Voice, QR Codes</td>
+                </tr>
+                <tr>
+                  <th>Key targets</th>
+                  <td>Credentials, Banking PINs, Session cookies</td>
+                </tr>
+                <tr>
+                  <th>First recorded</th>
+                  <td>1996 (AOL Crackers)</td>
+                </tr>
+                <tr>
+                  <th>Key indicator</th>
+                  <td>Typosquatting (e.g. <code>paypa1.com</code>)</td>
+                </tr>
+                <tr>
+                  <th>Countermeasures</th>
+                  <td>MFA, Flag mode in Zmail, Domain scrutiny</td>
+                </tr>
+                <tr>
+                  <th>Agency</th>
+                  <td><a href="#" onclick="browserGo('https://www.cisa.gov'); return false;">CISA (DHS)</a></td>
+                </tr>
+              </table>
+              <div style="margin-top:14px;padding-top:10px;border-top:1px solid #eaecf0;text-align:center;">
+                <button class="google-btn" style="width:100%;font-size:12px;padding:6px;" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">Explore CISA Guide ➔</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
+  // 2. Enterprise Single Sign-On Portal / Generic Corporate Site
   const displayHost = hostname.replace(/^www\./i, '');
-  const siteName = (displayHost.split('.')[0] || 'Website').replace(/[-_]/g, ' ');
+  const siteName = (displayHost.split('.')[0] || 'Enterprise').replace(/[-_]/g, ' ');
   const capitalized = siteName.charAt(0).toUpperCase() + siteName.slice(1);
 
   return `
     <div class="genericsite">
       <div class="genericsite-header">
-        <span class="genericsite-logo">${escapeHtml(capitalized.charAt(0))}</span>
-        <span class="genericsite-name">${escapeHtml(capitalized)}</span>
-        <nav class="genericsite-nav"><a href="#" onclick="browserGoHome()">Search</a><a href="#" onclick="browserGo('https://www.cisa.gov/topics/malware')">Threat Intel</a></nav>
-      </div>
-      <div class="genericsite-body">
-        <h2>${escapeHtml(capitalized)} Secure Portal</h2>
-        <p>You have navigated to <strong>${escapeHtml(displayHost)}</strong>. This authenticated website is functioning normally.</p>
-        <div style="margin-top:20px;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-          <h4>Cyber Threat Research Links:</h4>
-          <p style="margin:8px 0;"><a href="#" onclick="browserGo('https://www.cisa.gov/topics/malware'); return false;" style="color:#0284c7;">🦠 View Official Malware Encyclopedia &amp; Trojan Analysis</a></p>
-          <p style="margin:8px 0;"><a href="#" onclick="browserGo('https://www.consumer.ftc.gov/articles/how-recognize-phishing'); return false;" style="color:#0284c7;">🎣 View FTC Phishing Recognition Guidelines</a></p>
+        <div class="genericsite-header-left">
+          <div class="genericsite-logo">${escapeHtml(capitalized.charAt(0))}</div>
+          <div>
+            <div class="genericsite-name">${escapeHtml(capitalized)} Corporate Portal</div>
+            <div style="font-size:11.5px;color:#94a3b8;">Authenticated Workforce Gateway</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span class="genericsite-status-pill">🟢 SSO Operational</span>
+          <nav class="genericsite-nav">
+            <a href="#" onclick="browserGoHome()">Search</a>
+            <a href="#" onclick="browserGo('https://www.cisa.gov/topics/malware')">Threat Intel</a>
+            <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">Security Hub</a>
+          </nav>
         </div>
       </div>
-    </div>`;
+
+      <div class="genericsite-body">
+        <div class="genericsite-dashboard">
+          <div>
+            <div class="genericsite-card">
+              <h3>Workplace Security Protocol Notice</h3>
+              <p>You have navigated to <strong>${escapeHtml(displayHost)}</strong>. This website is operating under active corporate cybersecurity surveillance.</p>
+              <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:13.5px;color:#166534;">
+                <strong>🛡️ Cyber Defense Reminder:</strong> Internal IT will never send emergency emails demanding instant password entry on external domains. Always verify the address bar.
+              </div>
+              <p style="font-size:13px;color:#64748b;margin:0;">Current session: <strong>alex.intern@cyberzer0.local</strong> (Security Detective Clearance)</p>
+            </div>
+
+            <div class="genericsite-card">
+              <h3>Mandatory Cybersecurity Training Links</h3>
+              <p>Employees are required to review the following official guidelines to identify spear-phishing attacks:</p>
+              <div class="genericsite-quick-links">
+                <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'); return false;">
+                  <span>🛡️</span> CISA Secure Our World: 4 Red Flags of Phishing
+                </a>
+                <a href="#" onclick="browserGo('https://www.cisa.gov/topics/malware'); return false;">
+                  <span>🦠</span> CISA Malware Threat Intelligence &amp; Trojan Defense
+                </a>
+                <a href="#" onclick="browserGo('https://www.consumer.ftc.gov/articles/how-recognize-phishing'); return false;">
+                  <span>🎣</span> Federal Trade Commission Phishing Prevention Guidelines
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="genericsite-card">
+              <h3>Quick Diagnostic</h3>
+              <div style="font-size:13px;line-height:1.6;color:#475569;">
+                <p><strong>Host:</strong> ${escapeHtml(displayHost)}</p>
+                <p><strong>TLS Status:</strong> Secure Connection (TLS 1.3)</p>
+                <p><strong>Certificate Authority:</strong> DigiCert Global Root G2</p>
+                <p><strong>Flag Mode:</strong> Active in Zmail</p>
+              </div>
+              <div style="margin-top:14px;">
+                <button class="google-btn" style="width:100%;" onclick="browserGoHome()">🏠 Return to Google Search</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-function renderGoogleResults(query) {
-  const q = escapeHtml(query);
-  const qLower = query.toLowerCase();
+// ── COMPREHENSIVE GOOGLE SEARCH RESULTS WITH ALL / IMAGES / NEWS / VIDEOS TABS ──
+function renderGoogleResults(query, activeTab = 'all') {
+  const cleanQ = (query || 'phishing').trim();
+  const q = escapeHtml(cleanQ);
+  const qLower = cleanQ.toLowerCase();
+  const currentTab = (activeTab || 'all').toLowerCase();
 
+  // Header and Tabs Strip
+  const headerHtml = `
+    <div class="gresults-header">
+      <div class="gresults-logo" onclick="browserGoHome()" title="Google Home">
+        <span class="gl-blue">G</span><span class="gl-red">o</span><span class="gl-yellow">o</span><span class="gl-blue">g</span><span class="gl-green">l</span><span class="gl-red">e</span>
+      </div>
+      <div class="gresults-search-form">
+        <div class="gresults-input-wrap">
+          <input type="text" class="gresults-search-input" id="gresults-search-input" value="${q}" placeholder="Search Google or enter query..." onkeydown="if(event.key==='Enter'){ switchGoogleSearchTab('${currentTab}', this.value); }" oninput="handleResultsSearchInput(this)" />
+          <button type="button" class="gresults-clear-btn" id="gresults-clear-btn" style="display:${cleanQ ? 'inline-flex' : 'none'};" onclick="clearResultsSearch()" title="Clear">✕</button>
+        </div>
+        <button type="button" class="gresults-search-btn" onclick="const i=document.getElementById('gresults-search-input'); switchGoogleSearchTab('${currentTab}', i ? i.value : '${escapeHtml(cleanQ)}');">Search</button>
+      </div>
+    </div>
+
+    <div class="gsearch-tabs-strip">
+      <button type="button" class="gsearch-tab ${currentTab === 'all' ? 'active' : ''}" onclick="switchGoogleSearchTab('all', '${escapeHtml(cleanQ)}')">
+        <span class="gtab-icon">🔍</span> All
+      </button>
+      <button type="button" class="gsearch-tab ${currentTab === 'images' ? 'active' : ''}" onclick="switchGoogleSearchTab('images', '${escapeHtml(cleanQ)}')">
+        <span class="gtab-icon">🖼️</span> Images
+      </button>
+      <button type="button" class="gsearch-tab ${currentTab === 'news' ? 'active' : ''}" onclick="switchGoogleSearchTab('news', '${escapeHtml(cleanQ)}')">
+        <span class="gtab-icon">📰</span> News
+      </button>
+      <button type="button" class="gsearch-tab ${currentTab === 'videos' ? 'active' : ''}" onclick="switchGoogleSearchTab('videos', '${escapeHtml(cleanQ)}')">
+        <span class="gtab-icon">▶️</span> Videos
+      </button>
+    </div>
+  `;
+
+  // ──────────────────────────────────────────────────────────
+  // 1. IMAGES TAB
+  // ──────────────────────────────────────────────────────────
+  if (currentTab === 'images') {
+    const imageCards = [
+      {
+        icon: '🚩',
+        bg: 'bg-blue',
+        tag: 'Infographic',
+        res: '1200 × 800',
+        title: 'Anatomy of a Phishing Email: 4 Red Flags Breakdown',
+        desc: 'Official visual diagram illustrating suspicious sender lookalikes, manufactured urgency, fake prize disbursements, and hidden hyperlinks.',
+        source: 'cisa.gov',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
+      },
+      {
+        icon: '🔤',
+        bg: 'bg-red',
+        tag: 'Domain Intel',
+        res: '1080 × 720',
+        title: 'Typosquatting Examples: Detecting Look-Alike Domains',
+        desc: 'Visual side-by-side comparison of authentic paypal.com with green TLS padlock vs counterfeit paypa1.com with digit 1.',
+        source: 'cybersecurity.org',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
+      },
+      {
+        icon: '🦠',
+        bg: 'bg-amber',
+        tag: 'Architecture',
+        res: '1400 × 900',
+        title: 'Malware Infection Vectors: Trojan Dropper Lifecycle',
+        desc: 'Step-by-step schematic of disguised game utilities leading to Trojan execution, registry persistence, and credential exfiltration.',
+        source: 'sans.org',
+        link: 'https://www.cisa.gov/topics/malware'
+      },
+      {
+        icon: '🏢',
+        bg: 'bg-purple',
+        tag: 'Phishing Clones',
+        res: '960 × 640',
+        title: 'Credential Harvesting: Spotting Fake SSO Login Portals',
+        desc: 'Comparison of legitimate Single Sign-On corporate login forms versus counterfeit credential-harvesting pages.',
+        source: 'consumer.ftc.gov',
+        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing'
+      },
+      {
+        icon: '📱',
+        bg: 'bg-cyan',
+        tag: 'Education',
+        res: '1280 × 720',
+        title: 'Social Engineering Spectrum: Phishing, Vishing, Smishing',
+        desc: 'Visual matrix explaining voice scams, SMS phishing, executive whaling, and corporate defense frameworks.',
+        source: 'cisa.gov',
+        link: 'https://www.cisa.gov/secure-our-world'
+      },
+      {
+        icon: '📧',
+        bg: 'bg-blue',
+        tag: 'Forensics',
+        res: '1150 × 750',
+        title: 'How to Read Email Headers for Phishing Clues',
+        desc: 'Forensic breakdown of From, Return-Path, DKIM signatures, and SPF authentication headers.',
+        source: 'ic3.gov',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
+      },
+      {
+        icon: '🔒',
+        bg: 'bg-green',
+        tag: 'Mitigation',
+        res: '1200 × 675',
+        title: 'Ransomware Defense Playbook & 3-2-1 Cold Backups',
+        desc: 'Immutable offline storage topology and rapid network isolation guidelines during active cryptolocker incidents.',
+        source: 'cisa.gov',
+        link: 'https://www.cisa.gov/topics/malware#ransomware'
+      },
+      {
+        icon: '📋',
+        bg: 'bg-amber',
+        tag: 'Checklist',
+        res: '1024 × 768',
+        title: 'Quick Phishing Identification Checklist for Interns',
+        desc: 'Practical five-point verification routine before opening email attachments or typing organizational credentials.',
+        source: 'consumer.ftc.gov',
+        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing'
+      }
+    ];
+
+    const cardsHtml = imageCards.map(img => `
+      <div class="gimage-card" onclick="openImagePreviewModal('${escapeHtml(img.title)}', '${img.source}', '${img.res}', '${img.icon}', '${escapeHtml(img.desc)}', '${img.link}')">
+        <div class="gimage-thumb-box ${img.bg}">
+          <span class="gimage-tag-badge">${img.tag}</span>
+          <span class="gimage-thumb-icon">${img.icon}</span>
+          <span class="gimage-thumb-text">${escapeHtml(img.title)}</span>
+          <span class="gimage-res-badge">${img.res}</span>
+        </div>
+        <div class="gimage-info">
+          <div class="gimage-title">${escapeHtml(img.title)}</div>
+          <div class="gimage-source-row">
+            <span class="gimage-source">${img.source}</span>
+            <span>Click to inspect ➔</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="gresults">
+        ${headerHtml}
+        <div class="gresults-inner">
+          <div class="gresults-stats">Showing visual cyber intelligence results for "${q}"</div>
+          <div class="gimages-grid">
+            ${cardsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // 2. NEWS TAB
+  // ──────────────────────────────────────────────────────────
+  if (currentTab === 'news') {
+    const newsArticles = [
+      {
+        publisher: 'CISA Cyber Defense Alerts',
+        logo: '🛡️',
+        time: '2 hours ago',
+        title: 'CISA & FBI Issue Advisory on Emerging AI-Crafted Spear Phishing Campaigns',
+        desc: "America's Cyber Defense Agency warns organizations of threat actors leveraging large language models to construct hyper-personalized workplace pretexts mimicking internal corporate communications.",
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+        thumbBg: 'background:linear-gradient(135deg,#0c2340,#173866);',
+        thumbIcon: '🛡️'
+      },
+      {
+        publisher: 'ThreatWatch Cyber Weekly',
+        logo: '📡',
+        time: '5 hours ago',
+        title: 'Global Incident Telemetry: Over 85% of Workplace Breaches Initiated via Email Links',
+        desc: 'New enterprise telemetry confirms lookalike typosquatted domains and fake IT verification portals remain the highest-yield attack vectors against corporate employees and new interns.',
+        link: 'https://www.cisa.gov/topics/malware',
+        thumbBg: 'background:linear-gradient(135deg,#7f1d1d,#991b1b);',
+        thumbIcon: '🚨'
+      },
+      {
+        publisher: 'Wired InfoSec Dispatch',
+        logo: '⚡',
+        time: '18 hours ago',
+        title: 'New Trojan Dropper Masquerading as Office Productivity Utility Discovered in the Wild',
+        desc: 'Researchers have analyzed an executable dropper named "SystemOptimizer.exe" distributed through online forums that installs hidden keyloggers and credential harvesters.',
+        link: 'https://www.cisa.gov/topics/malware#trojans',
+        thumbBg: 'background:linear-gradient(135deg,#451a03,#b45309);',
+        thumbIcon: '🦠'
+      },
+      {
+        publisher: 'FTC Consumer Protection Bureau',
+        logo: '🏛️',
+        time: '1 day ago',
+        title: 'FTC Unveils "Spot the Red Flags Before You Click" Public Cyber Education Blitz',
+        desc: 'A nationwide campaign provides hands-on interactive exercises to help employees flag spoofed sender addresses, high-pressure deadlines, and deceptive prize disbursements.',
+        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing',
+        thumbBg: 'background:linear-gradient(135deg,#1e3a8a,#2563eb);',
+        thumbIcon: '🎣'
+      },
+      {
+        publisher: 'SANS CyberCast Review',
+        logo: '🔒',
+        time: '2 days ago',
+        title: 'Why Scrutinizing Domain Characters Remains the Top Defense Against Credential Theft',
+        desc: 'Security researchers illustrate why careful inspection of domain spelling (such as detecting paypa1.com with digit 1) combined with MFA neutralizes credential theft campaigns.',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+        thumbBg: 'background:linear-gradient(135deg,#052e16,#16a34a);',
+        thumbIcon: '🔍'
+      },
+      {
+        publisher: 'BleepingComputer',
+        logo: '💻',
+        time: '3 days ago',
+        title: 'Ransomware Gangs Target Unpatched Endpoints: Why Immutable Cold Backups are Vital',
+        desc: 'Detailed retrospective on incident containment illustrates why offline data isolation and rapid employee reporting prevent operational catastrophes during ransomware incursions.',
+        link: 'https://www.cisa.gov/topics/malware#ransomware',
+        thumbBg: 'background:linear-gradient(135deg,#2e1065,#7e22ce);',
+        thumbIcon: '💾'
+      }
+    ];
+
+    const newsCardsHtml = newsArticles.map(art => `
+      <div class="gnews-card" onclick="browserGo('${art.link}')">
+        <div class="gnews-content">
+          <div class="gnews-source-row">
+            <span class="gnews-source-logo">${art.logo}</span>
+            <span class="gnews-source-name">${art.publisher}</span>
+            <span>•</span>
+            <span class="gnews-time">${art.time}</span>
+          </div>
+          <div class="gnews-title">${escapeHtml(art.title)}</div>
+          <div class="gnews-desc">${escapeHtml(art.desc)}</div>
+        </div>
+        <div class="gnews-thumb" style="${art.thumbBg}">
+          ${art.thumbIcon}
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="gresults">
+        ${headerHtml}
+        <div class="gresults-inner">
+          <div class="gresults-stats">Latest cybersecurity advisories and intelligence reports for "${q}"</div>
+          <div class="gnews-stream">
+            ${newsCardsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // 3. VIDEOS TAB
+  // ──────────────────────────────────────────────────────────
+  if (currentTab === 'videos') {
+    const videoItems = [
+      {
+        title: 'How Phishing Actually Works: Live Red Team Simulation & Email Breakdown',
+        channel: 'CISA Cyber Defense',
+        views: '542K views',
+        time: '2 weeks ago',
+        duration: '12:45',
+        desc: 'Watch cyber defense specialists analyze live phishing samples, deconstruct deceptive sender addresses, and demonstrate the exact mechanics of credential harvesting.',
+        thumbBg: 'background:linear-gradient(135deg,#0c2340,#1e3a8a);',
+        thumbIcon: '🛡️',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
+      },
+      {
+        title: 'Spotting Typosquatting and Spoofed Sender Domains in Under 5 Minutes',
+        channel: 'CyberZER0 Academy',
+        views: '230K views',
+        time: '3 weeks ago',
+        duration: '05:18',
+        desc: 'Master the quick visual inspection techniques needed to identify lookalike letters, numbers masquerading as characters, and unauthorized domain extensions in your inbox.',
+        thumbBg: 'background:linear-gradient(135deg,#7f1d1d,#b91c1c);',
+        thumbIcon: '🔍',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
+      },
+      {
+        title: 'Malware Analysis 101: Understanding Trojans, Worms, Spyware & Ransomware',
+        channel: 'SANS Threat Series',
+        views: '890K views',
+        time: '1 month ago',
+        duration: '18:30',
+        desc: 'From deceptive trojan droppers to cryptographic lockouts: learn how malicious code executes on Windows systems and how endpoint defenses isolate threats.',
+        thumbBg: 'background:linear-gradient(135deg,#451a03,#d97706);',
+        thumbIcon: '🦠',
+        link: 'https://www.cisa.gov/topics/malware'
+      },
+      {
+        title: 'The Psychology of Social Engineering: Why Urgency Trumps Logic',
+        channel: 'Infosec Institute',
+        views: '145K views',
+        time: '1 month ago',
+        duration: '09:12',
+        desc: 'An exploration into psychological pretexts: how urgency, authority impersonation, and scarcity are weaponized by adversaries to cause panic clicks.',
+        thumbBg: 'background:linear-gradient(135deg,#2e1065,#9333ea);',
+        thumbIcon: '🧠',
+        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing'
+      },
+      {
+        title: 'Secure Our World: 4 Universal Pillars for Enterprise & Home Digital Safety',
+        channel: 'CISA Official',
+        views: '1.2M views',
+        time: '2 months ago',
+        duration: '07:40',
+        desc: "America's Cyber Defense Agency walks through the four key cyber hygiene habits: strong passwords, MFA, recognizing phishing, and updating software regularly.",
+        thumbBg: 'background:linear-gradient(135deg,#052e16,#15803d);',
+        thumbIcon: '🌟',
+        link: 'https://www.cisa.gov/secure-our-world'
+      }
+    ];
+
+    const videoCardsHtml = videoItems.map(vid => `
+      <div class="gvideo-card" onclick="playGoogleVideoDemo('${escapeHtml(vid.title)}', '${escapeHtml(vid.channel)}', '${vid.duration}', '${vid.link}')">
+        <div class="gvideo-thumb-wrap" style="${vid.thumbBg}">
+          <div class="gvideo-play-btn">▶</div>
+          <span class="gvideo-duration">${vid.duration}</span>
+        </div>
+        <div class="gvideo-info">
+          <div class="gvideo-title">${escapeHtml(vid.title)}</div>
+          <div class="gvideo-channel-row">
+            <span class="gvideo-channel-name">${escapeHtml(vid.channel)}</span>
+            <span class="gvideo-verified">✔</span>
+            <span>•</span>
+            <span class="gvideo-views-time">${vid.views} • ${vid.time}</span>
+          </div>
+          <div class="gvideo-desc">${escapeHtml(vid.desc)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="gresults">
+        ${headerHtml}
+        <div class="gresults-inner">
+          <div class="gresults-stats">Cybersecurity awareness video briefings and simulations for "${q}"</div>
+          <div class="gvideos-stream">
+            ${videoCardsHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // 4. "ALL" SEARCH TAB (Comprehensive Search Results)
+  // ──────────────────────────────────────────────────────────
   let mockResults = [];
+  let isPhishingTopic = /phish|phising|pisihing|email|scam|spoof|social-?engineering|fake login/i.test(qLower);
+  let isMalwareTopic = /malware|trojan|virus|spyware|worm|download/i.test(qLower);
+  let isRansomwareTopic = /ransomware|encrypt|decrypt|ransom/i.test(qLower);
+  let isCyberSecurityTopic = /cybersecurity|cyber security|cyber defense|infosec|security/i.test(qLower);
 
-  if (/malware|trojan|virus|spyware|worm|download/i.test(qLower)) {
+  if (isMalwareTopic) {
     mockResults = [
       {
         url: 'www.cisa.gov › topics › malware-and-ransomware',
         link: 'https://www.cisa.gov/topics/malware',
         title: 'Malware Threat Intelligence & Defense Guide | CISA',
-        desc: `Comprehensive official threat advisory on Trojans, Ransomware, Spyware, Worms, and how adversaries disguise executables (.exe, .scr) as harmless documents.`
+        desc: 'Comprehensive official threat advisory on Trojans, Ransomware, Spyware, Worms, and how adversaries disguise executables (.exe, .scr) as harmless documents.'
       },
       {
         url: 'www.cisa.gov › news-events › news › safe-software-downloads',
         link: 'https://www.cisa.gov/topics/malware#trojans',
         title: 'Trojan Horses: The Danger of "Free Software" Downloads | Cyber Academy',
-        desc: `Learn why downloading free utilities and game tools from online forums leads to Trojan dropper infections and system compromise.`
+        desc: 'Learn why downloading free utilities and game tools from online forums leads to Trojan dropper infections and system compromise.'
       },
       {
         url: 'www.consumer.ftc.gov › articles › ransomware-protection',
         link: 'https://www.cisa.gov/topics/malware#ransomware',
         title: 'Ransomware Prevention & Recovery Best Practices | CISA & FTC',
-        desc: `Protecting personal and organizational files from cryptographic ransomware lockouts. Real-world mitigation and cold backup advice.`
+        desc: 'Protecting personal and organizational files from cryptographic ransomware lockouts. Real-world mitigation and cold backup advice.'
       },
       {
         url: 'www.sans.org › resources › glossary › malware',
         link: 'https://www.cisa.gov/topics/malware',
         title: 'Malware Classifications & Threat Categories | SANS Institute',
-        desc: `Authoritative cybersecurity glossary covering all major malware families, attack vectors, and prevention frameworks.`
+        desc: 'Authoritative cybersecurity glossary covering all major malware families, attack vectors, and prevention frameworks.'
       }
     ];
-  } else if (/phishing|email|scam|spoof/i.test(qLower)) {
+  } else if (isPhishingTopic) {
     mockResults = [
+      {
+        url: 'www.cisa.gov › secure-our-world › recognize-and-report-phishing',
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+        title: 'Recognize and Report Phishing | CISA (Secure Our World)',
+        desc: "Official cyber defense guidance from America's Cyber Defense Agency. Learn how to recognize the 4 red flags of phishing: lookalike domains, artificial urgency, mismatched hyperlinks, and malicious attachments."
+      },
       {
         url: 'www.consumer.ftc.gov › articles › how-recognize-phishing',
         link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing',
         title: 'How to Recognize and Avoid Phishing Scams | Federal Trade Commission',
-        desc: `Learn the 4 tell-tale signs of a phishing email: mismatched sender addresses, artificial urgency, deceptive hyperlinks, and generic greetings.`
+        desc: 'Learn the 4 tell-tale signs of a phishing email: mismatched sender addresses, artificial urgency, deceptive hyperlinks, and generic greetings.'
       },
       {
-        url: 'www.cisa.gov › news-events › news › avoiding-social-engineering',
+        url: 'www.cisa.gov › secure-our-world',
         link: 'https://www.cisa.gov',
-        title: 'Avoiding Social Engineering and Phishing Attacks | CISA',
-        desc: `Attackers use email or malicious websites to solicit personal information by posing as a trustworthy organization.`
+        title: 'Secure Our World: 4 Easy Ways to Stay Safe Online | CISA',
+        desc: "America's Cyber Defense Agency flagship program: Use strong passwords, enable MFA, recognize & report phishing, and update software."
       },
       {
         url: 'www.ic3.gov › resources › phishing-prevention',
-        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing',
-        title: 'Phishing & Email Spoofing | FBI Internet Crime Complaint Center',
-        desc: `Report phishing and email spoofing attacks. FBI guidance on identifying lookalike sender addresses and fake login pages.`
+        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+        title: 'Phishing & Email Spoofing Defense | FBI Internet Crime Complaint Center',
+        desc: 'Report phishing and email spoofing attacks. FBI guidance on identifying lookalike sender addresses and fake login pages.'
+      },
+      {
+        url: 'en.wikipedia.org › wiki › Phishing',
+        link: 'https://en.wikipedia.org/wiki/Phishing',
+        title: 'Phishing — Techniques, History and Countermeasures | Wikipedia',
+        desc: 'Comprehensive encyclopedia article covering social engineering, typosquatting domains, credential harvesting, and technical email defenses.'
       }
     ];
-  } else if (/ransomware|encrypt|decrypt|ransom/i.test(qLower)) {
+  } else if (isRansomwareTopic) {
     mockResults = [
       {
         url: 'www.cisa.gov › stopransomware',
         link: 'https://www.cisa.gov/topics/malware#ransomware',
         title: 'Stop Ransomware | CISA',
-        desc: `Official joint advisory on ransomware prevention, detection, and recovery. Includes offline backup strategies and incident response playbooks.`
+        desc: 'Official joint advisory on ransomware prevention, detection, and recovery. Includes offline backup strategies and incident response playbooks.'
       },
       {
         url: 'www.consumer.ftc.gov › topics › ransomware-protection',
         link: 'https://www.cisa.gov/topics/malware',
         title: 'Ransomware Protection & Recovery Guide | FTC Consumer Advice',
-        desc: `Step-by-step guidance on protecting files from ransomware encryption and recovering after an attack without paying a ransom.`
+        desc: 'Step-by-step guidance on protecting files from ransomware encryption and recovering after an attack without paying a ransom.'
       }
     ];
-  } else if (/cybersecurity|cyber security|cyber defense|infosec/i.test(qLower)) {
+  } else if (isCyberSecurityTopic) {
     mockResults = [
       {
         url: 'www.cisa.gov',
         link: 'https://www.cisa.gov',
         title: 'Cybersecurity & Infrastructure Security Agency (CISA)',
-        desc: `America's Cyber Defense Agency — providing resources, advisories, and guidelines to defend national and personal digital infrastructure.`
+        desc: "America's Cyber Defense Agency — providing resources, advisories, and guidelines to defend national and personal digital infrastructure."
       },
       {
         url: 'www.consumer.ftc.gov › privacy-identity-online-security',
         link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing',
         title: 'Online Security & Identity Protection Tips | FTC',
-        desc: `Expert advice on cybersecurity hygiene, password safety, phishing awareness, and protecting your digital identity online.`
+        desc: 'Expert advice on cybersecurity hygiene, password safety, phishing awareness, and protecting your digital identity online.'
+      },
+      {
+        url: 'en.wikipedia.org › wiki › Computer_security',
+        link: 'https://en.wikipedia.org/wiki/Computer_security',
+        title: 'Computer security & Cyber Defense Systems | Wikipedia',
+        desc: 'Protection of computer systems and networks from attacks by malicious actors that may result in unauthorized information disclosure.'
       }
     ];
   } else {
     // Unknown query — show Google no-results page
     return `
       <div class="gresults">
-        <div class="gresults-header">
-          <div class="gresults-logo" onclick="browserGoHome()"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
-          <div class="gresults-search-form">
-            <input type="text" class="gresults-search-input" id="gresults-search-input" value="${q}" placeholder="Search Google..." onkeydown="if(event.key==='Enter'){browserGo(this.value);}" />
-            <button class="gresults-search-btn" onclick="browserGo(document.getElementById('gresults-search-input').value)">Search</button>
-          </div>
-        </div>
-        <div class="google-noresult-container">
-          <div class="google-noresult-icon">🔍</div>
-          <div class="google-noresult-heading">Your search — <em>${q}</em> — did not match any documents.</div>
-          <div class="google-noresult-suggestions">
-            <p>Suggestions:</p>
-            <ul>
-              <li>Make sure that all words are spelled correctly.</li>
-              <li>Try different keywords.</li>
-              <li>Try more general keywords.</li>
-              <li>Try fewer keywords.</li>
-            </ul>
-          </div>
-          <div class="google-noresult-tips">
-            💡 <strong>Detective Tip:</strong> This browser is optimized for cybersecurity topics. Try searching for
-            <a href="#" onclick="browserGo('https://www.google.com/search?q=malware'); return false;" style="color:#1a73e8;">malware</a>,
-            <a href="#" onclick="browserGo('https://www.google.com/search?q=phishing'); return false;" style="color:#1a73e8;">phishing</a>, or
-            <a href="#" onclick="browserGo('https://www.google.com/search?q=ransomware'); return false;" style="color:#1a73e8;">ransomware</a>.
+        ${headerHtml}
+        <div class="gresults-inner">
+          <div class="google-noresult-container">
+            <div class="google-noresult-icon">🔍</div>
+            <div class="google-noresult-heading">Your search — <em>${q}</em> — did not match any documents.</div>
+            <div class="google-noresult-suggestions">
+              <p>Suggestions:</p>
+              <ul>
+                <li>Make sure that all words are spelled correctly.</li>
+                <li>Try different keywords.</li>
+                <li>Try more general cybersecurity keywords.</li>
+              </ul>
+            </div>
+            <div class="google-noresult-tips">
+              💡 <strong>Detective Training Tip:</strong> This simulated browser is loaded with real cybersecurity defense curricula. Try exploring:
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                <button class="google-btn" onclick="browserGo('https://www.google.com/search?q=phishing')">🎣 Phishing</button>
+                <button class="google-btn" onclick="browserGo('https://www.google.com/search?q=malware')">🦠 Malware</button>
+                <button class="google-btn" onclick="browserGo('https://www.google.com/search?q=ransomware')">🔒 Ransomware</button>
+                <button class="google-btn" onclick="switchGoogleSearchTab('images', 'phishing')">🖼️ View Images</button>
+                <button class="google-btn" onclick="switchGoogleSearchTab('news', 'cybersecurity')">📰 Cyber News</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>`;
   }
 
-  const items = mockResults.map(r => `
+  // Feature Snippet / Knowledge Alert
+  let featureSnippetHtml = '';
+  if (isPhishingTopic) {
+    featureSnippetHtml = `
+      <div class="gfeature-snippet">
+        <div class="gfeature-badge"><span>🛡️ Official Cyber Alert</span> • CISA Secure Our World</div>
+        <div class="gfeature-title">The 4 Core Red Flags of Phishing Attacks</div>
+        <p class="gfeature-text">Over 90% of organizational cyber breaches originate with a deceptive email. Scrutinize incoming messages for these four telltale warning signs:</p>
+        <ul class="gfeature-list">
+          <li><strong>1. Suspicious Senders &amp; Typosquatting:</strong> Look for lookalike domains (e.g. <code>paypa1.com</code> with digit 1 instead of letter l) or mismatched addresses.</li>
+          <li><strong>2. Manufactured Urgency:</strong> Threats of account suspension or claims of ₱1,000,000 lottery prizes designed to induce panic.</li>
+          <li><strong>3. Deceptive Hyperlinks:</strong> Visible text that looks legitimate but hover reveals an untrusted external server.</li>
+          <li><strong>4. Dangerous Attachments:</strong> Executables disguised as invoices (.exe, .scr, .zip).</li>
+        </ul>
+        <button type="button" class="gfeature-btn" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing')">Read Full CISA Phishing Defense Guide ➔</button>
+      </div>
+    `;
+  } else if (isMalwareTopic) {
+    featureSnippetHtml = `
+      <div class="gfeature-snippet">
+        <div class="gfeature-badge"><span>🦠 Threat Intelligence</span> • CISA &amp; SANS Institute</div>
+        <div class="gfeature-title">Malware Classifications &amp; Infection Vectors</div>
+        <p class="gfeature-text">Malicious software is engineered to gain unauthorized administrative access, spy on keystrokes, or hold critical files hostage:</p>
+        <ul class="gfeature-list">
+          <li><strong>Trojans:</strong> Masquerade as free game tools or productivity utilities while secretly installing persistent backdoors.</li>
+          <li><strong>Ransomware:</strong> Cryptographically locks personal and organizational files to extort payment.</li>
+          <li><strong>Spyware &amp; Keyloggers:</strong> Silently monitors browser logins and clipboard tokens.</li>
+          <li><strong>Worms:</strong> Self-replicating threats that propagate across networks without user action.</li>
+        </ul>
+        <button type="button" class="gfeature-btn" onclick="browserGo('https://www.cisa.gov/topics/malware')">Explore Malware Encyclopedia &amp; Defense ➔</button>
+      </div>
+    `;
+  }
+
+  // Organic Results
+  const itemsHtml = mockResults.map((r, idx) => `
     <div class="gresult-item">
-      <div class="gresult-url">${r.url}</div>
-      <div class="gresult-title" onclick="navigateBrowser('${r.link}')">${r.title}</div>
-      <div class="gresult-desc">${r.desc}</div>
-    </div>`).join('');
+      <div class="gresult-url-wrap">
+        <span class="gresult-favicon">🌐</span>
+        <span class="gresult-site-name">${r.url.split('›')[0].trim()}</span>
+        <span class="gresult-url">${r.url}</span>
+      </div>
+      <div class="gresult-title" onclick="browserGo('${r.link}')">${escapeHtml(r.title)}</div>
+      <div class="gresult-desc">${escapeHtml(r.desc)}</div>
+      ${idx === 0 && isPhishingTopic ? `
+        <div class="gsitelinks-grid">
+          <div class="gsitelink-card">
+            <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'); return false;">Inspect Senders &amp; Typosquatting</a>
+            <p>Spot letter substitutions like paypa1.com and unverified webmail domains.</p>
+          </div>
+          <div class="gsitelink-card">
+            <a href="#" onclick="browserGo('https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'); return false;">Activate Flag Mode in Zmail</a>
+            <p>Tag suspicious headers, body urgency, and URLs to protect the company.</p>
+          </div>
+          <div class="gsitelink-card">
+            <a href="#" onclick="browserGo('https://www.consumer.ftc.gov/articles/how-recognize-phishing'); return false;">Federal Trade Commission Guidelines</a>
+            <p>Consumer protections against online lottery fraud and credential harvesting.</p>
+          </div>
+          <div class="gsitelink-card">
+            <a href="#" onclick="switchGoogleSearchTab('images', '${escapeHtml(cleanQ)}'); return false;">Browse Phishing Infographics</a>
+            <p>Inspect visual diagrams, red flags checklists, and attack flowcharts.</p>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+
+  // People Also Ask Accordion
+  const peopleAskHtml = isPhishingTopic ? `
+    <div class="gpeople-ask">
+      <div class="gpeople-ask-header">People also ask</div>
+      <div class="gask-item">
+        <div class="gask-question" onclick="const a=this.nextElementSibling; a.style.display=a.style.display==='none'?'block':'none';">
+          <span>How can you tell if an email is a phishing attempt?</span>
+          <span>▾</span>
+        </div>
+        <div class="gask-answer" style="display:none;">
+          Check the sender's exact email address (not just display name), look for artificial urgency or threats of account suspension, inspect hyperlink destinations by hovering before clicking, and never download unexpected attachments.
+        </div>
+      </div>
+      <div class="gask-item">
+        <div class="gask-question" onclick="const a=this.nextElementSibling; a.style.display=a.style.display==='none'?'block':'none';">
+          <span>What is typosquatting and why is it dangerous?</span>
+          <span>▾</span>
+        </div>
+        <div class="gask-answer" style="display:none;">
+          Typosquatting is when attackers register lookalike domain names with slight spelling mistakes (e.g., substituting "1" for "l" in <code>paypa1.com</code>). Because the domain looks authentic at a glance, victims unknowingly surrender real credentials on counterfeit login forms.
+        </div>
+      </div>
+      <div class="gask-item">
+        <div class="gask-question" onclick="const a=this.nextElementSibling; a.style.display=a.style.display==='none'?'block':'none';">
+          <span>What should you do immediately if you entered passwords on a fake website?</span>
+          <span>▾</span>
+        </div>
+        <div class="gask-answer" style="display:none;">
+          Immediately change the compromised password from a clean, verified device, notify your organizational IT security department, and enable multi-factor authentication (MFA) on the official account portal.
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  // Related Searches Section
+  const relatedSearchesHtml = `
+    <div class="grelated-section">
+      <div class="grelated-title">Related searches</div>
+      <div class="grelated-grid">
+        <div class="grelated-chip" onclick="browserGo('https://www.google.com/search?q=cisa recognize and report phishing')">🔍 cisa recognize and report phishing</div>
+        <div class="grelated-chip" onclick="browserGo('https://www.google.com/search?q=typosquatting examples')">🔍 typosquatting domain examples</div>
+        <div class="grelated-chip" onclick="browserGo('https://www.google.com/search?q=malware trojan dropper defense')">🔍 malware trojan dropper defense</div>
+        <div class="grelated-chip" onclick="switchGoogleSearchTab('images', '${escapeHtml(cleanQ)}')">🖼️ ${escapeHtml(cleanQ)} diagrams &amp; infographics</div>
+        <div class="grelated-chip" onclick="switchGoogleSearchTab('news', 'cybersecurity')">📰 cyber threat news alerts</div>
+        <div class="grelated-chip" onclick="switchGoogleSearchTab('videos', '${escapeHtml(cleanQ)}')">▶️ phishing awareness video briefing</div>
+      </div>
+    </div>
+  `;
 
   return `
     <div class="gresults">
-      <div class="gresults-header">
-        <div class="gresults-logo" onclick="browserGoHome()"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
-        <div class="gresults-search-form">
-          <input type="text" class="gresults-search-input" id="gresults-search-input" value="${q}" placeholder="Search Google or enter query..." onkeydown="if(event.key==='Enter'){browserGo(this.value);}" />
-          <button class="gresults-search-btn" onclick="browserGo(document.getElementById('gresults-search-input').value)">Search</button>
-        </div>
+      ${headerHtml}
+      <div class="gresults-inner">
+        <div class="gresults-stats">About ${(Math.floor(Math.random()*8)+2)},${Math.floor(Math.random()*800+100)},000 results (0.${Math.floor(Math.random()*6)+2}${Math.floor(Math.random()*9)} seconds)</div>
+        ${featureSnippetHtml}
+        ${itemsHtml}
+        ${peopleAskHtml}
+        ${relatedSearchesHtml}
       </div>
-      <div class="gresults-stats">About ${(Math.floor(Math.random()*9)+1)},${Math.floor(Math.random()*900+100)},000 results (0.${Math.floor(Math.random()*9)+1}${Math.floor(Math.random()*9)} seconds)</div>
-      ${items}
-    </div>`;
+    </div>
+  `;
 }
 
 function returnToGmail() {

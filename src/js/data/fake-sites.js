@@ -434,14 +434,16 @@ const FAKE_SITES = {
 };
 
 // The browser's default "home" page — a mock Google search homepage
-const BROWSER_HOME_HTML = `
+var BROWSER_HOME_HTML = `
   <div class="browser-home">
     <div class="google-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
     <div class="google-search-box">
       <span class="google-search-icon">🔍</span>
-      <input type="text" id="browser-home-search" class="google-search-input" placeholder="Search Google or type a URL" autocomplete="off" spellcheck="false" onkeydown="handleHomeSearchKey(event)" />
+      <input type="text" id="browser-home-search" class="google-search-input" placeholder="Search Google or type a URL" autocomplete="off" spellcheck="false" onkeydown="handleHomeSearchKey(event)" oninput="handleHomeSearchInput(this)" />
+      <button type="button" class="google-search-clear" id="browser-home-search-clear" style="display:none;" onclick="clearHomeSearch()" title="Clear">✕</button>
     </div>
     <div class="google-search-actions">
       <button class="google-btn" onclick="submitHomeSearch()">Google Search</button>
     </div>
   </div>`;
+window.BROWSER_HOME_HTML = BROWSER_HOME_HTML;

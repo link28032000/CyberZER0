@@ -246,6 +246,9 @@ function updateNetworkUI() {
     wsUpdateWifiTab();
     wsUpdateAirplaneTab();
     wsUpdateBluetoothTab();
+    if (typeof updatePhoneLinkConnectionState === 'function') {
+      updatePhoneLinkConnectionState();
+    }
     return;
   }
 
@@ -340,6 +343,11 @@ function updateNetworkUI() {
   wsUpdateWifiTab();
   wsUpdateAirplaneTab();
   wsUpdateBluetoothTab();
+
+  // Live sync Phone Link connection status
+  if (typeof updatePhoneLinkConnectionState === 'function') {
+    updatePhoneLinkConnectionState();
+  }
 }
 
 function toggleWifiSetting() {
