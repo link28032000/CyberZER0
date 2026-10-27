@@ -266,6 +266,11 @@ function clearFolderSearch() {
 function switchExplorerFolder(folderKey) {
   currentExplorerFolder = folderKey;
 
+  // Notify post-award mission checklist
+  if (typeof window._notifyPostAwardFolderSwitch === 'function') {
+    window._notifyPostAwardFolderSwitch(folderKey);
+  }
+
   // Update history
   if (explorerHistory[explorerHistoryIdx] !== folderKey) {
     explorerHistory = explorerHistory.slice(0, explorerHistoryIdx + 1);

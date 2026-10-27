@@ -40,6 +40,9 @@ function startAwarenessVideo() {
   vid.currentTime = 0;
   vid.volume = 1;
   vid.play().catch(() => {});
+  if (typeof window._notifyPostAwardVideoPlay === 'function') {
+    window._notifyPostAwardVideoPlay();
+  }
 }
 
 function _avFmtTime(s) {

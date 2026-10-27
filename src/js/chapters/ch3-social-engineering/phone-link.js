@@ -99,44 +99,26 @@ function isNewbieGcActive() {
   return false;
 }
 
-function setNewbieGcCreated(andHighlight = true) {
+function setNewbieGcCreated(andHighlight = false) {
   const state = loadNewbieGcState();
   state.created = true;
   state.joined = true;
   state.accepted = true;
-  state.hasUnread = true;
+  state.hasUnread = false;
   saveNewbieGcState(state);
   updatePhoneLinkBadges();
-  if (andHighlight) {
-    highlightPhoneLinkApp();
-  }
+  // Never glow phone link desktop icon — user follows sticky notes checklist
+  unhighlightPhoneLinkApp();
 }
 
 // Backward-compatibility alias
-function setNewbieGcInvitePending(andHighlight = true) {
+function setNewbieGcInvitePending(andHighlight = false) {
   setNewbieGcCreated(andHighlight);
 }
 
 function highlightPhoneLinkApp() {
-  const commsWin = document.getElementById('win-comms');
-  if (commsWin && !commsWin.classList.contains('hidden')) return;
-
-  // Highlight Phone Link ONLY on desktop app icon with blinking attention border
-  const icon = document.getElementById('icon-comms');
-  if (icon) {
-    icon.classList.remove('pl-icon-pulse');
-    icon.classList.add('icon-attention');
-    icon.setAttribute('data-badge', '1');
-    icon.title = 'Phone Link — Added to "new intern team 2027"!';
-  }
-  const taskbarBtn = document.getElementById('taskbar-comms');
-  if (taskbarBtn) {
-    taskbarBtn.classList.remove('icon-attention', 'pl-icon-pulse');
-  }
-  if (typeof IconAttention !== 'undefined') {
-    IconAttention.show('comms');
-  }
-  updatePhoneLinkBadges();
+  // Glowing notice on Phone Link desktop icon is removed — user follows sticky notes checklist
+  unhighlightPhoneLinkApp();
 }
 
 function unhighlightPhoneLinkApp() {
@@ -694,10 +676,13 @@ function renderPhoneMessages(container) {
 }
 
 function openNewbieGcConversation() {
-  const conn = getPhoneLinkConnectionStatus();
-  if (!conn.isBluetoothConnected) {
-    updatePhoneLinkConnectionState();
-    return;
+  // Ensure network and bluetooth connections are active so group chat opens seamlessly
+  if (typeof networkSettings !== 'undefined') {
+    if (!networkSettings.bluetooth) networkSettings.bluetooth = true;
+    if (!networkSettings.wifi) networkSettings.wifi = true;
+    if (!networkSettings.currentSsid) networkSettings.currentSsid = 'HomeNetwork_5G';
+    networkSettings.noInternet = false;
+    networkSettings.airplane = false;
   }
   g4ActiveConvo = 'business_newbie_gc';
   switchPhoneTab('messages');
@@ -725,7 +710,7 @@ function acceptNewbieGcInvite() {
 function renderNewbieGcChat(container) {
   const state = loadNewbieGcState();
   const conn = getPhoneLinkConnectionStatus();
-  const isOffline = !conn.isInternetConnected;
+  const isOffline = !conn.isInternetConnected && !conn.isBluetoothConnected;
   const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
 
   const playerMessages = state.playerMessages || [];
@@ -739,7 +724,7 @@ function renderNewbieGcChat(container) {
         <div class="pl-contact-avatar pl-gc-avatar-stack" style="width:34px;height:34px;font-size:16px;">👥</div>
         <div class="pl-gc-header-info">
           <div class="pl-convo-name" style="font-size:13.5px;font-weight:800;color:#ffffff;line-height:1.2;">${NEWBIE_GC_INFO.name}</div>
-          <div class="pl-gc-members-summary">Group created by Ryan · 4 members (Ryan, Ethan, Pia, Alex) · <span style="color:${isOffline ? '#f59e0b' : '#22c55e'};">${isOffline ? '⚠️ Offline' : '🟢 Online'}</span></div>
+          <div class="pl-gc-members-summary">Group created by Ryan · 4 members (Ryan, Ethan, Pia, Alex) · <span style="color:#22c55e;">🟢 Online</span></div>
         </div>
       </div>
 
@@ -792,21 +777,21 @@ function renderNewbieGcChat(container) {
       </div>
 
       <!-- Quick Replies & Input Bar -->
-      <div class="pl-gc-input-area ${isOffline ? 'pl-offline-input-area' : ''}">
+      <div class="pl-gc-input-area">
         ${!hasMessages ? `
           <div class="pl-gc-quick-replies">
-            <button type="button" class="pl-gc-chip ${isOffline ? 'pl-chip-disabled' : ''}" onclick="sendPlayerGcQuickReply('Hello!')" ${isOffline ? 'title="No internet connection"' : ''}>
+            <button type="button" class="pl-gc-chip" onclick="sendPlayerGcQuickReply('Hello!')">
               👋 Hello!
             </button>
           </div>
           <div class="pl-gc-input-bar">
-            <input type="text" id="pl-gc-text-input" placeholder="${isOffline ? '⚠️ Offline — Connect to Wi-Fi to send messages...' : 'Say \"Hello\" to greet the team...'}" maxlength="200" onkeydown="if(event.key==='Enter') sendCustomPlayerGcMessage()">
-            <button type="button" class="pl-gc-send-btn ${isOffline ? 'pl-btn-offline' : ''}" onclick="sendCustomPlayerGcMessage()">
-              ${isOffline ? 'Offline ⚠️' : 'Send 📨'}
+            <input type="text" id="pl-gc-text-input" placeholder="Say 'Hello' to greet the team..." maxlength="200" onkeydown="if(event.key==='Enter') sendCustomPlayerGcMessage()">
+            <button type="button" class="pl-gc-send-btn" onclick="sendCustomPlayerGcMessage()">
+              Send 📨
             </button>
           </div>
         ` : `
-          <div style="padding:4px 8px;text-align:center;">
+          <div style="padding:6px 8px;text-align:center;">
             <span style="font-size:12px;color:#86efac;font-weight:600;">✓ You greeted the team! Welcome to the squad, Alex.</span>
           </div>
         `}
@@ -822,38 +807,31 @@ function renderNewbieGcChat(container) {
 }
 
 function sendPlayerGcQuickReply(text) {
-  sendPlayerGcMessage('Hello!');
+  sendPlayerGcMessage(text || 'Hello!');
 }
 
 function sendCustomPlayerGcMessage() {
   const input = document.getElementById('pl-gc-text-input');
+  const typed = input ? (input.value || '').trim() : '';
   if (input) input.value = '';
-  sendPlayerGcMessage('Hello!');
+  sendPlayerGcMessage(typed || 'Hello!');
 }
 
 function sendPlayerGcMessage(text) {
-  if (!text) return;
+  const msgText = (text && typeof text === 'string' && text.trim().length > 0) ? text.trim() : 'Hello!';
 
-  const conn = getPhoneLinkConnectionStatus();
-  if (!conn.isBluetoothConnected) {
-    if (typeof showToast === 'function') {
-      showToast('🔴 Phone disconnected. Turn on Bluetooth on your PC to connect your phone.', 'error');
-    }
-    return;
+  // Auto-ensure connection state is restored
+  if (typeof networkSettings !== 'undefined') {
+    if (!networkSettings.bluetooth) networkSettings.bluetooth = true;
+    if (!networkSettings.wifi) networkSettings.wifi = true;
+    if (!networkSettings.currentSsid) networkSettings.currentSsid = 'HomeNetwork_5G';
+    networkSettings.noInternet = false;
+    networkSettings.airplane = false;
   }
-  if (!conn.isInternetConnected) {
-    if (typeof showToast === 'function') {
-      showToast('⚠️ No internet connection. Turn on Wi-Fi to send messages.', 'warning');
-    }
-    if (typeof AudioManager !== 'undefined' && AudioManager.playAlert) {
-      AudioManager.playAlert();
-    }
-    const input = document.getElementById('pl-gc-text-input');
-    if (input) {
-      input.classList.add('pl-input-error');
-      setTimeout(() => input.classList.remove('pl-input-error'), 600);
-    }
-    return;
+
+  // Notify post-award checklist: player sent a message in the group chat ✅
+  if (typeof window._notifyPostAwardPhoneLinkGroupJoin === 'function') {
+    window._notifyPostAwardPhoneLinkGroupJoin();
   }
 
   const state = loadNewbieGcState();
@@ -871,7 +849,7 @@ function sendPlayerGcMessage(text) {
     roleClass: 'pl-gc-role-you',
     avatar: 'assets/Character/Alex.png',
     time: timeStr,
-    text: 'Hello!'
+    text: msgText
   };
 
   state.playerMessages.push(playerMsg);
@@ -886,8 +864,12 @@ function sendPlayerGcMessage(text) {
     renderNewbieGcChat(content);
   }
 
+  if (typeof showToast === 'function') {
+    showToast(`💬 Greeted the team with "${msgText}"!`, 'success');
+  }
+
   // Teammates dynamic multi-step response with typing indicators and notification sounds
-  scheduleTeammateResponse('Hello!');
+  scheduleTeammateResponse(msgText);
 }
 
 function showGcTypingIndicator(name) {
@@ -1004,12 +986,20 @@ function scheduleTeammateResponse(playerText) {
 
             const eContent = document.getElementById('pl-tab-content');
             if (eContent) renderNewbieGcChat(eContent);
+
+            // Teammate reply sequence finished! Guide Alex before leaving PC workstation
+            setTimeout(() => {
+              if (typeof window.triggerPostPhoneLinkSaveDialogue === 'function') {
+                window.triggerPostPhoneLinkSaveDialogue();
+              }
+            }, 1200);
           }, 850);
         }, 700);
       }, 850);
     }, 700);
   }, 850);
 }
+
 
 function openPhoneConversation(contactId) {
   const conn = getPhoneLinkConnectionStatus();

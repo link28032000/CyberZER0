@@ -23,6 +23,7 @@ const EMAILS = [
     id: 1,
     sender: { name: 'PayPal Rewards Claim', address: 'rewards-claim@paypa1.com' },
     subject: 'CONGRATULATIONS: You Won ₱1,000,000 Pesos! Claim Your Prize Now',
+    date: 'Mon, Oct 27, 2026',
     time: '8:14 AM',
     preview: 'Congratulations! You have been selected as the grand winner of 1,000,000 Pesos (PHP 1,000,000.00). Click Claim Now within 30 minutes to transfer...',
     phishing: true,
@@ -42,7 +43,7 @@ const EMAILS = [
         type: 'link',
         flagId: 'link1',
         flagType: 'suspicious_link',
-        text: 'Claim Now — Transfer ₱1,000,000 to PayPal',
+        text: 'Claim Now',
         destination: 'https://paypa1.com/claim-reward',
         label: 'SUSPICIOUS LINK'
       },
@@ -82,6 +83,7 @@ const EMAILS = [
     id: 2,
     sender: { name: 'HR Department', address: 'hr@business.com' },
     subject: 'Updated Employee Benefits Information',
+    date: 'Mon, Oct 27, 2026',
     time: '9:02 AM',
     preview: 'Please review the updated employee benefits package for the upcoming quarter...',
     phishing: false,
@@ -112,6 +114,7 @@ const EMAILS = [
     id: 3,
     sender: { name: 'Microsoft Security', address: 'security-alert@m1crosoft-support.com' },
     subject: 'Unusual Sign-In Detected on Your Account',
+    date: 'Mon, Oct 27, 2026',
     time: '9:28 AM',
     preview: 'We detected a sign-in attempt from an unrecognized device. Your account may be at risk...',
     phishing: true,
@@ -169,6 +172,7 @@ const EMAILS = [
     id: 4,
     sender: { name: 'IT Support', address: 'it-support@business.com' },
     subject: 'Scheduled Network Maintenance \u2014 This Saturday',
+    date: 'Mon, Oct 27, 2026',
     time: '10:15 AM',
     preview: 'The IT team will conduct scheduled network maintenance this Saturday from 10 PM to 2 AM...',
     phishing: false,
@@ -199,6 +203,7 @@ const EMAILS = [
     id: 5,
     sender: { name: 'Technical Solutions Team', address: 'technical.solutions@business.com' },
     subject: 'System Maintenance and Technical Update',
+    date: 'Mon, Oct 27, 2026',
     time: '11:00 AM',
     preview: 'Monthly system maintenance has been completed. Please review the update summary for your department...',
     phishing: false,
@@ -229,6 +234,7 @@ const EMAILS = [
     id: 6,
     sender: { name: 'Payroll Department', address: 'payroll@business.com' },
     subject: 'September Payroll Processing Confirmation',
+    date: 'Mon, Oct 27, 2026',
     time: '11:45 AM',
     preview: 'Your September payroll has been processed and will be deposited within 1-2 business days...',
     phishing: false,
@@ -253,59 +259,62 @@ const EMAILS = [
     }
   },
 
-  // === EMAIL 7: Final Scenario — Obvious phishing — Wave 4 ===
+  // === EMAIL 7: Final Scenario — BPI phishing — Wave 4 ===
   {
     id: 7,
-    sender: { name: 'BANK SECURITY', address: 'urgent-alert@bankng-secure-verify.xyz' },
-    subject: '\u26a0\ufe0f FINAL WARNING: Account Suspended \u2014 Act NOW!',
+    sender: { name: 'BPI Online Security', address: 'security-alert@bpi-online-security.com' },
+    subject: '\u26a0\ufe0f FINAL WARNING: Your BPI Account Has Been Suspended \u2014 Act NOW!',
+    date: 'Mon, Oct 27, 2026',
     time: '12:10 PM',
-    preview: 'Your bank account has been suspended. You have 15 minutes to verify or lose all access permanently...',
+    preview: 'Your BPI Online account has been suspended due to suspicious activity. Verify your identity within 15 minutes to avoid permanent account closure...',
     phishing: true,
     evidence: ['fake_sender', 'false_urgency', 'suspicious_link'],
     body: [
-      { type: 'p', text: 'ATTENTION ACCOUNT HOLDER,' },
-      { type: 'p', text: '\u26a0\ufe0f Your bank account has been SUSPENDED due to multiple failed verification attempts. To restore access, you must confirm your identity IMMEDIATELY.' },
+      { type: 'p', text: 'Dear BPI Account Holder,' },
+      { type: 'p', text: 'We have detected suspicious login activity on your BPI Online account. To protect your funds, your online banking access has been temporarily SUSPENDED effective immediately.' },
+      { type: 'p', text: 'Incident Reference: BPI-SEC-2026-10-99214\nDetected: Unauthorized access attempt from an unrecognized device\nLocation: Outside Philippines (IP flagged)' },
       {
         type: 'p-flag',
         flagId: 'urgency',
         flagType: 'false_urgency',
-        text: '\ud83d\udd34 FINAL WARNING: You have 15 MINUTES to verify your account or you will permanently lose access to all your funds.',
+        text: '\ud83d\udd34 FINAL WARNING: You have 15 MINUTES to verify your identity. Failure to act will result in PERMANENT ACCOUNT CLOSURE and your balance will be frozen pending a 30-day manual review by our Risk Management Team.',
         label: 'FALSE URGENCY'
       },
-      { type: 'p', text: 'Click below NOW to restore your account before it is permanently closed and your balance is frozen.' },
+      { type: 'p', text: 'Click the secure verification button below to restore your BPI Online access immediately.' },
       {
         type: 'link',
         flagId: 'link1',
         flagType: 'suspicious_link',
-        text: 'RESTORE MY ACCOUNT IMMEDIATELY',
+        text: 'Restore My BPI Account Now',
         destination: 'https://bankng-secure-verify.xyz/restore',
         label: 'SUSPICIOUS LINK'
       },
-      { type: 'p', text: 'DO NOT IGNORE THIS MESSAGE.\nBank Security Division' }
+      { type: 'p', text: 'If you did not initiate any login attempts, verify immediately to secure your account.\n\nThank you,\nBPI Online Security Team\nBank of the Philippine Islands\nBSP Supervised Financial Institution\n\nThis is an automated security notification. Do not reply to this email.' }
     ],
     capybaraAnalysis: {
       fake_sender: {
-        correct: '\ud83d\udea9 SENDER \u2014 CORRECT\nThe domain <code>bankng-secure-verify.xyz</code> misspells \'banking\' and uses a <code>.xyz</code> TLD. Real banks never use <code>.xyz</code> domains for official communications.',
-        missed: '\ud83d\udea9 MISSED \u2014 FAKE SENDER\nThe sender <code>urgent-alert@bankng-secure-verify.xyz</code> is clearly fake. \'bankng\' misspells \'banking\' and <code>.xyz</code> is not used by real financial institutions.'
+        correct: '\ud83d\udea9 SENDER \u2014 CORRECT\nThe sender <code>security-alert@bpi-online-security.com</code> is NOT from BPI. Real BPI emails come from <code>@bpi.com.ph</code> only. The domain <code>bpi-online-security.com</code> is attacker-registered to impersonate the bank.',
+        missed: '\ud83d\udea9 MISSED \u2014 FAKE SENDER\nThe sender <code>security-alert@bpi-online-security.com</code> looks official but is 100% fake. Real BPI only sends emails from <code>@bpi.com.ph</code>. Any other domain claiming to be BPI is a scam.'
       },
       false_urgency: {
-        correct: '\ud83d\udea9 URGENCY \u2014 CORRECT\n\'FINAL WARNING\' in all-caps with a 15-minute countdown is extreme psychological pressure. No real bank sends 15-minute ultimatums or threatens to permanently freeze funds via email.',
-        missed: '\ud83d\udea9 MISSED \u2014 FALSE URGENCY\nThe 15-MINUTE countdown and \'FINAL WARNING\' all-caps language are extreme social engineering tactics. Real banks never impose 15-minute deadlines via email.'
+        correct: '\ud83d\udea9 URGENCY \u2014 CORRECT\nA \'15-minute countdown\' with threats of permanent account closure and 30-day fund freezing is extreme psychological pressure. No real bank including BPI sends 15-minute email ultimatums. Real account issues are handled through official channels with proper notice.',
+        missed: '\ud83d\udea9 MISSED \u2014 FALSE URGENCY\nThe \'15 MINUTES or permanent closure\' threat is classic social engineering. BPI and all real banks never impose 15-minute email deadlines to freeze accounts. That extreme pressure is designed to stop you from thinking critically.'
       },
       suspicious_link: {
-        correct: '\ud83d\udea9 LINK \u2014 CORRECT\nThe link leads to <code>bankng-secure-verify.xyz/restore</code> \u2014 the same misspelled fake domain as the sender. Attacker-controlled sender and link domains always match.',
-        missed: '\ud83d\udea9 MISSED \u2014 SUSPICIOUS LINK\nThe button leads to <code>bankng-secure-verify.xyz</code> \u2014 a fake domain matching the fake sender. Always verify where links actually go.'
+        correct: '\ud83d\udea9 LINK \u2014 CORRECT\nThe button leads to <code>bankng-secure-verify.xyz</code> \u2014 which misspells \'banking\' as \'bankng\' and uses a fake <code>.xyz</code> domain. BPI\'s real online banking is at <code>bpi.com.ph</code>. Sender domain and link domain also mismatch \u2014 another red flag.',
+        missed: '\ud83d\udea9 MISSED \u2014 SUSPICIOUS LINK\nThe button links to <code>bankng-secure-verify.xyz</code> \u2014 not <code>bpi.com.ph</code>. \'Bankng\' misspells \'banking\' and real BPI never uses a <code>.xyz</code> domain. Always hover over links to check the real URL before clicking.'
       }
     },
     ryanTutor: {
       correct: [
-        { text: '\u2705 Good catch! The sender is "urgent-alert@bankng-secure-verify.xyz". Two red flags right there: "bankng" misspells "banking", and real banks never use a ".xyz" domain for anything official.', state: 'success' },
-        { text: '"FINAL WARNING" in all caps and a 15-minute countdown are extreme pressure tactics. No real bank sends you a 15-minute ultimatum by email or threatens to freeze your money like that.', state: 'speaking' },
-        { text: 'The link goes to the same fake domain as the sender. When the sender and the link match and neither is a real bank domain, you are looking at a phishing attack.', state: 'thinking' }
+        { text: '\u2705 Great catch! That was a BPI phishing email. The sender is "security-alert@bpi-online-security.com" \u2014 NOT bpi.com.ph. Attackers register lookalike domains like this to impersonate real banks.', state: 'success' },
+        { text: 'A "15-minute countdown" with threats of permanent account closure is extreme pressure. BPI and any real bank would NEVER give you a 15-minute email ultimatum to save your account. That is designed to make you panic and click without verifying.', state: 'speaking' },
+        { text: 'The button goes to "bankng-secure-verify.xyz" \u2014 that misspells "banking" as "bankng" and uses a fake .xyz domain. BPI only uses bpi.com.ph. Always check where a link actually leads before you click!', state: 'thinking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was a phishing email. The sender "urgent-alert@bankng-secure-verify.xyz" spells "banking" as "bankng" and uses ".xyz". No real bank uses that kind of domain.', state: 'concerned' },
-        { text: '"FINAL WARNING" and a 15-minute threat to freeze your money are just scare tactics to make you act without thinking. Ask yourself: would my actual bank ever send an email like this? The answer is no.', state: 'speaking' }
+        { text: '\u26a0\ufe0f That was a BPI phishing email. The sender is "security-alert@bpi-online-security.com" \u2014 that is NOT bpi.com.ph. No matter how official it looks, real BPI emails only ever come from @bpi.com.ph.', state: 'concerned' },
+        { text: '"15 MINUTES or permanent account closure" is a scare tactic, not a real bank policy. BPI would never threaten to permanently close your account and freeze your money via a 15-minute email countdown. That pressure is the scammer\'s weapon.', state: 'speaking' },
+        { text: 'The link goes to "bankng-secure-verify.xyz" \u2014 a fake domain. BPI\'s real site is bpi.com.ph. Always verify the sender domain AND the link destination before taking any action in an email.', state: 'thinking' }
       ]
     }
   },
@@ -315,6 +324,7 @@ const EMAILS = [
     id: 8,
     sender: { name: 'IT Security Operations', address: 'security-ops@business-it-support.com' },
     subject: 'Action Required: Security Policy Compliance Update',
+    date: 'Mon, Oct 27, 2026',
     time: '12:35 PM',
     preview: 'All employees are required to complete mandatory security compliance verification before Friday...',
     phishing: true,
@@ -374,6 +384,7 @@ const EMAILS = [
     id: 9,
     sender: { name: 'IT Help Desk', address: 'helpdesk@business.com' },
     subject: 'Your IT Support Ticket #4821 Has Been Resolved',
+    date: 'Mon, Oct 27, 2026',
     time: '1:05 PM',
     preview: 'Your recent support ticket regarding email configuration has been resolved...',
     phishing: false,
@@ -403,6 +414,7 @@ const EMAILS = [
     id: 10,
     sender: { name: 'Northfield Scholarship Committee', address: 'grants-approval@northfield-scholarship.com' },
     subject: 'URGENT: Scholarship Grant Approval Form & Required Documents',
+    date: 'Mon, Oct 27, 2026',
     time: '2:40 PM',
     preview: 'Congratulations! Your academic grant has been approved. Download and submit the attached verification form within 24 hours to secure your funds...',
     phishing: true,

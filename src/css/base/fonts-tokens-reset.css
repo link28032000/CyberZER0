@@ -5,11 +5,60 @@
 
 /* ── FONT FACES ── */
 @font-face {
+  font-family: 'QB One Light';
+  src: url('../../../assets/fonts/QB One Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'QB One Regular';
+  src: url('../../../assets/fonts/QB One Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'QB One Bold';
+  src: url('../../../assets/fonts/QB One Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'QB One Extra Bold';
   src: url('../../../assets/fonts/QB-One-ExtraBold.woff2') format('woff2'),
        url('../../../assets/fonts/QB-One-ExtraBold.ttf') format('truetype'),
        url('https://db.onlinewebfonts.com/t/353b79b2ea9db02690b55e55fb094e08.woff2') format('woff2');
   font-weight: 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Multi-weight unified QB One family */
+@font-face {
+  font-family: 'QB One';
+  src: url('../../../assets/fonts/QB One Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'QB One';
+  src: url('../../../assets/fonts/QB One Regular.ttf') format('truetype');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'QB One';
+  src: url('../../../assets/fonts/QB One Bold.ttf') format('truetype');
+  font-weight: 600 700;
   font-style: normal;
   font-display: swap;
 }
@@ -53,7 +102,11 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --font-main: 'Inter', -apple-system, sans-serif;
-  --font-cyberzero: 'QB One Extra Bold', 'QB One', 'Chakra Petch', 'Orbitron', 'Inter', sans-serif;
+  --font-qb-light: 'QB One Light', 'QB One', sans-serif;
+  --font-qb-regular: 'QB One Regular', 'QB One', sans-serif;
+  --font-qb-bold: 'QB One Bold', 'QB One', sans-serif;
+  --font-qb-extrabold: 'QB One Extra Bold', 'QB One', sans-serif;
+  --font-cyberzero: 'QB One Bold', 'QB One Regular', 'QB One', 'Chakra Petch', 'Orbitron', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', 'Consolas', monospace;
   --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 360ms cubic-bezier(0.4, 0, 0.2, 1);

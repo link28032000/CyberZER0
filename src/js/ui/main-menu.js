@@ -72,6 +72,57 @@ function hideMainMenu() {
   if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
 }
 
+/** Show Story Selection screen directly, unlocking and selecting the target chapter (e.g. Chapter 2) */
+function showStorySelectionScreen(selectChapterId = 'malware') {
+  if (typeof hideAllOverlays === 'function') {
+    hideAllOverlays(false);
+  }
+  const mm = document.getElementById('overlay-main-menu');
+  if (mm) {
+    mm.classList.remove('active');
+    mm.style.display = 'none';
+  }
+  const tm = document.getElementById('overlay-title-menu');
+  if (tm) {
+    tm.classList.remove('active');
+    tm.style.display = 'none';
+  }
+  const desktop = document.getElementById('desktop');
+  if (desktop) {
+    desktop.style.visibility = 'hidden';
+    desktop.style.opacity = '0';
+  }
+
+  // Reveal Story Selection screen
+  const ss = document.getElementById('overlay-story-select');
+  if (ss) {
+    ss.style.display = 'flex';
+    ss.style.opacity = '1';
+    void ss.offsetWidth;
+    ss.classList.add('active');
+    if (typeof refreshStorySelectLocks === 'function') {
+      refreshStorySelectLocks();
+    }
+
+    const chapterNum = selectChapterId === 'malware' ? 2 : 1;
+    const cardEl = document.getElementById(`ss-card-${chapterNum}`);
+    if (cardEl && typeof selectStoryCard === 'function') {
+      setTimeout(() => {
+        selectStoryCard(cardEl, selectChapterId, chapterNum, true);
+      }, 120);
+    }
+  }
+
+  const bd = document.getElementById('overlay-backdrop');
+  if (bd) bd.classList.add('active');
+  if (typeof startMMBgMusic === 'function') startMMBgMusic();
+  if (typeof updateAchievementNotificationBadge === 'function') {
+    updateAchievementNotificationBadge();
+  }
+}
+window.showStorySelectionScreen = showStorySelectionScreen;
+
+
 /** START button — 5s loading, professional wipe transition into Enter Name */
 function mainMenuStart() {
   closeMainMenuAbout();

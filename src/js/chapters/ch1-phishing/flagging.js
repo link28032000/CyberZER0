@@ -511,34 +511,33 @@ function updateVerdictButtonsHighlight() {
   if (!reportBtn || !legitBtn) return;
 
   const currentEmailObj = (ch1InboxEmails && ch1InboxEmails[gameState.currentEmail]) || (EMAILS && EMAILS[gameState.currentEmail]);
-  const isFirstEmail = (gameState.currentEmail === 0 || (currentEmailObj && currentEmailObj.id === 1));
+  const isFirstEmail = Boolean(currentEmailObj && currentEmailObj.id === 1) || (gameState.currentEmail === 0 && (!gameState.emailResults || gameState.emailResults.length === 0));
   const isClosed = currentEmailObj && gameState.emailResults && gameState.emailResults.some(r => r.emailId === currentEmailObj.id);
-  const flagCount = (gameState.currentEmailFlags && gameState.currentEmailFlags.length) || 0;
 
-  // Tutorial active on email 1: require ALL 3 evidence flags before highlighting
-  const tutorialActive = (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive());
-  const FIRST_EMAIL_REQUIRED = 3;
-
-  // Email 1 (tutorial): glow only after ALL 3 flags.
-  // After the first email is completed: glow as soon as 1 flag is placed.
-  const firstEmailCompleted = Boolean(gameState.emailResults && gameState.emailResults.length >= 1);
-  let shouldHighlight = false;
-
-  if (!isClosed && currentEmailObj) {
-    if (isFirstEmail && !firstEmailCompleted) {
-      // Email 1 strict tutorial mode — need all 3 flags
-      if (currentEmailObj.evidence && currentEmailObj.evidence.length > 0) {
-        shouldHighlight = (flagCount >= FIRST_EMAIL_REQUIRED);
-      }
-    } else {
-      // Email 2+ (or email 1 revisited after first submit): 1 flag is enough to glow
-      shouldHighlight = (flagCount >= 1);
-    }
+  // Other emails: NO glowing effects even if evidence is flagged.
+  // Closed emails also have no glowing effects.
+  if (!isFirstEmail || isClosed) {
+    reportBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    return;
   }
 
-  if (shouldHighlight) {
-    reportBtn.classList.add('verdict-btn-highlight');
-    legitBtn.classList.add('verdict-btn-highlight');
+  // FIRST EMAIL ONLY:
+  // Glow Phishing button ONLY after all 3 required evidence items are flagged.
+  // Non-phishing button NEVER glows on first email.
+  const FIRST_EMAIL_REQUIRED = 3;
+  let allFound = false;
+
+  if (currentEmailObj && currentEmailObj.evidence && currentEmailObj.evidence.length > 0) {
+    const flaggedTypes = (gameState.currentEmailFlags || []).map(f => f.type);
+    allFound = currentEmailObj.evidence.every(ev => flaggedTypes.includes(ev));
+  } else {
+    allFound = ((gameState.currentEmailFlags && gameState.currentEmailFlags.length) >= FIRST_EMAIL_REQUIRED);
+  }
+
+  if (allFound) {
+    reportBtn.classList.add('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
   } else {
     reportBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
     legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');

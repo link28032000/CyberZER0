@@ -1,446 +1,852 @@
 'use strict';
 
+// Ad click handler — Northfield (last) site only
+function handleFakeAdClick(adName) {
+  if (typeof showToast === 'function') showToast('&#128680; FAKE AD: &ldquo;' + adName + '&rdquo; &mdash; Real phishing pages are packed with malicious ads. Never click them!', 'warning');
+}
 
+/* ────────────────────────────────────────────────
+   Northfield-only: sidebar ads + casino popup
+──────────────────────────────────────────────── */
+var _NF_AD_STYLES = `<style>
+  @keyframes ad-flash   { 0%,100%{opacity:1}50%{opacity:.5} }
+  @keyframes ad-pulse   { 0%,100%{transform:scale(1)}50%{transform:scale(1.06)} }
+  @keyframes ad-slidein { from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1} }
+  @keyframes ad-rainbow { 0%{background-position:0%}50%{background-position:100%}100%{background-position:0%} }
+  @keyframes ad-spin    { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
+  .nf-page-wrap  { display:flex; gap:10px; align-items:flex-start; padding:16px; }
+  .nf-main-col   { flex:1; min-width:0; }
+  .nf-ad-sidebar { width:152px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+  .nf-ad { border-radius:7px; overflow:hidden; cursor:pointer; font-size:11px; font-weight:700;
+           text-align:center; user-select:none; transition:transform .15s; }
+  .nf-ad:hover { transform:scale(1.03); }
+  .nf-ad-casino { background:linear-gradient(135deg,#0d0d0d,#1a0a00); border:2px solid #f59e0b; color:#fef3c7; padding:10px 6px; }
+  .nf-ad-casino .adc { display:block;margin-top:5px;background:linear-gradient(90deg,#d97706,#f59e0b,#d97706);background-size:200%;animation:ad-rainbow 2s linear infinite;color:#000;padding:5px;border-radius:4px; }
+  .nf-ad-app { background:linear-gradient(135deg,#0f172a,#1e3a5f); border:1px solid #3b82f6; color:#e0f2fe; padding:10px 6px; }
+  .nf-ad-app .adv { background:#ef4444;color:#fff;border-radius:4px;padding:2px 6px;margin:4px 0;font-size:10px;animation:ad-flash .8s ease-in-out infinite; }
+  .nf-ad-app .adc { display:block;background:#2563eb;color:#fff;padding:5px;border-radius:4px;margin-top:5px;animation:ad-pulse 1.5s ease-in-out infinite; }
+  .nf-ad-prize { background:linear-gradient(135deg,#4c0070,#7c3aed); border:2px solid #a855f7; color:#f3e8ff; padding:10px 6px; }
+  .nf-ad-prize .adi { font-size:20px;animation:ad-spin 3s linear infinite;display:inline-block; }
+  .nf-ad-prize .adc { display:block;background:linear-gradient(90deg,#7c3aed,#ec4899,#7c3aed);background-size:200%;animation:ad-rainbow 2s linear infinite;color:#fff;padding:5px;border-radius:4px;margin-top:5px; }
+  .nf-ad-crypto { background:linear-gradient(135deg,#052e16,#14532d); border:1px solid #22c55e; color:#dcfce7; padding:10px 6px; }
+  .nf-ad-crypto .adp { font-size:15px;font-weight:900;color:#4ade80;animation:ad-flash 1.2s ease-in-out infinite; }
+  .nf-ad-crypto .adc { display:block;background:#16a34a;color:#fff;padding:5px;border-radius:4px;margin-top:5px;animation:ad-pulse 2s ease-in-out infinite; }
+  /* popup */
+  .nf-popup-ad { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+                 z-index:9999; background:#0d0d0d; border:3px solid #f59e0b; border-radius:12px;
+                 padding:22px; width:260px; text-align:center; color:#fff;
+                 box-shadow:0 0 40px rgba(245,158,11,.6); }
+  .nf-popup-ad.visible { display:block; animation:ad-slidein .4s cubic-bezier(.34,1.56,.64,1) both; }
+  .nf-popup-ad .pop-x { position:absolute;top:7px;right:12px;cursor:pointer;font-size:18px;color:#aaa;line-height:1; }
+  .nf-popup-ad .pop-x:hover { color:#fff; }
+  .nf-popup-ad .pop-t { font-size:15px;font-weight:900;color:#fbbf24;animation:ad-flash 1s ease-in-out infinite;margin-bottom:8px; }
+  .nf-popup-ad .pop-c { display:block;margin-top:10px;background:linear-gradient(90deg,#d97706,#f59e0b,#d97706);background-size:200%;animation:ad-rainbow 2s linear infinite;color:#000;font-weight:900;padding:10px;border-radius:8px;font-size:14px;cursor:pointer; }
+  .nf-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998; }
+  .nf-overlay.visible { display:block; }
+</style>`;
 
+var _NF_SIDEBAR = `
+<div class="nf-ad-sidebar">
+  <div class="nf-ad nf-ad-casino" onclick="handleFakeAdClick('Lucky Casino &#8369;50,000 Jackpot')">
+    <div style="font-size:22px;animation:ad-flash 1s ease-in-out infinite;">&#127920;&#127920;&#127920;</div>
+    <div style="font-size:12px;color:#fbbf24;animation:ad-flash 1s ease-in-out infinite;">LUCKY CASINO</div>
+    <div style="font-size:10px;color:#fde68a;">&#8369;50,000 JACKPOT</div>
+    <span class="adc">&#9658; SPIN NOW</span>
+  </div>
+  <div class="nf-ad nf-ad-app" onclick="handleFakeAdClick('17 Viruses Detected! Clean Now')">
+    <div style="font-size:22px;animation:ad-pulse 2s ease-in-out infinite;">&#128241;</div>
+    <div class="adv">&#9888; 17 VIRUSES!</div>
+    <div style="font-size:10px;color:#93c5fd;">Phone at risk!</div>
+    <span class="adc">&#128640; Clean FREE</span>
+  </div>
+  <div class="nf-ad nf-ad-prize" onclick="handleFakeAdClick('You Are Visitor 1,000,000!')">
+    <div class="adi">&#127881;</div>
+    <div style="font-size:12px;font-weight:900;color:#f0abfc;">YOU WON!</div>
+    <div style="font-size:10px;">#1,000,000 Visitor</div>
+    <span class="adc">CLAIM PRIZE</span>
+  </div>
+  <div class="nf-ad nf-ad-crypto" onclick="handleFakeAdClick('Bitcoin +2400% Invest Now')">
+    <div style="font-size:11px;color:#86efac;">&#129689; CRYPTO ALERT</div>
+    <div class="adp">+2,400%</div>
+    <div style="font-size:10px;color:#bbf7d0;">Bitcoin x10!</div>
+    <span class="adc">INVEST &#8369;500</span>
+  </div>
+  <div class="nf-ad nf-ad-casino" onclick="handleFakeAdClick('Sabong Live Bet Now')" style="background:linear-gradient(135deg,#1a0000,#3b0000);border-color:#ef4444;">
+    <div style="font-size:20px;animation:ad-flash .6s ease-in-out infinite;">&#127953;</div>
+    <div style="font-size:12px;color:#fca5a5;font-weight:900;">SABONG LIVE</div>
+    <div style="font-size:10px;color:#fecaca;">LIVE matches!</div>
+    <span class="adc" style="background:linear-gradient(90deg,#dc2626,#ef4444,#dc2626);color:#fff;">&#9654; BET NOW</span>
+  </div>
+  <div class="nf-ad nf-ad-app" onclick="handleFakeAdClick('Fast Loan &#8369;20,000 in 5 Min')" style="background:linear-gradient(135deg,#0c0a1e,#1e1b4b);border-color:#818cf8;">
+    <div style="font-size:20px;">&#128178;</div>
+    <div style="font-size:12px;color:#a5b4fc;font-weight:900;">FAST LOAN</div>
+    <div style="font-size:10px;color:#c7d2fe;">&#8369;20,000 in 5min!</div>
+    <span class="adc" style="background:#4f46e5;color:#fff;animation:ad-pulse 1.5s ease-in-out infinite;">APPLY &rarr;</span>
+  </div>
+</div>`;
 
+var _NF_POPUP = `
+<div class="nf-overlay" id="nf-ov" onclick="this.classList.remove('visible');document.getElementById('nf-pop').classList.remove('visible');"></div>
+<div class="nf-popup-ad" id="nf-pop">
+  <span class="pop-x" onclick="document.getElementById('nf-ov').classList.remove('visible');this.parentElement.classList.remove('visible');">&#10005;</span>
+  <div style="font-size:28px;animation:ad-spin 3s linear infinite;display:inline-block;">&#127920;</div>
+  <div class="pop-t">&#127381; YOU ARE WINNER! &#127381;</div>
+  <div style="font-size:12px;color:#fde68a;margin-bottom:6px;">Spin &amp; win up to<br><strong style="font-size:18px;color:#fbbf24;">&#8369;1,000,000</strong></div>
+  <div style="font-size:10px;color:#aaa;">Expires in <span id="nf-ptimer" style="color:#f87171;font-weight:900;">04:59</span></div>
+  <span class="pop-c" onclick="handleFakeAdClick('Casino Wheel &#8369;1,000,000')">&#9658; SPIN THE WHEEL NOW &#9656;</span>
+</div>
+<script>
+(function(){
+  setTimeout(function(){
+    var p=document.getElementById('nf-pop'),o=document.getElementById('nf-ov');
+    if(p){p.classList.add('visible');o.classList.add('visible');}
+    var t=document.getElementById('nf-ptimer'),s=299;
+    if(!t)return;
+    var iv=setInterval(function(){
+      s--;if(s<=0){clearInterval(iv);return;}
+      var m=Math.floor(s/60),sec=s%60;
+      t.textContent=(m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+    },1000);
+  },1800);
+})();
+</script>`;
 
-// Fake websites for the browser
-// Fake websites for the browser (Authentic Phishing Website Examples)
+/* ═══════════════════════════════════════════════════════════
+   FAKE SITES — each styled exactly like the real site
+═══════════════════════════════════════════════════════════ */
 const FAKE_SITES = {
-  'https://paypa1.com/claim-reward': `
-    <div class="fakesite fakesite-paypal">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>paypa1.com</code> uses the digit <strong>1</strong> instead of the letter <strong>l</strong>! This is a fake phishing clone. Real PayPal is <code>paypal.com</code>.</span>
-      </div>
-      <div class="fakesite-header" style="background:#ffffff;border-bottom:1px solid #e2e8f0;">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo" style="color:#003087;">🅿️ PayPal</div>
-          <div class="fakesite-subtag" style="color:#0070ba;font-weight:600;">🎁 ₱1,000,000 Pesos Prize Disbursement Center</div>
-        </div>
-      </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <div style="background:#e0f2fe;color:#0369a1;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
-              🎉 Prize Disbursement: ₱1,000,000.00 PHP Ready for Transfer
-            </div>
-            <h2 style="color:#003087;">Log in to your PayPal account</h2>
-            <p>Enter your PayPal credentials below to confirm your identity and claim your ₱1,000,000 cash prize.</p>
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('paypa1.com', 'PayPal');">
-            <div class="fakesite-field">
-              <label for="paypal-claim-email">Email address or mobile number</label>
-              <input type="text" id="paypal-claim-email" placeholder="Email or mobile number" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="paypal-claim-pass">PayPal Password</label>
-              <input type="password" id="paypal-claim-pass" placeholder="Password" required autocomplete="off" />
-            </div>
-            <div class="fakesite-row">
-              <label class="fakesite-remember">
-                <input type="checkbox" checked /> Remember this device
-              </label>
-              <a href="#" class="fakesite-link" onclick="event.preventDefault(); showToast('⚠️ Fake link: Attackers only collect submitted credentials.', 'warning');">Having trouble logging in?</a>
-            </div>
-            <button type="submit" class="fakesite-submit" style="background:linear-gradient(90deg, #003087, #0070ba);">
-              Claim ₱1,000,000 &amp; Deposit to Wallet
-            </button>
-            <div style="margin-top:14px;text-align:center;">
-              <button type="button" class="fakesite-secondary-btn" onclick="event.preventDefault(); showToast('⚠️ Fake link on phishing portal.', 'warning');">Create an Account</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div class="fakesite-footer">
-        <p>English | Filipino | Español | Privacy | Legal</p>
-        <p style="margin-top:4px;">Copyright © 1999–2026 PayPal. All rights reserved.</p>
-      </div>
-    </div>`,
 
-  'https://business-account-verify.net/login': `
-    <div class="fakesite fakesite-corporate">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>business-account-verify.net</code> is a fake phishing website, NOT the official company domain <code>business.com</code>!</span>
+/* ─── 1. PayPal prize phishing ─────────────────────────── */
+'https://paypa1.com/claim-reward': `
+<style>
+  .pp-page { min-height:100%; background:#f5f7fa; display:flex; flex-direction:column;
+             align-items:center; justify-content:flex-start; padding:40px 16px 24px;
+             font-family:'Helvetica Neue',Arial,sans-serif; box-sizing:border-box; }
+  .pp-card { background:#fff; border:1px solid #dde0e4; border-radius:6px; width:100%;
+             max-width:460px; padding:32px 40px 28px; box-sizing:border-box;
+             box-shadow:0 2px 10px rgba(0,0,0,.06); }
+  .pp-logo { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:24px; }
+  .pp-p-mark { width:34px; height:34px; }
+  .pp-wordmark { font-size:26px; font-weight:700; color:#003087; letter-spacing:-.5px; font-family:'Arial Black',Arial,sans-serif; }
+  .pp-wordmark span { color:#009cde; }
+  .pp-prize-badge { background:#e6f4ea; border:1px solid #34a853; border-radius:20px;
+                    color:#1e7e34; font-size:12px; font-weight:700; padding:5px 16px;
+                    text-align:center; margin-bottom:20px; }
+  .pp-field { margin-bottom:14px; }
+  .pp-field input { width:100%; padding:12px 14px; border:1.5px solid #cbd0d8; border-radius:5px;
+                    font-size:15px; box-sizing:border-box; outline:none; color:#1c2127;
+                    font-family:inherit; transition:border-color .2s, box-shadow .2s; }
+  .pp-field input:focus { border-color:#0070ba; box-shadow:0 0 0 2px rgba(0,112,186,.18); }
+  .pp-field input.filled { background:#eef3fb; border-color:#afc8e8; }
+  .pp-btn-primary { width:100%; background:#0070ba; color:#fff; border:none; border-radius:25px;
+                    padding:14px; font-size:16px; font-weight:700; cursor:pointer;
+                    font-family:inherit; margin-top:4px; letter-spacing:.3px; }
+  .pp-btn-primary:hover { background:#005ea6; }
+  .pp-trouble { display:block; text-align:center; color:#0070ba; font-size:13px;
+                text-decoration:none; margin:14px 0; }
+  .pp-trouble:hover { text-decoration:underline; }
+  .pp-divider { display:flex; align-items:center; gap:10px; margin:6px 0 14px; }
+  .pp-divider hr { flex:1; border:none; border-top:1px solid #dde0e4; }
+  .pp-divider span { font-size:13px; color:#8a8a8a; }
+  .pp-btn-secondary { width:100%; background:#f5f7fa; color:#2c2e2f; border:1.5px solid #cbd0d8;
+                      border-radius:25px; padding:13px; font-size:15px; font-weight:700;
+                      cursor:pointer; font-family:inherit; }
+  .pp-btn-secondary:hover { background:#eef0f3; }
+  .pp-footer { margin-top:20px; text-align:center; font-size:11px; color:#9da3ae; }
+  .pp-footer a { color:#0070ba; text-decoration:none; }
+</style>
+<div class="fakesite" style="background:#f5f7fa;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL bar shows <code>paypa1.com</code> &mdash; digit &ldquo;1&rdquo; faking letter &ldquo;l&rdquo;! Real PayPal = <code>paypal.com</code>.</span>
+  </div>
+  <div class="pp-page">
+    <div class="pp-card">
+      <div class="pp-logo">
+        <svg class="pp-p-mark" viewBox="0 0 24 24" fill="none">
+          <path d="M7.5 21H4.5L7 6h5.5c2.5 0 4 1.2 4 3.5 0 3.5-2.5 5-5.5 5H9.5L7.5 21z" fill="#009cde"/>
+          <path d="M10 17H7L9.5 2h5.5c2.5 0 4 1.2 4 3.5 0 3.5-2.5 5-5.5 5H12L10 17z" fill="#003087"/>
+        </svg>
+        <span class="pp-wordmark">Pay<span>Pal</span></span>
       </div>
-      <div class="fakesite-header" style="background:#0f172a;">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo">🏢 Business Inc. — Employee SSO</div>
-          <div class="fakesite-subtag">Identity &amp; Access Management Portal</div>
+      <div class="pp-prize-badge">&#127873; &#8369;1,000,000 Prize &mdash; Confirm your identity to claim</div>
+      <form onsubmit="event.preventDefault(); handlePhishingSubmit('paypa1.com','PayPal');">
+        <div class="pp-field">
+          <input type="text" id="pp1-email" placeholder="Email or mobile number" required autocomplete="off" />
         </div>
-      </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <h2>Single Sign-On (SSO) Verification</h2>
-            <div class="fakesite-urgency-callout">
-              ⚠️ <strong>URGENT:</strong> Account access restricted due to suspicious sign-in. Verify credentials within 30 minutes to prevent permanent suspension.
-            </div>
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('business-account-verify.net', 'Business Inc. SSO');">
-            <div class="fakesite-field">
-              <label for="corp-user">Corporate Email or Employee ID</label>
-              <input type="text" id="corp-user" placeholder="user@business.com or EMP-ID" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="corp-pass">Current Work Password</label>
-              <input type="password" id="corp-pass" placeholder="••••••••••••" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="corp-pin">Employee PIN / Security Token</label>
-              <input type="password" id="corp-pin" placeholder="6-digit PIN" maxlength="6" autocomplete="off" />
-            </div>
-            <div class="fakesite-row">
-              <label class="fakesite-remember">
-                <input type="checkbox" checked /> Keep this workstation authenticated
-              </label>
-              <a href="#" class="fakesite-link" onclick="event.preventDefault(); showToast('⚠️ Fake link: Attackers only collect submitted credentials.', 'warning');">Forgot password?</a>
-            </div>
-            <button type="submit" class="fakesite-submit">
-              Verify Employee Identity &amp; Restore Access
-            </button>
-          </form>
-          <div class="fakesite-card-footer">
-            <p>Protected by Enterprise Multi-Factor Authentication • ISO 27001 Certified</p>
-          </div>
+        <div class="pp-field">
+          <input type="password" id="pp1-pass" class="filled" placeholder="Password" required autocomplete="off" />
         </div>
-      </div>
-      <div class="fakesite-footer">
-        <p>© 2026 Business Inc. Global IT &amp; Information Security Systems. All rights reserved.</p>
-      </div>
-    </div>`,
+        <button type="submit" class="pp-btn-primary">Log In</button>
+      </form>
+      <a href="#" class="pp-trouble" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');">Having trouble logging in?</a>
+      <div class="pp-divider"><hr /><span>or</span><hr /></div>
+      <button type="button" class="pp-btn-secondary" onclick="showToast('&#9888;&#65039; Fake link.','warning');">Sign Up</button>
+    </div>
+    <div class="pp-footer">
+      <a href="#" onclick="event.preventDefault();">Privacy</a> &nbsp;&bull;&nbsp;
+      <a href="#" onclick="event.preventDefault();">Legal</a> &nbsp;&bull;&nbsp;
+      <a href="#" onclick="event.preventDefault();">Contact</a><br/>
+      &copy; 1999&ndash;2026 PayPal, Inc. All rights reserved.
+    </div>
+  </div>
+</div>`,
 
-  'https://m1crosoft-account-verify.com/signin': `
-    <div class="fakesite fakesite-microsoft">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>m1crosoft-account-verify.com</code> uses a digit "1" instead of the letter "i"! Real Microsoft is <code>microsoft.com</code>.</span>
-      </div>
-      <div class="fakesite-ms-container">
-        <div class="fakesite-ms-card">
-          <div class="ms-logo-wrap">
-            <div class="ms-logo-grid">
-              <span style="background:#f25022;"></span>
-              <span style="background:#7fba00;"></span>
-              <span style="background:#00a4ef;"></span>
-              <span style="background:#ffb900;"></span>
-            </div>
-            <span class="ms-brand-name">Microsoft</span>
+/* ─── 2. Corporate SSO phishing ─────────────────────────── */
+'https://business-account-verify.net/login': `
+<style>
+  @keyframes scan-bar { 0%{top:0%}100%{top:100%} }
+  @keyframes urg-blink { 0%,100%{background:#7f1d1d}50%{background:#b91c1c} }
+  @keyframes corp-in { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  .corp-page { min-height:100%; background:#0f172a; display:flex; flex-direction:column;
+               font-family:'Segoe UI',Arial,sans-serif; }
+  .corp-topbar { background:#1e293b; border-bottom:1px solid #334155; padding:14px 24px;
+                 display:flex; align-items:center; gap:12px; position:relative; overflow:hidden; }
+  .corp-scan { position:absolute; left:0; width:100%; height:2px; background:rgba(239,68,68,.7);
+               animation:scan-bar 2.5s linear infinite; pointer-events:none; }
+  .corp-logo { font-size:17px; font-weight:800; color:#f1f5f9; }
+  .corp-badge { background:#1d4ed8; color:#bfdbfe; font-size:10px; font-weight:700;
+                padding:2px 10px; border-radius:20px; }
+  .corp-body { flex:1; display:flex; align-items:center; justify-content:center; padding:30px 16px; }
+  .corp-card { background:#1e293b; border:1px solid #334155; border-radius:10px; width:100%;
+               max-width:400px; padding:32px 28px; box-shadow:0 8px 32px rgba(0,0,0,.4);
+               animation:corp-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+  .corp-card h2 { color:#f1f5f9; font-size:20px; margin:0 0 4px 0; }
+  .corp-sub { font-size:12px; color:#64748b; margin:0 0 16px 0; }
+  .corp-urg { animation:urg-blink 1.2s ease-in-out infinite; border-radius:7px;
+              padding:10px 14px; color:#fff; font-size:12px; font-weight:700; margin-bottom:16px; }
+  .corp-field { margin-bottom:13px; }
+  .corp-field label { display:block; font-size:11px; color:#94a3b8; font-weight:600;
+                      text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+  .corp-field input { width:100%; padding:11px 14px; background:#0f172a; border:1.5px solid #334155;
+                      border-radius:7px; font-size:14px; color:#f1f5f9; box-sizing:border-box; outline:none; }
+  .corp-field input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.2); }
+  .corp-field input::placeholder { color:#475569; }
+  .corp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; font-size:12px; }
+  .corp-submit { width:100%; background:linear-gradient(90deg,#1d4ed8,#2563eb); color:#fff;
+                 border:none; padding:12px; border-radius:7px; font-size:14px; font-weight:700; cursor:pointer; }
+  .corp-submit:hover { background:linear-gradient(90deg,#1e40af,#1d4ed8); }
+  .corp-note { margin-top:14px; text-align:center; font-size:11px; color:#475569; }
+  .corp-footer { background:#0a0f1a; border-top:1px solid #1e293b; padding:12px 24px;
+                 text-align:center; font-size:11px; color:#475569; }
+</style>
+<div class="fakesite" style="background:#0f172a;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>business-account-verify.net</code> is NOT <code>business.com</code> &mdash; fake corporate phishing portal!</span>
+  </div>
+  <div class="corp-page">
+    <div class="corp-topbar">
+      <div class="corp-scan"></div>
+      <span class="corp-logo">&#127970; Business Inc.</span>
+      <span class="corp-badge">ENTERPRISE SSO</span>
+    </div>
+    <div class="corp-body">
+      <div class="corp-card">
+        <h2>Single Sign-On</h2>
+        <p class="corp-sub">Identity &amp; Access Management Portal</p>
+        <div class="corp-urg">&#9888;&#65039; <strong>URGENT:</strong> Account locked. Verify within 30 minutes to prevent permanent suspension.</div>
+        <form onsubmit="event.preventDefault(); handlePhishingSubmit('business-account-verify.net','Business Inc. SSO');">
+          <div class="corp-field"><label for="c-user">Corporate Email or Employee ID</label>
+            <input type="text" id="c-user" placeholder="user@business.com" required autocomplete="off" /></div>
+          <div class="corp-field"><label for="c-pass">Work Password</label>
+            <input type="password" id="c-pass" placeholder="Enter password" required autocomplete="off" /></div>
+          <div class="corp-field"><label for="c-pin">Security Token / PIN</label>
+            <input type="password" id="c-pin" placeholder="6-digit PIN" maxlength="6" autocomplete="off" /></div>
+          <div class="corp-row">
+            <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;"><input type="checkbox" checked /> Stay authenticated</label>
+            <a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');" style="color:#60a5fa;text-decoration:none;font-size:12px;">Forgot password?</a>
           </div>
-          <h2 class="ms-signin-title">Sign in</h2>
-          <div class="ms-security-warning">
-            ⚠️ <strong>Unusual sign-in activity detected.</strong> Enter your credentials to confirm your identity and prevent account lockout within 60 minutes.
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('m1crosoft-account-verify.com', 'Microsoft 365');">
-            <div class="ms-field">
-              <label for="ms-email" style="font-size:12px;color:#505050;display:block;margin-bottom:4px;">Email, phone, or Skype</label>
-              <input type="text" id="ms-email" placeholder="someone@example.com" required autocomplete="off" />
-            </div>
-            <div class="ms-field" style="margin-top:16px;">
-              <label for="ms-pwd" style="font-size:12px;color:#505050;display:block;margin-bottom:4px;">Password</label>
-              <input type="password" id="ms-pwd" placeholder="Enter password" required autocomplete="off" />
-            </div>
-            <div class="ms-trouble-links">
-              <p style="margin:6px 0;"><a href="#" onclick="event.preventDefault(); showToast('⚠️ Fake link on phishing portal.', 'warning');">No account? Create one!</a></p>
-              <p style="margin:6px 0;"><a href="#" onclick="event.preventDefault(); showToast('⚠️ Fake link on phishing portal.', 'warning');">Can’t access your account?</a></p>
-            </div>
-            <div class="ms-btn-row">
-              <button type="submit" class="ms-submit-btn">Next</button>
-            </div>
-          </form>
-        </div>
-        <div class="ms-footer">
-          <span>Terms of use</span>
-          <span>Privacy &amp; cookies</span>
-          <span>...</span>
-        </div>
+          <button type="submit" class="corp-submit">Verify Identity &amp; Restore Access</button>
+        </form>
+        <div class="corp-note">&#128274; Enterprise MFA Protected &bull; ISO 27001 Certified</div>
       </div>
-    </div>`,
+    </div>
+    <div class="corp-footer">&copy; 2026 Business Inc. Global IT &amp; Information Security Systems.</div>
+  </div>
+</div>`,
 
-  'https://bankng-secure-verify.xyz/restore': `
-    <div class="fakesite fakesite-banking">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>bankng-secure-verify.xyz</code> misspells "banking" and uses a cheap <code>.xyz</code> domain! Real banks never use .xyz domains.</span>
-      </div>
-      <div class="fakesite-header bankng-header">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo">🔒 Secure Bank Online — Risk Management</div>
-          <div class="fakesite-subtag">Emergency Account Restoration Portal</div>
-        </div>
-      </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <span class="bankng-alert-badge">⚠️ SUSPENSION ORDER #BK-99214</span>
-            <h2 style="color:#b91c1c;">Account Access Frozen</h2>
-            <div class="bankng-timer-box">
-              <span>⏳</span> <strong>TIME REMAINING: 14:48</strong> until permanent fund closure.
-            </div>
+/* ─── 3. Microsoft phishing — matches the screenshot exactly ─── */
+'https://m1crosoft-account-verify.com/signin': `
+<style>
+  @keyframes ms-in   { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes ms-prog { 0%{width:0%}55%{width:80%}100%{width:100%} }
+  .ms-page { min-height:100%; display:flex; flex-direction:column; align-items:stretch;
+             background:linear-gradient(135deg,#f3d9d5 0%,#dce8f5 30%,#d5ecd5 60%,#f0e6d0 100%);
+             font-family:'Segoe UI',system-ui,Arial,sans-serif; }
+  .ms-main { flex:1; display:flex; flex-direction:column; align-items:center;
+             justify-content:center; padding:24px 16px; gap:10px; }
+  .ms-card { background:#fff; width:100%; max-width:460px; padding:44px 44px 36px;
+             box-sizing:border-box; box-shadow:0 2px 16px rgba(0,0,0,.12);
+             animation:ms-in .4s cubic-bezier(.34,1.56,.64,1) both; }
+  .ms-logo-row { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+  .ms-logo-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px; width:21px; height:21px; }
+  .ms-logo-grid span { border-radius:1px; display:block; }
+  .ms-brand { font-size:18px; font-weight:600; color:#1b1b1b; }
+  .ms-progress { height:2px; background:#e0e0e0; margin-bottom:24px; overflow:hidden; border-radius:2px; }
+  .ms-pb { height:100%; background:#0067b8; animation:ms-prog 2s ease-out forwards; border-radius:2px; }
+  .ms-warn { border:1px solid #ffb900; background:#fffbe6; border-radius:2px; padding:10px 12px;
+             font-size:12px; color:#7a4a00; margin-bottom:20px; }
+  .ms-card h1 { font-size:26px; font-weight:600; color:#1b1b1b; margin:0 0 20px 0; letter-spacing:-.3px; }
+  .ms-field { margin-bottom:8px; position:relative; }
+  .ms-field input { width:100%; padding:10px 0 8px; border:none; border-bottom:1.5px solid #999;
+                    font-size:15px; box-sizing:border-box; outline:none; background:transparent;
+                    color:#1b1b1b; font-family:inherit; }
+  .ms-field input:focus { border-bottom:2px solid #0067b8; }
+  .ms-field input::placeholder { color:#767676; font-size:14px; }
+  .ms-links { margin:18px 0 24px; }
+  .ms-links a { display:block; font-size:13px; color:#0067b8; text-decoration:none; margin-bottom:10px; }
+  .ms-links a:hover { text-decoration:underline; }
+  .ms-links p { font-size:13px; color:#1b1b1b; margin:0 0 6px; }
+  .ms-btn-row { display:flex; justify-content:flex-end; }
+  .ms-next { background:#0067b8; color:#fff; border:none; padding:8px 22px; font-size:15px;
+             cursor:pointer; font-family:inherit; min-width:108px; }
+  .ms-next:hover { background:#005a9e; }
+  .ms-options-card { background:#fff; width:100%; max-width:460px; padding:16px 22px;
+                     box-sizing:border-box; box-shadow:0 2px 10px rgba(0,0,0,.1);
+                     display:flex; align-items:center; gap:14px; cursor:pointer;
+                     font-size:14px; color:#1b1b1b; }
+  .ms-options-card:hover { background:#f3f3f3; }
+  .ms-key-icon { font-size:22px; opacity:.7; }
+  .ms-footer { display:flex; gap:20px; justify-content:flex-end; padding:14px 20px 16px;
+               font-size:12px; }
+  .ms-footer a { color:#0067b8; text-decoration:none; }
+  .ms-footer a:hover { text-decoration:underline; }
+</style>
+<div class="fakesite" style="background:linear-gradient(135deg,#f3d9d5 0%,#dce8f5 30%,#d5ecd5 60%,#f0e6d0 100%);">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>m1crosoft-account-verify.com</code> uses digit &ldquo;1&rdquo; not letter &ldquo;i&rdquo;! Real Microsoft = <code>microsoft.com</code>.</span>
+  </div>
+  <div class="ms-page">
+    <div class="ms-main">
+      <div class="ms-card">
+        <div class="ms-logo-row">
+          <div class="ms-logo-grid">
+            <span style="background:#f25022;"></span><span style="background:#7fba00;"></span>
+            <span style="background:#00a4ef;"></span><span style="background:#ffb900;"></span>
           </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('bankng-secure-verify.xyz', 'Bank Security Portal');">
-            <div class="fakesite-field">
-              <label for="bank-user">Online Banking User ID / Username</label>
-              <input type="text" id="bank-user" placeholder="Enter online banking ID" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="bank-acc">16-Digit Debit / Account Card Number</label>
-              <input type="text" id="bank-acc" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="bank-pin">ATM PIN / Security Password</label>
-              <input type="password" id="bank-pin" placeholder="Enter ATM PIN or Password" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="bank-ssn">Mother's Maiden Name (Identity Verification)</label>
-              <input type="text" id="bank-ssn" placeholder="Security answer" required autocomplete="off" />
-            </div>
-            <button type="submit" class="fakesite-submit bankng-submit">
-              RESTORE MY ACCOUNT IMMEDIATELY
-            </button>
-          </form>
-          <div class="fakesite-card-footer">
-            <p>Federal Deposit Insurance Protection • 256-Bit SSL Encrypted Verification</p>
-          </div>
+          <span class="ms-brand">Microsoft</span>
         </div>
+        <div class="ms-progress"><div class="ms-pb"></div></div>
+        <div class="ms-warn">&#9888; <strong>Unusual sign-in detected.</strong> Verify your credentials within 60 minutes to prevent lockout.</div>
+        <h1>Sign in</h1>
+        <form onsubmit="event.preventDefault(); handlePhishingSubmit('m1crosoft-account-verify.com','Microsoft 365');">
+          <div class="ms-field">
+            <input type="text" id="ms-email" placeholder="Email, phone, or Skype" required autocomplete="off" />
+          </div>
+          <div class="ms-field" style="margin-top:14px;">
+            <input type="password" id="ms-pwd" placeholder="Password" required autocomplete="off" />
+          </div>
+          <div class="ms-links">
+            <p>No account? <a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');">Create one!</a></p>
+            <a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');">Can&rsquo;t access your account?</a>
+          </div>
+          <div class="ms-btn-row">
+            <button type="submit" class="ms-next">Next</button>
+          </div>
+        </form>
       </div>
-      <div class="fakesite-footer">
-        <p>© 2026 Interbank Security Network. All rights reserved.</p>
+      <div class="ms-options-card" onclick="showToast('&#9888;&#65039; Fake link.','warning');">
+        <span class="ms-key-icon">&#128273;</span>
+        <span>Sign-in options</span>
       </div>
-    </div>`,
+    </div>
+    <div class="ms-footer">
+      <a href="#" onclick="event.preventDefault();">Terms of use</a>
+      <a href="#" onclick="event.preventDefault();">Privacy &amp; cookies</a>
+      <a href="#" onclick="event.preventDefault();">...</a>
+    </div>
+  </div>
+</div>`,
 
-  'https://business-it-support.com/compliance-portal': `
-    <div class="fakesite fakesite-it">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>business-it-support.com</code> is a spear-phishing domain! Official company portal is <code>business.com</code>.</span>
+/* --- 4. BPI phishing (via bankng-secure-verify.xyz) --- */
+'https://bankng-secure-verify.xyz/restore': `
+<style>
+  @keyframes bk-in    { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes bk-timer { 0%,100%{color:#fca5a5}50%{color:#ef4444;text-shadow:0 0 8px rgba(239,68,68,.8)} }
+  @keyframes bk-badge { 0%,100%{opacity:1}50%{opacity:.4} }
+  @keyframes bk-btn   { 0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)} }
+  .bk-page { min-height:100%; background:#f5f5f5; display:flex; flex-direction:column; font-family:Arial,sans-serif; }
+  .bk-alert { background:#b91c1c; padding:9px 24px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .bk-badge { background:#fef2f2; color:#b91c1c; font-size:10px; font-weight:900; padding:2px 10px; border-radius:20px; animation:bk-badge 1.5s ease-in-out infinite; white-space:nowrap; }
+  .bk-alert-text { color:#fff; font-size:12px; font-weight:700; flex:1; }
+  .bk-timer { background:rgba(0,0,0,.35); font-size:12px; font-weight:800; font-family:monospace; padding:3px 12px; border-radius:20px; white-space:nowrap; animation:bk-timer 1s ease-in-out infinite; }
+  .bk-body { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px; }
+  .bk-card { background:#fff; border-radius:4px; box-shadow:0 2px 16px rgba(0,0,0,.14); width:100%; max-width:400px; overflow:hidden; animation:bk-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+  .bk-card-hd { background:linear-gradient(90deg,#8a0011,#b3001b); padding:18px 22px; }
+  .bk-card-hd h2 { margin:0 0 3px; font-size:17px; color:#fff; }
+  .bk-card-hd p  { margin:0; font-size:11px; color:rgba(255,255,255,.75); }
+  .bk-card-bd { padding:20px 22px; }
+  .bk-ref { background:#f1f5f9; border-radius:6px; padding:10px 12px; font-size:11px; color:#475569; margin-bottom:14px; line-height:1.8; font-family:monospace; }
+  .bk-field { margin-bottom:13px; }
+  .bk-field label { display:block; font-size:12px; color:#374151; font-weight:700; margin-bottom:5px; }
+  .bk-field input { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:3px; font-size:14px; box-sizing:border-box; outline:none; }
+  .bk-field input:focus { border-color:#8a0011; box-shadow:0 0 0 2px rgba(138,0,17,.12); }
+  .bk-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:12px; }
+  .bk-submit { width:100%; background:linear-gradient(90deg,#8a0011,#b3001b); color:#fff; border:none; padding:12px; border-radius:3px; font-size:14px; font-weight:700; cursor:pointer; animation:bk-btn 2s ease-in-out infinite; }
+  .bk-submit:hover { background:linear-gradient(90deg,#6d000d,#8a0011); }
+  .bk-sec { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:12px; font-size:11px; color:#6b7280; }
+  .bk-footer { background:#1a1a1a; padding:14px 24px; text-align:center; font-size:11px; color:#9ca3af; }
+  .bk-footer a { color:#d4a0a0; text-decoration:none; margin:0 6px; }
+</style>
+<div class="fakesite" style="background:#f5f5f5;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>bankng-secure-verify.xyz</code> is NOT <code>bpi.com.ph</code> &mdash; misspelled domain &amp; fake <code>.xyz</code> TLD!</span>
+  </div>
+  <div class="bk-page">
+    <header style="background:linear-gradient(90deg,#8a0011,#b3001b);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(138,0,17,.4);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="background:#fff;color:#8a0011;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;">B</div>
+        <div><div style="color:#fff;font-size:20px;font-weight:900;letter-spacing:1px;">BPI Online</div><div style="color:rgba(255,255,255,.7);font-size:10px;letter-spacing:.5px;">BANK OF THE PHILIPPINE ISLANDS</div></div>
       </div>
-      <div class="fakesite-header it-header">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo">🛡️ IT Security Operations | Compliance Hub</div>
-          <div class="fakesite-subtag">Mandatory Employee Security Review (ISP-2024-07)</div>
-        </div>
-      </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <span class="it-policy-pill">POLICY ISP-2024-07</span>
-            <h2 style="margin-top:8px;">Annual IT Security Compliance Verification</h2>
-            <p>Mandatory certification for all corporate staff. Must be completed by Friday 5:00 PM to maintain VPN and workstation privileges.</p>
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('business-it-support.com', 'IT Security Operations');">
-            <div class="fakesite-field">
-              <label for="it-email">Corporate Work Email (@business.com)</label>
-              <input type="email" id="it-email" placeholder="name@business.com" required autocomplete="off" />
+      <nav style="display:flex;gap:16px;">
+        <a href="#" onclick="event.preventDefault();" style="color:rgba(255,255,255,.8);font-size:12px;text-decoration:none;">Personal</a>
+        <a href="#" onclick="event.preventDefault();" style="color:rgba(255,255,255,.8);font-size:12px;text-decoration:none;">Business</a>
+        <a href="#" onclick="event.preventDefault();" style="color:rgba(255,255,255,.8);font-size:12px;text-decoration:none;">Help</a>
+      </nav>
+    </header>
+    <div class="bk-alert">
+      <span class="bk-badge">&#9888; INCIDENT REF: BPI-SEC-2026-10-99214</span>
+      <span class="bk-alert-text">BPI Account SUSPENDED &mdash; Immediate verification required.</span>
+      <span class="bk-timer" id="bankng-countdown">14:59</span>
+    </div>
+    <div class="bk-body">
+      <div class="bk-card">
+        <div class="bk-card-hd"><h2>BPI Account Restoration Portal</h2><p>Emergency Identity Verification &mdash; BSP Supervised</p></div>
+        <div class="bk-card-bd">
+          <div class="bk-ref">Detected: Unauthorized access &mdash; Unrecognized device<br/>Location: Outside Philippines (IP flagged)<br/>Status: <strong style="color:#b91c1c;">ACCOUNT SUSPENDED</strong></div>
+          <form onsubmit="event.preventDefault(); handlePhishingSubmit('bankng-secure-verify.xyz','BPI Online');">
+            <div class="bk-field"><label for="bk-user">BPI Online Username / User ID</label><input type="text" id="bk-user" placeholder="Enter username" required autocomplete="off" /></div>
+            <div class="bk-field"><label for="bk-acc">16-Digit Account / Card Number</label><input type="text" id="bk-acc" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required autocomplete="off" /></div>
+            <div class="bk-field"><label for="bk-pin">ATM PIN / Internet Banking Password</label><input type="password" id="bk-pin" placeholder="Enter PIN or password" required autocomplete="off" /></div>
+            <div class="bk-field"><label for="bk-ssn">Mother's Maiden Name (Security Verification)</label><input type="text" id="bk-ssn" placeholder="Enter maiden name" required autocomplete="off" /></div>
+            <div class="bk-row">
+              <label style="display:flex;align-items:center;gap:6px;color:#374151;"><input type="checkbox" checked /> Stay logged in</label>
+              <a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');" style="color:#8a0011;text-decoration:none;">Forgot Password?</a>
             </div>
-            <div class="fakesite-field">
-              <label for="it-pwd">Active Directory / Domain Password</label>
-              <input type="password" id="it-pwd" placeholder="Enter corporate password" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="it-dept">Department / Division</label>
-              <input type="text" id="it-dept" placeholder="e.g. Sales, Operations, Finance" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="it-otp">Two-Factor Authentication (2FA) Code</label>
-              <input type="text" id="it-otp" placeholder="6-digit authenticator code" maxlength="6" autocomplete="off" />
-            </div>
-            <button type="submit" class="fakesite-submit" style="background:linear-gradient(90deg, #0369a1, #0284c7);">
-              Complete Security Compliance Verification
-            </button>
+            <button type="submit" class="bk-submit">Restore My BPI Account Now</button>
           </form>
-          <div class="fakesite-card-footer">
-            <p>Internal Security Audit System • Global Information Security Office</p>
-          </div>
+          <div class="bk-sec">&#128274; 256-bit SSL Encrypted &bull; BSP Regulated &bull; Verified Secure</div>
         </div>
       </div>
-      <div class="fakesite-footer">
-        <p>© 2026 Business Inc. Global IT &amp; Information Security Systems. All rights reserved.</p>
-      </div>
-    </div>`,
+    </div>
+    <div class="bk-footer"><div><a href="#" onclick="event.preventDefault();">Privacy Policy</a><a href="#" onclick="event.preventDefault();">Terms of Use</a><a href="#" onclick="event.preventDefault();">Security</a></div><div style="margin-top:5px;">&copy; 2026 Bank of the Philippine Islands. Regulated by the Bangko Sentral ng Pilipinas (BSP).</div></div>
+  </div>
+</div>
+<script>
+(function(){
+  var el=document.getElementById('bankng-countdown');
+  if(!el)return;
+  var s=14*60+59,iv=setInterval(function(){
+    s--;if(s<=0){clearInterval(iv);el.textContent='00:00';return;}
+    var m=Math.floor(s/60),sec=s%60;
+    el.textContent=(m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+  },1000);
+})();
+</script>`,
 
-  'https://bpi-online-security.com/login': `
-    <div class="fakesite fakesite-bpi">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>bpi-online-security.com</code> is a fake phishing website, NOT the authentic <code>bpi.com.ph</code>!</span>
-      </div>
-      <div class="fakesite-header" style="background:linear-gradient(90deg, #8a0011, #b3001b);">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo">🏦 BPI Online</div>
-          <div class="fakesite-subtag">Personal &amp; Corporate Banking</div>
+/* ─── 5. IT Compliance phishing ─────────────────────────── */
+'https://business-it-support.com/compliance-portal': `
+<style>
+  @keyframes it-in   { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes it-prog { 0%{width:5%}70%{width:90%}85%{width:75%}100%{width:100%} }
+  @keyframes it-pill { 0%,100%{background:#1e3a5f;color:#60a5fa}50%{background:#1d4ed8;color:#fff} }
+  @keyframes it-dead { 0%,100%{color:#dc2626}50%{color:#f87171} }
+  .it-page { min-height:100%; background:#f8fafc; display:flex; flex-direction:column;
+             font-family:'Segoe UI',Arial,sans-serif; }
+  .it-header { background:linear-gradient(90deg,#0f172a,#1e293b); padding:0 24px; height:56px;
+               display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #0369a1; }
+  .it-logo { color:#f1f5f9; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .it-logo-b { background:#0369a1; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; }
+  .it-sub { color:#94a3b8; font-size:11px; }
+  .it-body { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px; }
+  .it-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; width:100%;
+             max-width:460px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.07);
+             animation:it-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+  .it-card-top { background:linear-gradient(90deg,#0f172a,#1e293b); padding:18px 24px; }
+  .it-pill { animation:it-pill 2s ease-in-out infinite; padding:3px 12px; border-radius:20px;
+             font-size:10px; font-weight:800; letter-spacing:.8px; display:inline-block; margin-bottom:8px; }
+  .it-card-top h2 { color:#f1f5f9; font-size:17px; margin:0 0 3px 0; }
+  .it-card-top p  { color:#94a3b8; font-size:12px; margin:0; }
+  .it-bar { height:3px; background:#334155; overflow:hidden; }
+  .it-bar-fill { height:100%; background:linear-gradient(90deg,#0369a1,#0ea5e9); animation:it-prog 3s ease-in-out forwards; }
+  .it-card-body { padding:22px 24px; }
+  .it-dead { animation:it-dead 1s ease-in-out infinite; font-weight:700; }
+  .it-field { margin-bottom:13px; }
+  .it-field label { display:block; font-size:11px; color:#64748b; font-weight:600;
+                    text-transform:uppercase; letter-spacing:.4px; margin-bottom:5px; }
+  .it-field input { width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:6px;
+                    font-size:14px; color:#1e293b; box-sizing:border-box; outline:none; }
+  .it-field input:focus { border-color:#0369a1; box-shadow:0 0 0 3px rgba(3,105,161,.1); }
+  .it-submit { width:100%; background:linear-gradient(90deg,#0369a1,#0284c7); color:#fff;
+               border:none; padding:12px; border-radius:6px; font-size:14px; font-weight:700; cursor:pointer; }
+  .it-note { margin-top:12px; font-size:11px; color:#94a3b8; text-align:center; }
+  .it-footer { background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 24px;
+               text-align:center; font-size:11px; color:#94a3b8; }
+</style>
+<div class="fakesite" style="background:#f8fafc;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>business-it-support.com</code> is NOT <code>business.com</code> &mdash; spear-phishing domain!</span>
+  </div>
+  <div class="it-page">
+    <header class="it-header">
+      <div class="it-logo">&#128737;&#65039; Business Inc. &mdash; IT Security <span class="it-logo-b">COMPLIANCE</span></div>
+      <span class="it-sub">ISP-2024-07</span>
+    </header>
+    <div class="it-body">
+      <div class="it-card">
+        <div class="it-card-top">
+          <div class="it-pill">POLICY ISP-2024-07</div>
+          <h2>Annual Security Compliance Verification</h2>
+          <p>Complete by <span class="it-dead">Friday 5:00 PM</span> &mdash; or lose VPN &amp; workstation access.</p>
         </div>
-      </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <h2>Log In to BPI Online</h2>
-            <p>Security Alert: Confirm your account credentials to avoid immediate account restriction.</p>
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('bpi-online-security.com', 'BPI Online');">
-            <div class="fakesite-field">
-              <label for="bpi-user">Username or User ID</label>
-              <input type="text" id="bpi-user" placeholder="Enter username" required autocomplete="off" />
-            </div>
-            <div class="fakesite-field">
-              <label for="bpi-pass">Password</label>
-              <input type="password" id="bpi-pass" placeholder="Enter password" required autocomplete="off" />
-            </div>
-            <div class="fakesite-row">
-              <label class="fakesite-remember">
-                <input type="checkbox" checked /> Remember User ID
-              </label>
-              <a href="#" class="fakesite-link" onclick="event.preventDefault(); showToast('⚠️ Fake link: Phishing sites only harvest submitted passwords.', 'warning');">Forgot Password?</a>
-            </div>
-            <button type="submit" class="fakesite-submit" style="background:linear-gradient(90deg, #8a0011, #b3001b);">
-              Log In &amp; Verify Account
-            </button>
+        <div class="it-bar"><div class="it-bar-fill"></div></div>
+        <div class="it-card-body">
+          <form onsubmit="event.preventDefault(); handlePhishingSubmit('business-it-support.com','IT Security Operations');">
+            <div class="it-field"><label for="it-e">Corporate Email</label><input type="email" id="it-e" placeholder="name@business.com" required autocomplete="off" /></div>
+            <div class="it-field"><label for="it-p">Domain Password</label><input type="password" id="it-p" placeholder="Enter corporate password" required autocomplete="off" /></div>
+            <div class="it-field"><label for="it-d">Department</label><input type="text" id="it-d" placeholder="e.g. Sales, Operations" required autocomplete="off" /></div>
+            <div class="it-field"><label for="it-o">2FA Code</label><input type="text" id="it-o" placeholder="6-digit authenticator code" maxlength="6" autocomplete="off" /></div>
+            <button type="submit" class="it-submit">Complete Compliance Verification</button>
           </form>
-          <div class="fakesite-card-footer">
-            <p>Don't have an account? <a href="#" onclick="event.preventDefault(); showToast('⚠️ Fake link on phishing portal.', 'warning');">Register for BPI Online</a></p>
-          </div>
+          <div class="it-note">&#128274; Internal Security Audit System &bull; Global InfoSec Office</div>
         </div>
       </div>
-      <div class="fakesite-footer">
-        <p>© 2026 Bank of the Philippine Islands. Regulated by the Bangko Sentral ng Pilipinas.</p>
-      </div>
-    </div>`,
+    </div>
+    <div class="it-footer">&copy; 2026 Business Inc. Global IT &amp; Information Security Systems.</div>
+  </div>
+</div>`,
 
-  'https://paypal-account-check.com/login': `
-    <div class="fakesite fakesite-paypal">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>paypal-account-check.com</code> is a fake clone! Real PayPal is <code>paypal.com</code>.</span>
+/* ─── 6. BPI phishing ───────────────────────────────────── */
+'https://bpi-online-security.com/login': `
+<style>
+  @keyframes bpi-in  { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes bpi-btn { 0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)} }
+  .bpi-page { min-height:100%; background:#f5f5f5; display:flex; flex-direction:column;
+              font-family:Arial,sans-serif; }
+  .bpi-hdr { background:linear-gradient(90deg,#8a0011,#b3001b); padding:0 24px; height:64px;
+             display:flex; align-items:center; justify-content:space-between;
+             box-shadow:0 2px 12px rgba(138,0,17,.4); }
+  .bpi-logo { display:flex; align-items:center; gap:10px; }
+  .bpi-mark { background:#fff; color:#8a0011; width:38px; height:38px; border-radius:50%;
+              display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; }
+  .bpi-txt { color:#fff; }
+  .bpi-name { font-size:20px; font-weight:900; letter-spacing:1px; }
+  .bpi-sub  { font-size:10px; color:rgba(255,255,255,.7); letter-spacing:.5px; }
+  .bpi-nav { display:flex; gap:16px; }
+  .bpi-nav a { color:rgba(255,255,255,.8); font-size:12px; text-decoration:none; }
+  .bpi-alert { background:linear-gradient(90deg,#7a000e,#a30014); padding:9px 24px;
+               font-size:12px; color:rgba(255,255,255,.85); }
+  .bpi-body { flex:1; display:flex; align-items:center; justify-content:center; padding:28px 16px; }
+  .bpi-card { background:#fff; border-radius:4px; box-shadow:0 2px 16px rgba(0,0,0,.14);
+              width:100%; max-width:380px; overflow:hidden;
+              animation:bpi-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+  .bpi-card-hd { background:linear-gradient(90deg,#8a0011,#b3001b); padding:16px 22px; }
+  .bpi-card-hd h2 { margin:0 0 3px; font-size:16px; color:#fff; }
+  .bpi-card-hd p  { margin:0; font-size:11px; color:rgba(255,255,255,.7); }
+  .bpi-card-bd { padding:20px 22px; }
+  .bpi-warn { background:#fef2f2; border-left:4px solid #b91c1c; padding:10px 12px;
+              border-radius:0 4px 4px 0; font-size:12px; color:#7f1d1d; margin-bottom:14px; font-weight:600; }
+  .bpi-field { margin-bottom:13px; }
+  .bpi-field label { display:block; font-size:12px; color:#374151; font-weight:700; margin-bottom:5px; }
+  .bpi-field input { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:3px;
+                     font-size:14px; box-sizing:border-box; outline:none; }
+  .bpi-field input:focus { border-color:#8a0011; box-shadow:0 0 0 2px rgba(138,0,17,.12); }
+  .bpi-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:12px; }
+  .bpi-submit { width:100%; background:linear-gradient(90deg,#8a0011,#b3001b); color:#fff;
+                border:none; padding:12px; border-radius:3px; font-size:14px; font-weight:700;
+                cursor:pointer; animation:bpi-btn 2s ease-in-out infinite; }
+  .bpi-submit:hover { background:linear-gradient(90deg,#6d000d,#8a0011); }
+  .bpi-ftnote { margin-top:12px; text-align:center; font-size:11px; color:#6b7280; }
+  .bpi-footer { background:#1a1a1a; padding:14px 24px; text-align:center; font-size:11px; color:#9ca3af; }
+  .bpi-footer a { color:#d4a0a0; text-decoration:none; margin:0 6px; }
+</style>
+<div class="fakesite" style="background:#f5f5f5;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>bpi-online-security.com</code> is NOT <code>bpi.com.ph</code> &mdash; fake BPI phishing site!</span>
+  </div>
+  <div class="bpi-page">
+    <header class="bpi-hdr">
+      <div class="bpi-logo">
+        <div class="bpi-mark">B</div>
+        <div class="bpi-txt"><div class="bpi-name">BPI Online</div><div class="bpi-sub">BANK OF THE PHILIPPINE ISLANDS</div></div>
       </div>
-      <div class="fakesite-header" style="background:#ffffff;border-bottom:1px solid #e2e8f0;">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo" style="color:#003087;">🅿️ PayPal</div>
-          <div class="fakesite-subtag" style="color:#64748b;">Security &amp; Verification Center</div>
-        </div>
-      </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <h2 style="color:#003087;">Log in to your PayPal account</h2>
-            <p>We detected unauthorized activity. Please verify your credentials to restore wallet access.</p>
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('paypal-account-check.com', 'PayPal');">
-            <div class="fakesite-field">
-              <label for="paypal-email">Email address or mobile number</label>
-              <input type="text" id="paypal-email" placeholder="Email or mobile number" required autocomplete="off" />
+      <nav class="bpi-nav">
+        <a href="#" onclick="event.preventDefault();">Personal</a>
+        <a href="#" onclick="event.preventDefault();">Business</a>
+        <a href="#" onclick="event.preventDefault();">Help</a>
+      </nav>
+    </header>
+    <div class="bpi-alert">&#9888;&#65039; Security Alert: Unusual activity detected. Immediate verification required.</div>
+    <div class="bpi-body">
+      <div class="bpi-card">
+        <div class="bpi-card-hd"><h2>Log In to BPI Online</h2><p>Personal &amp; Corporate Banking</p></div>
+        <div class="bpi-card-bd">
+          <div class="bpi-warn">&#128274; Account temporarily restricted. Verify credentials to restore access.</div>
+          <form onsubmit="event.preventDefault(); handlePhishingSubmit('bpi-online-security.com','BPI Online');">
+            <div class="bpi-field"><label for="bpi-u">Username or User ID</label><input type="text" id="bpi-u" placeholder="Enter username" required autocomplete="off" /></div>
+            <div class="bpi-field"><label for="bpi-p">Password</label><input type="password" id="bpi-p" placeholder="Enter password" required autocomplete="off" /></div>
+            <div class="bpi-row">
+              <label style="display:flex;align-items:center;gap:6px;color:#374151;font-size:12px;"><input type="checkbox" checked /> Remember my User ID</label>
+              <a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');" style="color:#8a0011;text-decoration:none;font-size:12px;">Forgot Password?</a>
             </div>
-            <div class="fakesite-field">
-              <label for="paypal-pass">PayPal Password</label>
-              <input type="password" id="paypal-pass" placeholder="Password" required autocomplete="off" />
-            </div>
-            <div class="fakesite-row">
-              <label class="fakesite-remember">
-                <input type="checkbox" checked /> Stay logged in
-              </label>
-              <a href="#" class="fakesite-link" onclick="event.preventDefault(); showToast('⚠️ Fake link: Attackers only collect submitted credentials.', 'warning');">Having trouble logging in?</a>
-            </div>
-            <button type="submit" class="fakesite-submit" style="background:linear-gradient(90deg, #003087, #0070ba);">
-              Log In &amp; Restore Access
-            </button>
-            <div style="margin-top:14px;text-align:center;">
-              <button type="button" class="fakesite-secondary-btn" onclick="event.preventDefault(); showToast('⚠️ Fake link on phishing portal.', 'warning');">Sign Up</button>
-            </div>
+            <button type="submit" class="bpi-submit">Log In &amp; Verify Account</button>
           </form>
+          <div class="bpi-ftnote"><a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');" style="color:#8a0011;text-decoration:none;font-size:12px;">Register for BPI Online</a></div>
         </div>
       </div>
-      <div class="fakesite-footer">
-        <p>English | Español | Français | Contact Us | Privacy | Legal</p>
-        <p style="margin-top:4px;">Copyright © 1999–2026 PayPal. All rights reserved.</p>
-      </div>
-    </div>`,
+    </div>
+    <div class="bpi-footer">
+      <div><a href="#" onclick="event.preventDefault();">Privacy</a><a href="#" onclick="event.preventDefault();">Terms</a><a href="#" onclick="event.preventDefault();">Security</a></div>
+      <div style="margin-top:5px;">&copy; 2026 Bank of the Philippine Islands. Regulated by the Bangko Sentral ng Pilipinas (BSP).</div>
+    </div>
+  </div>
+</div>`,
 
-  'https://gcash-claim-rewards.com/verify': `
-    <div class="fakesite fakesite-gcash">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>gcash-claim-rewards.com</code> is an MPIN harvesting scam! Authentic GCash is <code>gcash.com</code>.</span>
+/* ─── 7. PayPal security check — same exact PayPal design ── */
+'https://paypal-account-check.com/login': `
+<style>
+  @keyframes pp2-warn { 0%,100%{border-color:#fca5a5;background:#fef2f2}50%{border-color:#ef4444;background:#fee2e2} }
+  .pp2-page { min-height:100%; background:#f5f7fa; display:flex; flex-direction:column;
+              align-items:center; justify-content:flex-start; padding:40px 16px 24px;
+              font-family:'Helvetica Neue',Arial,sans-serif; box-sizing:border-box; }
+  .pp2-card { background:#fff; border:1px solid #dde0e4; border-radius:6px; width:100%;
+              max-width:460px; padding:32px 40px 28px; box-sizing:border-box;
+              box-shadow:0 2px 10px rgba(0,0,0,.06); }
+  .pp2-logo { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:20px; }
+  .pp2-p-mark { width:34px; height:34px; }
+  .pp2-wordmark { font-size:26px; font-weight:700; color:#003087; font-family:'Arial Black',Arial,sans-serif; }
+  .pp2-wordmark span { color:#009cde; }
+  .pp2-warn { border:1.5px solid #fca5a5; border-radius:5px; padding:10px 14px; font-size:12px;
+              color:#7f1d1d; margin-bottom:18px; font-weight:600;
+              animation:pp2-warn 2s ease-in-out infinite; }
+  .pp2-field { margin-bottom:14px; }
+  .pp2-field input { width:100%; padding:12px 14px; border:1.5px solid #cbd0d8; border-radius:5px;
+                     font-size:15px; box-sizing:border-box; outline:none; color:#1c2127;
+                     font-family:inherit; transition:border-color .2s,box-shadow .2s; }
+  .pp2-field input:focus { border-color:#0070ba; box-shadow:0 0 0 2px rgba(0,112,186,.18); }
+  .pp2-field input.filled { background:#eef3fb; }
+  .pp2-btn { width:100%; background:#0070ba; color:#fff; border:none; border-radius:25px;
+             padding:14px; font-size:16px; font-weight:700; cursor:pointer;
+             font-family:inherit; margin-top:4px; }
+  .pp2-btn:hover { background:#005ea6; }
+  .pp2-trouble { display:block; text-align:center; color:#0070ba; font-size:13px;
+                 text-decoration:none; margin:14px 0; }
+  .pp2-trouble:hover { text-decoration:underline; }
+  .pp2-divider { display:flex; align-items:center; gap:10px; margin:6px 0 14px; }
+  .pp2-divider hr { flex:1; border:none; border-top:1px solid #dde0e4; }
+  .pp2-divider span { font-size:13px; color:#8a8a8a; }
+  .pp2-signup { width:100%; background:#f5f7fa; color:#2c2e2f; border:1.5px solid #cbd0d8;
+                border-radius:25px; padding:13px; font-size:15px; font-weight:700;
+                cursor:pointer; font-family:inherit; }
+  .pp2-footer { margin-top:20px; text-align:center; font-size:11px; color:#9da3ae; }
+  .pp2-footer a { color:#0070ba; text-decoration:none; }
+</style>
+<div class="fakesite" style="background:#f5f7fa;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>paypal-account-check.com</code> is NOT <code>paypal.com</code> &mdash; fake PayPal clone!</span>
+  </div>
+  <div class="pp2-page">
+    <div class="pp2-card">
+      <div class="pp2-logo">
+        <svg class="pp2-p-mark" viewBox="0 0 24 24" fill="none">
+          <path d="M7.5 21H4.5L7 6h5.5c2.5 0 4 1.2 4 3.5 0 3.5-2.5 5-5.5 5H9.5L7.5 21z" fill="#009cde"/>
+          <path d="M10 17H7L9.5 2h5.5c2.5 0 4 1.2 4 3.5 0 3.5-2.5 5-5.5 5H12L10 17z" fill="#003087"/>
+        </svg>
+        <span class="pp2-wordmark">Pay<span>Pal</span></span>
       </div>
-      <div class="fakesite-header" style="background:linear-gradient(90deg,#005cfc,#007dfc);">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo">📱 GCash</div>
-          <div class="fakesite-subtag">Rewards &amp; Cash Rebates</div>
+      <div class="pp2-warn">&#9888;&#65039; We detected unauthorized activity on your account. Verify credentials immediately to restore wallet access.</div>
+      <form onsubmit="event.preventDefault(); handlePhishingSubmit('paypal-account-check.com','PayPal');">
+        <div class="pp2-field">
+          <input type="text" id="pp2-email" placeholder="Email or mobile number" required autocomplete="off" />
         </div>
+        <div class="pp2-field">
+          <input type="password" id="pp2-pass" class="filled" placeholder="Password" required autocomplete="off" />
+        </div>
+        <button type="submit" class="pp2-btn">Log In</button>
+      </form>
+      <a href="#" class="pp2-trouble" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');">Having trouble logging in?</a>
+      <div class="pp2-divider"><hr /><span>or</span><hr /></div>
+      <button type="button" class="pp2-signup" onclick="showToast('&#9888;&#65039; Fake link.','warning');">Sign Up</button>
+    </div>
+    <div class="pp2-footer">
+      <a href="#" onclick="event.preventDefault();">Privacy</a> &nbsp;&bull;&nbsp;
+      <a href="#" onclick="event.preventDefault();">Legal</a> &nbsp;&bull;&nbsp;
+      <a href="#" onclick="event.preventDefault();">Contact</a><br/>
+      &copy; 1999&ndash;2026 PayPal, Inc. All rights reserved.
+    </div>
+  </div>
+</div>`,
+
+/* ─── 8. GCash phishing ─────────────────────────────────── */
+'https://gcash-claim-rewards.com/verify': `
+<style>
+  @keyframes gc-in     { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes gc-bounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)} }
+  @keyframes gc-otp    { 0%,100%{border-color:#005cfc}50%{border-color:#93c5fd;box-shadow:0 0 8px rgba(0,92,252,.35)} }
+  @keyframes gc-btn    { 0%{background-position:0%}100%{background-position:200%} }
+  .gc-page { min-height:100%; background:#f0f4ff; display:flex; flex-direction:column;
+             font-family:'Segoe UI',Arial,sans-serif; }
+  .gc-hdr { background:linear-gradient(135deg,#005cfc,#007dfc); padding:0 20px; height:60px;
+            display:flex; align-items:center; justify-content:space-between;
+            box-shadow:0 2px 12px rgba(0,92,252,.35); }
+  .gc-logo { display:flex; align-items:center; gap:10px; }
+  .gc-circle { background:#fff; width:36px; height:36px; border-radius:50%;
+               display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .gc-name { color:#fff; }
+  .gc-name .gn { font-size:22px; font-weight:900; letter-spacing:-.5px; }
+  .gc-name .gs { font-size:10px; color:rgba(255,255,255,.7); letter-spacing:.5px; }
+  .gc-nav { display:flex; gap:14px; }
+  .gc-nav a { color:rgba(255,255,255,.8); font-size:12px; text-decoration:none; }
+  .gc-body { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px; }
+  .gc-card { background:#fff; border-radius:16px; box-shadow:0 6px 24px rgba(0,92,252,.13);
+             width:100%; max-width:380px; overflow:hidden;
+             animation:gc-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+  .gc-card-hd { background:linear-gradient(135deg,#005cfc,#007dfc); padding:22px 22px; text-align:center; }
+  .gc-bounce { animation:gc-bounce 2s ease-in-out infinite; display:inline-block; font-size:24px; }
+  .gc-card-hd h2 { color:#fff; font-size:17px; margin:8px 0 4px 0; }
+  .gc-card-hd p  { color:rgba(255,255,255,.8); font-size:12px; margin:0; }
+  .gc-card-bd { padding:22px; }
+  .gc-field { margin-bottom:14px; }
+  .gc-field label { display:block; font-size:12px; color:#374151; font-weight:700; margin-bottom:6px; }
+  .gc-field input { width:100%; padding:11px 14px; border:2px solid #e5e7eb; border-radius:10px;
+                    font-size:14px; color:#1f2937; box-sizing:border-box; outline:none; }
+  .gc-field input:focus { border-color:#005cfc; box-shadow:0 0 0 3px rgba(0,92,252,.1); }
+  #gc-otp { animation:gc-otp 1.5s ease-in-out infinite; text-align:center; letter-spacing:6px; }
+  #gc-mpin { text-align:center; letter-spacing:8px; font-size:18px; }
+  .gc-phone-wrap { display:flex; }
+  .gc-prefix { background:#f3f4f6; border:2px solid #e5e7eb; border-right:none;
+               border-radius:10px 0 0 10px; padding:11px 12px; font-size:14px;
+               color:#374151; font-weight:700; }
+  .gc-phone-wrap input { border-radius:0 10px 10px 0; }
+  .gc-submit { width:100%; background:linear-gradient(90deg,#005cfc,#007dfc,#005cfc);
+               background-size:200%; color:#fff; border:none; padding:13px; border-radius:10px;
+               font-size:15px; font-weight:700; cursor:pointer; animation:gc-btn 2s linear infinite; }
+  .gc-trust { display:flex; align-items:center; justify-content:center; gap:6px;
+              margin-top:12px; font-size:11px; color:#9ca3af; }
+  .gc-footer { background:#fff; border-top:1px solid #e5e7eb; padding:12px 20px;
+               text-align:center; font-size:11px; color:#9ca3af; }
+</style>
+<div class="fakesite" style="background:#f0f4ff;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>gcash-claim-rewards.com</code> is a fake GCash MPIN harvesting scam! Real GCash = <code>gcash.com</code>.</span>
+  </div>
+  <div class="gc-page">
+    <header class="gc-hdr">
+      <div class="gc-logo">
+        <div class="gc-circle">&#128241;</div>
+        <div class="gc-name"><div class="gn">GCash</div><div class="gs">POWERED BY GLOBE FINTECH</div></div>
       </div>
-      <div class="fakesite-body">
-        <div class="fakesite-card">
-          <div class="fakesite-card-header">
-            <h2 style="color:#005cfc;">🎉 Claim Your ₱5,000 Cash Reward</h2>
-            <p>Special loyalty reward for verified GCash accounts. Enter details below to deposit directly into your wallet.</p>
-          </div>
-          <form onsubmit="event.preventDefault(); handlePhishingSubmit('gcash-claim-rewards.com', 'GCash');">
-            <div class="fakesite-field">
-              <label for="gcash-phone">Registered Mobile Number</label>
-              <div class="fakesite-phone-wrap">
-                <span class="fakesite-phone-prefix">+63</span>
-                <input type="tel" id="gcash-phone" placeholder="9XX XXX XXXX" maxlength="12" required autocomplete="off" />
+      <nav class="gc-nav">
+        <a href="#" onclick="event.preventDefault();">Help</a>
+        <a href="#" onclick="event.preventDefault();">About</a>
+      </nav>
+    </header>
+    <div class="gc-body">
+      <div class="gc-card">
+        <div class="gc-card-hd">
+          <div class="gc-bounce">&#127881;</div>
+          <h2>Claim Your &#8369;5,000 Cash Reward!</h2>
+          <p>Special loyalty reward for verified GCash users.</p>
+        </div>
+        <div class="gc-card-bd">
+          <form onsubmit="event.preventDefault(); handlePhishingSubmit('gcash-claim-rewards.com','GCash');">
+            <div class="gc-field">
+              <label for="gc-ph">Registered Mobile Number</label>
+              <div class="gc-phone-wrap">
+                <span class="gc-prefix">+63</span>
+                <input type="tel" id="gc-ph" placeholder="9XX XXX XXXX" maxlength="12" required autocomplete="off" />
               </div>
             </div>
-            <div class="fakesite-field">
-              <label for="gcash-mpin">4-Digit MPIN (Security Code)</label>
-              <input type="password" id="gcash-mpin" maxlength="4" placeholder="••••" required autocomplete="off" style="letter-spacing:6px;font-size:18px;text-align:center;" />
-            </div>
-            <div class="fakesite-field">
-              <label for="gcash-otp">One-Time PIN (OTP) from SMS</label>
-              <input type="password" id="gcash-otp" maxlength="6" placeholder="6-digit OTP" autocomplete="off" style="letter-spacing:4px;text-align:center;" />
-            </div>
-            <button type="submit" class="fakesite-submit" style="background:linear-gradient(90deg,#005cfc,#007dfc);">
-              Verify &amp; Claim ₱5,000 Reward
-            </button>
+            <div class="gc-field"><label for="gc-mpin">4-Digit MPIN</label>
+              <input type="password" id="gc-mpin" maxlength="4" placeholder="&bull;&bull;&bull;&bull;" required autocomplete="off" /></div>
+            <div class="gc-field"><label for="gc-otp">OTP from SMS</label>
+              <input type="password" id="gc-otp" placeholder="6-digit OTP" maxlength="6" autocomplete="off" /></div>
+            <button type="submit" class="gc-submit">Verify &amp; Claim &#8369;5,000 Reward</button>
           </form>
+          <div class="gc-trust">&#128274; BSP Regulated &bull; SSL Secured &bull; GCash Certified</div>
         </div>
       </div>
-      <div class="fakesite-footer">
-        <p>GCash is regulated by the Bangko Sentral ng Pilipinas (BSP).</p>
-      </div>
-    </div>`,
+    </div>
+    <div class="gc-footer">GCash is regulated by the Bangko Sentral ng Pilipinas (BSP). &copy; 2026 G-Xchange, Inc.</div>
+  </div>
+</div>`,
 
-  'https://northfield-scholarship.com/download/Scholarship_Grant_Form.pdf.exe': `
-    <div class="fakesite fakesite-corporate">
-      <div class="phish-sim-banner">
-        <span class="phish-banner-icon">🚨</span>
-        <span class="phish-banner-text">Look at the browser URL bar: <code>northfield-scholarship.com</code> is a fake phishing website attempting to distribute malware disguised as a PDF (.pdf.exe)!</span>
-      </div>
-      <div class="fakesite-header" style="background:#1e293b;">
-        <div class="fakesite-header-inner">
-          <div class="fakesite-logo" style="color:#38bdf8;">🎓 Northfield Scholarship Foundation (SIMULATED MALICIOUS DOMAIN)</div>
-          <div class="fakesite-subtag">Student Financial Assistance Portal</div>
-        </div>
-      </div>
-      <div class="fakesite-body" style="text-align:center;padding:48px 24px;">
-        <div class="fakesite-card" style="max-width:520px;margin:0 auto;">
-          <div style="font-size:42px;margin-bottom:12px;">⚠️</div>
-          <h2 style="color:#ef4444;font-size:20px;margin-bottom:12px;">High-Risk Download Blocked</h2>
-          <p style="color:#cbd5e1;line-height:1.6;margin-bottom:20px;font-size:14px;">
-            The file <code>Scholarship_Grant_Form.pdf.exe</code> contains a dangerous double extension. Attackers disguise executable files as PDF documents to deploy spyware, trojans, or ransomware.
-          </p>
-          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;text-align:left;font-size:12px;color:#94a3b8;line-height:1.8;">
-            <div><strong>Threat Classification:</strong> Malicious Executable (.EXE Trojan)</div>
+/* ─── 9. Northfield malware — LAST — with ads ───────────── */
+'https://northfield-scholarship.com/download/Scholarship_Grant_Form.pdf.exe': `
+${_NF_AD_STYLES}
+<style>
+  @keyframes nf-in   { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes nf-scan { 0%{width:0%}40%{width:60%}70%{width:85%}100%{width:100%} }
+  @keyframes nf-pulse{ 0%,100%{transform:scale(1)}50%{transform:scale(1.1);filter:drop-shadow(0 0 10px rgba(239,68,68,.8))} }
+  .nf-page { min-height:100%; background:#0f172a; display:flex; flex-direction:column;
+             font-family:'Segoe UI',Arial,sans-serif; }
+  .nf-hdr  { background:#1e293b; border-bottom:1px solid #334155; padding:0 24px; height:58px;
+             display:flex; align-items:center; }
+  .nf-logo { color:#38bdf8; font-size:15px; font-weight:800; }
+  .nf-mal-card { background:#1e293b; border:1px solid #334155; border-radius:10px;
+                 padding:28px; margin:0 auto; max-width:520px; width:100%;
+                 animation:nf-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+  .nf-icon { display:block; font-size:44px; text-align:center; margin-bottom:12px;
+             animation:nf-pulse 1.5s ease-in-out infinite; }
+  .nf-mal-card h2 { color:#ef4444; font-size:20px; margin:0 0 12px 0; text-align:center; }
+  .nf-mal-card p  { color:#cbd5e1; font-size:14px; line-height:1.7; text-align:center; margin:0 0 10px 0; }
+  .nf-bar  { height:4px; background:#334155; border-radius:2px; margin:14px 0; overflow:hidden; }
+  .nf-bar-fill { height:100%; background:linear-gradient(90deg,#ef4444,#f97316); animation:nf-scan 2.5s ease-out forwards; border-radius:2px; }
+  .nf-scan-lbl { color:#94a3b8; font-size:12px; text-align:center; margin-bottom:14px; }
+  .nf-det { background:#0f172a; border:1px solid #334155; border-radius:8px; padding:14px 16px;
+            font-size:12px; color:#94a3b8; line-height:1.9; }
+  .nf-footer { background:#0a0f1a; border-top:1px solid #1e293b; padding:12px 24px;
+               text-align:center; font-size:11px; color:#475569; }
+</style>
+<div class="fakesite" style="background:#0f172a;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text">URL <code>northfield-scholarship.com</code> is distributing malware disguised as a PDF (.pdf.exe)!</span>
+  </div>
+  <div class="nf-page">
+    <header class="nf-hdr">
+      <div class="nf-logo">&#127891; Northfield Scholarship Foundation <span style="font-size:10px;font-weight:400;color:#64748b;">(SIMULATED MALICIOUS DOMAIN)</span></div>
+    </header>
+    <div class="nf-page-wrap">
+      ${_NF_SIDEBAR}
+      <div class="nf-main-col" style="padding-top:16px;">
+        <div class="nf-mal-card">
+          <span class="nf-icon">&#9888;&#65039;</span>
+          <h2>High-Risk Download Blocked</h2>
+          <p>The file <code>Scholarship_Grant_Form.pdf.exe</code> contains a dangerous double extension. Attackers disguise executables as PDFs to install spyware, trojans, or ransomware.</p>
+          <div class="nf-bar"><div class="nf-bar-fill"></div></div>
+          <div class="nf-scan-lbl">Scanning threat signature database...</div>
+          <div class="nf-det">
+            <div><strong>Threat:</strong> Malicious Executable (.EXE Trojan)</div>
             <div><strong>Sender Domain:</strong> northfield-scholarship.com (Spoofed)</div>
-            <div><strong>Official School Domain:</strong> northfield.edu.ph</div>
-            <div><strong>Action:</strong> Flagged as suspicious evidence in CyberZerØ Sandbox.</div>
+            <div><strong>Legit Domain:</strong> northfield.edu.ph</div>
+            <div><strong>Action:</strong> Flagged in CyberZer&#216; Sandbox.</div>
           </div>
         </div>
       </div>
-      <div class="fakesite-footer">
-        <p>CyberZerØ Threat Intelligence Simulation • Northfield High School Security Lab</p>
-      </div>
-    </div>`
+    </div>
+    <div class="nf-footer">CyberZer&#216; Threat Intelligence Simulation &bull; Northfield High School Security Lab</div>
+  </div>
+</div>
+${_NF_POPUP}`
+
 };
 
-// The browser's default "home" page — a mock Google search homepage
+// Browser home page
 var BROWSER_HOME_HTML = `
   <div class="browser-home">
     <div class="google-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
     <div class="google-search-box">
-      <span class="google-search-icon">🔍</span>
+      <span class="google-search-icon">&#128269;</span>
       <input type="text" id="browser-home-search" class="google-search-input" placeholder="Search Google or type a URL" autocomplete="off" spellcheck="false" onkeydown="handleHomeSearchKey(event)" oninput="handleHomeSearchInput(this)" />
-      <button type="button" class="google-search-clear" id="browser-home-search-clear" style="display:none;" onclick="clearHomeSearch()" title="Clear">✕</button>
+      <button type="button" class="google-search-clear" id="browser-home-search-clear" style="display:none;" onclick="clearHomeSearch()" title="Clear">&#10005;</button>
     </div>
     <div class="google-search-actions">
       <button class="google-btn" onclick="submitHomeSearch()">Google Search</button>

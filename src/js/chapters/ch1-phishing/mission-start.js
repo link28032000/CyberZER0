@@ -32,7 +32,8 @@ function startMission(openGmail = false) {
     tbNotesInit.classList.remove('btn-pulse-highlight');
   }
   window._stickyNotesHighlightDismissed = false;
-  window._phoneLinkHighlightDismissed = false;
+  window._phoneLinkHighlightDismissed = true;
+  if (typeof unhighlightPhoneLinkApp === 'function') unhighlightPhoneLinkApp();
   window._ryanFirstEmailSpoken = false;
 
   // ── Clear any saved pretest result so it always runs fresh ──
@@ -96,7 +97,7 @@ function startMission(openGmail = false) {
         { text: "Before we dive in, I'd like to know where you're starting from. That way I can guide you at a pace that feels right for you.", state: 'speaking' },
         { text: "So I've put together a short pre-test: twenty quick questions about staying safe online.", state: 'thinking' },
         { text: "There's no pass or fail, and nobody is judging you. If you're not sure about one, just pick your best guess. Honest answers help me the most.", state: 'speaking' },
-        { text: "Take your time and breathe. Whenever you're ready, let's begin!", state: 'success', label: 'TAP TO BEGIN' }
+        { text: "Take your time and breathe. Whenever you're ready, let's begin!", state: 'success', label: "Let's Begin" }
       ];
 
       // What Ryan says right after the result screen, by score tier

@@ -62,6 +62,7 @@ const IconAttention = (() => {
   }
 
   function show(appName) {
+    if (appName === 'comms' || appName === 'icon-comms') return; // Phone link glowing notice is removed
     const icon = _getIcon(appName);
     if (!icon) return;
     icon.classList.remove('icon-attention', 'icon-attention-dismiss');

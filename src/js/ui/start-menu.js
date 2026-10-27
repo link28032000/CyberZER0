@@ -36,6 +36,13 @@ function toggleStartMenu(event) {
       startAvatar.src = currentChar.img;
       startAvatar.alt = currentChar.name;
     }
+
+    if (window._awaitingShutdownForChapter2 && typeof window.updateShutdownGuideStep === 'function') {
+      window.updateShutdownGuideStep(2);
+      if (typeof showToast === 'function') {
+        showToast('👉 Click Power & Terminal Controls (⏻) in the Start Menu', 'info');
+      }
+    }
   } else {
     closeStartMenu();
   }
@@ -50,7 +57,12 @@ function closeStartMenu(event) {
 
   const pMenu = document.getElementById('start-power-dropdown');
   if (pMenu) pMenu.classList.add('hidden');
+
+  if (window._awaitingShutdownForChapter2 && typeof window.updateShutdownGuideStep === 'function') {
+    window.updateShutdownGuideStep(1);
+  }
 }
+
 
 function filterStartMenuApps(query) {
   const q = query.toLowerCase().trim();
@@ -105,8 +117,21 @@ function startMenuFileClick(fileType) {
 function togglePowerMenu(event) {
   if (event) event.stopPropagation();
   const pMenu = document.getElementById('start-power-dropdown');
-  if (pMenu) pMenu.classList.toggle('hidden');
+  if (pMenu) {
+    pMenu.classList.toggle('hidden');
+    if (window._awaitingShutdownForChapter2 && typeof window.updateShutdownGuideStep === 'function') {
+      if (!pMenu.classList.contains('hidden')) {
+        window.updateShutdownGuideStep(3);
+        if (typeof showToast === 'function') {
+          showToast("👉 Click 'Shutdown (Save)' to save completion and unlock Chapter 2!", 'info');
+        }
+      } else {
+        window.updateShutdownGuideStep(2);
+      }
+    }
+  }
 }
+
 
 let pausedLockInterval = null;
 
@@ -198,12 +223,29 @@ function shutdownGame() {
   const noteEl  = document.getElementById('shutdown-loading-note-text');
   const noteWrap = document.getElementById('shutdown-loading-note-wrap');
 
+  const wasAwaitingCh2 = !!window._awaitingShutdownForChapter2;
+
+  // Dismiss and remove logoff HUD notice
+  const dsn = document.getElementById('desktop-shutdown-notice');
+  if (dsn) dsn.remove();
+
+  // Complete Category 1 (phishing) and unlock Category 2 (malware)
+  if (typeof completeCategory === 'function') {
+    completeCategory('phishing', 100, 'S');
+  } else if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
+    CATEGORIES[0].completed = true;
+    CATEGORIES[1].unlocked = true;
+    if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
+    if (typeof refreshStorySelectLocks === 'function') refreshStorySelectLocks();
+  }
+
   // Dismiss and reset Ryan guide immediately — it will restart fresh for Chapter 1
   if (typeof RyanGuide !== 'undefined') {
     RyanGuide.reset();
   }
 
-  // Reset chapter tracking so Ryan fires fresh next time Chapter 1 is loaded
+  // Set pending chapter for story selection
+  window._pendingStoryChapter = 'malware';
   window._currentChapterCategory = null;
   window._currentChapterCharacter = null;
 
@@ -235,7 +277,7 @@ function shutdownGame() {
   }
 
   // Close open app windows
-  ['gmail', 'browser', 'folder', 'antivirus'].forEach(a => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms'].forEach(a => {
     if (typeof appState !== 'undefined' && appState[a]) {
       appState[a].open = false;
       appState[a].minimized = false;
@@ -258,22 +300,35 @@ function shutdownGame() {
       desktop.style.visibility = 'hidden';
       desktop.style.opacity = '0';
     }
-    showMainMenu();
+    if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
+      window._awaitingShutdownForChapter2 = false;
+      if (typeof showStorySelectionScreen === 'function') {
+        showStorySelectionScreen('malware');
+      } else {
+        showMainMenu();
+      }
+    } else {
+      showMainMenu();
+    }
     return;
   }
 
   // Shutdown-specific awareness tips
-  const SHUTDOWN_NOTES = [
-    'Saving your progress and securing all open files…',
-    'Tip: Always log out of shared computers to protect your accounts.',
-    'Tip: Never leave your workstation unlocked — even for a moment.',
-    'Tip: Clearing your browser history and cache protects your privacy.',
-    'Tip: Strong passwords use 12+ characters with letters, numbers, and symbols.',
-    'Shutting down terminal… Returning to Main Menu.'
-  ];
+  if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
+    if (noteEl) noteEl.textContent = 'Saving task completion… Returning to Story Selection for Chapter 2!';
+  } else {
+    const SHUTDOWN_NOTES = [
+      'Saving your progress and securing all open files…',
+      'Tip: Always log out of shared computers to protect your accounts.',
+      'Tip: Never leave your workstation unlocked — even for a moment.',
+      'Tip: Clearing your browser history and cache protects your privacy.',
+      'Tip: Strong passwords use 12+ characters with letters, numbers, and symbols.',
+      'Shutting down terminal… Returning to Main Menu.'
+    ];
 
-  const selected = SHUTDOWN_NOTES[Math.floor(Math.random() * SHUTDOWN_NOTES.length)];
-  if (noteEl) noteEl.textContent = selected;
+    const selected = SHUTDOWN_NOTES[Math.floor(Math.random() * SHUTDOWN_NOTES.length)];
+    if (noteEl) noteEl.textContent = selected;
+  }
 
   // Play power-off descending tones
   _playLoadingBeep(320, 0.12, 0);
@@ -294,13 +349,17 @@ function shutdownGame() {
     if (noteWrap && noteEl) {
       noteWrap.classList.add('transitioning');
       setTimeout(() => {
-        noteEl.textContent = 'Shutting down CyberZerØ terminal… Returning to Main Menu.';
+        if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
+          noteEl.textContent = 'Workstation secured! Transitioning to Chapter 2: The Digital Trap…';
+        } else {
+          noteEl.textContent = 'Shutting down CyberZerØ terminal… Returning to Main Menu.';
+        }
         noteWrap.classList.remove('transitioning');
       }, 300);
     }
   }, 1600);
 
-  // After duration: smooth fade out of shutdown screen directly to Main Menu
+  // After duration: smooth fade out of shutdown screen directly to Story Selection or Main Menu
   setTimeout(() => {
     clearTimeout(midTimer);
 
@@ -310,9 +369,6 @@ function shutdownGame() {
       desktop.style.opacity = '0';
     }
 
-    // Ensure Main Menu is active and ready underneath
-    showMainMenu();
-
     // Fade overlay out
     sd.classList.add('sd-leaving');
 
@@ -321,5 +377,18 @@ function shutdownGame() {
       sd.classList.remove('sd-active', 'sd-leaving');
     }, 800);
 
+    // Transition to Story Selection screen to open Chapter 2!
+    if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
+      window._awaitingShutdownForChapter2 = false;
+      if (typeof showStorySelectionScreen === 'function') {
+        showStorySelectionScreen('malware');
+      } else {
+        showMainMenu();
+      }
+    } else {
+      showMainMenu();
+    }
+
   }, SHUTDOWN_DURATION);
 }
+

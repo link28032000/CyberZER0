@@ -255,7 +255,7 @@ function openSentOrTrashEmail(id, folder) {
     </div>
     <div class="email-meta-row">
       <span class="email-meta-label">DATE</span>
-      <span class="email-meta-value" style="color:var(--text-muted)">${email.time}</span>
+      <span class="email-meta-value" style="color:var(--text-muted)">${email.date ? email.date + ' \u2022 ' + email.time : email.time}</span>
     </div>`;
   content.appendChild(header);
 
@@ -518,7 +518,7 @@ function renderEmailContent(email) {
     </div>
     <div class="email-meta-row">
       <span class="email-meta-label">DATE</span>
-      <span class="email-meta-value" style="color:var(--text-muted)">${email.time}</span>
+      <span class="email-meta-value" style="color:var(--text-muted)">${email.date ? email.date + ' \u2022 ' + email.time : email.time}</span>
     </div>`;
   content.appendChild(header);
 
@@ -565,7 +565,7 @@ function renderEmailContent(email) {
       link.dataset.flagText = part.destination;
       link.dataset.destination = part.destination;
       link.textContent = part.text;
-      link.title = 'Click to open in safe browser (or turn on Flag Evidence to flag)';
+      link.title = 'Double-click to open in Browser (or turn on 🚩 Flag Evidence to flag)';
       link.setAttribute('onclick', 'handleEmailLinkClick(event, this)');
       link.setAttribute('ondblclick', 'handleEmailLinkDblClick(event, this)');
       link.setAttribute('oncontextmenu', 'handleEmailLinkRightClick(event, this)');
@@ -574,7 +574,7 @@ function renderEmailContent(email) {
       // Hint label below the link
       const hint = document.createElement('div');
       hint.className = 'email-link-dblclick-hint';
-      hint.textContent = '🌐 Click to open in browser';
+      hint.textContent = '🌐 Double-click to open in Browser';
       actionsRow.appendChild(hint);
 
       wrap.appendChild(actionsRow);

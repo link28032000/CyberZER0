@@ -105,7 +105,8 @@ const PhishTutorial = (() => {
         const rBtn = document.getElementById('report-btn');
         const lBtn = document.getElementById('legit-btn');
         if (rBtn) rBtn.classList.add('btn-pulse-highlight');
-        if (lBtn) lBtn.classList.add('btn-pulse-highlight');
+        // Email 1 tutorial: only highlight the Phishing button — keep Non-Phishing dark
+        if (lBtn) lBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
 
         // Show Ryan's final instruction through his existing dialogue interface.
         // The Phishing / Non-phishing buttons are NOT placed inside the dialogue box.
@@ -231,8 +232,9 @@ const PhishTutorial = (() => {
   /**
    * updateVerdictBtnHighlight — called by placeFlag / removeFlag.
    * Email 1 (tutorial): buttons glow only after ALL 3 evidence flags.
-   * All other emails:   buttons glow as soon as ANY flag exists,
-   *                     and dim again if all flags are removed.
+   * First email (email 1): ONLY the Phishing button glows, and only after ALL 3
+   *                        required evidence flags are placed. Non-phishing button never glows.
+   * Other emails (email 2+): NO glowing effects at all, even if evidence is flagged.
    */
   function updateVerdictBtnHighlight() {
     const rBtn = document.getElementById('report-btn');
@@ -240,26 +242,30 @@ const PhishTutorial = (() => {
     if (!rBtn || !lBtn) return;
 
     const currentEmailObj = (ch1InboxEmails && ch1InboxEmails[gameState.currentEmail]) || (EMAILS && EMAILS[gameState.currentEmail]);
-    const isEmail1 = (gameState.currentEmail === 0 || (currentEmailObj && currentEmailObj.id === 1));
-    const flags = gameState.currentEmailFlags || [];
-    const flagCount = flags.length;
-    const EMAIL1_REQUIRED = 3; // all 3 evidence must be flagged on email 1
+    const isEmail1 = Boolean(currentEmailObj && currentEmailObj.id === 1) || (gameState.currentEmail === 0 && (!gameState.emailResults || gameState.emailResults.length === 0));
+    const firstEmailCompleted = Boolean(gameState.emailResults && gameState.emailResults.some(r => r.emailId === 1));
 
-    // Email 1 tutorial: glow only after ALL 3 flags.
-    // Email 2+: glow as soon as 1 flag is placed (first email already completed).
-    const firstEmailCompleted = Boolean(gameState.emailResults && gameState.emailResults.length >= 1);
-    let shouldGlow = false;
-    if (isEmail1 && !firstEmailCompleted) {
-      // Strict tutorial mode on email 1: need all 3 evidence flags
-      shouldGlow = (flagCount >= EMAIL1_REQUIRED);
-    } else {
-      // After first email done: 1 flag is enough to enable phishing verdict glow
-      shouldGlow = (flagCount >= 1);
+    // Other emails: NO glowing effects even if you flagged any evidence.
+    // Also remove glow if first email is already completed.
+    if (!isEmail1 || firstEmailCompleted) {
+      rBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
+      lBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
+      return;
     }
 
-    if (shouldGlow) {
-      rBtn.classList.add('btn-pulse-highlight');
-      lBtn.classList.add('btn-pulse-highlight');
+    const flags = gameState.currentEmailFlags || [];
+    const EMAIL1_REQUIRED = 3; // all 3 evidence must be flagged on email 1
+
+    // Email 1 only: glow ONLY after ALL 3 flags are placed
+    const flaggedTypes = flags.map(f => f.type);
+    const allFound = (currentEmailObj && currentEmailObj.evidence && currentEmailObj.evidence.length > 0)
+      ? currentEmailObj.evidence.every(ev => flaggedTypes.includes(ev))
+      : (flags.length >= EMAIL1_REQUIRED);
+
+    if (allFound) {
+      rBtn.classList.add('btn-pulse-highlight', 'verdict-btn-highlight');
+      // Email 1: guide player to Phishing — keep Non-Phishing button dark
+      lBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
     } else {
       rBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
       lBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');

@@ -4,6 +4,172 @@
 // STICKY NOTE — Scoring Reminder
 // ═══════════════════════════════════════════════════════════
 
+// ── Post-Award Mission Checklist Tracking ──────────────────
+window._awardClaimed        = false;
+window._postAwardTasks      = {
+  browserOpened:    false,  // opened browser
+  phishingSearched: false,  // searched phishing in browser
+  phishingVisited:  false,  // visited a phishing site in browser
+  explorerOpened:   false,  // opened File Explorer
+  videoFolderOpen:  false,  // navigated to Videos folder
+  videoPlayed:      false,  // played a video
+  postTestDone:     false   // completed post-test
+};
+
+// Quick launcher from Sticky Notes tasks
+window.quickOpenChecklistTask = function(taskId) {
+  if (taskId === 'browser') {
+    if (typeof openApp === 'function') openApp('browser');
+    if (typeof focusWindow === 'function') focusWindow('browser');
+    if (typeof showToast === 'function') {
+      showToast('🌐 Browser opened! Search "phishing" to complete this checklist task.', 'info');
+    }
+  } else if (taskId === 'explorer') {
+    if (typeof openApp === 'function') {
+      openApp('folder');
+      if (typeof switchExplorerFolder === 'function') {
+        switchExplorerFolder('videos');
+      }
+      if (typeof focusWindow === 'function') focusWindow('folder');
+    }
+    if (typeof showToast === 'function') {
+      showToast('📁 Videos folder opened! Click cyber_awareness_clip.mp4 to watch.', 'info');
+    }
+  }
+};
+
+// Called by openApp wrapper
+window._notifyPostAwardAppOpen = function(appName) {
+  if (!window._awardClaimed) return;
+  const t = window._postAwardTasks;
+  if (appName === 'browser')    { t.browserOpened = true; }
+  if (appName === 'folder')     { t.explorerOpened = true; }
+  if (appName === 'videoplayer'){ t.videoPlayed = true; }
+  _refreshPostAwardChecklist();
+};
+
+// Called by navigateBrowser wrapper
+window._notifyPostAwardBrowserNav = function(url) {
+  if (!window._awardClaimed) return;
+  const t = window._postAwardTasks;
+  t.browserOpened = true;
+  const lower = (url || '').toLowerCase();
+  if (lower.includes('phish') || (typeof getPhishingSiteForUrl === 'function' && getPhishingSiteForUrl(url))) {
+    t.phishingSearched = true;
+    t.phishingVisited  = true;
+  }
+  _refreshPostAwardChecklist();
+};
+
+// Called by switchExplorerFolder wrapper
+window._notifyPostAwardFolderSwitch = function(folderId) {
+  if (!window._awardClaimed) return;
+  const t = window._postAwardTasks;
+  t.explorerOpened = true;
+  if ((folderId || '').toLowerCase().includes('video')) {
+    t.videoFolderOpen = true;
+  }
+  _refreshPostAwardChecklist();
+};
+
+// Called when video plays
+window._notifyPostAwardVideoPlay = function() {
+  if (!window._awardClaimed) return;
+  window._postAwardTasks.videoPlayed = true;
+  _refreshPostAwardChecklist();
+};
+
+// Check if all post-award checklist tasks are complete (Browser & File Explorer Video)
+function _allChecklistTasksDone() {
+  const t = window._postAwardTasks;
+  if (!t) return false;
+  const browserDone = !!(t.phishingSearched || t.phishingVisited);
+  const videoDone   = !!t.videoPlayed;
+  return !!(browserDone && videoDone);
+}
+
+function _refreshPostAwardChecklist() {
+  const section = document.getElementById('sn-post-award-checklist');
+  if (!section) return;
+  section.innerHTML = _buildPostAwardChecklistHTML();
+}
+
+function _buildPostAwardChecklistHTML() {
+  const t = window._postAwardTasks;
+  const postDone = typeof RyanPosttest !== 'undefined' && RyanPosttest.getResult && RyanPosttest.getResult();
+  t.postTestDone = !!postDone;
+
+  const browserDone = !!(t.phishingSearched || t.phishingVisited);
+  const videoDone   = !!t.videoPlayed;
+
+  const tasks = [
+    {
+      id: 'browser',
+      icon: '🌐',
+      label: 'Open Browser &amp; Search Phishing',
+      desc: 'Open the Browser and search <strong>"phishing"</strong> on Google to learn about deceptive threat indicators.',
+      done: browserDone
+    },
+    {
+      id: 'explorer',
+      icon: '📁',
+      label: 'Open File Explorer &amp; Watch Phishing Short Video',
+      desc: 'Open File Explorer, go to the <strong>Videos</strong> folder, and watch the short video about phishing (<code>cyber_awareness_clip.mp4</code>).',
+      done: videoDone
+    }
+  ];
+
+  const doneCount = tasks.filter(task => task.done).length;
+  const pct = Math.round((doneCount / tasks.length) * 100);
+  const allDone = doneCount === tasks.length;
+
+  let html = `
+    <div class="sn-progress-card">
+      <div class="sn-progress-header">
+        <span class="sn-progress-title">&#128203; Mission Checklist</span>
+        <span class="sn-progress-count">${doneCount} of ${tasks.length} Done</span>
+      </div>
+      <div class="sn-progress-bar-track">
+        <div class="sn-progress-bar-fill" style="width:${pct}%;"></div>
+      </div>
+    </div>
+    <ul class="sn-checklist">`;
+
+  tasks.forEach(function(task) {
+    html += `
+      <li class="sn-ach-item${task.done ? ' sn-ach-done' : ''}" onclick="quickOpenChecklistTask('${task.id}')" title="Click to open ${task.id === 'browser' ? 'Browser' : 'File Explorer'}" style="cursor:pointer;">
+        <div class="sn-checkbox${task.done ? ' checked' : ''}" aria-hidden="true">${task.done ? '&#10003;' : ''}</div>
+        <div class="sn-ach-body">
+          <div class="sn-ach-header-row">
+            <span class="sn-ach-label">${task.icon} ${task.label}</span>
+            <span class="sn-ach-prog-badge${task.done ? ' done' : ''}">${task.done ? '&#10003; Done' : 'Pending'}</span>
+          </div>
+          <div class="sn-ach-desc">${task.desc}</div>
+        </div>
+      </li>`;
+  });
+
+  html += '</ul>';
+
+  if (allDone) {
+    html += `
+      <div style="margin-top:12px;padding:12px 10px;background:rgba(16,185,129,.12);border-radius:10px;border:1.5px solid rgba(16,185,129,.35);text-align:center;">
+        <div style="font-size:12.5px;color:#065f46;font-weight:800;margin-bottom:6px;">&#127881; Checklist Complete! All tasks followed!</div>
+        <div style="font-size:11.5px;color:#047857;margin-bottom:10px;">Ready to test your knowledge in the post-investigation evaluation.</div>
+        <button type="button" onclick="startPostTestFromSticky(event)" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 12px rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span>&#128221; Begin Post-Test (20 Questions)</span><span>&#10145;</span>
+        </button>
+      </div>`;
+  } else {
+    html += `
+      <div style="margin-top:10px;padding:8px 10px;background:rgba(245,158,11,.08);border-radius:8px;border:1px solid rgba(245,158,11,.25);text-align:center;font-size:11.5px;color:#92400e;line-height:1.5;">
+        &#128203; <strong>Guide:</strong> Complete both tasks above to continue to the Post-Test. Click a task to open the app!
+      </div>`;
+  }
+
+  return html;
+}
+
 function showStickyNote() {
   const note = document.getElementById('sticky-note');
   const icon = document.getElementById('icon-notes');
@@ -295,6 +461,8 @@ function savePhishingProgress() {
       unlockedAchievements: Array.from(_achievementUnlocked),
       trophyUnlocked: isTrophyUnlocked,
       earnedAward: _phishingEarnedAward,
+      awardClaimed: !!window._awardClaimed,
+      postAwardTasks: window._postAwardTasks || {},
       unlockedDate: _trophyUnlockedDate || (_phishingEarnedAward ? _phishingEarnedAward.unlockedDate : (isTrophyUnlocked ? new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : null))
     };
     localStorage.setItem('cyberzero_phishing_progress', JSON.stringify(data));
@@ -311,6 +479,12 @@ function loadPhishingProgress() {
       }
       if (data.earnedAward) {
         _phishingEarnedAward = data.earnedAward;
+      }
+      if (data.awardClaimed) {
+        window._awardClaimed = true;
+      }
+      if (data.postAwardTasks) {
+        window._postAwardTasks = Object.assign(window._postAwardTasks || {}, data.postAwardTasks);
       }
       if (data.trophyUnlocked) {
         _achievementUnlocked.add('task_all_complete');
@@ -450,30 +624,28 @@ function showPhishingAchievementModal(customAward, customCount) {
   document.body.appendChild(modal);
 
   const confettiEl = modal.querySelector('#ptm-confetti');
-  const palette = tier === 'trophy'
-    ? ['#ffd700', '#facc15', '#f59e0b', '#ffffff', '#fbbf24', '#f43f5e', '#10b981']
-    : tier === 'medal'
-    ? ['#e2e8f0', '#38bdf8', '#0ea5e9', '#ffffff', '#94a3b8', '#a855f7', '#fbbf24']
-    : ['#f59e0b', '#fbbf24', '#cd7f32', '#10b981', '#ffffff', '#f43f5e', '#38bdf8'];
 
-  // Generate 75 festive confetti particles across full screen
-  for (let i = 0; i < 75; i++) {
-    const p = document.createElement('div');
-    p.className = 'ptm-confetti-particle';
-    const size = 7 + Math.random() * 9;
-    const isRound = Math.random() > 0.6;
-    const isRibbon = !isRound && Math.random() > 0.5;
-    p.style.cssText = `
-      left: ${Math.random() * 100}%;
-      background: ${palette[Math.floor(Math.random() * palette.length)]};
-      animation-delay: ${Math.random() * 2.5}s;
-      animation-duration: ${2.4 + Math.random() * 2}s;
-      width: ${isRibbon ? size * 0.45 : size}px;
-      height: ${isRibbon ? size * 1.8 : size}px;
-      border-radius: ${isRound ? '50%' : '2px'};
-      opacity: ${0.85 + Math.random() * 0.15};
-    `;
-    confettiEl.appendChild(p);
+  // Confetti only for Trophy (1st place) — not for medal or ribbon
+  if (tier === 'trophy') {
+    const palette = ['#ffd700', '#facc15', '#f59e0b', '#ffffff', '#fbbf24', '#f43f5e', '#10b981'];
+    for (let i = 0; i < 75; i++) {
+      const p = document.createElement('div');
+      p.className = 'ptm-confetti-particle';
+      const size = 7 + Math.random() * 9;
+      const isRound = Math.random() > 0.6;
+      const isRibbon = !isRound && Math.random() > 0.5;
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        background: ${palette[Math.floor(Math.random() * palette.length)]};
+        animation-delay: ${Math.random() * 2.5}s;
+        animation-duration: ${2.4 + Math.random() * 2}s;
+        width: ${isRibbon ? size * 0.45 : size}px;
+        height: ${isRibbon ? size * 1.8 : size}px;
+        border-radius: ${isRound ? '50%' : '2px'};
+        opacity: ${0.85 + Math.random() * 0.15};
+      `;
+      confettiEl.appendChild(p);
+    }
   }
 
   requestAnimationFrame(() => {
@@ -499,17 +671,55 @@ function closePhishingTrophy() {
   savePhishingProgress();
   setTimeout(() => modal.remove(), 400);
 
-  // Trigger post-achievement dialogue: concise reward result + Phishing Post-Test prompt
+  // Mark award as claimed — switches sticky note to post-award checklist
+  window._awardClaimed = true;
+  savePhishingProgress();
+
+  // Ensure Phone Link desktop icon has NO glowing notice or blinking highlight
+  if (typeof unhighlightPhoneLinkApp === 'function') {
+    unhighlightPhoneLinkApp();
+  }
+  const commsIcon = document.getElementById('icon-comms');
+  if (commsIcon) {
+    commsIcon.classList.remove('icon-attention', 'pl-icon-pulse');
+    commsIcon.removeAttribute('data-badge');
+  }
+
+  // User only guide is checklist sticky notes — dismiss RyanGuide dialogue
+  if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+    RyanGuide.dismiss();
+  }
+
+  // Open and show sticky note immediately as the player's primary guide
+  showStickyNote();
+  if (typeof focusStickyNote === 'function') {
+    focusStickyNote();
+  }
+
+  // Refresh sticky note immediately to show the new mission checklist
   setTimeout(() => {
-    triggerPostAchievementPostTestPrompt();
-  }, 450);
+    if (typeof renderStickyNoteResults === 'function') {
+      renderStickyNoteResults();
+    }
+    showStickyNote();
+    if (typeof focusStickyNote === 'function') {
+      focusStickyNote();
+    }
+  }, 420);
+
+  // Silently prepare newbie group without any desktop icon glow or Ryan speech popup
+  setTimeout(() => {
+    if (typeof _silentlyCreatePhoneLinkGroup === 'function') {
+      _silentlyCreatePhoneLinkGroup();
+    }
+  }, 600);
 }
 
-// ─── Post-Achievement Dialogue: Reward Result + Phishing Post-Test Prompt ────
+// ─── Post-Achievement Dialogue: Checklist Guide + Post-Test Prompt ────────────
 function triggerPostAchievementPostTestPrompt() {
   const award = (typeof getPhishingEarnedAward === 'function') ? getPhishingEarnedAward() : null;
   const awardTitle = award ? award.title : 'Phishing Security Ribbon';
-  const awardIcon = award ? award.icon : '🎖️';
+  const awardIcon = award ? award.icon : '\uD83C\uDF96\uFE0F';
   const tier = award ? award.tier : 'ribbon';
 
   // If already taken post-test, jump straight to team onboarding
@@ -525,15 +735,15 @@ function triggerPostAchievementPostTestPrompt() {
     return;
   }
 
-  // Dismiss any active dialogue first to guarantee a clean slate
+  // Dismiss any active dialogue first
   RyanGuide.dismiss();
 
-  // Congratulate Alex based on the specific medal/award claimed!
+  // Congratulate Alex based on award tier
   let congratsIntro = '';
   if (tier === 'trophy' || (award && award.rank && award.rank.includes('1st'))) {
-    congratsIntro = `Congratulations on claiming your 🏆 <strong>${awardTitle}</strong>! Flawless investigation work, Alex!`;
+    congratsIntro = `Congratulations on claiming your \uD83C\uDFC6 <strong>${awardTitle}</strong>! Flawless investigation work, Alex!`;
   } else if (tier === 'medal' || (award && award.rank && award.rank.includes('2nd'))) {
-    congratsIntro = `Congratulations on claiming your 🥈 <strong>${awardTitle}</strong>! Outstanding effort uncovering email threats, Alex!`;
+    congratsIntro = `Congratulations on claiming your \uD83E\uDD48 <strong>${awardTitle}</strong>! Outstanding effort uncovering email threats, Alex!`;
   } else {
     congratsIntro = `Congratulations on claiming your ${awardIcon} <strong>${awardTitle}</strong>! Great job learning email threat indicators, Alex!`;
   }
@@ -546,50 +756,77 @@ function triggerPostAchievementPostTestPrompt() {
         label: 'TAP TO CONTINUE'
       },
       {
-        text: "Now that you've claimed your award, you need to take a 20-question multiple-choice Post-Test based on what you learned.",
+        text: "Before the Post-Test, complete the <strong>Mission Checklist</strong> in your Sticky Notes \uD83D\uDCCB. Complete all 3 tasks first!",
         state: 'speaking',
         label: 'TAP TO CONTINUE'
+      },
+      {
+        text: "🌐 <strong>Task 1:</strong> Open the <strong>Browser</strong> and search for <strong>\"phishing\"</strong> to learn more about deceptive threat indicators.",
+        state: 'thinking',
+        label: 'TAP TO CONTINUE'
+      },
+      {
+        text: "📁 <strong>Task 2:</strong> Open <strong>File Explorer</strong> → go to the <strong>Videos</strong> folder → watch the short video about phishing.",
+        state: 'speaking',
+        label: 'TAP TO CONTINUE'
+      },
+      {
+        text: "📱 <strong>Task 3:</strong> Follow your Sticky Notes checklist to open <strong>Phone Link</strong> and send \"Hello!\" to meet your new team in the group chat.",
+        state: 'thinking',
+        label: 'TAP TO CONTINUE'
+      },
+      {
+        text: "Follow the checklist in your Sticky Notes! Once all tasks are checked off, click <strong>Begin Post-Test</strong> to start! 📝",
+        state: 'success',
+        label: 'GOT IT!'
       }
     ],
     {
       onDone: function() {
-        if (typeof RyanPosttest !== 'undefined') {
-          RyanPosttest.confirmAndLaunch(
-            function(res) {
-              // On post-test completion, proceed to team group chat on Phone Link
-              setTimeout(() => triggerPostAchievementPhoneLinkInvite(), 500);
-            },
-            function() {
-              triggerPostTestReviewLaterGuide();
-            }
-          );
-        } else {
-          triggerPostAchievementPhoneLinkInvite();
+        if (typeof showToast === 'function') {
+          showToast('📋 Check Sticky Notes — complete all 3 tasks to unlock the Post-Test!', 'info');
         }
+        // Silently create Phone Link group with NO glowing notice on desktop
+        setTimeout(function() {
+          _silentlyCreatePhoneLinkGroup();
+        }, 800);
       }
     }
   );
 }
 
+// Notify checklist that the Phone Link task is done
+window._notifyPostAwardPhoneLinkGroupJoin = function() {
+  if (!window._awardClaimed) return;
+  window._postAwardTasks.phoneLinkOpened = true;
+  _refreshPostAwardChecklist();
+};
+
+// Silent group creator — fires right after award claim, NO celebration dialogue, NO desktop glow
+function _silentlyCreatePhoneLinkGroup() {
+  if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+    AudioManager.playNotification();
+  }
+  if (typeof setNewbieGcCreated === 'function') {
+    setNewbieGcCreated(false); // false = do not highlight phone link desktop icon
+  } else if (typeof setNewbieGcInvitePending === 'function') {
+    setNewbieGcInvitePending(false);
+  }
+  if (typeof unhighlightPhoneLinkApp === 'function') {
+    unhighlightPhoneLinkApp();
+  }
+  const commsIcon = document.getElementById('icon-comms');
+  if (commsIcon) {
+    commsIcon.classList.remove('icon-attention', 'pl-icon-pulse');
+    commsIcon.removeAttribute('data-badge');
+  }
+}
+
 // ─── Post-Test Review Later Guidance Dialogue ────
 function triggerPostTestReviewLaterGuide() {
   if (typeof showToast === 'function') {
-    showToast('📝 Post-Test saved. Take your time to review before starting!', 'info');
+    showToast('\uD83D\uDCCB Complete the Mission Checklist in Sticky Notes first, then take the Post-Test!', 'info');
   }
-
-  // Highlight Browser and File Explorer icons on desktop to guide review
-  if (typeof IconAttention !== 'undefined') {
-    IconAttention.show('browser');
-    IconAttention.show('folder');
-  }
-
-  // Clear icon highlights after a short period if not clicked
-  setTimeout(() => {
-    if (typeof IconAttention !== 'undefined') {
-      IconAttention.hide('browser');
-      IconAttention.hide('folder');
-    }
-  }, 15000);
 
   if (typeof RyanGuide !== 'undefined') {
     RyanGuide.speak([
@@ -620,22 +857,15 @@ function triggerPostAchievementPhoneLinkInvite() {
     AudioManager.playNotification();
   }
 
-  // Create group chat "new intern team 2027" and highlight desktop icon
+  // Create group chat "new intern team 2027"
   if (typeof setNewbieGcCreated === 'function') {
     setNewbieGcCreated(true);
   } else if (typeof setNewbieGcInvitePending === 'function') {
     setNewbieGcInvitePending(true);
   }
 
-  if (typeof highlightPhoneLinkApp === 'function') {
-    highlightPhoneLinkApp();
-  }
-  if (typeof IconAttention !== 'undefined') {
-    IconAttention.show('comms');
-  }
-
   if (typeof showToast === 'function') {
-    showToast('📱 Ding! Ryan created group "new intern team 2027" and added you!', 'info');
+    showToast('\uD83D\uDCF1 Ding! Ryan created group "new intern team 2027" and added you!', 'info');
   }
 
   // Ryan's human, conversational dialogue celebrating post-test finish & guiding to Phone Link
@@ -669,10 +899,173 @@ function triggerPostAchievementPhoneLinkInvite() {
   }
 }
 
+// ─── Post-Phone Link Dialogue: Ryan guides Alex before leaving PC workstation ────
+window.triggerPostPhoneLinkSaveDialogue = function() {
+  if (window._hasTriggeredPostPhoneLinkSave) return;
+  window._hasTriggeredPostPhoneLinkSave = true;
 
+  // Minimize or close Phone Link window so Alex's desktop and taskbar are clearly visible
+  if (typeof minimizeApp === 'function') {
+    minimizeApp('comms');
+  } else if (typeof closeApp === 'function') {
+    closeApp('comms');
+  }
+
+  // Play notification chime
+  if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+    AudioManager.playNotification();
+  }
+
+  // Ryan's dialogue guiding Alex before leaving the workstation
+  if (typeof RyanGuide !== 'undefined') {
+    RyanGuide.speak(
+      [
+        {
+          text: "Terrific job introducing yourself to the team, Alex! 🎉 Ethan and Pia have confirmed your workstation access and credentials.",
+          state: 'success',
+          label: 'TAP TO CONTINUE'
+        },
+        {
+          text: "Before you step away from your PC, remember good cybersecurity hygiene: never walk away from an active workstation unattended.",
+          state: 'speaking',
+          label: 'TAP TO CONTINUE'
+        },
+        {
+          text: "To save your completed task and secure this terminal, click the <strong>Windows Start menu (⊞)</strong> on the taskbar below.",
+          state: 'speaking',
+          label: 'TAP TO CONTINUE'
+        },
+        {
+          text: "From the Start Menu, open <strong>Power &amp; Terminal Controls (⏻)</strong> and select <strong>'Shutdown (Save)'</strong> to log off and proceed to Chapter 2!",
+          state: 'speaking',
+          label: 'LOG OFF & SAVE'
+        }
+      ],
+      {
+        onDone: function() {
+          if (typeof window.startWorkstationLogoffGuide === 'function') {
+            window.startWorkstationLogoffGuide();
+          }
+        }
+      }
+    );
+  } else {
+    if (typeof window.startWorkstationLogoffGuide === 'function') {
+      window.startWorkstationLogoffGuide();
+    }
+  }
+};
+
+window.startWorkstationLogoffGuide = function() {
+  window._awaitingShutdownForChapter2 = true;
+  if (typeof window.updateShutdownGuideStep === 'function') {
+    window.updateShutdownGuideStep(1);
+  }
+  if (typeof showToast === 'function') {
+    showToast('👉 Click the Windows Start menu (⊞) on the taskbar to begin saving', 'info');
+  }
+};
+
+window.updateShutdownGuideStep = function(step) {
+  if (!window._awaitingShutdownForChapter2 && step !== 0) return;
+
+  // Render/update HUD notice on desktop
+  let notice = document.getElementById('desktop-shutdown-notice');
+  if (!notice && step !== 0) {
+    notice = document.createElement('div');
+    notice.id = 'desktop-shutdown-notice';
+    notice.className = 'desktop-shutdown-notice';
+    notice.innerHTML = `
+      <div class="dsn-header">
+        <div class="dsn-title">
+          <span class="dsn-pulse-dot"></span>
+          <span>WORKSTATION LOG-OFF PROTOCOL</span>
+        </div>
+        <span class="dsn-badge">CHAPTER 1 SAVE</span>
+      </div>
+      <div class="dsn-desc">Save your task completion before leaving Alex's PC to unlock Chapter 2:</div>
+      <div class="dsn-steps">
+        <div class="dsn-step active" id="dsn-step-1">
+          <span class="dsn-step-num">1</span>
+          <span class="dsn-step-text">Click the <strong>Windows Start menu (⊞)</strong> on the taskbar</span>
+          <span class="dsn-step-status" id="dsn-status-1">Action Required</span>
+        </div>
+        <div class="dsn-step" id="dsn-step-2">
+          <span class="dsn-step-num">2</span>
+          <span class="dsn-step-text">Click <strong>Power &amp; Terminal Controls (⏻)</strong></span>
+          <span class="dsn-step-status" id="dsn-status-2">Waiting</span>
+        </div>
+        <div class="dsn-step" id="dsn-step-3">
+          <span class="dsn-step-num">3</span>
+          <span class="dsn-step-text">Click <strong>Shutdown (Save)</strong> to open Chapter 2</span>
+          <span class="dsn-step-status" id="dsn-status-3">Waiting</span>
+        </div>
+      </div>
+    `;
+    const desktop = document.getElementById('desktop');
+    if (desktop) desktop.appendChild(notice);
+  }
+
+  if (notice) {
+    if (step === 0) {
+      notice.classList.add('hidden');
+    } else {
+      notice.classList.remove('hidden');
+    }
+  }
+
+  const s1 = document.getElementById('dsn-step-1');
+  const s2 = document.getElementById('dsn-step-2');
+  const s3 = document.getElementById('dsn-step-3');
+  const stat1 = document.getElementById('dsn-status-1');
+  const stat2 = document.getElementById('dsn-status-2');
+  const stat3 = document.getElementById('dsn-status-3');
+
+  const startBtn = document.getElementById('start-btn');
+  const powerBtn = document.getElementById('start-power-btn');
+  const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+
+  // Step 1: Click Windows Start Menu
+  if (step === 1) {
+    if (s1) { s1.className = 'dsn-step active'; if (stat1) stat1.textContent = 'Action Required'; }
+    if (s2) { s2.className = 'dsn-step'; if (stat2) stat2.textContent = 'Waiting'; }
+    if (s3) { s3.className = 'dsn-step'; if (stat3) stat3.textContent = 'Waiting'; }
+
+    if (startBtn) startBtn.classList.add('start-attention', 'btn-pulse-highlight');
+    if (powerBtn) powerBtn.classList.remove('power-attention');
+    if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
+  }
+  // Step 2: Click Power & Terminal Controls
+  else if (step === 2) {
+    if (s1) { s1.className = 'dsn-step completed'; if (stat1) stat1.textContent = '✓ Done'; }
+    if (s2) { s2.className = 'dsn-step active'; if (stat2) stat2.textContent = 'Action Required'; }
+    if (s3) { s3.className = 'dsn-step'; if (stat3) stat3.textContent = 'Waiting'; }
+
+    if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight');
+    if (powerBtn) powerBtn.classList.add('power-attention');
+    if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
+  }
+  // Step 3: Click Shutdown (Save)
+  else if (step === 3) {
+    if (s1) { s1.className = 'dsn-step completed'; if (stat1) stat1.textContent = '✓ Done'; }
+    if (s2) { s2.className = 'dsn-step completed'; if (stat2) stat2.textContent = '✓ Done'; }
+    if (s3) { s3.className = 'dsn-step active'; if (stat3) stat3.textContent = 'Action Required'; }
+
+    if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight');
+    if (powerBtn) powerBtn.classList.remove('power-attention');
+    if (shutdownBtn) shutdownBtn.classList.add('power-item-attention');
+  }
+  // Step 0: Clear all
+  else if (step === 0) {
+    if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight');
+    if (powerBtn) powerBtn.classList.remove('power-attention');
+    if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
+  }
+};
 
 function toggleStickyNote() {
   // ── Block during pretest / Ryan intro dialogue ──
+
   const pretestRunning  = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
   const ryanIntroActive = typeof RyanGuide   !== 'undefined' && RyanGuide.isActive   && RyanGuide.isActive()
                           && typeof gameState !== 'undefined' && gameState.phase === 'mission'
@@ -721,81 +1114,32 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
   const correctCount = (typeof correct === 'number') ? correct : (gameState && typeof gameState.correctDecisions === 'number' ? gameState.correctDecisions : 6);
   const totalEmails = (typeof total === 'number') ? total : ((typeof EMAILS !== 'undefined') ? EMAILS.length : 10);
 
-  // 1. Stats row directly on yellow sticky notes paper (no white background)
-  let html = `
-    <div class="sn-finish-stats">
-      <div class="sn-stat-col">
-        <div class="sn-stat-label">Completed</div>
-        <div class="sn-stat-val">${count} / ${totalGoals}</div>
-      </div>
-      <div class="sn-stat-col">
-        <div class="sn-stat-label">Accuracy</div>
-        <div class="sn-stat-val">${accuracyPct}%</div>
-      </div>
-      <div class="sn-stat-col">
-        <div class="sn-stat-label">Decisions</div>
-        <div class="sn-stat-val">${correctCount} / ${totalEmails}</div>
-      </div>
-    </div>
-  `;
-
-  // 2. Big Medal Hero Display (Checklist is hidden after investigations finish)
-  const tier = award.tier || 'ribbon';
-  const rankText = award.rank || (rank ? `Rank ${rank}` : '1st Place');
-
-  html += `
-    <div class="sn-big-medal-card sn-tier-${tier}" onclick="showPhishingAchievementModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPhishingAchievementModal();}" aria-label="View Rewards: ${award.title}" title="Click medal to view rewards">
-      <div class="sn-medal-top-badge">🎖️ INVESTIGATION COMPLETE</div>
-      <div class="sn-big-medal-emblem-wrap">
-        <div class="sn-big-medal-glow"></div>
-        <div class="sn-big-medal-icon">${award.icon}</div>
-      </div>
-      <div class="sn-big-medal-title">${award.title}</div>
-      <div class="sn-big-medal-sub">${rankText} · ${rankLabel || 'CYBER DETECTIVE'}</div>
-      <button type="button" class="sn-big-medal-cta-btn" onclick="event.stopPropagation(); showPhishingAchievementModal();">
-        <span>🏆 Click Medal to View Rewards</span>
-        <span>➔</span>
-      </button>
-    </div>
-  `;
-
-  const postTestDone = typeof RyanPosttest !== 'undefined' && RyanPosttest.getResult && RyanPosttest.getResult();
-  if (!postTestDone) {
-    const isExpanded = window._snPostTestExpanded !== false;
-    html += `
-      <div class="sn-posttest-card-wrap">
-        <div class="sn-posttest-checklist-card">
-          <div class="sn-progress-header" style="margin-bottom:6px;">
-            <span class="sn-progress-title">📋 Next Mission Task</span>
-            <span class="sn-progress-count" style="background:#e0f2fe; color:#0369a1; border-color:rgba(2,132,199,0.3);">20 Questions</span>
-          </div>
-          <div class="sn-ach-item sn-posttest-checklist-item ${isExpanded ? 'expanded' : ''}" onclick="toggleStickyPostTestItem(event)" role="button" tabindex="0" title="Click to show Begin Post-Test">
-            <div class="sn-checkbox" aria-hidden="true"></div>
-            <div class="sn-ach-body">
-              <div class="sn-ach-header-row">
-                <span class="sn-ach-label">📝 Phishing Post-Test</span>
-                <span class="sn-ach-prog-badge ${isExpanded ? 'done' : ''}">${isExpanded ? 'Ready' : 'Click to Begin'}</span>
-              </div>
-              <div class="sn-ach-desc">Click this task to show Begin Post-Test and assess your awareness!</div>
-            </div>
-          </div>
-          <div id="sn-posttest-begin-box" class="sn-posttest-begin-box ${isExpanded ? 'active' : ''}">
-            <div class="sn-posttest-begin-desc">Ready after reviewing? Answer 20 questions to evaluate your cyber defense growth against your pre-test baseline.</div>
-            <button type="button" class="sn-posttest-btn" onclick="startPostTestFromSticky(event)">
-              <span>✓ Begin Post-Test (20 Questions)</span>
-              <span>➔</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  } else {
-    const preResult = (typeof RyanPretest !== 'undefined' && RyanPretest.getResult)
-      ? RyanPretest.getResult()
-      : (typeof gameState !== 'undefined' ? gameState.preTestResult : null);
-    html += renderPostTestComparisonHTML(preResult, postTestDone);
+  // ── After award is claimed: hide medal/stats, show mission checklist ────────
+  if (window._awardClaimed) {
+    scrollEl.innerHTML = `<div id="sn-post-award-checklist">${_buildPostAwardChecklistHTML()}</div>`;
+    // Hook video play event once
+    setTimeout(function() {
+      var vid = document.getElementById('videoplayer-video');
+      if (vid && !vid._postAwardHooked) {
+        vid._postAwardHooked = true;
+        vid.addEventListener('play', function() { window._notifyPostAwardVideoPlay(); });
+      }
+    }, 500);
+    return;
   }
 
+  // ── Pre-claim: show a simple "complete the checklist" reminder ──────────────
+  let html = `
+    <div class="sn-progress-card">
+      <div class="sn-progress-header">
+        <span class="sn-progress-title">&#128203; Mission Checklist</span>
+        <span class="sn-progress-count">Claim your award to begin</span>
+      </div>
+    </div>
+    <div style="padding:12px 4px;font-size:12px;color:#78716c;text-align:center;line-height:1.6;">
+      &#127942; Complete all investigation tasks above,<br/>then claim your award to unlock the Mission Checklist.
+    </div>
+  `;
   scrollEl.innerHTML = html;
 }
 
@@ -924,6 +1268,19 @@ function toggleStickyPostTestItem(event) {
 
 function startPostTestFromSticky(event) {
   if (event) event.stopPropagation();
+
+  // Gate: both checklist tasks must be done first
+  if (window._awardClaimed && !_allChecklistTasksDone()) {
+    const t = window._postAwardTasks || {};
+    const pending = [];
+    if (!t.phishingSearched && !t.phishingVisited) pending.push('🌐 Search "phishing" in the Browser');
+    if (!t.videoPlayed)                            pending.push('📁 Watch phishing short video in File Explorer');
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Complete the checklist first: ' + pending.join(' • '), 'warning');
+    }
+    return;
+  }
+
   if (typeof RyanPosttest !== 'undefined') {
     RyanPosttest.confirmAndLaunch(
       function(res) {

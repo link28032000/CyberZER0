@@ -163,9 +163,13 @@
   }
 }
 
-.verdict-phishing.verdict-btn-highlight {
+#report-btn.verdict-btn-highlight,
+#report-btn.btn-pulse-highlight,
+.verdict-phishing.verdict-btn-highlight,
+.verdict-phishing.btn-pulse-highlight {
   animation: verdict-pulse-phish 1.4s ease-in-out infinite !important;
   background: rgba(183, 28, 28, 0.32) !important;
+  border-color: #ef5350 !important;
   color: #ffffff !important;
   font-weight: 800 !important;
 }
@@ -826,15 +830,17 @@
   color: #1c1917;
   font-weight: 650;
   font-size: 12.5px;
-  line-height: 1.35;
+  line-height: 1.4;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow: visible;
+  text-overflow: unset;
   font-family: inherit;
   transition: color 140ms ease;
+  flex-wrap: wrap;
 }
 .sn-ach-item.sn-ach-done .sn-ach-label {
   color: #78716c;

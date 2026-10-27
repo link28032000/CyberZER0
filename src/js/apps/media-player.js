@@ -42,6 +42,9 @@ function openVideoPlayer(file) {
 
   openApp('videoplayer');
   focusWindow('videoplayer');
+  if (typeof window._notifyPostAwardVideoPlay === 'function') {
+    window._notifyPostAwardVideoPlay();
+  }
   showToast(`🎬 Playing "${file.name}" in Media Player.`, 'success');
 }
 

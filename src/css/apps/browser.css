@@ -1534,10 +1534,75 @@
 #win-browser.maximized .fakesite-body {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 30px 20px;
 }
+
+/* ── Fullscreen / Maximized ad layout overrides ── */
+#win-browser.maximized .fs-page-wrap {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 16px !important;
+  box-sizing: border-box !important;
+  align-items: flex-start !important;
+}
+#win-browser.maximized .fs-main-col {
+  flex: 1 !important;
+}
+/* Wider ad sidebar in maximized mode */
+#win-browser.maximized .fs-ad-sidebar {
+  width: 185px !important;
+  flex-shrink: 0 !important;
+}
+/* Sticky ad — stay at bottom of browser content, not the screen */
+#win-browser.maximized .fs-sticky-ad {
+  position: sticky !important;
+  bottom: 0 !important;
+}
+/* Popup overlay anchors to browser content box in maximized mode */
+#win-browser.maximized .fs-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+}
+#win-browser.maximized .fs-popup-ad {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 300px !important;
+}
+/* Fakesite card max-width in maximized so form doesn't stretch too wide */
+#win-browser.maximized .fakesite-card {
+  max-width: 480px !important;
+  width: 100% !important;
+}
+#win-browser.maximized .fakesite-ms-card {
+  max-width: 440px !important;
+  width: 100% !important;
+}
+
+/* body.is-fullscreen mirrors the maximized rules */
+body.is-fullscreen #win-browser .fs-page-wrap {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 16px !important;
+  box-sizing: border-box !important;
+}
+body.is-fullscreen #win-browser .fs-ad-sidebar {
+  width: 185px !important;
+}
+body.is-fullscreen #win-browser .fakesite-card {
+  max-width: 480px !important;
+  width: 100% !important;
+}
+body.is-fullscreen #win-browser .fs-popup-ad {
+  position: fixed !important;
+  width: 320px !important;
+}
+
 
 /* Chrome-style "Your connection is not private" interstitial */
 .cert-warning {

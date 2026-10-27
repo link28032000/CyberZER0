@@ -217,6 +217,12 @@ function renderPageIntoTab(tab, url) {
   const urlInput = document.getElementById('browser-url-input');
   if (urlInput) urlInput.value = url === 'https://www.google.com' ? '' : url;
   updateBrowserNavBtns();
+
+  // Notify post-award mission checklist for any URL loaded
+  if (typeof window._notifyPostAwardBrowserNav === 'function') {
+    window._notifyPostAwardBrowserNav(url);
+  }
+
   _applyPageToContent(url);
   // Update tab title/icon from security indicator side effect
   const tabTitle = document.getElementById('browser-tab-title-fake');
@@ -908,6 +914,12 @@ function browserGo(raw) {
   const trimmed = (raw || '').trim();
   if (!trimmed) return;
 
+  if (window._awardClaimed && window._postAwardTasks && trimmed.toLowerCase().includes('phish')) {
+    window._postAwardTasks.phishingSearched = true;
+    window._postAwardTasks.phishingVisited = true;
+    if (typeof _refreshPostAwardChecklist === 'function') _refreshPostAwardChecklist();
+  }
+
   let url;
   if (isSearchQuery(trimmed)) {
     url = 'https://www.google.com/search?q=' + encodeURIComponent(trimmed);
@@ -931,6 +943,10 @@ function updateBrowserNavBtns() {
 }
 
 function navigateBrowser(url) {
+  // Notify post-award mission checklist
+  if (typeof window._notifyPostAwardBrowserNav === 'function') {
+    window._notifyPostAwardBrowserNav(url);
+  }
   const tab = getActiveTab();
   if (!tab) {
     createNewBrowserTab(url);

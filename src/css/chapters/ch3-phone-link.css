@@ -1205,7 +1205,8 @@
 
 #icon-comms.pl-icon-pulse,
 .desktop-icon#icon-comms.pl-icon-pulse {
-  animation: plIconGlow 1.6s infinite !important;
+  animation: none !important;
+  box-shadow: none !important;
   border-radius: 8px;
 }
 
@@ -1530,27 +1531,32 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PHONE LINK DESKTOP ICON ATTENTION HIGHLIGHT (BLINKING BORDER)
+   PHONE LINK DESKTOP ICON ATTENTION (GLOWING NOTICE REMOVED)
    ═══════════════════════════════════════════════════════════════ */
-.desktop-icon#icon-comms.icon-attention {
-  border: 2px solid #38bdf8 !important;
-  background: rgba(56, 189, 248, 0.16) !important;
-  animation: pl-icon-comms-blink 1.25s ease-in-out infinite !important;
-  border-radius: 12px;
-  position: relative;
-  z-index: 5;
+.desktop-icon#icon-comms.icon-attention,
+#icon-comms.icon-attention,
+.desktop-icon#icon-comms.pl-icon-pulse,
+#icon-comms.pl-icon-pulse {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  animation: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transform: none !important;
+}
+.desktop-icon#icon-comms[data-badge]::after,
+#icon-comms[data-badge]::after,
+.desktop-icon#icon-comms::before,
+.desktop-icon#icon-comms::after {
+  display: none !important;
+  content: none !important;
 }
 
 @keyframes pl-icon-comms-blink {
   0%, 100% {
-    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.7), 0 0 16px 4px rgba(56, 189, 248, 0.4);
-    border-color: rgba(56, 189, 248, 0.8);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 1), 0 0 28px 8px rgba(56, 189, 248, 0.75);
-    border-color: #38bdf8;
-    transform: scale(1.06);
+    box-shadow: none;
+    border-color: transparent;
+    transform: none;
   }
 }
 

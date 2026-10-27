@@ -285,7 +285,8 @@ const RyanGuide = (() => {
         return {
           text: (m.text !== undefined && m.text !== null) ? String(m.text) : '',
           state: (typeof m.state === 'string') ? m.state : 'speaking',
-          action: m.action || null
+          action: m.action || null,
+          label: (typeof m.label === 'string' && m.label.length > 0) ? m.label : null
         };
       }
       return { text: '', state: 'speaking' };

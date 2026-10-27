@@ -118,6 +118,11 @@ function openApp(appName) {
   updateTaskbar();
   if (typeof AudioManager !== 'undefined') AudioManager.playWindowSound(true);
 
+  // Notify post-award mission checklist
+  if (typeof window._notifyPostAwardAppOpen === 'function') {
+    window._notifyPostAwardAppOpen(appName);
+  }
+
   if (appName === 'gmail') {
     updateFolderCounts();
     renderEmailList();
@@ -309,7 +314,17 @@ function closeApp(appName) {
       updateBrowserPhishingNotice(false);
     }
   }
+  if (appName === 'comms') {
+    const gcState = (typeof loadNewbieGcState === 'function') ? loadNewbieGcState() : null;
+    const hasPlayerMsg = gcState && Array.isArray(gcState.playerMessages) && gcState.playerMessages.some(m => m.from === 'player');
+    if (hasPlayerMsg && !window._hasTriggeredPostPhoneLinkSave && typeof window.triggerPostPhoneLinkSaveDialogue === 'function') {
+      setTimeout(() => {
+        window.triggerPostPhoneLinkSaveDialogue();
+      }, 400);
+    }
+  }
   appState[appName].open = false;
+
   appState[appName].minimized = false;
   appState[appName].maximized = false;
   win.classList.add('hidden');

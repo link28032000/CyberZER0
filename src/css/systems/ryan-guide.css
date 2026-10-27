@@ -312,6 +312,13 @@
 }
 
 /* ── Dismiss transition ────────────────────── */
+.desktop-icon#icon-comms.icon-attention {
+  border-color: transparent !important;
+  background: transparent !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+
 .desktop-icon#icon-notes.icon-attention {
   border-color: rgba(251, 146, 60, 0.9) !important;
   background: rgba(251, 146, 60, 0.14) !important;
