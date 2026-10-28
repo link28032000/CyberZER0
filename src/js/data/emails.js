@@ -319,62 +319,58 @@ const EMAILS = [
     }
   },
 
-  // === EMAIL 8: Final Scenario — Sophisticated phishing — Wave 4 ===
+  // === EMAIL 8: Final Scenario — GCash Quishing (QR phishing) — Wave 4 ===
   {
     id: 8,
-    sender: { name: 'IT Security Operations', address: 'security-ops@business-it-support.com' },
-    subject: 'Action Required: Security Policy Compliance Update',
+    sender: { name: 'GCash Security Team', address: 'security-alert@gcash-secure-verification.com' },
+    subject: 'Action Required: Scan QR Code to Verify Your GCash Account',
     date: 'Mon, Oct 27, 2026',
     time: '12:35 PM',
-    preview: 'All employees are required to complete mandatory security compliance verification before Friday...',
+    preview: 'Unusual activity detected on your GCash wallet. Scan the QR code below to complete mandatory identity verification...',
     phishing: true,
     evidence: ['fake_sender', 'false_urgency', 'suspicious_link'],
     body: [
-      { type: 'p', text: 'Dear Employee,' },
-      { type: 'p', text: 'As part of our annual cybersecurity compliance review, all employees are required to verify their account credentials through our updated secure portal.' },
-      { type: 'p', text: 'This is a mandatory requirement under our updated IT Security Policy (ISP-2024-07). Non-compliance may result in temporary account restrictions.' },
+      { type: 'p', text: 'Dear GCash User,' },
+      { type: 'p', text: 'We have detected unusual activity on your GCash wallet. To protect your funds, your account has been flagged for mandatory identity re-verification under GCash\'s KYC Compliance Policy (GC-SEC-2024-11).' },
       {
         type: 'p-flag',
         flagId: 'urgency',
         flagType: 'false_urgency',
-        text: 'IMPORTANT: This compliance verification must be completed by this Friday, 5:00 PM. Accounts not verified by this deadline will be suspended pending manual review.',
+        text: 'IMPORTANT: Your GCash wallet will be LOCKED and all transactions CANCELLED if verification is not completed within 24 hours.',
         label: 'FALSE URGENCY'
       },
-      { type: 'p', text: 'Please use the secure compliance portal link below to complete your verification. The process takes approximately 3 minutes.' },
+      { type: 'p', text: 'Use your phone camera to scan the QR code below and complete your identity verification in 3 minutes. Do NOT share this QR code with anyone.' },
       {
-        type: 'link',
+        type: 'qr',
         flagId: 'link1',
         flagType: 'suspicious_link',
-        text: 'Complete Security Compliance Verification',
-        destination: 'https://business-it-support.com/compliance-portal',
-        label: 'SUSPICIOUS LINK'
+        destination: 'https://gcash-secure-verification.com/kyc-portal',
+        label: 'SUSPICIOUS QR CODE'
       },
-      { type: 'p', text: 'Thank you for helping us maintain a secure workplace.\n\nIT Security Operations\nCompliance & Risk Management' }
+      { type: 'p', text: 'Thank you for keeping your GCash wallet secure.\n\nGCash Security Team\nGlobe Fintech Innovations, Inc.\n\nThis is an automated security alert. Do not reply to this email.' }
     ],
     capybaraAnalysis: {
       fake_sender: {
-        correct: '\ud83d\udea9 SENDER \u2014 CORRECT\nThe sender uses <code>business-it-support.com</code> \u2014 not the company\'s real domain <code>business.com</code>. Sophisticated phishers register plausible domains to impersonate internal IT departments.',
-        missed: '\ud83d\udea9 MISSED \u2014 FAKE SENDER\nThe sender is <code>security-ops@business-it-support.com</code>. This looks official, but the domain is <code>business-it-support.com</code> \u2014 not the real company domain <code>business.com</code>.'
+        correct: '\ud83d\udea9 SENDER \u2014 CORRECT\nThe sender uses <code>gcash-secure-verification.com</code> \u2014 NOT GCash\'s real domain <code>gcash.com.ph</code>. Attackers register convincing lookalike domains to impersonate GCash.',
+        missed: '\ud83d\udea9 MISSED \u2014 FAKE SENDER\nThe sender <code>security-alert@gcash-secure-verification.com</code> looks official, but <code>gcash-secure-verification.com</code> is a fake attacker-registered domain. Real GCash emails only come from <code>@gcash.com.ph</code>.'
       },
       false_urgency: {
-        correct: '\ud83d\udea9 URGENCY \u2014 CORRECT\nA Friday deadline with suspension threats is manufactured urgency \u2014 just more credible-sounding. Real compliance requirements are announced well in advance through multiple official channels.',
-        missed: '\ud83d\udea9 MISSED \u2014 FALSE URGENCY\nThe \'Friday 5 PM deadline with suspension\' creates time pressure. Sophisticated phishing uses realistic-sounding deadlines. Real compliance notices go through multiple official channels.'
+        correct: '\ud83d\udea9 URGENCY \u2014 CORRECT\nA 24-hour wallet lockout threat is manufactured urgency. Real GCash security and KYC requests are communicated through the official app \u2014 never a single urgent email with a countdown.',
+        missed: '\ud83d\udea9 MISSED \u2014 FALSE URGENCY\nThe \'24-hour lock\' threat is social engineering. GCash never suspends wallets via a single urgent email. That extreme pressure exists to stop you from verifying the source.'
       },
       suspicious_link: {
-        correct: '\ud83d\udea9 LINK \u2014 CORRECT\nThe compliance portal link goes to <code>business-it-support.com</code> \u2014 the same fake domain as the sender, not the real company domain <code>business.com</code>.',
-        missed: '\ud83d\udea9 MISSED \u2014 SUSPICIOUS LINK\nThe link leads to <code>business-it-support.com/compliance-portal</code> \u2014 not <code>business.com</code>. The sender and link share the same fake domain, confirming a coordinated phishing attack.'
+        correct: '🚩 QR CODE — CORRECT\nThis is Quishing (QR code phishing). Attackers hide malicious sites behind QR codes. Remember: Think before you scan! You cannot hover over a QR code to verify the link destination.',
+        missed: '🚩 MISSED — SUSPICIOUS QR CODE\nThis attack is Quishing (QR phishing). Think before you scan! The QR code redirects to a fake GCash site at <code>gcash-secure-verification.com</code> to harvest your credentials.'
       }
     },
     ryanTutor: {
       correct: [
-        { text: '\u2705 That one was tricky and you got it! The sender "security-ops@business-it-support.com" looks like it could be IT, but the domain is "business-it-support.com", not "business.com".', state: 'success' },
-        { text: 'This is an advanced attack that uses a convincing-sounding domain. The "Friday 5 PM deadline" sounds real but real compliance requirements are announced through multiple official channels, never just one urgent email.', state: 'speaking' },
-        { text: 'The link also used "business-it-support.com", same fake domain as the sender. Always compare the sender domain against your company\'s actual domain. Even one extra word makes it fake.', state: 'thinking' }
+        { text: '✅ Spot on! That was Quishing (QR code phishing). Scammers hide phishing links inside QR codes because email security filters cannot easily inspect image content.', state: 'success' },
+        { text: 'Golden rule: Think before you scan! You cannot hover over a QR code to preview where it goes. Real GCash verifications only happen inside the official app, never through email QR codes.', state: 'speaking' }
       ],
       wrong: [
-        { text: '\u26a0\ufe0f That was a tricky phishing email. The sender used "business-it-support.com" which sounds like an IT address, but the company\'s real domain is "business.com". Those are two different things.', state: 'concerned' },
-        { text: 'Always compare the exact sender domain with your company\'s real one. "business-it-support.com" versus "business.com". One extra phrase in the domain and it is fake.', state: 'speaking' },
-        { text: 'The Friday deadline and account suspension talk were just pressure to make you act fast. Real compliance notices come through official channels, not a single urgent email. When in doubt, call IT directly.', state: 'thinking' }
+        { text: '⚠️ That was a Quishing attack (QR code phishing). The QR code leads to a fake GCash website built to harvest your registered mobile number and MPIN.', state: 'concerned' },
+        { text: 'Always remember: Think before you scan! Attackers exploit QR codes because you cannot preview the destination URL. Real GCash will never ask you to scan an email QR code.', state: 'speaking' }
       ]
     }
   },
@@ -434,10 +430,10 @@ const EMAILS = [
         type: 'attachment',
         flagId: 'attach1',
         flagType: 'suspicious_link',
-        filename: 'Scholarship_Grant_Form.pdf.exe',
+        filename: 'Scholarship_Form.pdf.exe',
         size: '2.4 MB',
         label: 'SUSPICIOUS ATTACHMENT / MALICIOUS FILE',
-        destination: 'https://northfield-scholarship.com/download/Scholarship_Grant_Form.pdf.exe'
+        destination: 'https://northfield-scholarship.com/download/Scholarship_Form.pdf.exe'
       },
       { type: 'p', text: 'Ensure you open and run the form installer immediately to finalize your student grant records.\n\nNorthfield Scholarship Foundation\nFinancial Assistance & Awards Office' }
     ],
@@ -451,20 +447,20 @@ const EMAILS = [
         missed: '🚩 MISSED — FALSE URGENCY\nThe \'24 hours or award forfeited\' warning creates false urgency. Official scholarship programs provide ample notice and multiple verification channels.'
       },
       suspicious_link: {
-        correct: '🚩 MALICIOUS FILE / LINK — CORRECT\nThe attachment appears to be a document but carries a dangerous double extension: <code>Scholarship_Grant_Form.pdf.exe</code>! This is an executable program (malware), not a legitimate PDF document.',
-        missed: '🚩 MISSED — MALICIOUS FILE / LINK\nThe attached file has a hidden double extension (<code>.pdf.exe</code>). Opening executable files disguised as documents will compromise and infect the computer.'
+        correct: '🚩 MALICIOUS ATTACHMENT — CORRECT\nBe careful downloading attachments! The file appears to be a PDF but carries a dangerous double extension: <code>Scholarship_Form.pdf.exe</code>! This is an executable program (malware), not a document.',
+        missed: '🚩 MISSED — MALICIOUS ATTACHMENT\nBe careful downloading attachments! The attached file has a hidden double extension (<code>.pdf.exe</code>). Opening executable files disguised as documents will compromise and infect the computer.'
       }
     },
     ryanTutor: {
       correct: [
-        { text: '✅ Really good catch on that one! That was a dangerous phishing email with a malicious file attached.', state: 'success' },
-        { text: 'See the file name: "Scholarship_Grant_Form.pdf.exe"? That double extension is the giveaway. It looks like a PDF but it is actually an executable program. Open it and you are installing malware.', state: 'speaking' },
-        { text: 'The sender domain "northfield-scholarship.com" is not the school\'s real domain either, and the 24-hour panic deadline is classic pressure tactics. You spotted all of it, great work.', state: 'success' }
+        { text: '✅ Really good catch! Be careful downloading attachments — especially files disguised with double extensions.', state: 'success' },
+        { text: 'Look closely at "Scholarship_Form.pdf.exe". That double extension is the giveaway — it looks like a PDF, but the ".exe" at the end means it is an executable program that installs malware.', state: 'speaking' },
+        { text: 'The fake domain "northfield-scholarship.com" and 24-hour urgency were designed to make you download in a panic. Outstanding work spotting all the clues!', state: 'success' }
       ],
       wrong: [
-        { text: '⚠️ That was a high-risk phishing email with malware hiding in the attachment. Be careful with this one.', state: 'concerned' },
-        { text: 'The file was named "Scholarship_Grant_Form.pdf.exe". That ".exe" at the end means it is a program, not a PDF. Running it would install malware on the computer.', state: 'speaking' },
-        { text: 'The sender domain was fake and the 24-hour deadline was designed to make you panic and open the file without thinking. Always look at the full file extension before opening any attachment.', state: 'thinking' }
+        { text: '⚠️ Be careful downloading attachments! That was a high-risk phishing email with malware hiding in the attachment.', state: 'concerned' },
+        { text: 'The file was named "Scholarship_Form.pdf.exe". That ".exe" at the end means it is an executable program, not a PDF. Running it would install malware on the computer.', state: 'speaking' },
+        { text: 'Always check the full file extension before downloading any attachment. If an unexpected email pushes you to download an executable, it is a dangerous scam.', state: 'thinking' }
       ]
     }
   }

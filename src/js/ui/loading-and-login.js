@@ -242,6 +242,9 @@ function lsSignIn() {
         if (catId === 'phishing') {
           startMission(false);
         } else if (catId === 'malware' || catId === 'social_engineering' || catId === 'ransomware') {
+          if (typeof window.clearWorkstationLogoffGuide === 'function') {
+            window.clearWorkstationLogoffGuide();
+          }
           openChapterDesktopDirect(catId);
         } else {
           openCategoryHub();

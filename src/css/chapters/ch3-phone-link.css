@@ -982,6 +982,118 @@
   gap: 10px;
   align-items: flex-start;
   max-width: 85%;
+  transition: transform 0.2s ease;
+}
+
+/* Smooth Natural Slide-in / Fade-in Message Animations */
+.pl-gc-msg-item.pl-msg-new.mine {
+  animation: plMsgSlideInMine 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.pl-gc-msg-item.pl-msg-new.theirs {
+  animation: plMsgSlideInTheirs 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes plMsgSlideInMine {
+  0% {
+    opacity: 0;
+    transform: translate3d(14px, 12px, 0) scale(0.96);
+  }
+  70% {
+    transform: translate3d(-1px, -1px, 0) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes plMsgSlideInTheirs {
+  0% {
+    opacity: 0;
+    transform: translate3d(-14px, 12px, 0) scale(0.96);
+  }
+  70% {
+    transform: translate3d(1px, -1px, 0) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Typing Indicator Animation */
+.pl-gc-msg-item.pl-typing-active {
+  animation: plTypingItemIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes plTypingItemIn {
+  from {
+    opacity: 0;
+    transform: translate3d(-10px, 8px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.pl-gc-typing-bubble {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px !important;
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-top-left-radius: 3px !important;
+  border-radius: 14px !important;
+}
+
+.pl-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  height: 12px;
+}
+
+.pl-typing-dot {
+  width: 5.5px;
+  height: 5.5px;
+  background: #38bdf8;
+  border-radius: 50%;
+  display: inline-block;
+  animation: plDotWave 1.4s infinite ease-in-out both;
+}
+
+.pl-typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.pl-typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+.pl-typing-dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes plDotWave {
+  0%, 80%, 100% {
+    transform: scale(0.7);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1.15) translateY(-2.5px);
+    opacity: 1;
+  }
+}
+
+.pl-typing-label {
+  font-size: 11.5px;
+  font-style: italic;
+  color: #94a3b8;
+  letter-spacing: 0.2px;
 }
 
 .pl-gc-msg-item.theirs {
@@ -1094,6 +1206,44 @@
   color: #ffffff;
 }
 
+/* Messenger-style Seen Indicator */
+.pl-gc-seen-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 3px;
+  padding-right: 2px;
+}
+
+.pl-gc-seen-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.2px;
+}
+
+.pl-gc-seen-avatar {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid #38bdf8;
+  object-fit: cover;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.45);
+  animation: plSeenPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes plSeenPop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Quick Replies and Input Bar */
 .pl-gc-input-area {
   background: #0b111e;
@@ -1129,6 +1279,10 @@
   color: #ffffff;
   border-color: #38bdf8;
   transform: translateY(-1px);
+}
+
+.pl-gc-chip * {
+  pointer-events: none;
 }
 
 .pl-gc-input-bar {
@@ -1609,5 +1763,18 @@
   border-radius: 12px;
   margin: 8px auto 16px auto;
   max-width: 380px;
+}
+
+.pl-gc-chip-highlight {
+  animation: pl-chip-pulse 2s infinite ease-in-out;
+}
+
+@keyframes pl-chip-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(56, 189, 248, 0);
+  }
 }
 

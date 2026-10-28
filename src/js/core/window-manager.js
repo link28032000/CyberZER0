@@ -124,11 +124,42 @@ function openApp(appName) {
   }
 
   if (appName === 'gmail') {
+    if (typeof IconAttention !== 'undefined') {
+      IconAttention.hide('gmail');
+    }
+    const iconG = document.getElementById('icon-gmail');
+    if (iconG) iconG.classList.remove('icon-attention', 'btn-pulse-highlight');
+    const taskbarGmail = document.getElementById('taskbar-gmail');
+    if (taskbarGmail) taskbarGmail.classList.remove('btn-pulse-highlight');
+    if (typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0) {
+      const listView = document.getElementById('email-list-view');
+      const detailView = document.getElementById('email-detail-view');
+      const sentView = document.getElementById('sent-detail-view');
+      if (listView) listView.classList.add('active');
+      if (detailView) detailView.classList.remove('active');
+      if (sentView) sentView.classList.remove('active');
+    }
     updateFolderCounts();
     renderEmailList();
   }
 
   if (appName === 'browser') {
+    // If on post-award checklist, ensure any lingering phishing tabs are closed
+    if (window._awardClaimed && typeof browserTabs !== 'undefined' && Array.isArray(browserTabs)) {
+      const hasPhish = browserTabs.some(t => typeof isPhishingUrl === 'function' && isPhishingUrl(t.url));
+      if (hasPhish) {
+        browserTabs = browserTabs.filter(t => typeof isPhishingUrl === 'function' && !isPhishingUrl(t.url));
+        if (browserTabs.length === 0) {
+          if (typeof initBrowserTabs === 'function') initBrowserTabs();
+        } else {
+          if (!browserTabs.some(t => t.id === browserActiveTabId)) {
+            browserActiveTabId = browserTabs[0].id;
+          }
+          if (typeof renderTabStrip === 'function') renderTabStrip();
+          if (typeof renderActiveTab === 'function') renderActiveTab();
+        }
+      }
+    }
     if (!browserTabs || browserTabs.length === 0) {
       initBrowserTabs();
     } else {

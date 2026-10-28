@@ -416,11 +416,63 @@ function submitReport(isPhishing) {
         }, 400);
       }
 
+      // Check if this is the final email of the mission
+      const isFinalEmail = gameState.emailResults.length >= EMAILS.length;
+      if (isFinalEmail) {
+        const total = EMAILS.length;
+        const correct = gameState.correctDecisions;
+        const pct = total > 0 ? (correct / total) : 0;
+        const t1Done = (typeof SN_ACHIEVEMENTS !== 'undefined' && SN_ACHIEVEMENTS[0]) ? SN_ACHIEVEMENTS[0].check() : false;
+        const t2Done = (typeof SN_ACHIEVEMENTS !== 'undefined' && SN_ACHIEVEMENTS[1]) ? SN_ACHIEVEMENTS[1].check() : false;
+        const t3Done = (typeof SN_ACHIEVEMENTS !== 'undefined' && SN_ACHIEVEMENTS[2]) ? SN_ACHIEVEMENTS[2].check() : false;
+        const t4Done = (typeof SN_ACHIEVEMENTS !== 'undefined' && SN_ACHIEVEMENTS[3]) ? SN_ACHIEVEMENTS[3].check() : false;
+        const completedTasksCount = [t1Done, t2Done, t3Done, t4Done].filter(Boolean).length;
+        const earnedTier = (typeof getPhishingEarnedTier === 'function')
+          ? getPhishingEarnedTier(completedTasksCount, pct)
+          : { title: 'Phishing Bronze Medal', icon: '🥉', rank: 'Bronze Medal' };
+
+        messages = [
+          ...messages,
+          {
+            text: `🎉 <strong>Investigation Complete!</strong> That was the final email case in your inbox. Excellent job completing all ${total} investigations!`,
+            state: 'success'
+          },
+          {
+            text: `📊 <strong>Your Investigation Results:</strong> You made <strong>${correct} / ${total}</strong> correct verdicts (<strong>${Math.round(pct * 100)}% accuracy</strong>) and completed <strong>${completedTasksCount} of 4</strong> checklist tasks!`,
+            state: 'speaking'
+          },
+          {
+            text: `🏆 <strong>Reward Unlocked:</strong> For your dedicated investigation, you have earned the <strong>${earnedTier.title}</strong> (${earnedTier.icon} ${earnedTier.rank})! Click below to claim your reward!`,
+            state: 'success',
+            label: '🎉 CLAIM REWARD'
+          }
+        ];
+
+        renderEmailList();
+        updateHUD();
+
+        setTimeout(() => {
+          RyanGuide.speak(messages, {
+            onDone: function() {
+              finishMission();
+            }
+          });
+        }, 150);
+        return;
+      }
+
       setTimeout(() => {
         RyanGuide.speak(messages, {
           autoDismiss: 6000
         });
       }, 150);
+    } else {
+      if (gameState.emailResults.length >= EMAILS.length) {
+        renderEmailList();
+        updateHUD();
+        setTimeout(finishMission, 400);
+        return;
+      }
     }
 
     // Check if ALL emails in the mission are finished
@@ -820,14 +872,14 @@ function finishMission() {
 
   const completedTasksCount = [t1Done, t2Done, t3Done, t4Done].filter(Boolean).length;
 
-  // ── 2. Determine Achievement Tier (Trophy, Medal, Ribbon) based on 4 Tasks ──
+  // ── 2. Determine Achievement Tier (Gold / Silver / Bronze Medal) based on 4 Tasks ──
   const earnedTier = getPhishingEarnedTier(completedTasksCount);
   _achievementUnlocked.add(earnedTier.id);
   _achievementUnlocked.add(`phish_award_${earnedTier.tier}`);
-  if (earnedTier.tier === 'trophy') {
+  if (earnedTier.tier === 'gold') {
     _achievementUnlocked.add('task_all_complete');
-    _achievementUnlocked.add('phish_trophy_unlocked');
-    _achievementUnlocked.add('phish_trophy_master');
+    _achievementUnlocked.add('phish_trophy_unlocked');  // legacy compat
+    _achievementUnlocked.add('phish_gold_medal');
   }
 
   const dateStr = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -845,22 +897,12 @@ function finishMission() {
   };
   savePhishingProgress();
 
-  // ── 3. Show Sticky Note with the full Task Bar Results & Progress ──
-  renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total, earnedTier, completedTasksCount);
-  showStickyNote();
-
-  // ── Taskbar updates: show Sticky Note on taskbar ──
-  const tbNotes = document.getElementById('taskbar-notes');
-  if (tbNotes) {
-    tbNotes.classList.remove('hidden');
-    tbNotes.classList.add('open', 'active');
+  // ── 3. Keep Sticky Note hidden so player focuses on Claim Reward modal ──
+  if (typeof closeStickyNote === 'function') {
+    closeStickyNote();
+  } else {
     const sNote = document.getElementById('sticky-note');
-    const isNoteOpen = sNote && !sNote.classList.contains('hidden');
-    if (!isNoteOpen && !window._stickyNotesHighlightDismissed) {
-      tbNotes.classList.add('btn-pulse-highlight');
-    } else {
-      tbNotes.classList.remove('btn-pulse-highlight');
-    }
+    if (sNote) sNote.classList.add('hidden');
   }
 
   // ── 4. Show Achievement Toast for earned tier ──
@@ -872,10 +914,8 @@ function finishMission() {
     progress: () => `${earnedTier.rank} · ${completedTasksCount}/4 Investigation Tasks Completed!`
   });
 
-  // ── 5. Show Achievement Modal automatically AFTER email investigation ──
-  setTimeout(() => {
-    showPhishingAchievementModal(earnedTier, completedTasksCount);
-  }, 1000);
+  // ── 5. Show medal modal directly ──
+  showPhishingAchievementModal(earnedTier, completedTasksCount);
 
   if (typeof addSimulationNotification === 'function') {
     addSimulationNotification({

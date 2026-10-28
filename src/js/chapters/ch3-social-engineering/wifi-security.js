@@ -21,6 +21,19 @@ function startGroup4Mission() {
   gameState.phase = 'social_engineering';
   updateDesktopBackgroundForPhase('social_engineering');
 
+  // Show Ch2-only column (it contains both Ch2 and Ch3 icons)
+  document.querySelectorAll('.ch2-only').forEach(el => {
+    el.style.setProperty('display', 'flex', 'important');
+  });
+  // Hide Ch2-not-Ch3 gaming icons (Steam, GTA6, Games) — Chapter 3 replaces them
+  document.querySelectorAll('.ch2-not-ch3').forEach(el => {
+    el.style.setProperty('display', 'none', 'important');
+  });
+  // Show Ch3-only social icons (Instagram, Pictures)
+  document.querySelectorAll('.ch3-only').forEach(el => {
+    el.style.setProperty('display', 'flex', 'important');
+  });
+
   // Show desktop and open Wi-Fi Settings for Stage 1
   hideAllOverlays();
   showToast('📶 Stage 1: Open Wi-Fi Settings and inspect the available networks before connecting.', 'info');

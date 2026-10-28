@@ -19,6 +19,56 @@ function handleFlaggableClick(el) {
   placeFlag(el);
 }
 
+function handleQrCodeClick(event, el) {
+  event.preventDefault();
+  // In flag mode: flag the QR code as suspicious
+  if (gameState.flagModeActive) {
+    if (el.classList.contains('flagged')) {
+      removeFlag(el.dataset.flagType);
+    } else {
+      placeFlag(el);
+    }
+    return;
+  }
+  // Outside flag mode: clicking also opens destination in simulated browser
+  const destination = el.dataset.destination;
+  if (destination) {
+    openSuspiciousSite(destination);
+  }
+}
+
+function handleQrCodeDblClick(event, el) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (gameState.flagModeActive) return;
+  const destination = el.dataset.destination;
+  if (destination) {
+    openSuspiciousSite(destination);
+  }
+}
+
+function handleAttachmentClick(event, el, filename, size) {
+  event.preventDefault();
+  const currentEmailObj = ch1InboxEmails[gameState.currentEmail];
+  if (currentEmailObj && gameState.emailResults.some(r => r.emailId === currentEmailObj.id)) {
+    showToast('🔒 This email has already been reported. Case is closed.', 'warning');
+    return;
+  }
+  // In flag mode: flag the attachment as suspicious
+  if (gameState.flagModeActive) {
+    if (el.classList.contains('flagged')) {
+      removeFlag(el.dataset.flagType);
+    } else {
+      placeFlag(el);
+    }
+    return;
+  }
+  // Outside flag mode: clicking downloads the attachment & triggers warning dialogue
+  if (typeof downloadEmailAttachment === 'function') {
+    downloadEmailAttachment(filename, size);
+  }
+}
+
 function handleEmailLinkRightClick(event, el) {
   event.preventDefault();
   const destination = el.dataset.destination;
@@ -580,11 +630,24 @@ function returnToInbox() {
   document.getElementById('email-list-view').classList.add('active');
   gameState.flagModeActive = false;
   const flagModeBtn = document.getElementById('flag-mode-btn');
-  if (flagModeBtn) flagModeBtn.classList.remove('active');
+  if (flagModeBtn) {
+    flagModeBtn.classList.remove('active', 'btn-pulse-highlight', 'tutorial-flag-blink', 'phish-tutorial-highlight');
+    flagModeBtn.style.display = '';
+  }
   const reportBtn = document.getElementById('report-btn');
   const legitBtn  = document.getElementById('legit-btn');
-  if (reportBtn) reportBtn.classList.remove('verdict-btn-highlight');
-  if (legitBtn) legitBtn.classList.remove('verdict-btn-highlight');
+  if (reportBtn) {
+    reportBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    reportBtn.style.display = '';
+  }
+  if (legitBtn) {
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.style.display = '';
+  }
+  const verdictGroup = document.querySelector('.verdict-btn-group');
+  if (verdictGroup) verdictGroup.style.display = '';
+  const ch2Action = document.getElementById('ch2-toolbar-action');
+  if (ch2Action) ch2Action.style.display = 'none';
   const gmailBody = document.querySelector('.gmail-body');
   if (gmailBody) gmailBody.classList.remove('flag-mode-active');
   renderEmailList();

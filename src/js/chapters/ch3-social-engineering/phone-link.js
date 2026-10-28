@@ -8,6 +8,69 @@
 
 const NEWBIE_GC_STORAGE_KEY = 'cyberzero_newbie_gc_state';
 
+// ── 4-CHARACTER ROSTER FOR PHONE LINK SIMULATION ──────────────
+const CHAR_ROSTER = {
+  alex: {
+    id: 'alex',
+    name: 'Alex',
+    displayName: 'Alex (You)',
+    avatar: 'assets/Character/Alex.png',
+    roleTag: 'ALEX (YOU)',
+    roleClass: 'pl-gc-role-you',
+    phoneDeviceName: "Alex's Phone",
+    quickReplies: ['Hello po.'],
+    chapterNum: 1
+  },
+  ethan: {
+    id: 'ethan',
+    name: 'Ethan',
+    displayName: 'Ethan (You)',
+    avatar: 'assets/Character/Ethan.png',
+    roleTag: 'ETHAN (YOU)',
+    roleClass: 'pl-gc-role-sysadmin',
+    phoneDeviceName: "Ethan's Phone",
+    quickReplies: ["Alex, it’s me, your high school classmate!"],
+    chapterNum: 2
+  },
+  pia: {
+    id: 'pia',
+    name: 'Pia',
+    displayName: 'Pia (You)',
+    avatar: 'assets/Character/Pia.png',
+    roleTag: 'PIA (YOU)',
+    roleClass: 'pl-gc-role-analyst',
+    phoneDeviceName: "Pia's Phone",
+    quickReplies: ['Hi team,'],
+    chapterNum: 3
+  },
+  ryan: {
+    id: 'ryan',
+    name: 'Ryan',
+    displayName: 'Ryan (You)',
+    avatar: 'assets/Character/Ryan.png',
+    roleTag: 'RYAN (YOU)',
+    roleClass: 'pl-gc-role-mentor',
+    phoneDeviceName: "Ryan's Phone",
+    quickReplies: ['Team, status report on incident containment!'],
+    chapterNum: 4
+  }
+};
+
+function getCurrentPhoneCharacter() {
+  const curCatId = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
+
+  if (curCatId === 'malware' || curCatId === 2 || curCatId === 'ch2') {
+    return CHAR_ROSTER.ethan;
+  }
+  if (curCatId === 'social_engineering' || curCatId === 'social' || curCatId === 'social-engineering' || curCatId === 3 || curCatId === 'ch3') {
+    return CHAR_ROSTER.pia;
+  }
+  if (curCatId === 'ransomware' || curCatId === 4 || curCatId === 'ch4') {
+    return CHAR_ROSTER.ryan;
+  }
+  return CHAR_ROSTER.alex;
+}
+
 const NEWBIE_GC_INFO = {
   id: 'business_newbie_gc',
   name: 'new intern team 2027',
@@ -48,16 +111,14 @@ const NEWBIE_GC_INFO = {
     },
     {
       id: 'alex',
-      name: 'Alex (You)',
+      name: 'Alex',
       role: 'IT Support Trainee & Security Recruit',
-      roleTag: 'ALEX (YOU)',
+      roleTag: 'ALEX',
       roleClass: 'pl-gc-role-you',
       avatar: 'assets/Character/Alex.png',
-      isPlayer: true,
-      status: 'Active Now'
+      status: 'Online'
     }
   ],
-  // Real messaging app experience: no pre-filled fake messages, starts clean with creation event
   defaultMessages: []
 };
 
@@ -66,13 +127,23 @@ function loadNewbieGcState() {
     const raw = localStorage.getItem(NEWBIE_GC_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (typeof parsed === 'object' && parsed !== null) return parsed;
+      if (typeof parsed === 'object' && parsed !== null) {
+        if (!Array.isArray(parsed.playerMessages)) parsed.playerMessages = [];
+        parsed.playerMessages = parsed.playerMessages.filter(m =>
+          m.id !== 'ryan_initial_welcome' &&
+          m.text !== 'I created this group for new interns welcoming them.' &&
+          m.id !== 'init_ryan_1' &&
+          m.id !== 'init_alex_1'
+        );
+        return parsed;
+      }
     }
   } catch (e) {}
   return {
     created: false,
     joined: false,
     hasUnread: false,
+    seenByRyan: false,
     playerMessages: []
   };
 }
@@ -84,19 +155,16 @@ function saveNewbieGcState(state) {
 }
 
 function isNewbieGcActive() {
-  const state = loadNewbieGcState();
-  if (state.created || state.joined || state.invited || state.accepted) return true;
-  // If player already completed Chapter 1 or unlocked an achievement
-  try {
-    const phishProgress = localStorage.getItem('cyberzero_phishing_progress');
-    if (phishProgress) {
-      const p = JSON.parse(phishProgress);
-      if (p.trophyUnlocked || p.earnedAward || (Array.isArray(p.unlockedAchievements) && p.unlockedAchievements.length > 0)) {
-        return true;
-      }
-    }
-  } catch(e) {}
-  return false;
+  const curCatId = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
+  // In Chapter 2, Chapter 3, and Chapter 4, Phone Link group chat is always active!
+  if (curCatId !== 'phishing' && curCatId !== 'mission') {
+    return true;
+  }
+  // During Chapter 1 / first checklist, Phone Link group chat is strictly INACTIVE until the award is claimed
+  if (typeof window !== 'undefined' && !window._awardClaimed) {
+    return false;
+  }
+  return true;
 }
 
 function setNewbieGcCreated(andHighlight = false) {
@@ -315,6 +383,11 @@ function updatePhoneLinkConnectionState() {
   // 1. Device status label in left sidebar
   const statusEl = document.getElementById('pl-device-status');
   const labelEl = document.querySelector('.pl-device-label');
+  const curChar = getCurrentPhoneCharacter();
+  const devNameEl = document.querySelector('.pl-device-name');
+  if (devNameEl) {
+    devNameEl.textContent = `📱 ${curChar.phoneDeviceName}`;
+  }
   if (statusEl) {
     if (conn.isBluetoothConnected) {
       statusEl.textContent = '🟢 Connected';
@@ -428,13 +501,11 @@ function renderPhoneLinkApp() {
   showPhoneHomeScreen();
   updatePhoneLinkBadges();
   switchPhoneTab('messages');
-  if (typeof isNewbieGcActive === 'function' && isNewbieGcActive()) {
-    openNewbieGcConversation();
-  }
   updatePhoneLinkConnectionState();
 }
 
 function renderPhoneFrame() {
+  const curChar = getCurrentPhoneCharacter();
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
@@ -447,6 +518,11 @@ function renderPhoneFrame() {
 
   const widgetDate = document.getElementById('pl-phone-widget-date');
   if (widgetDate) widgetDate.textContent = dateStr;
+
+  const devNameEl = document.querySelector('.pl-device-name');
+  if (devNameEl) {
+    devNameEl.textContent = `📱 ${curChar.phoneDeviceName}`;
+  }
 }
 
 function showPhoneHomeScreen() {
@@ -454,12 +530,18 @@ function showPhoneHomeScreen() {
   const phoneContent = document.getElementById('pl-phone-content');
   if (!phoneContent) return;
 
+  const curChar = getCurrentPhoneCharacter();
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
   phoneContent.innerHTML = `
     <div class="pl-phone-home-view">
+      <!-- Active User Profile Chip -->
+      <div class="pl-phone-user-chip" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:3px 8px;margin-bottom:8px;">
+        <img src="${curChar.avatar}" alt="${curChar.name}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid #38bdf8;">
+        <span style="font-size:9.5px;font-weight:700;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${curChar.displayName}</span>
+      </div>
       <div class="pl-phone-widget">
         <div class="pl-phone-widget-time" id="pl-phone-widget-time">${timeStr}</div>
         <div class="pl-phone-widget-date" id="pl-phone-widget-date">${dateStr}</div>
@@ -494,9 +576,12 @@ function showPhoneInAppScreen(app) {
 
   if (isMsg && isNewbieGcActive()) {
     const gcState = loadNewbieGcState();
+    const curChar = getCurrentPhoneCharacter();
     const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
-    const lastMsgPreview = hasPlayerMsgs
-      ? gcState.playerMessages[gcState.playerMessages.length - 1].text
+    const lastMsg = hasPlayerMsgs ? gcState.playerMessages[gcState.playerMessages.length - 1] : null;
+    const lastSender = lastMsg ? (lastMsg.from === curChar.id ? curChar.displayName : (lastMsg.author || lastMsg.from)) : '';
+    const lastMsgPreview = lastMsg
+      ? `${lastSender}: ${lastMsg.text}`
       : 'Ryan added you';
 
     phoneContent.innerHTML = `
@@ -513,7 +598,7 @@ function showPhoneInAppScreen(app) {
               <span style="font-size:10px;font-weight:800;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">new intern team 2027</span>
             </div>
             <div style="font-size:8.5px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              ${lastMsgPreview}
+              ${escapeHtml(lastMsgPreview)}
             </div>
           </div>
           <button type="button" class="pl-phone-screen-home-btn" onclick="returnPhoneHome()" style="margin-top:auto;">⌂</button>
@@ -616,10 +701,13 @@ function renderPhoneMessages(container) {
   // 1. Group Chat Row (Pinned at top if active)
   if (gcActive) {
     const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
-    const preview = hasPlayerMsgs
-      ? `${gcState.playerMessages[gcState.playerMessages.length - 1].author}: ${gcState.playerMessages[gcState.playerMessages.length - 1].text}`
+    const curChar = getCurrentPhoneCharacter();
+    const lastMsg = hasPlayerMsgs ? gcState.playerMessages[gcState.playerMessages.length - 1] : null;
+    const lastSender = lastMsg ? (lastMsg.from === curChar.id ? curChar.displayName : (lastMsg.author || lastMsg.from)) : '';
+    const preview = lastMsg
+      ? `${lastSender}: ${lastMsg.text}`
       : `Ryan added you`;
-    const timeStr = '10:49 AM';
+    const timeStr = lastMsg ? lastMsg.time : '10:49 AM';
 
     html += `
       <div class="pl-contact-row" onclick="openNewbieGcConversation()" title="${NEWBIE_GC_INFO.name}">
@@ -630,7 +718,7 @@ function renderPhoneMessages(container) {
             <span class="pl-gc-tag-active">👥 4 MEMBERS</span>
           </div>
           <div class="pl-contact-meta" style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;">${preview}</span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;">${escapeHtml(preview)}</span>
             <span style="font-size:10px;color:#94a3b8;margin-left:8px;">${timeStr}</span>
           </div>
         </div>
@@ -676,6 +764,11 @@ function renderPhoneMessages(container) {
 }
 
 function openNewbieGcConversation() {
+  if (!isNewbieGcActive()) {
+    switchPhoneTab('messages');
+    return;
+  }
+
   // Ensure network and bluetooth connections are active so group chat opens seamlessly
   if (typeof networkSettings !== 'undefined') {
     if (!networkSettings.bluetooth) networkSettings.bluetooth = true;
@@ -690,7 +783,104 @@ function openNewbieGcConversation() {
   const content = document.getElementById('pl-tab-content');
   if (!content) return;
 
+  const curChar = getCurrentPhoneCharacter();
   const state = loadNewbieGcState();
+  if (!Array.isArray(state.playerMessages)) state.playerMessages = [];
+
+  // Remove any old dummy test messages
+  state.playerMessages = state.playerMessages.filter(m =>
+    m.id !== 'ryan_initial_welcome' &&
+    m.text !== 'I created this group for new interns welcoming them.' &&
+    m.id !== 'init_ryan_1' &&
+    m.id !== 'init_alex_1'
+  );
+
+  // Chapter 1: Strictly NO messages initially. Alex (You) must manually send "Hello po."
+  if (curChar.id === 'alex') {
+    const hasAlexHello = state.playerMessages.some(m => (m.from === 'alex' || m.isPlayer) && m.text.toLowerCase().includes('hello'));
+    if (!hasAlexHello) {
+      state.playerMessages = [];
+      state.ryanWelcomedAlex = false;
+    }
+  } else if (curChar.id === 'ethan') {
+    // In Chapter 2 (Ethan): ensure Chapter 1 history is present
+    const hasCh1Hello = state.playerMessages.some(m => m.from === 'alex' && m.text.toLowerCase().includes('hello'));
+    if (!hasCh1Hello) {
+      state.playerMessages = [
+        {
+          id: 'ch1_alex_hello',
+          from: 'alex',
+          author: 'Alex',
+          roleTag: 'ALEX',
+          roleClass: 'pl-gc-role-you',
+          avatar: 'assets/Character/Alex.png',
+          time: '9:00 AM',
+          text: 'Hello po.'
+        },
+        {
+          id: 'ch1_ryan_welcome',
+          from: 'ryan',
+          author: 'Ryan',
+          roleTag: 'CREATOR',
+          roleClass: 'pl-gc-role-mentor',
+          avatar: 'assets/Character/Ryan.png',
+          time: '9:01 AM',
+          text: 'Welcome to the group, Alex!'
+        }
+      ];
+      state.ryanWelcomedAlex = true;
+    }
+  } else if (curChar.id === 'pia') {
+    // In Chapter 3 (Pia): ensure Chapter 1 & 2 history is present
+    const hasCh2Ethan = state.playerMessages.some(m => m.from === 'ethan');
+    if (!hasCh2Ethan) {
+      state.playerMessages = [
+        {
+          id: 'ch1_alex_hello',
+          from: 'alex',
+          author: 'Alex',
+          roleTag: 'ALEX',
+          roleClass: 'pl-gc-role-you',
+          avatar: 'assets/Character/Alex.png',
+          time: '9:00 AM',
+          text: 'Hello po.'
+        },
+        {
+          id: 'ch1_ryan_welcome',
+          from: 'ryan',
+          author: 'Ryan',
+          roleTag: 'CREATOR',
+          roleClass: 'pl-gc-role-mentor',
+          avatar: 'assets/Character/Ryan.png',
+          time: '9:01 AM',
+          text: 'Welcome to the group, Alex!'
+        },
+        {
+          id: 'ch2_ethan_msg',
+          from: 'ethan',
+          author: 'Ethan',
+          roleTag: 'SYSADMIN',
+          roleClass: 'pl-gc-role-sysadmin',
+          avatar: 'assets/Character/Ethan.png',
+          time: '9:15 AM',
+          text: 'Alex, it’s me, your high school classmate!'
+        },
+        {
+          id: 'ch2_alex_reply',
+          from: 'alex',
+          author: 'Alex',
+          roleTag: 'ALEX',
+          roleClass: 'pl-gc-role-you',
+          avatar: 'assets/Character/Alex.png',
+          time: '9:16 AM',
+          text: 'What, Ryan?'
+        }
+      ];
+      state.ryanWelcomedAlex = true;
+      state.alexRepliedEthan = true;
+    }
+  }
+
   state.hasUnread = false;
   saveNewbieGcState(state);
   updatePhoneLinkBadges();
@@ -707,14 +897,17 @@ function acceptNewbieGcInvite() {
   openNewbieGcConversation();
 }
 
-function renderNewbieGcChat(container) {
+function renderNewbieGcChat(container, options = {}) {
   const state = loadNewbieGcState();
   const conn = getPhoneLinkConnectionStatus();
   const isOffline = !conn.isInternetConnected && !conn.isBluetoothConnected;
   const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
+  const curChar = getCurrentPhoneCharacter();
 
-  const playerMessages = state.playerMessages || [];
-  const hasMessages = playerMessages.length > 0;
+  const allMessages = state.playerMessages || [];
+
+  const existingInput = document.getElementById('pl-gc-text-input');
+  const preservedText = existingInput ? existingInput.value : '';
 
   container.innerHTML = `
     <div class="pl-convo-view" style="display:flex;flex-direction:column;height:100%;background:#090e18;">
@@ -733,92 +926,262 @@ function renderNewbieGcChat(container) {
 
       <!-- Messages Thread -->
       <div class="pl-convo-messages" id="pl-gc-messages-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <!-- Real messaging app system events -->
+        <!-- Group system creation event -->
         <div class="pl-gc-system-events-container">
           <div class="pl-gc-system-pill">
-            👑 <strong>Ryan</strong> created group <strong>"${NEWBIE_GC_INFO.name}"</strong>
+            👑 <strong>Ryan${curChar.id === 'ryan' ? ' (You)' : ''}</strong> created group <strong>"${NEWBIE_GC_INFO.name}"</strong>
           </div>
-          <div class="pl-gc-system-pill">
-            👥 <strong>Ryan</strong> added <strong>Ethan</strong> and <strong>Pia</strong>
-          </div>
-          <div class="pl-gc-system-pill pl-gc-pill-you">
-            👋 <strong>Ryan</strong> added <strong>you</strong>
-          </div>
+          ${curChar.id === 'alex' ? `
+            <div class="pl-gc-system-pill pl-gc-pill-you">
+              👋 <strong>Ryan</strong> added <strong>Alex (You)</strong>
+            </div>
+          ` : curChar.id === 'ethan' ? `
+            <div class="pl-gc-system-pill">
+              👋 <strong>Ryan</strong> added <strong>Alex</strong>
+            </div>
+            <div class="pl-gc-system-pill pl-gc-pill-you">
+              👋 <strong>Ryan</strong> added <strong>Ethan (You)</strong>
+            </div>
+          ` : curChar.id === 'pia' ? `
+            <div class="pl-gc-system-pill">
+              👋 <strong>Ryan</strong> added <strong>Alex</strong> and <strong>Ethan</strong>
+            </div>
+            <div class="pl-gc-system-pill pl-gc-pill-you">
+              👋 <strong>Ryan</strong> added <strong>Pia (You)</strong>
+            </div>
+          ` : `
+            <div class="pl-gc-system-pill pl-gc-pill-you">
+              👋 <strong>Ryan (You)</strong> added <strong>Alex, Ethan, Pia</strong>
+            </div>
+          `}
         </div>
 
-        ${!hasMessages ? `
-          <div class="pl-gc-start-hint">
-            <span style="font-size:22px;">💬</span>
-            <div style="font-weight:700;color:#f1f5f9;">No messages yet</div>
-            <div style="font-size:11px;color:#94a3b8;">Say hi to Ethan, Pia, and Ryan to start the team conversation!</div>
-          </div>
-        ` : ''}
+        ${allMessages.map((msg, idx) => {
+          const isMine = (msg.from === curChar.id) || (msg.isPlayer && msg.playerCharId === curChar.id) || (msg.from === 'player' && (!msg.playerCharId || msg.playerCharId === curChar.id));
 
-        ${playerMessages.map(msg => {
-          const isMine = msg.from === 'player' || msg.from === 'alex' || msg.isPlayer;
-          const authorName = isMine ? 'Alex (You)' : msg.author;
-          const avatarSrc = isMine ? 'assets/Character/Alex.png' : msg.avatar;
-          const roleTag = isMine ? 'ALEX (YOU)' : msg.roleTag;
-          const roleClass = isMine ? 'pl-gc-role-you' : msg.roleClass;
+          let authorName = '';
+          let avatarSrc = '';
+          let roleTag = '';
+          let roleClass = '';
+
+          if (isMine) {
+            authorName = curChar.displayName;
+            avatarSrc = curChar.avatar;
+            roleTag = curChar.roleTag;
+            roleClass = curChar.roleClass;
+          } else {
+            const senderRoster = CHAR_ROSTER[msg.from];
+            authorName = senderRoster ? senderRoster.name : (msg.author || 'Teammate');
+            avatarSrc = senderRoster ? senderRoster.avatar : (msg.avatar || 'assets/Character/Ryan.png');
+            roleTag = senderRoster ? senderRoster.roleTag.replace(' (YOU)', '') : (msg.roleTag || 'MEMBER');
+            roleClass = senderRoster ? senderRoster.roleClass : (msg.roleClass || 'pl-gc-role-mentor');
+          }
+
+          let seenReceiptHtml = '';
+          if (isMine) {
+            const isLatestMine = !allMessages.slice(idx + 1).some(m => (m.from === curChar.id) || (m.isPlayer && m.playerCharId === curChar.id));
+            if (isLatestMine) {
+              if (state.seenByRyan) {
+                seenReceiptHtml = `
+                  <div class="pl-gc-seen-row" title="Seen by Team">
+                    <span class="pl-gc-seen-label">Seen</span>
+                    <img src="assets/Character/Ryan.png" class="pl-gc-seen-avatar" alt="Ryan" title="Seen by Ryan">
+                  </div>
+                `;
+              } else {
+                seenReceiptHtml = `
+                  <div class="pl-gc-seen-row" title="Sent">
+                    <span class="pl-gc-seen-label" style="color:#64748b;">✓ Sent</span>
+                  </div>
+                `;
+              }
+            }
+          }
+
+          const isNew = !!msg.isNew;
+          const animClass = isNew ? 'pl-msg-new' : '';
+
           return `
-            <div class="pl-gc-msg-item ${isMine ? 'mine' : 'theirs'}">
-              <img src="${avatarSrc}" class="pl-gc-msg-avatar ${isMine ? 'avatar-mine' : ''}" alt="${authorName}">
+            <div class="pl-gc-msg-item ${isMine ? 'mine' : 'theirs'} ${animClass}">
+              <img src="${avatarSrc}" class="pl-gc-msg-avatar ${isMine ? 'avatar-mine' : ''}" alt="${escapeHtml(authorName)}">
               <div class="pl-gc-msg-col">
                 <div class="pl-gc-msg-meta">
-                  <span class="pl-gc-msg-author">${authorName}</span>
-                  <span class="pl-gc-msg-role-tag ${roleClass}">${roleTag}</span>
+                  <span class="pl-gc-msg-author">${escapeHtml(authorName)}</span>
+                  <span class="pl-gc-msg-role-tag ${roleClass}">${escapeHtml(roleTag)}</span>
                   <span class="pl-gc-msg-time-inline">${msg.time}</span>
                 </div>
-                <div class="pl-gc-bubble">${msg.text}</div>
+                <div class="pl-gc-bubble">${escapeHtml(msg.text)}</div>
+                ${seenReceiptHtml}
               </div>
             </div>
           `;
         }).join('')}
+
+        ${state.typingMember ? `
+          <div class="pl-gc-msg-item theirs pl-typing-active" id="pl-gc-typing-item">
+            <img src="${state.typingMember.avatar}" class="pl-gc-msg-avatar" alt="${escapeHtml(state.typingMember.name)}">
+            <div class="pl-gc-msg-col">
+              <div class="pl-gc-msg-meta">
+                <span class="pl-gc-msg-author">${escapeHtml(state.typingMember.name)}</span>
+                <span class="pl-gc-msg-role-tag ${state.typingMember.roleClass}">${escapeHtml(state.typingMember.roleTag)}</span>
+              </div>
+              <div class="pl-gc-bubble pl-gc-typing-bubble">
+                <span class="pl-typing-dots" aria-hidden="true">
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                </span>
+                <span class="pl-typing-label">${escapeHtml(state.typingMember.name)} is typing…</span>
+              </div>
+            </div>
+          </div>
+        ` : (state.ryanIsTyping ? `
+          <div class="pl-gc-msg-item theirs pl-typing-active" id="pl-gc-typing-item">
+            <img src="assets/Character/Ryan.png" class="pl-gc-msg-avatar" alt="Ryan">
+            <div class="pl-gc-msg-col">
+              <div class="pl-gc-msg-meta">
+                <span class="pl-gc-msg-author">Ryan</span>
+                <span class="pl-gc-msg-role-tag pl-gc-role-mentor">CREATOR</span>
+              </div>
+              <div class="pl-gc-bubble pl-gc-typing-bubble">
+                <span class="pl-typing-dots" aria-hidden="true">
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                </span>
+                <span class="pl-typing-label">Ryan is typing…</span>
+              </div>
+            </div>
+          </div>
+        ` : '')}
       </div>
 
       <!-- Quick Replies & Input Bar -->
       <div class="pl-gc-input-area">
-        ${!hasMessages ? `
-          <div class="pl-gc-quick-replies">
-            <button type="button" class="pl-gc-chip" onclick="sendPlayerGcQuickReply('Hello!')">
-              👋 Hello!
+        <div class="pl-gc-quick-replies" style="display:flex;gap:8px;padding:4px 0;flex-wrap:wrap;">
+          ${curChar.quickReplies.map(qr => `
+            <button type="button" class="pl-gc-chip ${((curChar.id === 'alex' && allMessages.length === 0) || (curChar.id === 'ethan' && !state.alexRepliedEthan) || (curChar.id === 'pia' && !state.piaWelcomed)) ? 'pl-gc-chip-highlight' : ''}" data-qr="${escapeHtml(qr)}" onclick="sendPlayerGcQuickReply(this.getAttribute('data-qr'))" style="cursor:pointer;background:rgba(56,189,248,0.2);border:1.5px solid #38bdf8;color:#f0f9ff;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:5px 12px;font-size:12px;box-shadow:0 2px 8px rgba(56,189,248,0.25);" title="Click to send">
+              <span>💬</span> <span>${escapeHtml(qr)}</span> <span style="font-size:10px;color:#7dd3fc;margin-left:2px;">(Click to send)</span>
             </button>
-          </div>
-          <div class="pl-gc-input-bar">
-            <input type="text" id="pl-gc-text-input" placeholder="Say 'Hello' to greet the team..." maxlength="200" onkeydown="if(event.key==='Enter') sendCustomPlayerGcMessage()">
-            <button type="button" class="pl-gc-send-btn" onclick="sendCustomPlayerGcMessage()">
-              Send 📨
-            </button>
-          </div>
-        ` : `
-          <div style="padding:6px 8px;text-align:center;">
-            <span style="font-size:12px;color:#86efac;font-weight:600;">✓ You greeted the team! Welcome to the squad, Alex.</span>
-          </div>
-        `}
+          `).join('')}
+        </div>
+        <div class="pl-gc-input-bar">
+          <input type="text" id="pl-gc-text-input" placeholder="${curChar.id === 'alex' ? 'Click &quot;Hello po.&quot; above or type here...' : curChar.id === 'ethan' ? 'Click message above or type here...' : curChar.id === 'pia' ? 'Click &quot;Hi team,&quot; above or type here...' : `Message as ${curChar.name}...`}" maxlength="200" autocomplete="off" onkeydown="if(event.key==='Enter') sendCustomPlayerGcMessage()">
+          <button type="button" class="pl-gc-send-btn" onclick="sendCustomPlayerGcMessage()">
+            Send 📨
+          </button>
+        </div>
       </div>
     </div>
   `;
 
-  // Auto-scroll to bottom of messages
-  setTimeout(() => {
-    const list = document.getElementById('pl-gc-messages-list');
-    if (list) list.scrollTop = list.scrollHeight;
-  }, 60);
+  // Explicitly wire quick reply buttons to guarantee automatic sending on click
+  const targetWrap = container || document.getElementById('pl-tab-content');
+  if (targetWrap && typeof targetWrap.querySelectorAll === 'function') {
+    targetWrap.querySelectorAll('.pl-gc-chip').forEach(btn => {
+      btn.onclick = function(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const text = this.getAttribute('data-qr') || (curChar.quickReplies && curChar.quickReplies[0]) || 'Hello po.';
+        sendPlayerGcQuickReply(text);
+      };
+    });
+  }
+
+  // Restore preserved input text if user had already begun typing
+  const inp = document.getElementById('pl-gc-text-input');
+  if (inp && preservedText) {
+    inp.value = preservedText;
+  }
+
+  // Auto-scroll to latest message: smooth on send/receive/typing, instant on initial open
+  const isSmooth = !!options.smoothScroll;
+  const list = document.getElementById('pl-gc-messages-list');
+  if (list) {
+    if (isSmooth) {
+      list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+      setTimeout(() => {
+        const l2 = document.getElementById('pl-gc-messages-list');
+        if (l2) l2.scrollTo({ top: l2.scrollHeight, behavior: 'smooth' });
+      }, 70);
+    } else {
+      list.scrollTop = list.scrollHeight;
+      setTimeout(() => {
+        const l2 = document.getElementById('pl-gc-messages-list');
+        if (l2) l2.scrollTop = l2.scrollHeight;
+      }, 40);
+    }
+  }
+
+  if (inp && options.focusInput !== false) {
+    setTimeout(() => {
+      const i2 = document.getElementById('pl-gc-text-input');
+      if (i2 && document.activeElement !== i2 && !options.noFocus) {
+        i2.focus();
+      }
+    }, 60);
+  }
+
+  // Clear isNew flag on messages after their animation finishes (400ms)
+  let hadNew = false;
+  allMessages.forEach(m => {
+    if (m.isNew) {
+      hadNew = true;
+      m.isNew = false;
+    }
+  });
+  if (hadNew) {
+    setTimeout(() => {
+      saveNewbieGcState(state);
+    }, 450);
+  }
 }
 
 function sendPlayerGcQuickReply(text) {
-  sendPlayerGcMessage(text || 'Hello!');
+  const curChar = getCurrentPhoneCharacter();
+  let msg = text;
+  if (!msg || typeof msg !== 'string') {
+    msg = (curChar && curChar.quickReplies && curChar.quickReplies[0]) ? curChar.quickReplies[0] : 'Hello po.';
+  }
+  const input = document.getElementById('pl-gc-text-input');
+  if (input) input.value = '';
+  sendPlayerGcMessage(msg);
 }
 
 function sendCustomPlayerGcMessage() {
   const input = document.getElementById('pl-gc-text-input');
-  const typed = input ? (input.value || '').trim() : '';
+  let typed = input ? (input.value || '').trim() : '';
+  const curChar = getCurrentPhoneCharacter();
+  if (!typed) {
+    if (curChar.id === 'alex') {
+      typed = 'Hello po.';
+    } else if (curChar.id === 'ethan') {
+      typed = "Alex, it\u2019s me, your high school classmate!";
+    } else if (curChar.id === 'pia') {
+      typed = 'Hi team,';
+    } else {
+      if (input) input.focus();
+      return;
+    }
+  }
   if (input) input.value = '';
-  sendPlayerGcMessage(typed || 'Hello!');
+  sendPlayerGcMessage(typed);
 }
 
 function sendPlayerGcMessage(text) {
-  const msgText = (text && typeof text === 'string' && text.trim().length > 0) ? text.trim() : 'Hello!';
+  if (window._isSendingGcMessage) return;
+  window._isSendingGcMessage = true;
+  setTimeout(() => { window._isSendingGcMessage = false; }, 400);
+
+  const curChar = getCurrentPhoneCharacter();
+  const state = loadNewbieGcState();
+  const msgText = (text && typeof text === 'string' && text.trim().length > 0)
+    ? text.trim()
+    : curChar.quickReplies[0];
+
+  if (!msgText) return;
 
   // Auto-ensure connection state is restored
   if (typeof networkSettings !== 'undefined') {
@@ -829,12 +1192,6 @@ function sendPlayerGcMessage(text) {
     networkSettings.airplane = false;
   }
 
-  // Notify post-award checklist: player sent a message in the group chat ✅
-  if (typeof window._notifyPostAwardPhoneLinkGroupJoin === 'function') {
-    window._notifyPostAwardPhoneLinkGroupJoin();
-  }
-
-  const state = loadNewbieGcState();
   if (!state.playerMessages) state.playerMessages = [];
 
   const now = new Date();
@@ -842,17 +1199,20 @@ function sendPlayerGcMessage(text) {
 
   const playerMsg = {
     id: 'p_' + Date.now(),
-    from: 'alex',
+    from: curChar.id,
+    playerCharId: curChar.id,
     isPlayer: true,
-    author: 'Alex (You)',
-    roleTag: 'ALEX (YOU)',
-    roleClass: 'pl-gc-role-you',
-    avatar: 'assets/Character/Alex.png',
+    author: curChar.displayName,
+    roleTag: curChar.roleTag,
+    roleClass: curChar.roleClass,
+    avatar: curChar.avatar,
     time: timeStr,
-    text: msgText
+    text: msgText,
+    isNew: true
   };
 
   state.playerMessages.push(playerMsg);
+  state.seenByRyan = false;
   saveNewbieGcState(state);
 
   if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
@@ -861,144 +1221,188 @@ function sendPlayerGcMessage(text) {
 
   const content = document.getElementById('pl-tab-content');
   if (content) {
-    renderNewbieGcChat(content);
+    renderNewbieGcChat(content, { smoothScroll: true });
   }
 
   if (typeof showToast === 'function') {
-    showToast(`💬 Greeted the team with "${msgText}"!`, 'success');
+    showToast(`💬 Sent: "${msgText}"`, 'success');
   }
 
-  // Teammates dynamic multi-step response with typing indicators and notification sounds
-  scheduleTeammateResponse(msgText);
+  // Trigger simulated teammate replies
+  triggerTeammateReplies(curChar, msgText);
 }
 
-function showGcTypingIndicator(name) {
-  const list = document.getElementById('pl-gc-messages-list');
-  if (!list) return;
-  const existing = document.getElementById('pl-gc-typing-row');
-  if (existing) existing.remove();
-  const typing = document.createElement('div');
-  typing.id = 'pl-gc-typing-row';
-  typing.className = 'pl-gc-typing-pill';
-  typing.innerHTML = `<span>💬</span> <span>${escapeHtml(name)} is typing...</span>`;
-  list.appendChild(typing);
-  list.scrollTop = list.scrollHeight;
-}
+function triggerTeammateReplies(curChar, msgText) {
+  const state = loadNewbieGcState();
+  let repliers = [];
+  const lower = (msgText || '').toLowerCase();
 
-function removeGcTypingIndicator() {
-  const existing = document.getElementById('pl-gc-typing-row');
-  if (existing) existing.remove();
-}
-
-function scheduleTeammateResponse(playerText) {
-  showGcTypingIndicator('Ryan');
-
-  // Step 1: Ryan warmly welcomes Alex to the team
-  setTimeout(() => {
-    removeGcTypingIndicator();
-    const state = loadNewbieGcState();
-    if (!state.playerMessages) state.playerMessages = [];
-
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const ryanReply = {
-      id: 'r_' + Date.now(),
-      from: 'ryan',
-      author: 'Ryan',
-      roleTag: 'CREATOR',
-      roleClass: 'pl-gc-role-mentor',
-      avatar: 'assets/Character/Ryan.png',
-      time: timeStr,
-      text: "Welcome, new intern! 🎉 So glad you're officially on the team, Alex! You handled those phishing threats like a pro today. Take a quick breather—we're excited to work with you!"
-    };
-
-    state.playerMessages.push(ryanReply);
-    saveNewbieGcState(state);
-
-    if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
-      AudioManager.playNotification();
-    }
-
-    const content = document.getElementById('pl-tab-content');
-    if (content) renderNewbieGcChat(content);
-
-    // Step 2: Pia welcomes Alex
-    setTimeout(() => {
-      showGcTypingIndicator('Pia');
-
+  if (curChar.id === 'alex') {
+    // ── Chapter 1: Ryan’s Group Chat ──
+    // - Alex (You) must manually send the first message: “Hello po.”
+    // - After Alex sends the message, show the typing indicator (“Ryan is typing…”).
+    // - Ryan should automatically reply with: “Welcome to the group, Alex!”
+    // - All other messages must be sent manually by the user. Do not automate any additional replies.
+    if (!state.ryanWelcomedAlex) {
+      state.ryanWelcomedAlex = true;
+      saveNewbieGcState(state);
+      repliers.push({
+        member: CHAR_ROSTER.ryan,
+        text: 'Welcome to the group, Alex!',
+        delay: 850,
+        typingDuration: 1200
+      });
+    } else {
+      // Do not automate any additional replies
       setTimeout(() => {
-        removeGcTypingIndicator();
-        const pState = loadNewbieGcState();
-        if (!pState.playerMessages) pState.playerMessages = [];
-        const pNow = new Date();
-        const pTime = pNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const sState = loadNewbieGcState();
+        sState.seenByRyan = true;
+        saveNewbieGcState(sState);
+        const c = document.getElementById('pl-tab-content');
+        if (c && g4ActiveConvo === 'business_newbie_gc') renderNewbieGcChat(c, { smoothScroll: true });
+      }, 700);
+      return;
+    }
+  } else if (curChar.id === 'ethan') {
+    // ── Chapter 2: Ethan’s Message ──
+    // - Ethan manually sends Alex this message: “Alex, it’s me, your high school classmate!”
+    // - Alex automatically replies: “What, Ryan?”
+    if (!state.alexRepliedEthan) {
+      state.alexRepliedEthan = true;
+      saveNewbieGcState(state);
+      repliers.push({
+        member: CHAR_ROSTER.alex,
+        text: 'What, Ryan?',
+        delay: 850,
+        typingDuration: 1100
+      });
+    } else {
+      // All other messages must be sent manually by the user. Do not automate any additional replies.
+      setTimeout(() => {
+        const sState = loadNewbieGcState();
+        sState.seenByRyan = true;
+        saveNewbieGcState(sState);
+        const c = document.getElementById('pl-tab-content');
+        if (c && g4ActiveConvo === 'business_newbie_gc') renderNewbieGcChat(c, { smoothScroll: true });
+      }, 700);
+      return;
+    }
+  } else if (curChar.id === 'pia') {
+    // ── Chapter 3: Pia ──
+    if (!state.piaWelcomed) {
+      state.piaWelcomed = true;
+      saveNewbieGcState(state);
+      repliers.push({
+        member: CHAR_ROSTER.ryan,
+        text: 'Welcome to the group, Pia!',
+        delay: 850,
+        typingDuration: 1200
+      });
+    } else {
+      setTimeout(() => {
+        const sState = loadNewbieGcState();
+        sState.seenByRyan = true;
+        saveNewbieGcState(sState);
+        const c = document.getElementById('pl-tab-content');
+        if (c && g4ActiveConvo === 'business_newbie_gc') renderNewbieGcChat(c, { smoothScroll: true });
+      }, 700);
+      return;
+    }
+  } else if (curChar.id === 'ryan') {
+    // ── Chapter 4: Ryan ──
+    if (!state.ryanCh4Prompted) {
+      state.ryanCh4Prompted = true;
+      saveNewbieGcState(state);
+      repliers.push({
+        member: CHAR_ROSTER.ethan,
+        text: 'Workstations secure, Ryan!',
+        delay: 850,
+        typingDuration: 1100
+      });
+      repliers.push({
+        member: CHAR_ROSTER.alex,
+        text: 'Threats isolated, sir!',
+        delay: 2400,
+        typingDuration: 1100
+      });
+    }
+  }
 
-        const piaReply = {
-          id: 'r_' + Date.now(),
-          from: 'pia',
-          author: 'Pia',
-          roleTag: 'ANALYST',
-          roleClass: 'pl-gc-role-analyst',
-          avatar: 'assets/Character/Pia.png',
-          time: pTime,
-          text: "Welcome aboard, Alex! 😄 Don't hesitate to reach out if you ever need a second pair of eyes on suspicious links or weird emails. We've got your back!"
-        };
+  repliers.forEach((rep) => {
+    window._plTypingTimers = window._plTypingTimers || [];
+    const t1 = setTimeout(() => {
+      // Show typing indicator
+      const tState = loadNewbieGcState();
+      tState.seenByRyan = true;
+      tState.typingMember = {
+        name: rep.member.name,
+        avatar: rep.member.avatar,
+        roleTag: rep.member.roleTag.replace(' (YOU)', ''),
+        roleClass: rep.member.roleClass
+      };
+      saveNewbieGcState(tState);
+      const c1 = document.getElementById('pl-tab-content');
+      if (c1 && g4ActiveConvo === 'business_newbie_gc') {
+        renderNewbieGcChat(c1, { smoothScroll: true });
+      }
 
-        pState.playerMessages.push(piaReply);
-        saveNewbieGcState(pState);
+      // Deliver message after typing duration
+      const duration = rep.typingDuration || 1100;
+      const t2 = setTimeout(() => {
+        const sState = loadNewbieGcState();
+        sState.typingMember = null;
+        sState.seenByRyan = true;
+
+        const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        sState.playerMessages.push({
+          id: 'reply_' + rep.member.id + '_' + Date.now(),
+          from: rep.member.id,
+          author: rep.member.name,
+          roleTag: rep.member.roleTag.replace(' (YOU)', ''),
+          roleClass: rep.member.roleClass,
+          avatar: rep.member.avatar,
+          time: replyTime,
+          text: rep.text,
+          isNew: true
+        });
+        saveNewbieGcState(sState);
+
+        const c2 = document.getElementById('pl-tab-content');
+        if (c2 && g4ActiveConvo === 'business_newbie_gc') {
+          renderNewbieGcChat(c2, { smoothScroll: true });
+        }
 
         if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
           AudioManager.playNotification();
         }
 
-        const pContent = document.getElementById('pl-tab-content');
-        if (pContent) renderNewbieGcChat(pContent);
-
-        // Step 3: Ethan adds SysAdmin welcome
-        setTimeout(() => {
-          showGcTypingIndicator('Ethan');
-
-          setTimeout(() => {
-            removeGcTypingIndicator();
-            const eState = loadNewbieGcState();
-            if (!eState.playerMessages) eState.playerMessages = [];
-            const eNow = new Date();
-            const eTime = eNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            const ethanReply = {
-              id: 'r_' + Date.now(),
-              from: 'ethan',
-              author: 'Ethan',
-              roleTag: 'SYSADMIN',
-              roleClass: 'pl-gc-role-sysadmin',
-              avatar: 'assets/Character/Ethan.png',
-              time: eTime,
-              text: "Welcome to the squad, Alex! 💻 Your security clearance and workstation accounts are all set up. Glad to have you with us!"
-            };
-
-            eState.playerMessages.push(ethanReply);
-            saveNewbieGcState(eState);
-
-            if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
-              AudioManager.playNotification();
-            }
-
-            const eContent = document.getElementById('pl-tab-content');
-            if (eContent) renderNewbieGcChat(eContent);
-
-            // Teammate reply sequence finished! Guide Alex before leaving PC workstation
-            setTimeout(() => {
-              if (typeof window.triggerPostPhoneLinkSaveDialogue === 'function') {
-                window.triggerPostPhoneLinkSaveDialogue();
-              }
-            }, 1200);
-          }, 850);
-        }, 700);
-      }, 850);
-    }, 700);
-  }, 850);
+        if (typeof window._notifyPostAwardGcOpen === 'function') {
+          window._notifyPostAwardGcOpen();
+        }
+      }, duration);
+      window._plTypingTimers.push(t2);
+    }, rep.delay);
+    window._plTypingTimers.push(t1);
+  });
 }
+
+function resetPhoneLinkChat() {
+  if (Array.isArray(window._plTypingTimers)) {
+    window._plTypingTimers.forEach(id => clearTimeout(id));
+    window._plTypingTimers = [];
+  }
+  try {
+    localStorage.removeItem(NEWBIE_GC_STORAGE_KEY);
+  } catch(e) {}
+  const content = document.getElementById('pl-tab-content');
+  if (content && g4ActiveConvo === 'business_newbie_gc') {
+    renderNewbieGcChat(content);
+  }
+}
+window.resetPhoneLinkChat = resetPhoneLinkChat;
+window.sendPlayerGcQuickReply = sendPlayerGcQuickReply;
+window.sendPlayerGcMessage = sendPlayerGcMessage;
+window.sendCustomPlayerGcMessage = sendCustomPlayerGcMessage;
 
 
 function openPhoneConversation(contactId) {

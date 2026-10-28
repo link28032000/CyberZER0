@@ -1,4 +1,60 @@
 /* ═══════════════════════════════════════════════════════════
+   QR CODE EMAIL ELEMENT (Quishing simulation)
+   ═══════════════════════════════════════════════════════════ */
+.email-qr-wrap {
+  margin: 14px 0 18px;
+}
+
+.email-qr-label {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.email-qr-box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.email-qr-box:hover {
+  border-color: #005cfc;
+  box-shadow: 0 0 0 3px rgba(0, 92, 252, 0.12);
+}
+
+.email-qr-box.flagged {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+  background: #fff5f5;
+}
+
+.email-qr-svg {
+  width: 120px;
+  height: 120px;
+  color: #111827;
+  display: block;
+}
+
+.email-qr-box.flagged .email-qr-svg {
+  color: #b91c1c;
+}
+
+.email-qr-hint {
+  font-size: 10.5px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════
    CHROME ERROR PAGE (DNS_PROBE_FINISHED_NXDOMAIN)
    ═══════════════════════════════════════════════════════════ */
 .chrome-error-page {

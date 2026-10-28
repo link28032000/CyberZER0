@@ -42,7 +42,7 @@ const RyanPretest = (() => {
     { q: 'What is social engineering?',
       c: ['Building computer networks', 'Writing computer code', 'A school subject about engineering', 'Tricking people into giving away access or information'], a: 3 },
     { q: 'Which of these is the strongest password?',
-      c: ['password123', 'T7!rain&Kite92', 'Your birthday', 'qwerty'], a: 1 },
+      c: ['password123', 'B@yan1han#2026!', 'Your birthday', 'qwerty'], a: 1 },
     { q: 'Why is it risky to use the same password on many websites?',
       c: ['Passwords expire faster', 'It slows down your login', 'If one site is hacked, attackers can try that password on your other accounts', 'It is not risky at all'], a: 2 },
     { q: 'You get an unexpected message with a link. What should you do first?',
@@ -66,7 +66,7 @@ const RyanPretest = (() => {
     { q: 'You find an unknown USB flash drive on the school grounds. What should you do?',
       c: ['Plug it into your computer to find the owner', 'Plug it into a friend\'s computer instead', 'Keep it and share it with classmates', 'Do not plug it in, and hand it to a teacher or IT staff'], a: 3 },
     { q: 'You think your account has been hacked. What should you do first?',
-      c: ['Ignore it and hope it goes away', 'Change your password right away, turn on MFA, and report it', 'Delete your phone', 'Post your password online to ask for help'], a: 1 },
+      c: ['Ignore it and hope it goes away', 'Change your password right away, turn on MFA, and report it', 'Reset your phone', 'Post your password online to ask for help'], a: 1 },
     { q: 'A classmate is receiving hurtful messages online. What is a good response?',
       c: ['Reply with even meaner messages', 'Share screenshots to make fun of them', 'Do not engage, save the evidence, block the sender, and tell a trusted adult', 'Delete everything and say nothing'], a: 2 },
     { q: 'Why is it important to back up your files?',
@@ -123,8 +123,35 @@ const RyanPretest = (() => {
   let _canContinue = false;
   let _raf = 0;
   let _timers = [];
+  let _activeQuestions = [];
 
   const $ = (id) => document.getElementById(id);
+
+  function _getShuffledQuestions() {
+    // Clone each question and randomize choice order while maintaining correct answer index
+    const list = QUESTIONS.map((item, origIdx) => {
+      const correctChoiceText = item.c[item.a];
+      const shuffledChoices = [...item.c];
+      for (let i = shuffledChoices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledChoices[i], shuffledChoices[j]] = [shuffledChoices[j], shuffledChoices[i]];
+      }
+      return {
+        q: item.q,
+        c: shuffledChoices,
+        a: shuffledChoices.indexOf(correctChoiceText),
+        origIdx: origIdx
+      };
+    });
+
+    // Randomize question sequence so users cannot memorize question order
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+
+    return list;
+  }
 
   function _reduced() {
     try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
@@ -392,8 +419,9 @@ const RyanPretest = (() => {
   function _render() {
     const body = $('rpt-body');
     if (!body) return;
-    const item = QUESTIONS[_index];
-    const total = QUESTIONS.length;
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const item = questionsList[_index];
+    const total = questionsList.length;
     const isLast = _index === total - 1;
 
     const counter = $('rpt-q-counter');
@@ -456,7 +484,8 @@ const RyanPretest = (() => {
 
   function _next() {
     if (_mode !== 'question' || _answers[_index] === undefined) return;
-    if (_index < QUESTIONS.length - 1) {
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    if (_index < questionsList.length - 1) {
       _index++;
       _render();
       const panel = $('ryan-pretest-panel');
@@ -504,15 +533,16 @@ const RyanPretest = (() => {
   // ══════════════════════════════════════════════════════════
   function _finish() {
     let score = 0;
-    const detail = QUESTIONS.map((item, i) => {
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const detail = questionsList.map((item, i) => {
       const ok = _answers[i] === item.a;
       if (ok) score++;
       return { q: i + 1, chosen: LETTERS[_answers[i]], correct: LETTERS[item.a], isCorrect: ok };
     });
     const result = {
       score: score,
-      total: QUESTIONS.length,
-      percent: Math.round((score / QUESTIONS.length) * 100),
+      total: questionsList.length,
+      percent: Math.round((score / questionsList.length) * 100),
       answers: detail,
       completedAt: new Date().toISOString()
     };
@@ -735,6 +765,7 @@ const RyanPretest = (() => {
     }
 
     _clearTimers();
+    _activeQuestions = _getShuffledQuestions();
     _index = 0;
     _answers = [];
     _mode = 'question';

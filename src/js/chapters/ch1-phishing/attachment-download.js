@@ -14,7 +14,7 @@ function downloadEmailAttachment(filename, size) {
   const fillEl = document.getElementById('bdt-progress-fill');
   const actionsEl = document.getElementById('bdt-actions');
 
-  const fname = filename || 'Scholarship_Grant_Form.pdf.exe';
+  const fname = filename || 'Scholarship_Form.pdf.exe';
   const fsize = size || '2.4 MB';
 
   if (nameEl) nameEl.textContent = fname;
@@ -27,11 +27,21 @@ function downloadEmailAttachment(filename, size) {
     AudioManager.playClick();
   }
 
-  showToast(`⬇️ Starting download: "${fname}" (${fsize})...`, 'info');
+  showToast(`⬇️ Starting download: "${fname}" (${fsize})...`, 'warning');
+
+  // Immediately warn the player to be careful downloading attachments
+  if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+    RyanGuide.speak([
+      {
+        text: "⚠️ <strong>Be careful downloading attachments!</strong> Look closely at that file: <code>" + fname + "</code>. Notice that double extension? Attackers disguise dangerous executables (.exe) as PDF documents!",
+        state: 'concerned'
+      }
+    ]);
+  }
 
   let pct = 0;
   const interval = setInterval(() => {
-    pct += Math.floor(Math.random() * 18) + 15;
+    pct += Math.floor(Math.random() * 8) + 7;
     if (pct > 100) pct = 100;
 
     if (fillEl) fillEl.style.width = `${pct}%`;
@@ -40,7 +50,7 @@ function downloadEmailAttachment(filename, size) {
         const mb = ((pct / 100) * 2.4).toFixed(1);
         metaEl.textContent = `Downloading... ${pct}% (${mb} MB / ${fsize} • 3.4 MB/s)`;
       } else {
-        metaEl.innerHTML = `<strong style="color:#ef4444">⚠️ Threat Flagged</strong> • ${fsize} • Saved to Downloads`;
+        metaEl.innerHTML = `<strong style="color:#ef4444">⚠️ Suspicious File Detected — Possible Malware</strong> • ${fsize} • Saved to Downloads`;
       }
     }
 
@@ -80,7 +90,7 @@ function downloadEmailAttachment(filename, size) {
       if (typeof RyanGuide !== 'undefined') {
         RyanGuide.speak([
           {
-            text: "🛑 <strong>STOP! Do not open that file!</strong><br><code>Scholarship_Grant_Form.pdf.exe</code> ends in <strong>.exe</strong> — attackers disguised malware as a PDF!",
+            text: "🛑 <strong>STOP! Do not open that file!</strong><br><code>Scholarship_Form.pdf.exe</code> ends in <strong>.exe</strong> — attackers disguised malware as a PDF!",
             state: 'concerned'
           },
           {
@@ -103,6 +113,16 @@ function openFolderFromTray() {
   openApp('folder');
   switchExplorerFolder('downloads');
   showToast('📁 Opened Downloads folder: 1 file ready.', 'info');
+}
+
+function deleteDownloadedFileFromTray() {
+  closeDownloadTray();
+  if (typeof quarantineFile === 'function') {
+    quarantineFile('f_scholarship_grant');
+  } else if (typeof quarantineScholarshipMalware === 'function') {
+    quarantineScholarshipMalware();
+  }
+  showToast('🗑️ Deleted: "Scholarship_Form.pdf.exe" has been removed.', 'success');
 }
 
 function openDownloadedFileFromTray() {
@@ -158,7 +178,7 @@ function startScholarshipInstallation() {
     { p: 20, text: 'Connecting to remote host: northfield-scholarship.com...', log: '[0.35s] Established socket connection to 198.51.100.89:443' },
     { p: 45, text: 'Extracting package: grant_agreement_v2.dll...', log: '[0.70s] Dropping payload to AppData\\Local\\Temp\\NorthfieldGrantSvc.exe' },
     { p: 70, text: 'Creating autorun registry keys...', log: '[1.10s] Added HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run entry' },
-    { p: 90, text: 'Executing payload binary (Scholarship_Grant_Form.pdf.exe)...', log: '[1.45s] Process spawned with elevated system privileges PID: 4892' },
+    { p: 90, text: 'Executing payload binary (Scholarship_Form.pdf.exe)...', log: '[1.45s] Process spawned with elevated system privileges PID: 4892' },
     { p: 100, text: 'Installation complete. Launching payload...', log: '[1.70s] ⚠️ Trojan Dropper execution triggered!' }
   ];
 
@@ -200,7 +220,7 @@ function quarantineScholarshipMalware() {
   if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
     AudioManager.playCorrect();
   }
-  showToast('🛡️ Threat Neutralized: "Scholarship_Grant_Form.pdf.exe" has been quarantined.', 'success');
+  showToast('🛡️ Threat Neutralized: "Scholarship_Form.pdf.exe" has been quarantined.', 'success');
 }
 
 function returnToZmailFromInstaller() {

@@ -11,6 +11,8 @@ const PhishTutorial = (() => {
   let _step = 0;
   let _currentTarget = null;
   let _done = false;
+  let _stepTimer = null;
+  let _finishTimer = null;
 
   const STEPS = [
     // 1. Ryan: "Click Flag to mark this suspicious email for investigation."
@@ -83,7 +85,8 @@ const PhishTutorial = (() => {
 
     _clearHighlight();
 
-    setTimeout(() => {
+    if (_stepTimer) clearTimeout(_stepTimer);
+    _stepTimer = setTimeout(() => {
       // Step 5: browser inspection
       if (step.id === 'browser_url_inspect') {
         const win = document.getElementById('win-browser');
@@ -166,7 +169,8 @@ const PhishTutorial = (() => {
     if (!step) return;
 
     if (step.requireAction === event) {
-      setTimeout(() => _showStep(_step + 1), 160);
+      if (_stepTimer) clearTimeout(_stepTimer);
+      _stepTimer = setTimeout(() => _showStep(_step + 1), 160);
     }
   }
 
@@ -198,7 +202,8 @@ const PhishTutorial = (() => {
 
     // Unlock sticky notes checklist — update content but do NOT auto-open.
     // Highlight the desktop icon so the player knows to open it manually.
-    setTimeout(() => {
+    if (_finishTimer) clearTimeout(_finishTimer);
+    _finishTimer = setTimeout(() => {
       updateStickyNoteForPhase('phishing');
       // Only update the open note's content if it's already visible
       const sNote = document.getElementById('sticky-note');
@@ -272,12 +277,54 @@ const PhishTutorial = (() => {
     }
   }
 
+  function reset() {
+    if (_stepTimer) {
+      clearTimeout(_stepTimer);
+      _stepTimer = null;
+    }
+    if (_finishTimer) {
+      clearTimeout(_finishTimer);
+      _finishTimer = null;
+    }
+    _active = false;
+    _step = 0;
+    _done = false;
+    _clearHighlight();
+
+    // Strip tutorial highlight from any flaggable elements across the entire document
+    document.querySelectorAll('.phish-tutorial-highlight').forEach(el => {
+      el.classList.remove('phish-tutorial-highlight');
+    });
+
+    const rBtn = document.getElementById('report-btn');
+    const lBtn = document.getElementById('legit-btn');
+    if (rBtn) rBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
+    if (lBtn) lBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
+
+    const flagBtn = document.getElementById('flag-mode-btn');
+    if (flagBtn) {
+      flagBtn.classList.remove('active', 'btn-pulse-highlight', 'tutorial-flag-blink', 'phish-tutorial-highlight');
+    }
+
+    const oldOverlay = document.getElementById('phish-tutorial-overlay');
+    if (oldOverlay) oldOverlay.remove();
+    const oldTooltip = document.getElementById('phish-tutorial-tooltip');
+    if (oldTooltip) oldTooltip.remove();
+    const oldCallout = document.getElementById('ptt-inline-callout');
+    if (oldCallout) oldCallout.remove();
+    const oldModal = document.getElementById('phish-edu-summary-modal');
+    if (oldModal) oldModal.remove();
+    const oldWidget = document.getElementById('url-investigation-widget');
+    if (oldWidget) oldWidget.remove();
+  }
+
   return {
     start,
     notify,
     isDone,
     isActive,
     finishTutorial,
-    updateVerdictBtnHighlight
+    updateVerdictBtnHighlight,
+    reset
   };
 })();

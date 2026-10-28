@@ -303,7 +303,7 @@ function quarantineFile(fileId) {
     if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
       AudioManager.playCorrect();
     }
-    showToast('🛡️ Threat Neutralized: "Scholarship_Grant_Form.pdf.exe" deleted from Downloads folder.', 'success');
+    showToast('🛡️ Threat Neutralized: "Scholarship_Form.pdf.exe" deleted from Downloads folder.', 'success');
     if (typeof RyanGuide !== 'undefined') {
       RyanGuide.speak([
         {

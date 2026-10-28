@@ -38,9 +38,11 @@ function toggleStartMenu(event) {
     }
 
     if (window._awaitingShutdownForChapter2 && typeof window.updateShutdownGuideStep === 'function') {
-      window.updateShutdownGuideStep(2);
-      if (typeof showToast === 'function') {
-        showToast('👉 Click Power & Terminal Controls (⏻) in the Start Menu', 'info');
+      const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null);
+      if (!curCat || curCat === 'phishing') {
+        window.updateShutdownGuideStep(2);
+      } else {
+        if (typeof window.clearWorkstationLogoffGuide === 'function') window.clearWorkstationLogoffGuide();
       }
     }
   } else {
@@ -59,7 +61,12 @@ function closeStartMenu(event) {
   if (pMenu) pMenu.classList.add('hidden');
 
   if (window._awaitingShutdownForChapter2 && typeof window.updateShutdownGuideStep === 'function') {
-    window.updateShutdownGuideStep(1);
+    const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null);
+    if (!curCat || curCat === 'phishing') {
+      window.updateShutdownGuideStep(1);
+    } else {
+      if (typeof window.clearWorkstationLogoffGuide === 'function') window.clearWorkstationLogoffGuide();
+    }
   }
 }
 
@@ -119,14 +126,25 @@ function togglePowerMenu(event) {
   const pMenu = document.getElementById('start-power-dropdown');
   if (pMenu) {
     pMenu.classList.toggle('hidden');
+    if (!pMenu.classList.contains('hidden')) {
+      const restartBtn = pMenu.querySelector("button[onclick*='restart']");
+      if (restartBtn) {
+        restartBtn.setAttribute('title', 'Restart active chapter from the beginning');
+        restartBtn.style.opacity = '1';
+        restartBtn.disabled = false;
+        restartBtn.innerHTML = '🔄 Restart (Mission)';
+      }
+    }
     if (window._awaitingShutdownForChapter2 && typeof window.updateShutdownGuideStep === 'function') {
-      if (!pMenu.classList.contains('hidden')) {
-        window.updateShutdownGuideStep(3);
-        if (typeof showToast === 'function') {
-          showToast("👉 Click 'Shutdown (Save)' to save completion and unlock Chapter 2!", 'info');
+      const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null);
+      if (!curCat || curCat === 'phishing') {
+        if (!pMenu.classList.contains('hidden')) {
+          window.updateShutdownGuideStep(3);
+        } else {
+          window.updateShutdownGuideStep(2);
         }
       } else {
-        window.updateShutdownGuideStep(2);
+        if (typeof window.clearWorkstationLogoffGuide === 'function') window.clearWorkstationLogoffGuide();
       }
     }
   }
@@ -210,7 +228,11 @@ function unlockPausedTerminal() {
 function startMenuPower(action) {
   closeStartMenu();
   if (action === 'restart') {
-    restartEntireGame();
+    if (typeof restartCurrentChapterMission === 'function') {
+      restartCurrentChapterMission();
+    } else {
+      restartEntireGame();
+    }
   } else if (action === 'lock') {
     lockTerminalPaused();
   } else if (action === 'shutdown') {
@@ -225,19 +247,93 @@ function shutdownGame() {
 
   const wasAwaitingCh2 = !!window._awaitingShutdownForChapter2;
 
+  // Immediately clear logoff guide and notices before closing menus
+  if (typeof window.clearWorkstationLogoffGuide === 'function') {
+    window.clearWorkstationLogoffGuide();
+  } else {
+    window._awaitingShutdownForChapter2 = false;
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
+    const powerBtn = document.getElementById('start-power-btn');
+    if (powerBtn) powerBtn.classList.remove('power-attention');
+    const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+    if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
+  }
+
   // Dismiss and remove logoff HUD notice
   const dsn = document.getElementById('desktop-shutdown-notice');
   if (dsn) dsn.remove();
 
-  // Complete Category 1 (phishing) and unlock Category 2 (malware)
-  if (typeof completeCategory === 'function') {
-    completeCategory('phishing', 100, 'S');
-  } else if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
-    CATEGORIES[0].completed = true;
-    CATEGORIES[1].unlocked = true;
-    if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
-    if (typeof refreshStorySelectLocks === 'function') refreshStorySelectLocks();
+  // Detect current active chapter before clearing category state
+  const activeCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
+  const isCh2 = (activeCat === 'malware' || activeCat === 'ch2' || activeCat === 2);
+  const isCh3 = (activeCat === 'social_engineering' || activeCat === 'social' || activeCat === 'social-engineering' || activeCat === 'ch3' || activeCat === 3);
+  const isCh4 = (activeCat === 'ransomware' || activeCat === 'ch4' || activeCat === 4);
+
+  let targetChapter = 'malware';
+  let initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
+  let midNote = 'Workstation secured! Transitioning to Chapter 2: The Digital Trap…';
+
+  if (isCh2) {
+    const ch2Score = (typeof gameState !== 'undefined' && gameState.score) || 100;
+    const ch2Complete = (typeof gameState !== 'undefined' && gameState.malwareQuarantined >= 4) || (typeof CATEGORIES !== 'undefined' && CATEGORIES[1] && CATEGORIES[1].completed);
+    if (ch2Complete) {
+      if (typeof completeCategory === 'function') {
+        completeCategory('malware', ch2Score, 'S');
+      }
+      if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 2) {
+        CATEGORIES[0].completed = true;
+        CATEGORIES[1].completed = true;
+        CATEGORIES[2].unlocked = true;
+      }
+      targetChapter = 'social_engineering';
+      initialNote = 'Saving Chapter 2 task completion… Returning to Story Selection for Chapter 3!';
+      midNote = 'Workstation secured! Chapter 3 unlocked in Story Selection.';
+    } else {
+      if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
+        CATEGORIES[0].completed = true;
+        CATEGORIES[1].unlocked = true;
+      }
+      targetChapter = 'malware';
+      initialNote = "Saving Ethan's PC progress… Returning to Story Selection!";
+      midNote = "Ethan's PC secured! Returning to Story Selection…";
+    }
+  } else if (isCh3) {
+    const ch3Complete = (typeof CATEGORIES !== 'undefined' && CATEGORIES[2] && CATEGORIES[2].completed);
+    if (ch3Complete) {
+      if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 3) {
+        CATEGORIES[2].completed = true;
+        CATEGORIES[3].unlocked = true;
+      }
+      targetChapter = 'ransomware';
+      initialNote = 'Saving Chapter 3 task completion… Returning to Story Selection for Chapter 4!';
+      midNote = 'Workstation secured! Chapter 4 unlocked in Story Selection.';
+    } else {
+      targetChapter = 'social_engineering';
+      initialNote = "Saving Pia's PC progress… Returning to Story Selection!";
+      midNote = "Pia's PC secured! Returning to Story Selection…";
+    }
+  } else if (isCh4) {
+    targetChapter = 'ransomware';
+    initialNote = 'Saving final mission progress… Returning to Story Selection!';
+    midNote = 'Workstation secured! Returning to Story Selection…';
+  } else {
+    // Chapter 1 (phishing)
+    if (typeof completeCategory === 'function') {
+      completeCategory('phishing', (typeof gameState !== 'undefined' && gameState.score) || 100, 'S');
+    }
+    if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
+      CATEGORIES[0].completed = true;
+      CATEGORIES[1].unlocked = true;
+    }
+    targetChapter = 'malware';
+    initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
+    midNote = 'Workstation secured! Transitioning to Chapter 2: The Digital Trap…';
   }
+
+  // Save categories progress and update locks
+  if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
+  if (typeof refreshStorySelectLocks === 'function') refreshStorySelectLocks();
 
   // Dismiss and reset Ryan guide immediately — it will restart fresh for Chapter 1
   if (typeof RyanGuide !== 'undefined') {
@@ -245,7 +341,7 @@ function shutdownGame() {
   }
 
   // Set pending chapter for story selection
-  window._pendingStoryChapter = 'malware';
+  window._pendingStoryChapter = targetChapter;
   window._currentChapterCategory = null;
   window._currentChapterCharacter = null;
 
@@ -277,7 +373,7 @@ function shutdownGame() {
   }
 
   // Close open app windows
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms'].forEach(a => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner'].forEach(a => {
     if (typeof appState !== 'undefined' && appState[a]) {
       appState[a].open = false;
       appState[a].minimized = false;
@@ -300,13 +396,9 @@ function shutdownGame() {
       desktop.style.visibility = 'hidden';
       desktop.style.opacity = '0';
     }
-    if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
-      window._awaitingShutdownForChapter2 = false;
-      if (typeof showStorySelectionScreen === 'function') {
-        showStorySelectionScreen('malware');
-      } else {
-        showMainMenu();
-      }
+    window._awaitingShutdownForChapter2 = false;
+    if (typeof showStorySelectionScreen === 'function') {
+      showStorySelectionScreen(targetChapter);
     } else {
       showMainMenu();
     }
@@ -314,21 +406,7 @@ function shutdownGame() {
   }
 
   // Shutdown-specific awareness tips
-  if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
-    if (noteEl) noteEl.textContent = 'Saving task completion… Returning to Story Selection for Chapter 2!';
-  } else {
-    const SHUTDOWN_NOTES = [
-      'Saving your progress and securing all open files…',
-      'Tip: Always log out of shared computers to protect your accounts.',
-      'Tip: Never leave your workstation unlocked — even for a moment.',
-      'Tip: Clearing your browser history and cache protects your privacy.',
-      'Tip: Strong passwords use 12+ characters with letters, numbers, and symbols.',
-      'Shutting down terminal… Returning to Main Menu.'
-    ];
-
-    const selected = SHUTDOWN_NOTES[Math.floor(Math.random() * SHUTDOWN_NOTES.length)];
-    if (noteEl) noteEl.textContent = selected;
-  }
+  if (noteEl) noteEl.textContent = initialNote;
 
   // Play power-off descending tones
   _playLoadingBeep(320, 0.12, 0);
@@ -349,11 +427,7 @@ function shutdownGame() {
     if (noteWrap && noteEl) {
       noteWrap.classList.add('transitioning');
       setTimeout(() => {
-        if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
-          noteEl.textContent = 'Workstation secured! Transitioning to Chapter 2: The Digital Trap…';
-        } else {
-          noteEl.textContent = 'Shutting down CyberZerØ terminal… Returning to Main Menu.';
-        }
+        noteEl.textContent = midNote;
         noteWrap.classList.remove('transitioning');
       }, 300);
     }
@@ -377,14 +451,10 @@ function shutdownGame() {
       sd.classList.remove('sd-active', 'sd-leaving');
     }, 800);
 
-    // Transition to Story Selection screen to open Chapter 2!
-    if (wasAwaitingCh2 || (typeof CATEGORIES !== 'undefined' && CATEGORIES[0].completed)) {
-      window._awaitingShutdownForChapter2 = false;
-      if (typeof showStorySelectionScreen === 'function') {
-        showStorySelectionScreen('malware');
-      } else {
-        showMainMenu();
-      }
+    // Transition to Story Selection screen!
+    window._awaitingShutdownForChapter2 = false;
+    if (typeof showStorySelectionScreen === 'function') {
+      showStorySelectionScreen(targetChapter);
     } else {
       showMainMenu();
     }

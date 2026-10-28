@@ -591,6 +591,9 @@ function _proceedToEthanPassword() {
 
 /** Smooth transition into Chapter 2 desktop with Windows 10 loading screen */
 function _launchChapter2FromComic() {
+  if (typeof window.clearWorkstationLogoffGuide === 'function') {
+    window.clearWorkstationLogoffGuide();
+  }
   const ls = document.getElementById('overlay-loading-screen');
   if (ls) {
     ls.style.display = 'flex';

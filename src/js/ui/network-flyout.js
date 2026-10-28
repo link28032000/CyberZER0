@@ -101,6 +101,7 @@ function switchWifiSettingsTab(tab) {
   if (tab === 'wifi') wsUpdateWifiTab();
   if (tab === 'airplane') wsUpdateAirplaneTab();
   if (tab === 'bluetooth') wsUpdateBluetoothTab();
+  if (typeof updateSettingsAboutDeviceName === 'function') updateSettingsAboutDeviceName();
 }
 
 function wsUpdateWifiTab() {
@@ -143,12 +144,31 @@ function wsUpdateBluetoothTab() {
   const label = document.getElementById('ws-bt-state-label');
   const btn = document.getElementById('ws-bt-toggle-btn');
   const isOn = networkSettings.bluetooth;
-  if (label) label.textContent = isOn ? 'On — Student Headset connected' : 'Off — No devices connected';
+  if (label) label.textContent = isOn ? 'On — Mobile Phone connected' : 'Off — No devices connected';
   if (btn) {
     btn.textContent = isOn ? 'Turn Off' : 'Turn On';
     btn.style.background = isOn ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.08)';
     btn.style.borderColor = isOn ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.15)';
     btn.style.color = isOn ? '#38bdf8' : 'var(--text-secondary)';
+  }
+
+  // Update paired phone status based on Bluetooth state
+  const devStatus = document.querySelector('#wstab-bluetooth .bt-device-status-connected, #wstab-bluetooth .bt-device-status-muted');
+  const devBtn = document.querySelector('#wstab-bluetooth .bt-btn-connected, #wstab-bluetooth .bt-btn-pair');
+  if (devStatus && devBtn) {
+    if (isOn) {
+      devStatus.className = 'bt-device-status-connected';
+      devStatus.textContent = 'Connected • Paired phone';
+      devBtn.className = 'bt-btn-connected';
+      devBtn.textContent = 'Connected';
+      devBtn.setAttribute('onclick', "showToast('📱 Mobile Phone is already connected.','info')");
+    } else {
+      devStatus.className = 'bt-device-status-muted';
+      devStatus.textContent = 'Paired • Bluetooth is off';
+      devBtn.className = 'bt-btn-pair';
+      devBtn.textContent = 'Disconnected';
+      devBtn.setAttribute('onclick', "showToast('📡 Turn on Bluetooth to connect your phone.','warning')");
+    }
   }
 }
 
@@ -160,7 +180,7 @@ function wsToggleBluetooth() {
   networkSettings.bluetooth = !networkSettings.bluetooth;
   updateNetworkUI();
   if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
-  showToast(networkSettings.bluetooth ? '📡 Bluetooth On • Student Headset Connected.' : '📡 Bluetooth Off.', networkSettings.bluetooth ? 'success' : 'info');
+  showToast(networkSettings.bluetooth ? '📡 Bluetooth On • Mobile Phone Connected.' : '📡 Bluetooth Off.', networkSettings.bluetooth ? 'success' : 'info');
   wsUpdateBluetoothTab();
 }
 
@@ -369,7 +389,7 @@ function toggleBluetoothSetting() {
   networkSettings.bluetooth = !networkSettings.bluetooth;
   updateNetworkUI();
   if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
-  showToast(networkSettings.bluetooth ? '📡 Bluetooth On • Student Headset Connected.' : '📡 Bluetooth Off.', networkSettings.bluetooth ? 'success' : 'info');
+  showToast(networkSettings.bluetooth ? '📡 Bluetooth On • Mobile Phone Connected.' : '📡 Bluetooth Off.', networkSettings.bluetooth ? 'success' : 'info');
 }
 
 function toggleAirplaneSetting() {

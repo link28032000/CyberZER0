@@ -3,7 +3,7 @@
 function getScholarshipGrantFileDef() {
   return {
     id: 'f_scholarship_grant',
-    name: 'Scholarship_Grant_Form.pdf.exe',
+    name: 'Scholarship_Form.pdf.exe',
     fakeExt: 'pdf',
     realExt: 'exe',
     type: 'Executable Application (.exe)',

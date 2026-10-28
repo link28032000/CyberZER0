@@ -39,19 +39,30 @@ function smartscreenScan() {
 }
 
 function smartscreenDontRun() {
+  const file = smartscreenTargetFile || getScholarshipGrantFileDef();
   closeSmartScreenModal();
+
   if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
     AudioManager.playCorrect();
   }
-  showToast('🛡️ Windows SmartScreen: Blocked unrecognized app from running.', 'info');
+
+  // Auto-delete via antivirus immediately
+  if (file && typeof quarantineFile === 'function') {
+    quarantineFile(file.id);
+  } else if (typeof quarantineScholarshipMalware === 'function') {
+    quarantineScholarshipMalware();
+  }
+
+  showToast('🛡️ Windows Defender: Threat automatically deleted — "Scholarship_Form.pdf.exe" has been removed.', 'success');
+
   if (typeof RyanGuide !== 'undefined') {
     RyanGuide.speak([
       {
-        text: "🎯 <strong>Great decision!</strong> You clicked <strong>Don't run</strong>.",
+        text: "🎯 <strong>Great decision!</strong> You clicked <strong>Don't Run</strong> — Windows Defender automatically deleted the malicious file.",
         state: 'success'
       },
       {
-        text: "Windows protected your PC! Never execute unrecognized .exe files downloaded from unverified emails. Now delete or quarantine the file to keep your system safe.",
+        text: "Never execute unrecognized <code>.exe</code> files downloaded from unverified emails. The file has been safely removed from your system.",
         state: 'speaking'
       }
     ]);
@@ -67,5 +78,5 @@ function smartscreenQuarantine() {
   if (typeof AudioManager !== 'undefined' && AudioManager.playCorrect) {
     AudioManager.playCorrect();
   }
-  showToast(`🛡️ Threat neutralized: "${file ? file.name : 'Scholarship_Grant_Form.pdf.exe'}" deleted/quarantined.`, 'success');
+  showToast(`🛡️ Threat neutralized: "${file ? file.name : 'Scholarship_Form.pdf.exe'}" deleted/quarantined.`, 'success');
 }

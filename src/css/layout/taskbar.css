@@ -37,36 +37,42 @@
 }
 .start-btn:hover { background: rgba(79,195,247,0.1); }
 
-/* Start Menu Log-off / Save Attention Pulse */
+/* Start Menu Log-off / Save Attention — light blinking glow notice */
 .start-btn.btn-pulse-highlight,
 .start-btn.start-attention {
-  animation: startBtnAttentionPulse 1.25s ease-in-out infinite !important;
-  background: rgba(0, 240, 255, 0.28) !important;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.85), inset 0 0 8px rgba(0, 240, 255, 0.5) !important;
+  animation: startBtnAttentionBlink 1.1s ease-in-out infinite !important;
+  background: rgba(79, 195, 247, 0.22) !important;
+  border: 1.5px solid rgba(79, 195, 247, 0.8) !important;
   border-radius: 6px !important;
 }
 
-.start-btn.start-attention::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #00f0ff;
-  box-shadow: 0 0 8px #00f0ff;
-  pointer-events: none;
+@keyframes startBtnAttentionBlink {
+  0%, 100% {
+    opacity: 1;
+    border-color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.3);
+    box-shadow: 0 0 12px rgba(79, 195, 247, 0.75), inset 0 0 6px rgba(79, 195, 247, 0.35);
+  }
+  50% {
+    opacity: 0.45;
+    border-color: rgba(79, 195, 247, 0.35);
+    background: rgba(79, 195, 247, 0.08);
+    box-shadow: 0 0 2px rgba(79, 195, 247, 0.15);
+  }
 }
 
 @keyframes startBtnAttentionPulse {
   0%, 100% {
-    box-shadow: 0 0 8px rgba(0, 240, 255, 0.5), inset 0 0 6px rgba(0, 240, 255, 0.3);
-    transform: scale(1);
+    opacity: 1;
+    border-color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.3);
+    box-shadow: 0 0 12px rgba(79, 195, 247, 0.75), inset 0 0 6px rgba(79, 195, 247, 0.35);
   }
   50% {
-    box-shadow: 0 0 24px rgba(0, 240, 255, 1), 0 0 34px rgba(0, 240, 255, 0.6), inset 0 0 12px rgba(0, 240, 255, 0.7);
-    transform: scale(1.14);
+    opacity: 0.45;
+    border-color: rgba(79, 195, 247, 0.35);
+    background: rgba(79, 195, 247, 0.08);
+    box-shadow: 0 0 2px rgba(79, 195, 247, 0.15);
   }
 }
 

@@ -13,8 +13,6 @@ function wuSetRing(mode) {
   const ringIcon  = document.getElementById('wu-ring-icon');
   if (!ringFill) return;
 
-  const CIRC = 138.23; // 2π × 22
-
   if (mode === 'spin') {
     ringFill.classList.add('spin-anim');
     ringSvg && ringSvg.classList.add('spin');
@@ -98,6 +96,227 @@ function wuToggleHistory() {
   if (toggle) toggle.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" id="wu-hist-chevron"><polyline points="${isHidden ? '6,9 12,15 18,9' : '6,15 12,9 18,15'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> ${isHidden ? 'Show' : 'Hide'}`;
 }
 
+// ── SYSTEM SETTINGS INTERACTIVE TOGGLES & DEVICE PROFILE ─────────────────────
+
+const systemSettingsState = {
+  nightLight: false,
+  scaleIndex: 2, // 150% (Recommended)
+  speakerMuted: false,
+  microphone: true,
+  batterySaver: false,
+  sleepIndex: 1, // 30 minutes
+  location: true,
+  camera: true,
+  privacyMic: true,
+  firewall: true,
+  smartScreen: false
+};
+
+const _SCALE_OPTIONS = [
+  '100%',
+  '125%',
+  '150% (Recommended)',
+  '175%'
+];
+
+const _SLEEP_OPTIONS = [
+  '15 minutes',
+  '30 minutes',
+  '1 hour',
+  'Never'
+];
+
+function getSettingsDeviceName() {
+  const curCatId = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
+  const foundCat = (typeof CATEGORIES !== 'undefined' && CATEGORIES.find(c => c.id === curCatId));
+  const currentChar = (foundCat && foundCat.character) ? foundCat.character : (window._currentChapterCharacter || { name: 'Alex' });
+  const charName = (currentChar && currentChar.name) ? currentChar.name : 'Alex';
+  return `${charName} PC`;
+}
+
+function updateSettingsAboutDeviceName() {
+  const devName = getSettingsDeviceName();
+  const heroNameEl = document.getElementById('about10-pc-name-display') || document.querySelector('.about10-pc-name');
+  if (heroNameEl) heroNameEl.textContent = devName;
+  const specNameEl = document.getElementById('abt-devname');
+  if (specNameEl) specNameEl.textContent = devName;
+}
+
+function applySettingsToggleBtnStyle(btn, isOn) {
+  if (!btn) return;
+  btn.textContent = isOn ? 'Turn Off' : 'Turn On';
+  btn.style.background = isOn ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.08)';
+  btn.style.borderColor = isOn ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.15)';
+  btn.style.color = isOn ? '#38bdf8' : 'var(--text-secondary)';
+}
+
+// Display: Night Light
+function wsToggleNightLight() {
+  systemSettingsState.nightLight = !systemSettingsState.nightLight;
+  const isOn = systemSettingsState.nightLight;
+  const btn = document.getElementById('ws-nightlight-btn');
+  const label = document.getElementById('ws-nightlight-label');
+  applySettingsToggleBtnStyle(btn, isOn);
+  if (label) {
+    label.textContent = isOn ? 'On — Warmer colors reduce eye strain' : 'Off — Reduces blue light in the evening';
+    label.style.color = isOn ? '#38bdf8' : 'var(--text-muted)';
+  }
+  document.body.classList.toggle('night-light-active', isOn);
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(isOn ? '🌙 Night Light turned On.' : '☀️ Night Light turned Off.', 'info');
+}
+
+// Display: Scale
+function wsToggleScale() {
+  systemSettingsState.scaleIndex = (systemSettingsState.scaleIndex + 1) % _SCALE_OPTIONS.length;
+  const scale = _SCALE_OPTIONS[systemSettingsState.scaleIndex];
+  const label = document.getElementById('ws-scale-label');
+  const btn = document.getElementById('ws-scale-btn');
+  if (label) label.textContent = `Change the size of text and apps: ${scale}`;
+  if (btn) btn.textContent = scale.split(' ')[0];
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(`📐 Display scale set to ${scale}.`, 'info');
+}
+
+// Sound: Speakers
+function wsToggleSpeakers() {
+  systemSettingsState.speakerMuted = !systemSettingsState.speakerMuted;
+  const isMuted = systemSettingsState.speakerMuted;
+  const btn = document.getElementById('ws-speakers-btn');
+  const label = document.getElementById('ws-speakers-label');
+  applySettingsToggleBtnStyle(btn, !isMuted);
+  if (label) {
+    label.textContent = isMuted ? 'Off — Speakers are muted' : 'On — Realtek HD Audio (Speakers)';
+    label.style.color = isMuted ? '#fb923c' : 'var(--text-muted)';
+  }
+  if (typeof AudioManager !== 'undefined') {
+    if (typeof AudioManager.setMuted === 'function') {
+      AudioManager.setMuted(isMuted);
+    } else {
+      AudioManager.playMouseClick();
+    }
+  }
+  showToast(isMuted ? '🔇 Speakers turned Off (Muted).' : '🔊 Speakers turned On.', isMuted ? 'warning' : 'info');
+}
+
+// Sound: Microphone
+function wsToggleMicrophone() {
+  systemSettingsState.microphone = !systemSettingsState.microphone;
+  const isOn = systemSettingsState.microphone;
+  const btn = document.getElementById('ws-mic-btn');
+  const label = document.getElementById('ws-mic-label');
+  applySettingsToggleBtnStyle(btn, isOn);
+  if (label) {
+    label.textContent = isOn ? 'On — Internal Microphone active' : 'Off — Microphone is disabled';
+    label.style.color = isOn ? 'var(--text-muted)' : '#fb923c';
+  }
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(isOn ? '🎤 Microphone turned On.' : '🎤 Microphone turned Off.', isOn ? 'info' : 'warning');
+}
+
+// Power: Battery Saver
+function wsToggleBatterySaver() {
+  systemSettingsState.batterySaver = !systemSettingsState.batterySaver;
+  const isOn = systemSettingsState.batterySaver;
+  const btn = document.getElementById('ws-battery-btn');
+  const label = document.getElementById('ws-battery-label');
+  applySettingsToggleBtnStyle(btn, isOn);
+  if (label) {
+    label.textContent = isOn ? 'On — Conserving battery life & background sync' : 'Off — Turns on automatically at 20%';
+    label.style.color = isOn ? '#38bdf8' : 'var(--text-muted)';
+  }
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(isOn ? '🔋 Battery Saver turned On.' : '🔋 Battery Saver turned Off.', 'info');
+}
+
+// Power: Sleep Timer
+function wsToggleSleepTimer() {
+  systemSettingsState.sleepIndex = (systemSettingsState.sleepIndex + 1) % _SLEEP_OPTIONS.length;
+  const sleepTime = _SLEEP_OPTIONS[systemSettingsState.sleepIndex];
+  const label = document.getElementById('ws-sleep-label');
+  const btn = document.getElementById('ws-sleep-btn');
+  if (label) label.textContent = `When plugged in: ${sleepTime}`;
+  if (btn) btn.textContent = `Change (${sleepTime})`;
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(`⚡ Screen sleep timer set to ${sleepTime}.`, 'info');
+}
+
+// Privacy: Location / Camera / Microphone
+function wsTogglePrivacy(type) {
+  let isOn;
+  let btnId;
+  let labelId;
+  let onText;
+  let offText;
+  let icon;
+
+  if (type === 'location') {
+    systemSettingsState.location = !systemSettingsState.location;
+    isOn = systemSettingsState.location;
+    btnId = 'ws-priv-location-btn';
+    labelId = 'ws-priv-location-label';
+    onText = 'On — Apps can access your location';
+    offText = 'Off — Location access blocked';
+    icon = '📍 Location';
+  } else if (type === 'camera') {
+    systemSettingsState.camera = !systemSettingsState.camera;
+    isOn = systemSettingsState.camera;
+    btnId = 'ws-priv-camera-btn';
+    labelId = 'ws-priv-camera-label';
+    onText = 'On — Apps can use your camera';
+    offText = 'Off — Camera access blocked';
+    icon = '📷 Camera';
+  } else if (type === 'microphone') {
+    systemSettingsState.privacyMic = !systemSettingsState.privacyMic;
+    isOn = systemSettingsState.privacyMic;
+    btnId = 'ws-priv-microphone-btn';
+    labelId = 'ws-priv-microphone-label';
+    onText = 'On — Apps can use your microphone';
+    offText = 'Off — Microphone access blocked';
+    icon = '🎤 Microphone';
+  }
+
+  const btn = document.getElementById(btnId);
+  const label = document.getElementById(labelId);
+  applySettingsToggleBtnStyle(btn, isOn);
+  if (label) {
+    label.textContent = isOn ? onText : offText;
+    label.style.color = isOn ? 'var(--text-muted)' : '#fb923c';
+  }
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(isOn ? `${icon} turned On.` : `${icon} turned Off.`, isOn ? 'info' : 'warning');
+}
+
+// Security: Windows Firewall
+function wsToggleFirewall() {
+  systemSettingsState.firewall = !systemSettingsState.firewall;
+  const isOn = systemSettingsState.firewall;
+  const btn = document.getElementById('ws-firewall-btn');
+  const label = document.getElementById('ws-firewall-label');
+  applySettingsToggleBtnStyle(btn, isOn);
+  if (label) {
+    label.textContent = isOn ? '✓ Active on all networks' : '⚠️ Firewall is turned off — Device is vulnerable';
+    label.style.color = isOn ? '#4ade80' : '#fb923c';
+  }
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(isOn ? '🛡️ Windows Firewall turned On.' : '⚠️ Windows Firewall turned Off.', isOn ? 'success' : 'warning');
+}
+
+// Security: SmartScreen
+function wsToggleSmartScreen() {
+  systemSettingsState.smartScreen = !systemSettingsState.smartScreen;
+  const isOn = systemSettingsState.smartScreen;
+  const btn = document.getElementById('ws-smartscreen-btn');
+  const label = document.getElementById('ws-smartscreen-label');
+  applySettingsToggleBtnStyle(btn, isOn);
+  if (label) {
+    label.textContent = isOn ? '✓ SmartScreen is active and protecting your PC' : '⚠️ SmartScreen is off — Warnings suspended';
+    label.style.color = isOn ? '#4ade80' : '#fb923c';
+  }
+  if (typeof AudioManager !== 'undefined') AudioManager.playMouseClick();
+  showToast(isOn ? '🛡️ SmartScreen turned On.' : '⚠️ SmartScreen turned Off.', isOn ? 'success' : 'warning');
+}
+
 // ── ABOUT page — copy helpers ────────────────────────────────────────────────
 
 function aboutCopyWinSpecs(btn) {
@@ -112,8 +331,9 @@ function aboutCopyWinSpecs(btn) {
 }
 
 function aboutCopyDevSpecs(btn) {
+  const devName = getSettingsDeviceName();
   const text = [
-    'Device name:  CYBERZERO-PC',
+    `Device name:  ${devName}`,
     'Processor:    Intel(R) Core(TM) i5-1235U CPU @ 1.30GHz',
     'RAM:          8.00 GB (7.79 GB usable)',
     'Device ID:    A3F2-7B14-C901-D487-9EFA-2C10-B847',
@@ -137,3 +357,11 @@ function _aboutCopy(btn, text) {
   }
 }
 
+// Auto-sync device name on load
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateSettingsAboutDeviceName);
+  } else {
+    updateSettingsAboutDeviceName();
+  }
+}

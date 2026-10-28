@@ -820,3 +820,9 @@
   justify-content: flex-end;
 }
 
+/* Night light active warm screen tint */
+body.night-light-active #desktop {
+  filter: sepia(0.18) saturate(1.05) brightness(0.96);
+  transition: filter 0.35s ease;
+}
+

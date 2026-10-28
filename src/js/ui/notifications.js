@@ -47,36 +47,7 @@ function initChapterMissionNotifications(chapterId, playChime = false) {
       app: 'gmail'
     });
   } else if (cat === 'malware') {
-    simNotifications.push({
-      id: 'notif-ch2-zmail-ticket',
-      source: 'Zmail',
-      icon: '📧',
-      iconType: 'mail',
-      title: 'New Email: Incident Alert - Malware Detected',
-      body: 'Reports of malicious file attachments in student downloads. Review ticket in Zmail.',
-      time: 'Just now',
-      app: 'gmail'
-    });
-    simNotifications.push({
-      id: 'notif-ch2-defender',
-      source: 'ShieldAV Defender',
-      icon: '🛡️',
-      iconType: 'av',
-      title: 'Chapter 2: The Digital Trap',
-      body: 'Scan suspicious files in Downloads and quarantine all 4 malware threats.',
-      time: '1m ago',
-      app: 'antivirus'
-    });
-    simNotifications.push({
-      id: 'notif-ch2-folder',
-      source: 'File Explorer',
-      icon: '📁',
-      iconType: 'shield',
-      title: 'Downloads Directory Alert',
-      body: 'Unverified executable payloads detected. Inspect file extensions carefully.',
-      time: '2m ago',
-      app: 'folder'
-    });
+    // No active mission notifications for Chapter 2
   } else if (cat === 'social_engineering') {
     simNotifications.push({
       id: 'notif-ch3-zmail-advisory',

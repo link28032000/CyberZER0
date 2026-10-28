@@ -62,7 +62,7 @@ const RyanPosttest = (() => {
       q: "Which of the following demonstrates the strongest password defense?",
       c: [
         "password123",
-        "T7!rain&Kite92",
+        "B@yan1han#2026!",
         "Your birthday and pet name",
         "qwerty2026"
       ],
@@ -254,8 +254,35 @@ const RyanPosttest = (() => {
   let _mode = 'question';
   let _result = null;
   let _timers = [];
+  let _activeQuestions = [];
 
   const $ = (id) => document.getElementById(id);
+
+  function _getShuffledQuestions() {
+    // Clone each question and randomize choice order while maintaining correct answer index
+    const list = QUESTIONS.map((item, origIdx) => {
+      const correctChoiceText = item.c[item.a];
+      const shuffledChoices = [...item.c];
+      for (let i = shuffledChoices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledChoices[i], shuffledChoices[j]] = [shuffledChoices[j], shuffledChoices[i]];
+      }
+      return {
+        q: item.q,
+        c: shuffledChoices,
+        a: shuffledChoices.indexOf(correctChoiceText),
+        origIdx: origIdx
+      };
+    });
+
+    // Randomize question sequence so users cannot memorize question order
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+
+    return list;
+  }
 
   function _sfx(name) {
     if (typeof AudioManager === 'undefined' || typeof AudioManager[name] !== 'function') return;
@@ -368,6 +395,7 @@ const RyanPosttest = (() => {
       return;
     }
 
+    _activeQuestions = _getShuffledQuestions();
     _index = 0;
     _answers = [];
     _mode = 'question';
@@ -418,8 +446,9 @@ const RyanPosttest = (() => {
   function _render() {
     const body = $('rpost-body');
     if (!body) return;
-    const item = QUESTIONS[_index];
-    const total = QUESTIONS.length;
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const item = questionsList[_index];
+    const total = questionsList.length;
     const isLast = _index === total - 1;
 
     const counter = $('rpost-q-counter');
@@ -476,7 +505,8 @@ const RyanPosttest = (() => {
 
   function _next() {
     if (_mode !== 'question' || _answers[_index] === undefined) return;
-    if (_index < QUESTIONS.length - 1) {
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    if (_index < questionsList.length - 1) {
       _index++;
       _render();
       const panel = $('ryan-posttest-panel');
@@ -515,17 +545,18 @@ const RyanPosttest = (() => {
   // ══════════════════════════════════════════════════════════
   function _finish() {
     let score = 0;
-    const detail = QUESTIONS.map((item, i) => {
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const detail = questionsList.map((item, i) => {
       const ok = _answers[i] === item.a;
       if (ok) score++;
       return { q: i + 1, chosen: LETTERS[_answers[i]], correct: LETTERS[item.a], isCorrect: ok };
     });
 
-    const tier = tierOf(score, QUESTIONS.length);
+    const tier = tierOf(score, questionsList.length);
     const result = {
       score: score,
-      total: QUESTIONS.length,
-      percent: Math.round((score / QUESTIONS.length) * 100),
+      total: questionsList.length,
+      percent: Math.round((score / questionsList.length) * 100),
       tier: tier,
       rank: RESULT[tier].rank,
       answers: detail,
@@ -645,8 +676,8 @@ const RyanPosttest = (() => {
 
     wrap.appendChild(growthCard);
 
-    // Continue button
-    const contBtn = _el('button', 'rpost-continue-btn', '🎉 Continue to Team Onboarding');
+    // Continue button: Guide to shutdown & save
+    const contBtn = _el('button', 'rpost-continue-btn', '🎉 Complete & Proceed to Save');
     contBtn.type = 'button';
     contBtn.addEventListener('click', _complete);
     wrap.appendChild(contBtn);
@@ -678,6 +709,13 @@ const RyanPosttest = (() => {
     if (typeof cb === 'function') {
       try { cb(res); } catch (e) { console.error('[RyanPosttest] callback failed:', e); }
     }
+
+    // Trigger guidance dialogue to highlights border of Windows Start menu -> Power -> Shutdown (Save)
+    setTimeout(() => {
+      if (typeof window.triggerPostTestSaveDialogue === 'function') {
+        window.triggerPostTestSaveDialogue();
+      }
+    }, 400);
   }
 
   function reset() {

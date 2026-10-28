@@ -100,6 +100,21 @@ function updateLoginScreenForChapter(categoryId) {
   window._currentChapterCharacter = char;
   activeCategoryStory = categoryId || 'phishing';
 
+  // Blinking start menu notice is strictly for Chapter 1
+  if (categoryId && categoryId !== 'phishing') {
+    if (typeof window.clearWorkstationLogoffGuide === 'function') {
+      window.clearWorkstationLogoffGuide();
+    } else {
+      window._awaitingShutdownForChapter2 = false;
+      const startBtn = document.getElementById('start-btn');
+      if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
+      const powerBtn = document.getElementById('start-power-btn');
+      if (powerBtn) powerBtn.classList.remove('power-attention');
+      const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+      if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
+    }
+  }
+
   // Windows 10 Login Screen (Overlay Title Menu) avatar & username
   const avatarImg = document.querySelector('#ls-user-avatar .ls-user-avatar-img');
   if (avatarImg) {
@@ -142,6 +157,11 @@ function updateLoginScreenForChapter(categoryId) {
   const gTo2 = document.getElementById('gdemo-to-user-legit');
   if (gTo1) gTo1.textContent = emailVal;
   if (gTo2) gTo2.textContent = emailVal;
+
+  // Keep Settings About device name in sync with character profile (e.g. Alex PC, Ethan PC)
+  if (typeof updateSettingsAboutDeviceName === 'function') {
+    updateSettingsAboutDeviceName();
+  }
 }
 
 /**

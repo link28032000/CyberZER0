@@ -3,11 +3,156 @@
 
 
 // ═══════════════════════════════════════════════════════════
+// ZMAIL INTERFACE COMPLETE CLEANUP & RESET
+// ═══════════════════════════════════════════════════════════
+
+function resetCh1ZmailInterface() {
+  // 1. Clear active investigation timers & auto-advance timeouts
+  if (typeof ch1AutoAdvanceTimer !== 'undefined' && ch1AutoAdvanceTimer) {
+    clearTimeout(ch1AutoAdvanceTimer);
+    ch1AutoAdvanceTimer = null;
+  }
+  if (typeof placeFlag !== 'undefined' && placeFlag && placeFlag._ryanTimer) {
+    clearTimeout(placeFlag._ryanTimer);
+    placeFlag._ryanTimer = null;
+  }
+  if (window._ryanMissionIntroTimer) {
+    clearTimeout(window._ryanMissionIntroTimer);
+    window._ryanMissionIntroTimer = null;
+  }
+
+  // 2. Clear PhishTutorial
+  if (typeof PhishTutorial !== 'undefined' && PhishTutorial.reset) {
+    PhishTutorial.reset();
+  }
+
+  // 3. Clear all flagging state in gameState
+  if (typeof gameState !== 'undefined') {
+    gameState.flagModeActive = false;
+    gameState.flagBtnFirstEmailBlinked = false;
+    gameState.currentEmailFlags = [];
+    gameState.pendingLinkUrl = null;
+    gameState.pendingLinkFlagId = null;
+    gameState.pendingLinkFlagType = null;
+  }
+
+  // 4. Reset Zmail views back to Inbox list view
+  const listView = document.getElementById('email-list-view');
+  const detailView = document.getElementById('email-detail-view');
+  const sentView = document.getElementById('sent-detail-view');
+  if (listView) listView.classList.add('active');
+  if (detailView) detailView.classList.remove('active');
+  if (sentView) sentView.classList.remove('active');
+
+  // Reset folder navigation tabs
+  const navInbox = document.getElementById('nav-inbox');
+  const navSent = document.getElementById('nav-sent');
+  const navTrash = document.getElementById('nav-trash');
+  if (navInbox) navInbox.classList.add('active');
+  if (navSent) navSent.classList.remove('active');
+  if (navTrash) navTrash.classList.remove('active');
+
+  const titleEl = document.getElementById('gmail-toolbar-title');
+  if (titleEl) titleEl.textContent = 'Inbox';
+
+  // 5. Clean up buttons and controls in Zmail (remove all blinking and active classes)
+  const flagBtn = document.getElementById('flag-mode-btn');
+  if (flagBtn) {
+    flagBtn.classList.remove('active', 'btn-pulse-highlight', 'tutorial-flag-blink', 'phish-tutorial-highlight');
+    flagBtn.disabled = false;
+    flagBtn.title = '';
+    flagBtn.style.display = '';
+  }
+
+  const reportBtn = document.getElementById('report-btn');
+  if (reportBtn) {
+    reportBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
+    reportBtn.disabled = false;
+    reportBtn.title = 'Flag and submit as Phishing';
+    reportBtn.style.display = '';
+  }
+
+  const legitBtn = document.getElementById('legit-btn');
+  if (legitBtn) {
+    legitBtn.classList.remove('btn-pulse-highlight', 'verdict-btn-highlight');
+    legitBtn.disabled = false;
+    legitBtn.title = 'Confirm and submit as Non-phishing';
+    legitBtn.style.display = '';
+  }
+
+  const verdictGroup = document.querySelector('.verdict-btn-group');
+  if (verdictGroup) verdictGroup.style.display = '';
+
+  const ch2Action = document.getElementById('ch2-toolbar-action');
+  if (ch2Action) ch2Action.style.display = 'none';
+
+  const gmailBody = document.querySelector('.gmail-body');
+  if (gmailBody) gmailBody.classList.remove('flag-mode-active');
+
+  const emailContent = document.getElementById('email-content');
+  if (emailContent) emailContent.innerHTML = '';
+
+  // Clear any tutorial callout / highlights inside Zmail or document
+  const callout = document.getElementById('ptt-inline-callout');
+  if (callout) callout.remove();
+  document.querySelectorAll('.phish-tutorial-highlight').forEach(el => {
+    el.classList.remove('phish-tutorial-highlight');
+  });
+
+  // 6. Reset badges
+  const inboxCount = document.getElementById('inbox-count');
+  if (inboxCount) {
+    inboxCount.textContent = '0';
+    inboxCount.classList.add('hidden-init');
+  }
+  const trashCount = document.getElementById('trash-count');
+  if (trashCount) {
+    trashCount.textContent = '0';
+    trashCount.classList.add('hidden-init');
+  }
+  const sentCount = document.getElementById('sent-count');
+  if (sentCount) {
+    sentCount.textContent = '2';
+    sentCount.classList.remove('hidden-init');
+  }
+
+  // 7. Remove any pulse or attention classes from icons and taskbar
+  const iconG = document.getElementById('icon-gmail');
+  if (iconG) iconG.classList.remove('icon-attention', 'btn-pulse-highlight');
+  const taskbarGmail = document.getElementById('taskbar-gmail');
+  if (taskbarGmail) taskbarGmail.classList.remove('btn-pulse-highlight');
+
+  const iconNotes = document.getElementById('icon-notes');
+  if (iconNotes) iconNotes.classList.remove('icon-attention', 'btn-pulse-highlight');
+  const taskbarNotes = document.getElementById('taskbar-notes');
+  if (taskbarNotes) taskbarNotes.classList.remove('btn-pulse-highlight');
+
+  const iconComms = document.getElementById('icon-comms');
+  if (iconComms) iconComms.classList.remove('icon-attention', 'btn-pulse-highlight');
+  const taskbarComms = document.getElementById('taskbar-comms');
+  if (taskbarComms) taskbarComms.classList.remove('btn-pulse-highlight');
+
+  const startBtn = document.getElementById('start-btn');
+  if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
+  const powerBtn = document.getElementById('start-power-btn');
+  if (powerBtn) powerBtn.classList.remove('power-attention');
+
+  const stickyNote = document.getElementById('sticky-note');
+  if (stickyNote) stickyNote.classList.remove('highlight-attention');
+
+  if (typeof IconAttention !== 'undefined' && IconAttention.hideAll) {
+    IconAttention.hideAll();
+  }
+}
+window.resetCh1ZmailInterface = resetCh1ZmailInterface;
+
+// ═══════════════════════════════════════════════════════════
 // MISSION
 // ═══════════════════════════════════════════════════════════
 
 function startMission(openGmail = false) {
   gameState.phase = 'mission';
+  window._currentChapterCategory = 'phishing';
   gameState.currentEmail = 0;
   gameState.score = 0;
   gameState.correctDecisions = 0;
@@ -18,6 +163,17 @@ function startMission(openGmail = false) {
   gameState.currentFolder = 'inbox';
   gameState.trashedSentIds = [];
   gameState.readSentIds = [];
+  gameState.flagBtnFirstEmailBlinked = false;
+  gameState.flagModeActive = false;
+  gameState.currentEmailFlags = [];
+  gameState.pendingLinkUrl = null;
+  gameState.pendingLinkFlagId = null;
+  gameState.pendingLinkFlagType = null;
+  gameState.selectedFolderFileId = null;
+  gameState.activeScanFileId = null;
+
+  // ── Reset Zmail interface completely (removes all blinking animations & views) ──
+  resetCh1ZmailInterface();
 
   // ── Chapter 1 dynamic inbox reset ──────────────────────────
   ch1InboxEmails               = [];    // Dynamic inbox
@@ -27,6 +183,12 @@ function startMission(openGmail = false) {
   ch1MistakeCount              = 0;
   ch1InvestigationTutorialDone = false; // Reset investigation tutorial flag
   ch1CloserLookWarnedOnce      = false; // Reset closer look warning tracker
+  ch1FlaggedLegitWarnedOnce    = false;
+  ch1SecondEmailNotesHintDone  = false;
+  window._stickyHintShownOnce  = false;
+  if (typeof _stickyHintShownOnce !== 'undefined') _stickyHintShownOnce = false;
+  if (typeof isSubmittingReport !== 'undefined') isSubmittingReport = false;
+
   const tbNotesInit = document.getElementById('taskbar-notes');
   if (tbNotesInit) {
     tbNotesInit.classList.remove('btn-pulse-highlight');
@@ -36,8 +198,44 @@ function startMission(openGmail = false) {
   if (typeof unhighlightPhoneLinkApp === 'function') unhighlightPhoneLinkApp();
   window._ryanFirstEmailSpoken = false;
 
-  // ── Clear any saved pretest result so it always runs fresh ──
+  // ── Mission / First Checklist: Award is NOT claimed yet, Phone Link is empty ──
+  window._awardClaimed = false;
+  window._postAwardPostTestDialogueFired = false;
+  window._hasTriggeredPostTestSave = false;
+  window._awaitingShutdownForChapter2 = false;
+  window._postAwardTasks = {
+    browserOpened:    false,
+    browserNavigated: false,
+    phishingSearched: false,
+    phishingVisited:  false,
+    explorerOpened:   false,
+    videoFolderOpen:  false,
+    videoPlayed:      false,
+    gcOpened:         false,
+    postTestDone:     false
+  };
+
+  try {
+    localStorage.removeItem('cyberzero_phishing_progress');
+  } catch(e) {}
+  try {
+    localStorage.removeItem('cyberzero_newbie_gc_state');
+  } catch(e) {}
+
+  if (typeof _achievementUnlocked !== 'undefined' && _achievementUnlocked.clear) _achievementUnlocked.clear();
+  if (typeof _phishingEarnedAward !== 'undefined') _phishingEarnedAward = null;
+  if (typeof _trophyUnlockedDate !== 'undefined') _trophyUnlockedDate = null;
+
+  // ── Reset Browser tabs & notifications ──
+  if (typeof initBrowserTabs === 'function') initBrowserTabs();
+  if (typeof updateBrowserPhishingNotice === 'function') updateBrowserPhishingNotice(false);
+
+  // ── Reset Phone Link GC state ──
+  if (typeof resetPhoneLinkChat === 'function') resetPhoneLinkChat();
+
+  // ── Clear any saved pretest & mentor guide result so it always runs fresh ──
   if (typeof RyanPretest !== 'undefined' && RyanPretest.reset) RyanPretest.reset();
+  if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) RyanGuide.reset();
 
   // ── Inbox starts EMPTY — emails are injected after Ryan's full dialogue ends ──
 
@@ -53,8 +251,8 @@ function startMission(openGmail = false) {
   updateAppLockStates();
   if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications('phishing', false);
 
-  // Always hide Ch2-only desktop icons during Chapter 1
-  document.querySelectorAll('.ch2-only').forEach(el => {
+  // Always hide Ch2-only and Ch3-only desktop icons during Chapter 1
+  document.querySelectorAll('.ch2-only, .ch3-only, .ch2-not-ch3').forEach(el => {
     el.style.setProperty('display', 'none', 'important');
   });
 
@@ -201,13 +399,40 @@ function startMission(openGmail = false) {
 function openChapterDesktopDirect(chapterId) {
   closeCategoryHub();
   hideAllOverlays();
-  if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
-    RyanGuide.dismiss();
+  if (chapterId === 'phishing') {
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) {
+      RyanGuide.reset();
+    } else if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+      RyanGuide.dismiss(true);
+    }
+    if (typeof resetCh1ZmailInterface === 'function') {
+      resetCh1ZmailInterface();
+    }
+  } else {
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+      RyanGuide.dismiss(true);
+    }
   }
 
   // Set phase and desktop background
   gameState.phase = chapterId;
+  window._currentChapterCategory = chapterId;
   updateDesktopBackgroundForPhase(chapterId);
+
+  // Clear any Chapter 1 logoff / start menu blinking notice on Chapter 2+ desktop
+  if (chapterId !== 'phishing') {
+    if (typeof window.clearWorkstationLogoffGuide === 'function') {
+      window.clearWorkstationLogoffGuide();
+    } else {
+      window._awaitingShutdownForChapter2 = false;
+      const startBtn = document.getElementById('start-btn');
+      if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
+      const powerBtn = document.getElementById('start-power-btn');
+      if (powerBtn) powerBtn.classList.remove('power-attention');
+      const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+      if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
+    }
+  }
 
   // Close all app windows to ensure completely clean desktop view
   ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner'].forEach(a => {
@@ -238,15 +463,33 @@ function openChapterDesktopDirect(chapterId) {
 
   // HUD
   const hudEl = document.getElementById('hud');
-  if (hudEl) hudEl.classList.remove('hidden');
+  if (hudEl) {
+    if (chapterId === 'malware') {
+      hudEl.classList.add('hidden');
+    } else {
+      hudEl.classList.remove('hidden');
+    }
+  }
 
   // Keep Chapter profile in sync
   updateLoginScreenForChapter(chapterId);
   if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications(chapterId, false);
 
-  // Show Ch2-only desktop icons in Chapter 2+, hide them in Chapter 1
-  const isCh2Plus = (chapterId === 'malware' || chapterId === 'social-engineering' || chapterId === 'social_engineering' || chapterId === 'ransomware');
+  // Show/hide chapter-specific desktop icons
+  const isCh2 = (chapterId === 'malware' || chapterId === 'ch2' || chapterId === 2);
+  const isCh3 = (chapterId === 'social-engineering' || chapterId === 'social_engineering' || chapterId === 'social' || chapterId === 'ch3' || chapterId === 3);
+  const isCh2Plus = isCh2 || isCh3 || (chapterId === 'ransomware' || chapterId === 'ch4' || chapterId === 4);
+
+  // Column 3 container: visible in Chapter 2, Chapter 3, etc.
   document.querySelectorAll('.ch2-only').forEach(el => {
     el.style.setProperty('display', isCh2Plus ? 'flex' : 'none', 'important');
+  });
+  // Gaming icons (Steam, GTA 6, Games): hidden in Chapter 3 only (visible in Chapter 2)
+  document.querySelectorAll('.ch2-not-ch3').forEach(el => {
+    el.style.setProperty('display', (isCh2Plus && !isCh3) ? 'flex' : 'none', 'important');
+  });
+  // Chapter 3 apps (Instagram, Pictures): visible in Chapter 3 only
+  document.querySelectorAll('.ch3-only').forEach(el => {
+    el.style.setProperty('display', isCh3 ? 'flex' : 'none', 'important');
   });
 }

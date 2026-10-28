@@ -778,8 +778,216 @@ const FAKE_SITES = {
   </div>
 </div>`,
 
-/* ─── 9. Northfield malware — LAST — with ads ───────────── */
-'https://northfield-scholarship.com/download/Scholarship_Grant_Form.pdf.exe': `
+/* ─── 9. GCash Quishing — KYC landing page (no login form) ─ */
+'https://gcash-secure-verification.com/kyc-portal': `
+<style>
+  @keyframes gv-in    { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes gv-lock  { 0%,100%{color:#ef4444}50%{color:#fca5a5;text-shadow:0 0 8px rgba(239,68,68,.5)} }
+  @keyframes gv-btn   { 0%{background-position:0%}100%{background-position:200%} }
+  @keyframes gv-scan  { 0%{top:0%}100%{top:96%} }
+  @keyframes gv-prog  { 0%{width:5%}55%{width:80%}80%{width:65%}100%{width:100%} }
+  @keyframes gv-pulse { 0%,100%{opacity:1}50%{opacity:.55} }
+
+  .gv-page { min-height:100%; background:#f0f4ff; display:flex; flex-direction:column;
+             font-family:'Segoe UI',Arial,sans-serif; }
+
+  /* header */
+  .gv-hdr { background:linear-gradient(135deg,#005cfc,#007dfc); padding:0 20px; height:60px;
+            display:flex; align-items:center; justify-content:space-between;
+            box-shadow:0 2px 14px rgba(0,92,252,.4); }
+  .gv-logo { display:flex; align-items:center; gap:10px; }
+  .gv-circle { background:#fff; width:36px; height:36px; border-radius:50%;
+               display:flex; align-items:center; justify-content:center;
+               font-weight:900; font-size:15px; color:#005cfc; }
+  .gv-name .gn { color:#fff; font-size:22px; font-weight:900; letter-spacing:-.5px; }
+  .gv-name .gs { color:rgba(255,255,255,.7); font-size:10px; letter-spacing:.5px; }
+  .gv-hdr-right { display:flex; align-items:center; gap:10px; }
+  .gv-hdr-right a { color:rgba(255,255,255,.8); font-size:12px; text-decoration:none; }
+  .gv-sec { background:rgba(255,255,255,.2); color:#fff; font-size:10px; font-weight:700;
+            padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,.3); }
+
+  /* countdown bar */
+  .gv-alert { background:#b91c1c; padding:8px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .gv-alert-badge { background:#fef2f2; color:#b91c1c; font-size:10px; font-weight:900;
+                    padding:2px 10px; border-radius:20px; white-space:nowrap; }
+  .gv-alert-txt  { color:#fff; font-size:12px; font-weight:700; flex:1; }
+  .gv-cd { background:rgba(0,0,0,.3); color:#fca5a5; font-size:12px; font-weight:800;
+           font-family:monospace; padding:3px 12px; border-radius:20px;
+           animation:gv-lock 1s ease-in-out infinite; white-space:nowrap; }
+
+  /* body */
+  .gv-body { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:24px 16px; }
+  .gv-card { background:#fff; border-radius:16px; box-shadow:0 6px 28px rgba(0,92,252,.14);
+             width:100%; max-width:400px; overflow:hidden;
+             animation:gv-in .45s cubic-bezier(.34,1.56,.64,1) both; }
+
+  /* card header */
+  .gv-card-hd { background:linear-gradient(135deg,#005cfc,#007dfc); padding:20px 22px; }
+  .gv-kyc-pill { background:rgba(255,255,255,.22); color:#fff; font-size:10px; font-weight:800;
+                 padding:3px 12px; border-radius:20px; border:1px solid rgba(255,255,255,.4);
+                 letter-spacing:.6px; display:inline-block; margin-bottom:10px; }
+  .gv-card-hd h2 { color:#fff; font-size:17px; margin:0 0 4px 0; }
+  .gv-card-hd p  { color:rgba(255,255,255,.8); font-size:12px; margin:0; }
+
+  /* scan animation */
+  .gv-scan-box { position:relative; width:100px; height:100px; margin:0 auto 10px;
+                 border:3px solid #005cfc; border-radius:8px; overflow:hidden;
+                 background:#f0f4ff; }
+  .gv-scan-qr { display:grid; grid-template-columns:repeat(7,1fr); gap:2px;
+                padding:6px; height:100%; box-sizing:border-box; }
+  .gv-scan-qr span { background:#005cfc; border-radius:1px; }
+  .gv-scan-qr span.w { background:transparent; }
+  .gv-scan-line { position:absolute; left:0; width:100%; height:2px;
+                  background:rgba(0,92,252,.7); animation:gv-scan 1.8s ease-in-out infinite alternate; }
+  .gv-scan-corner { position:absolute; width:14px; height:14px; border-color:#005cfc; border-style:solid; }
+  .gv-scan-corner.tl { top:0; left:0; border-width:3px 0 0 3px; }
+  .gv-scan-corner.tr { top:0; right:0; border-width:3px 3px 0 0; }
+  .gv-scan-corner.bl { bottom:0; left:0; border-width:0 0 3px 3px; }
+  .gv-scan-corner.br { bottom:0; right:0; border-width:0 3px 3px 0; }
+  .gv-scan-status { font-size:11px; color:#005cfc; font-weight:700; text-align:center;
+                    animation:gv-pulse 1.2s ease-in-out infinite; margin-bottom:6px; }
+
+  /* progress bar */
+  .gv-bar { height:3px; background:rgba(0,92,252,.15); overflow:hidden; }
+  .gv-bar-fill { height:100%; background:#005cfc; animation:gv-prog 3s ease-in-out forwards; }
+
+  /* card body */
+  .gv-card-bd { padding:22px; }
+  .gv-info-box { background:#f0f4ff; border:1px solid #bfdbfe; border-radius:8px;
+                 padding:10px 14px; font-size:12px; color:#1e40af; margin-bottom:16px; line-height:1.8; }
+  .gv-field { margin-bottom:14px; }
+  .gv-field label { display:block; font-size:12px; color:#374151; font-weight:700; margin-bottom:6px; }
+  .gv-field input { width:100%; padding:11px 14px; border:2px solid #e5e7eb; border-radius:10px;
+                    font-size:14px; color:#1f2937; box-sizing:border-box; outline:none; }
+  .gv-field input:focus { border-color:#005cfc; box-shadow:0 0 0 3px rgba(0,92,252,.1); }
+  .gv-phone-wrap { display:flex; }
+  .gv-prefix { background:#f3f4f6; border:2px solid #e5e7eb; border-right:none;
+               border-radius:10px 0 0 10px; padding:11px 12px; font-size:14px;
+               color:#374151; font-weight:700; }
+  .gv-phone-wrap input { border-radius:0 10px 10px 0 !important; }
+  #gv-mpin { text-align:center; letter-spacing:8px; font-size:18px; }
+  .gv-submit { width:100%; background:linear-gradient(90deg,#005cfc,#007dfc,#005cfc);
+               background-size:200%; color:#fff; border:none; padding:13px; border-radius:10px;
+               font-size:15px; font-weight:700; cursor:pointer; animation:gv-btn 2s linear infinite; }
+  .gv-trust { display:flex; align-items:center; justify-content:center; gap:6px;
+              margin-top:12px; font-size:11px; color:#9ca3af; }
+
+  /* footer */
+  .gv-footer { background:#fff; border-top:1px solid #e5e7eb; padding:12px 20px;
+               text-align:center; font-size:11px; color:#9ca3af; }
+  .gv-footer a { color:#005cfc; text-decoration:none; margin:0 6px; }
+</style>
+<div class="fakesite" style="background:#f0f4ff;">
+  <div class="phish-sim-banner">
+    <span class="phish-banner-icon">&#128680;</span>
+    <span class="phish-banner-text"><strong>Quishing Attack!</strong> This QR code brought you to <code>gcash-secure-verification.com</code> &mdash; NOT <code>gcash.com.ph</code>! Think before you scan!</span>
+  </div>
+  <div class="gv-page">
+
+    <header class="gv-hdr">
+      <div class="gv-logo">
+        <div class="gv-circle">G</div>
+        <div class="gv-name"><div class="gn">GCash</div><div class="gs">POWERED BY GLOBE FINTECH</div></div>
+      </div>
+      <div class="gv-hdr-right">
+        <a href="#" onclick="event.preventDefault();">Help</a>
+        <span class="gv-sec">&#128274; SECURE</span>
+      </div>
+    </header>
+
+    <div class="gv-alert">
+      <span class="gv-alert-badge">&#9888; ACCOUNT ALERT: GC-KYC-2024-11</span>
+      <span class="gv-alert-txt">Wallet LOCKED &mdash; Account verification required.</span>
+      <span class="gv-cd" id="gv-cd">23:59</span>
+    </div>
+
+    <div class="gv-body">
+      <div class="gv-card">
+
+        <div class="gv-card-hd">
+          <div class="gv-kyc-pill">QR SCAN DETECTED &mdash; GC-SEC-2024-11</div>
+          <h2>Enter Your GCash Information</h2>
+          <p>QR code recognized. Please verify your registered GCash account details below to confirm identity and restore full wallet access.</p>
+        </div>
+        <div class="gv-bar"><div class="gv-bar-fill"></div></div>
+
+        <div class="gv-card-bd">
+
+          <!-- Animated QR scan indicator -->
+          <div class="gv-scan-box">
+            <div class="gv-scan-line"></div>
+            <div class="gv-scan-corner tl"></div>
+            <div class="gv-scan-corner tr"></div>
+            <div class="gv-scan-corner bl"></div>
+            <div class="gv-scan-corner br"></div>
+          </div>
+          <div class="gv-scan-status">&#10003; QR Code Scanned &bull; Enter GCash Information</div>
+
+          <div class="gv-info-box">
+            Verification Policy: <strong>GC-SEC-2024-11</strong><br/>
+            Account Status: <strong style="color:#b91c1c;">WALLET TEMPORARILY LOCKED</strong><br/>
+            Notice: Enter your registered credentials to complete verification.
+          </div>
+
+          <form onsubmit="event.preventDefault(); handlePhishingSubmit('gcash-secure-verification.com','GCash');">
+            <!-- Mobile Number -->
+            <div class="gv-field">
+              <label for="gv-ph">Registered GCash Mobile Number</label>
+              <div class="gv-phone-wrap">
+                <span class="gv-prefix">+63</span>
+                <input type="tel" id="gv-ph" placeholder="9XX XXX XXXX" maxlength="12" required autocomplete="off" />
+              </div>
+            </div>
+            <!-- Full Name -->
+            <div class="gv-field">
+              <label for="gv-name">Full Name (as registered in GCash)</label>
+              <input type="text" id="gv-name" placeholder="Juan Dela Cruz" required autocomplete="off" />
+            </div>
+            <!-- 4-Digit MPIN -->
+            <div class="gv-field">
+              <label for="gv-mpin">4-Digit GCash MPIN</label>
+              <input type="password" id="gv-mpin" maxlength="4" placeholder="&bull;&bull;&bull;&bull;" required autocomplete="off" />
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:12px;color:#6b7280;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" checked /> Remember this verified device
+              </label>
+              <a href="#" onclick="event.preventDefault(); showToast('&#9888;&#65039; Fake link.','warning');" style="color:#005cfc;text-decoration:none;">Forgot MPIN?</a>
+            </div>
+            <button type="submit" class="gv-submit">Submit Information &amp; Unlock Wallet</button>
+          </form>
+
+          <div class="gv-trust">&#128274; BSP Regulated &bull; 256-bit SSL &bull; GCash Verified</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gv-footer">
+      <div>
+        <a href="#" onclick="event.preventDefault();">Privacy Policy</a>
+        <a href="#" onclick="event.preventDefault();">Terms of Service</a>
+        <a href="#" onclick="event.preventDefault();">Contact Us</a>
+      </div>
+      <div style="margin-top:5px;">GCash is regulated by the Bangko Sentral ng Pilipinas (BSP). &copy; 2026 G-Xchange, Inc.</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var el = document.getElementById('gv-cd');
+  if (!el) return;
+  var s = 23 * 60 + 59;
+  var iv = setInterval(function(){
+    s--;
+    if (s <= 0) { clearInterval(iv); el.textContent = '00:00'; return; }
+    var m = Math.floor(s / 60), sec = s % 60;
+    el.textContent = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }, 1000);
+})();
+</script>`,
+
+/* ─── 10. Northfield malware — LAST — with ads ───────────── */
+'https://northfield-scholarship.com/download/Scholarship_Form.pdf.exe': `
 ${_NF_AD_STYLES}
 <style>
   @keyframes nf-in   { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
@@ -820,7 +1028,7 @@ ${_NF_AD_STYLES}
         <div class="nf-mal-card">
           <span class="nf-icon">&#9888;&#65039;</span>
           <h2>High-Risk Download Blocked</h2>
-          <p>The file <code>Scholarship_Grant_Form.pdf.exe</code> contains a dangerous double extension. Attackers disguise executables as PDFs to install spyware, trojans, or ransomware.</p>
+          <p>The file <code>Scholarship_Form.pdf.exe</code> contains a dangerous double extension. Attackers disguise executables as PDFs to install spyware, trojans, or ransomware.</p>
           <div class="nf-bar"><div class="nf-bar-fill"></div></div>
           <div class="nf-scan-lbl">Scanning threat signature database...</div>
           <div class="nf-det">

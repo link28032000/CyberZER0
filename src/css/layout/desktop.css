@@ -30,6 +30,12 @@
 /* ── Ch2-only icons: hidden during Chapter 1, shown when Chapter 2 starts ── */
 .ch2-only { display: none !important; }
 
+/* ── Ch2-not-Ch3 icons: shown in Chapter 2 only, hidden when Chapter 3+ starts ── */
+.ch2-not-ch3 { display: none !important; }
+
+/* ── Ch3-only icons: hidden until Chapter 3 starts ── */
+.ch3-only { display: none !important; }
+
 /* ── Desktop Icons ── */
 .desktop-icons {
   position: absolute;
@@ -266,6 +272,21 @@
 @keyframes ch2IconsFadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.desktop-icon.ch3-only {
+  animation: ch3IconsFadeIn 0.45s ease forwards;
+}
+@keyframes ch3IconsFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.desktop-icons-col.ch2-only {
+  animation: ch2IconsFadeIn 0.45s ease forwards;
+}
+.desktop-icons-col.ch3-only {
+  animation: ch3IconsFadeIn 0.45s ease forwards;
 }
 
 /* ═══════════════════════════════════════════════

@@ -93,6 +93,31 @@ function showStorySelectionScreen(selectChapterId = 'malware') {
     desktop.style.opacity = '0';
   }
 
+  // Normalize target chapter id
+  let targetId = selectChapterId || 'malware';
+  if (targetId === 'malware' || targetId === 2) {
+    targetId = 'malware';
+  } else if (targetId === 'social_engineering' || targetId === 'social' || targetId === 3) {
+    targetId = 'social_engineering';
+  } else if (targetId === 'ransomware' || targetId === 4) {
+    targetId = 'ransomware';
+  } else {
+    targetId = 'phishing';
+  }
+
+  // Set pending chapter so refreshStorySelectLocks picks it up
+  window._pendingStoryChapter = targetId;
+
+  // Deselect previous selection so target card can be cleanly selected
+  _selectedStoryCard = null;
+  document.querySelectorAll('.ss-card').forEach(c => {
+    c.classList.remove('ss-card-selected');
+    const existingBtn = c.querySelector('.ss-play-btn');
+    if (existingBtn) existingBtn.remove();
+    const existingBadge = c.querySelector('.ss-selected-badge');
+    if (existingBadge) existingBadge.remove();
+  });
+
   // Reveal Story Selection screen
   const ss = document.getElementById('overlay-story-select');
   if (ss) {
@@ -102,14 +127,6 @@ function showStorySelectionScreen(selectChapterId = 'malware') {
     ss.classList.add('active');
     if (typeof refreshStorySelectLocks === 'function') {
       refreshStorySelectLocks();
-    }
-
-    const chapterNum = selectChapterId === 'malware' ? 2 : 1;
-    const cardEl = document.getElementById(`ss-card-${chapterNum}`);
-    if (cardEl && typeof selectStoryCard === 'function') {
-      setTimeout(() => {
-        selectStoryCard(cardEl, selectChapterId, chapterNum, true);
-      }, 120);
     }
   }
 
@@ -330,13 +347,13 @@ function lsGoBack() {
  */
 let _selectedStoryCard = null;
 
-function selectStoryCard(cardEl, categoryId, chapterNum, playSound = true) {
+function selectStoryCard(cardEl, categoryId, chapterNum, playSound = true, allowLaunch = false) {
   if (!cardEl) return;
 
   const isAlreadySelected = cardEl.classList.contains('ss-card-selected');
   const isLocked = cardEl.classList.contains('ss-card-locked') || !categoryId;
 
-  // If already selected and clicked again:
+  // If already selected:
   if (isAlreadySelected) {
     if (isLocked) {
       // Re-trigger locked shake & sound
@@ -344,7 +361,7 @@ function selectStoryCard(cardEl, categoryId, chapterNum, playSound = true) {
       void cardEl.offsetWidth;
       cardEl.classList.add('ss-card-selected');
       storySelectLocked(chapterNum);
-    } else {
+    } else if (allowLaunch) {
       storySelectPlay(categoryId);
     }
     return;
@@ -785,11 +802,13 @@ function getChapterMedalTier(cat) {
       const phishSaved = localStorage.getItem('cyberzero_phishing_progress');
       if (phishSaved) {
         const pData = JSON.parse(phishSaved);
-        const aw = pData.earnedAward || (pData.trophyUnlocked ? { tier: 'trophy' } : null);
+        const aw = pData.earnedAward || (pData.trophyUnlocked ? { tier: 'gold' } : null);
         if (aw && aw.tier) {
-          if (aw.tier === 'trophy') return 'gold';
-          if (aw.tier === 'medal') return 'silver';
-          return 'bronze';
+          // New tier system: gold / silver / bronze (direct map)
+          if (aw.tier === 'gold'   || aw.tier === 'trophy') return 'gold';
+          if (aw.tier === 'silver' || aw.tier === 'medal')  return 'silver';
+          if (aw.tier === 'bronze' || aw.tier === 'ribbon') return 'bronze';
+          return 'bronze'; // completed but unrecognised tier
         }
       }
     } catch(e) {}

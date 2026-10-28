@@ -8,16 +8,18 @@ function updateHUD() {
   const hudType = document.getElementById('hud-type-label');
   const hudCount = document.getElementById('hud-email-count');
   const hudScore = document.getElementById('hud-score');
+  const hudEl = document.getElementById('hud');
 
-  if (gameState.phase === 'malware') {
-    if (hudType) hudType.textContent = 'MALWARE';
-    if (hudCount) hudCount.textContent = `${gameState.malwareQuarantined} / ${TOTAL_MALWARE_COUNT}`;
-  } else {
-    if (hudType) hudType.textContent = 'EMAIL';
-    const activeMissionIdx = EMAILS.findIndex(e => !gameState.emailResults.some(r => r.emailId === e.id));
-    const currentNum = activeMissionIdx === -1 ? EMAILS.length : activeMissionIdx + 1;
-    if (hudCount) hudCount.textContent = `${currentNum} / ${EMAILS.length}`;
+  if (gameState.phase === 'malware' || (typeof isChapter2Active === 'function' && isChapter2Active())) {
+    if (hudEl) hudEl.classList.add('hidden');
+    return;
   }
+  if (hudEl) hudEl.classList.remove('hidden');
+
+  if (hudType) hudType.textContent = 'EMAIL';
+  const activeMissionIdx = EMAILS.findIndex(e => !gameState.emailResults.some(r => r.emailId === e.id));
+  const currentNum = activeMissionIdx === -1 ? EMAILS.length : activeMissionIdx + 1;
+  if (hudCount) hudCount.textContent = `${currentNum} / ${EMAILS.length}`;
   if (hudScore) hudScore.textContent = `${gameState.correctDecisions}/${gameState.emailResults.length || 0}`;
   updateAppLockStates();
 }
@@ -45,10 +47,158 @@ function switchGmailFolder(folder) {
   renderEmailList();
 }
 
+// ═══════════════════════════════════════════════════════════
+// CHAPTER 2 (ETHAN) MALWARE INCIDENT EMAILS
+// ═══════════════════════════════════════════════════════════
+
+function isChapter2Active() {
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null);
+  return curCat === 'malware' || curCat === 2 || curCat === 'ch2';
+}
+
+const CH2_EMAILS = [];
+const CH2_SENT_EMAILS = [];
+
+function openCh2WorkstationTools() {
+  if (typeof openApp === 'function') {
+    openApp('folder');
+    if (typeof switchExplorerFolder === 'function') {
+      switchExplorerFolder('downloads');
+    }
+    openApp('antivirus');
+  }
+}
+
+function renderCh2EmailList() {
+  const list = document.getElementById('email-list');
+  if (!list) return;
+  list.innerHTML = `
+    <div class="email-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:240px;padding:40px 20px;text-align:center;color:#64748b;">
+      <div style="font-size:36px;margin-bottom:10px;opacity:0.7;">📭</div>
+      <div style="font-weight:700;font-size:15px;color:#cbd5e1;margin-bottom:6px;">No new emails</div>
+      <div style="font-size:12.5px;color:#64748b;max-width:260px;line-height:1.4;">Your inbox is completely empty.</div>
+    </div>
+  `;
+
+  const content = document.getElementById('email-content');
+  if (content) {
+    content.innerHTML = `
+      <div class="email-empty-reading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:240px;padding:40px;color:#64748b;text-align:center;">
+        <p style="font-size:13px;margin:0;">Select an item to read</p>
+      </div>
+    `;
+  }
+}
+
+function openCh2Email(idx) {
+  const email = CH2_EMAILS[idx];
+  if (!email) return;
+
+  email.read = true;
+  updateFolderCounts();
+
+  document.getElementById('email-list-view').classList.remove('active');
+  document.getElementById('email-detail-view').classList.add('active');
+
+  const flagModeBtn = document.getElementById('flag-mode-btn');
+  if (flagModeBtn) flagModeBtn.style.display = 'none';
+  const verdictGroup = document.querySelector('.verdict-btn-group');
+  if (verdictGroup) verdictGroup.style.display = 'none';
+  const evPanel = document.getElementById('evidence-panel');
+  if (evPanel) evPanel.classList.add('hidden');
+
+  let ch2Action = document.getElementById('ch2-toolbar-action');
+  if (!ch2Action) {
+    ch2Action = document.createElement('button');
+    ch2Action.type = 'button';
+    ch2Action.id = 'ch2-toolbar-action';
+    ch2Action.className = 'ch2-email-toolbar-btn';
+    ch2Action.onclick = openCh2WorkstationTools;
+    const toolbar = document.querySelector('.gmail-toolbar');
+    if (toolbar) toolbar.appendChild(ch2Action);
+  }
+  if (ch2Action) {
+    ch2Action.style.display = 'inline-flex';
+    ch2Action.innerHTML = '🛡️ Open Downloads & ShieldAV';
+  }
+
+  renderCh2EmailDetail(email);
+}
+
+function renderCh2EmailDetail(email) {
+  const content = document.getElementById('email-content');
+  if (!content) return;
+  content.innerHTML = '';
+  content.classList.remove('case-closed-reviewed');
+
+  // Header block
+  const header = document.createElement('div');
+  header.className = 'email-header-block';
+  header.innerHTML = `
+    <div class="email-subject-line">${escapeHtml(email.subject)}</div>
+    <div class="email-meta-row">
+      <span class="email-meta-label">FROM</span>
+      <span class="email-meta-value">${escapeHtml(email.sender.name)} &lt;${escapeHtml(email.sender.email)}&gt;</span>
+    </div>
+    <div class="email-meta-row">
+      <span class="email-meta-label">TO</span>
+      <span class="email-meta-value" style="color:var(--text-muted)">Ethan (You) &lt;ethan.sysadmin@techsolutions.com&gt;</span>
+    </div>
+    <div class="email-meta-row">
+      <span class="email-meta-label">DATE</span>
+      <span class="email-meta-value" style="color:var(--text-muted)">${email.date} • ${email.time}</span>
+    </div>`;
+  content.appendChild(header);
+
+  // Threat Box (if present)
+  if (email.content && email.content.threatBox) {
+    const tb = email.content.threatBox;
+    const threatBoxEl = document.createElement('div');
+    threatBoxEl.className = 'ch2-email-threat-box';
+    threatBoxEl.innerHTML = `
+      <div class="ch2-threat-header">
+        <span class="ch2-threat-title">${tb.title}</span>
+        <span class="ch2-threat-badge">${tb.threatLevel}</span>
+      </div>
+      <div class="ch2-threat-summary">${tb.summary}</div>
+      <ol class="ch2-threat-steps">
+        ${tb.instructions.map(step => `<li>${step}</li>`).join('')}
+      </ol>
+      <button type="button" class="ch2-email-action-btn" onclick="openCh2WorkstationTools()">
+        ${tb.actionBtnText || '🛡️ Open Downloads & ShieldAV'}
+      </button>
+    `;
+    content.appendChild(threatBoxEl);
+  }
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'email-body-text';
+  if (email.content && email.content.body) {
+    body.innerHTML = email.content.body;
+  }
+  content.appendChild(body);
+}
+
 function updateFolderCounts() {
   const inboxBadge = document.getElementById('inbox-count');
   const sentBadge = document.getElementById('sent-count');
   const trashBadge = document.getElementById('trash-count');
+
+  if (isChapter2Active()) {
+    if (inboxBadge) {
+      inboxBadge.textContent = '';
+      inboxBadge.style.display = 'none';
+    }
+    if (sentBadge) {
+      sentBadge.textContent = '';
+      sentBadge.style.display = 'none';
+    }
+    if (trashBadge) {
+      trashBadge.style.display = 'none';
+    }
+    return;
+  }
 
   // Inbox badge — hide only during intro phase (pretest/Ryan talking before any emails arrive)
   if (inboxBadge) {
@@ -83,6 +233,17 @@ function updateFolderCounts() {
 function renderEmailList() {
   const folder = gameState.currentFolder || 'inbox';
   updateFolderCounts();
+
+  if (isChapter2Active()) {
+    if (folder === 'sent') return renderSentOrTrashList(CH2_SENT_EMAILS, 'sent');
+    if (folder === 'trash') {
+      const list = document.getElementById('email-list');
+      if (list) list.innerHTML = `<div class="email-empty-state">🗑 Trash is empty</div>`;
+      return;
+    }
+    renderCh2EmailList();
+    return;
+  }
 
   if (folder === 'sent') return renderSentOrTrashList(SENT_EMAILS.filter(e => !gameState.trashedSentIds.includes(e.id)), 'sent');
   if (folder === 'trash') return renderSentOrTrashList(SENT_EMAILS.filter(e => gameState.trashedSentIds.includes(e.id)), 'trash');
@@ -177,7 +338,8 @@ function renderSentOrTrashList(items, folder) {
   }
 
   items.forEach((email, idx) => {
-    const initial = gameState.playerName ? gameState.playerName.charAt(0).toUpperCase() : 'S'; // Student — the player is the sender
+    const isCh2 = isChapter2Active();
+    const initial = isCh2 ? 'E' : (gameState.playerName ? gameState.playerName.charAt(0).toUpperCase() : 'S');
     const avatarColors = ['#5c6bc0', '#00897b'];
     const avatarColor = avatarColors[idx % avatarColors.length];
 
@@ -218,7 +380,10 @@ function renderSentOrTrashList(items, folder) {
 }
 
 function openSentOrTrashEmail(id, folder) {
-  const email = SENT_EMAILS.find(e => e.id === id);
+  let email = SENT_EMAILS.find(e => e.id === id);
+  if (!email && isChapter2Active()) {
+    email = CH2_SENT_EMAILS.find(e => e.id === id);
+  }
   if (!email) return;
 
   // If opening a sent email, mark as read/seen and update folder badges
@@ -240,6 +405,8 @@ function openSentOrTrashEmail(id, folder) {
   const content = document.getElementById('sent-detail-content');
   content.innerHTML = '';
 
+  const senderLabel = isChapter2Active() ? 'Ethan' : (gameState.playerName || 'Student');
+
   // Header block — mirrors the Inbox email-header-block markup
   const header = document.createElement('div');
   header.className = 'email-header-block';
@@ -247,7 +414,7 @@ function openSentOrTrashEmail(id, folder) {
     <div class="email-subject-line">${email.subject}</div>
     <div class="email-meta-row">
       <span class="email-meta-label">FROM</span>
-      <span class="email-meta-value">${escapeHtml(gameState.playerName || 'Student')} (You)</span>
+      <span class="email-meta-value">${escapeHtml(senderLabel)} (You)</span>
     </div>
     <div class="email-meta-row">
       <span class="email-meta-label">TO</span>
@@ -580,6 +747,107 @@ function renderEmailContent(email) {
       wrap.appendChild(actionsRow);
       body.appendChild(wrap);
 
+    } else if (part.type === 'qr') {
+      const qrWrap = document.createElement('div');
+      qrWrap.className = 'email-qr-wrap';
+      const isFlagged = gameState.currentEmailFlags.some(f => f.type === part.flagType);
+
+      qrWrap.innerHTML = `
+        <div class="email-qr-label">📷 Scan QR Code to verify your GCash account:</div>
+        <div class="email-qr-box flaggable ${isFlagged ? 'flagged' : ''}"
+             data-flag-id="${part.flagId}"
+             data-flag-type="${part.flagType}"
+             data-flag-label="${part.label}"
+             data-flag-text="${part.destination}"
+             data-destination="${part.destination}"
+             onclick="handleQrCodeClick(event, this)"
+             ondblclick="handleQrCodeDblClick(event, this)"
+             title="Double-click to scan QR code & open in Browser (or turn on 🚩 Flag Evidence to flag)">
+          <svg class="email-qr-svg" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+            <!-- QR finder pattern top-left -->
+            <rect x="0" y="0" width="7" height="7" fill="currentColor"/>
+            <rect x="1" y="1" width="5" height="5" fill="white"/>
+            <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+            <!-- QR finder pattern top-right -->
+            <rect x="22" y="0" width="7" height="7" fill="currentColor"/>
+            <rect x="23" y="1" width="5" height="5" fill="white"/>
+            <rect x="24" y="2" width="3" height="3" fill="currentColor"/>
+            <!-- QR finder pattern bottom-left -->
+            <rect x="0" y="22" width="7" height="7" fill="currentColor"/>
+            <rect x="1" y="23" width="5" height="5" fill="white"/>
+            <rect x="2" y="24" width="3" height="3" fill="currentColor"/>
+            <!-- QR timing patterns -->
+            <rect x="8" y="6" width="1" height="1" fill="currentColor"/>
+            <rect x="10" y="6" width="1" height="1" fill="currentColor"/>
+            <rect x="12" y="6" width="1" height="1" fill="currentColor"/>
+            <rect x="6" y="8" width="1" height="1" fill="currentColor"/>
+            <rect x="6" y="10" width="1" height="1" fill="currentColor"/>
+            <rect x="6" y="12" width="1" height="1" fill="currentColor"/>
+            <!-- QR data modules (fake pattern) -->
+            <rect x="8" y="8" width="2" height="2" fill="currentColor"/>
+            <rect x="11" y="8" width="1" height="1" fill="currentColor"/>
+            <rect x="13" y="9" width="2" height="2" fill="currentColor"/>
+            <rect x="8" y="11" width="3" height="1" fill="currentColor"/>
+            <rect x="12" y="11" width="2" height="2" fill="currentColor"/>
+            <rect x="9" y="13" width="1" height="2" fill="currentColor"/>
+            <rect x="11" y="14" width="2" height="1" fill="currentColor"/>
+            <rect x="16" y="8" width="2" height="1" fill="currentColor"/>
+            <rect x="19" y="8" width="2" height="2" fill="currentColor"/>
+            <rect x="16" y="10" width="1" height="2" fill="currentColor"/>
+            <rect x="18" y="11" width="3" height="1" fill="currentColor"/>
+            <rect x="16" y="13" width="2" height="2" fill="currentColor"/>
+            <rect x="19" y="14" width="2" height="1" fill="currentColor"/>
+            <rect x="22" y="8" width="2" height="3" fill="currentColor"/>
+            <rect x="25" y="8" width="1" height="1" fill="currentColor"/>
+            <rect x="23" y="11" width="3" height="1" fill="currentColor"/>
+            <rect x="8" y="16" width="1" height="2" fill="currentColor"/>
+            <rect x="10" y="16" width="3" height="1" fill="currentColor"/>
+            <rect x="14" y="16" width="1" height="3" fill="currentColor"/>
+            <rect x="9" y="18" width="2" height="1" fill="currentColor"/>
+            <rect x="12" y="17" width="1" height="2" fill="currentColor"/>
+            <rect x="16" y="16" width="3" height="2" fill="currentColor"/>
+            <rect x="20" y="16" width="2" height="1" fill="currentColor"/>
+            <rect x="19" y="17" width="1" height="3" fill="currentColor"/>
+            <rect x="22" y="16" width="2" height="2" fill="currentColor"/>
+            <rect x="25" y="16" width="2" height="3" fill="currentColor"/>
+            <rect x="8" y="20" width="2" height="2" fill="currentColor"/>
+            <rect x="11" y="21" width="3" height="1" fill="currentColor"/>
+            <rect x="15" y="20" width="1" height="2" fill="currentColor"/>
+            <rect x="17" y="21" width="2" height="1" fill="currentColor"/>
+            <rect x="20" y="20" width="1" height="3" fill="currentColor"/>
+            <rect x="22" y="21" width="3" height="1" fill="currentColor"/>
+            <rect x="26" y="20" width="2" height="2" fill="currentColor"/>
+            <rect x="9" y="23" width="2" height="1" fill="currentColor"/>
+            <rect x="12" y="23" width="1" height="2" fill="currentColor"/>
+            <rect x="14" y="24" width="3" height="1" fill="currentColor"/>
+            <rect x="18" y="23" width="2" height="2" fill="currentColor"/>
+            <rect x="21" y="24" width="2" height="1" fill="currentColor"/>
+            <rect x="24" y="23" width="3" height="2" fill="currentColor"/>
+            <rect x="8" y="26" width="3" height="1" fill="currentColor"/>
+            <rect x="13" y="26" width="2" height="1" fill="currentColor"/>
+            <rect x="17" y="26" width="1" height="1" fill="currentColor"/>
+            <rect x="19" y="26" width="2" height="1" fill="currentColor"/>
+            <rect x="23" y="26" width="1" height="1" fill="currentColor"/>
+            <rect x="25" y="26" width="2" height="1" fill="currentColor"/>
+          </svg>
+          <div class="email-qr-hint">🌐 Double-click to open QR destination</div>
+        </div>
+      `;
+
+      const qrBox = qrWrap.querySelector('.email-qr-box');
+      if (qrBox) {
+        qrBox.setAttribute('ondblclick', 'handleQrCodeDblClick(event, this)');
+        qrBox.addEventListener('dblclick', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (gameState.flagModeActive) return;
+          if (part.destination && typeof openSuspiciousSite === 'function') {
+            openSuspiciousSite(part.destination);
+          }
+        });
+      }
+      body.appendChild(qrWrap);
+
     } else if (part.type === 'attachment') {
       const attachBox = document.createElement('div');
       attachBox.className = 'email-attachment-card';
@@ -596,7 +864,8 @@ function renderEmailContent(email) {
              data-flag-id="${part.flagId || 'attach1'}"
              data-flag-type="${part.flagType || 'suspicious_link'}"
              data-flag-label="${part.label || 'MALICIOUS ATTACHMENT'}"
-             data-flag-text="${part.filename}">
+             data-flag-text="${part.filename}"
+             title="Click to download attachment (or turn on 🚩 Flag Evidence to flag)">
           <div class="email-attach-preview-thumb">
             <div class="email-attach-thumb-paper">
               <div class="thumb-paper-lines">
@@ -613,21 +882,15 @@ function renderEmailContent(email) {
             </div>
             <div class="email-attach-meta-row">
               <span class="email-attach-filesize">${part.size || '2.4 MB'}</span>
+              <span class="email-attach-dot">•</span>
+              <span class="email-attach-hint">Click to download</span>
             </div>
-          </div>
-          <div class="email-attach-actions">
-            <button type="button" class="email-attach-download-btn" onclick="event.stopPropagation(); downloadEmailAttachment('${part.filename}', '${part.size || '2.4 MB'}');" title="Download ${part.filename}">
-              <svg class="dl-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-              </svg>
-              <span>Download</span>
-            </button>
           </div>
         </div>
       `;
       const attachBody = attachBox.querySelector('.email-attachment-body');
       if (attachBody) {
-        attachBody.setAttribute('onclick', 'handleFlaggableClick(this)');
+        attachBody.setAttribute('onclick', `handleAttachmentClick(event, this, '${part.filename}', '${part.size || '2.4 MB'}')`);
       }
       body.appendChild(attachBox);
     }

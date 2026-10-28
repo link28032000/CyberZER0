@@ -360,13 +360,20 @@ const RyanGuide = (() => {
     }
   }
 
-  function dismiss() {
+  function dismiss(skipCallback = false) {
     clearTimeout(_typeTimeout);
     clearTimeout(_dismissTimer);
     _dismissTimer = null;
     _typing = false;
     _queue = [];
     _hide();
+    if (!skipCallback && typeof _onDoneCallback === 'function') {
+      const cb = _onDoneCallback;
+      _onDoneCallback = null;
+      try { cb(); } catch(e) {}
+    } else {
+      _onDoneCallback = null;
+    }
   }
 
   function once(key, fn) {
@@ -379,7 +386,8 @@ const RyanGuide = (() => {
   function reset() {
     _seen = {};
     _mainFlowLocked = false;
-    dismiss();
+    _onDoneCallback = null;
+    dismiss(true);
   }
 
   function lockMainFlow()    { _mainFlowLocked = true; }

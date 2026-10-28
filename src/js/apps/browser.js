@@ -26,17 +26,26 @@ let lastPhishingNoticeToastTime = 0;
 
 function updateBrowserPhishingNotice(isPhishing, url) {
   const winCloseBtn = document.getElementById('browser-win-close');
+  const activeTabCloseBtn = document.querySelector('.browser-tab.active .browser-tab-close');
 
   if (isPhishing) {
     if (winCloseBtn) {
       winCloseBtn.classList.add('phish-close-highlight');
-      winCloseBtn.setAttribute('title', 'Close');
+      winCloseBtn.setAttribute('title', 'Close window');
+    }
+    if (activeTabCloseBtn) {
+      activeTabCloseBtn.classList.add('phish-close-highlight');
+      activeTabCloseBtn.setAttribute('title', 'Close phishing tab');
     }
   } else {
     if (winCloseBtn) {
       winCloseBtn.classList.remove('phish-close-highlight');
       winCloseBtn.setAttribute('title', 'Close');
     }
+    document.querySelectorAll('.browser-tab-close.phish-close-highlight').forEach(btn => {
+      btn.classList.remove('phish-close-highlight');
+      btn.setAttribute('title', 'Close tab');
+    });
   }
 }
 
@@ -182,13 +191,18 @@ function createNewBrowserTab(url) {
 function renderTabStrip() {
   const strip = document.getElementById('browser-tabs-strip');
   if (!strip) return;
-  strip.innerHTML = browserTabs.map(tab => `
-    <div class="browser-tab${tab.id === browserActiveTabId ? ' active' : ''}" onclick="switchTab(${tab.id})" title="${escapeHtml(tab.url)}">
-      <span class="browser-tab-favicon">${tab.icon}</span>
-      <span class="browser-tab-title">${escapeHtml(tab.title)}</span>
-      <button class="browser-tab-close" onclick="closeTab(${tab.id}, event)" title="Close tab">✕</button>
-    </div>
-  `).join('') +
+  strip.innerHTML = browserTabs.map(tab => {
+    const isPhish = typeof isPhishingUrl === 'function' && isPhishingUrl(tab.url);
+    const isActive = tab.id === browserActiveTabId;
+    const isHighlight = isPhish && isActive;
+    return `
+      <div class="browser-tab${isActive ? ' active' : ''}" onclick="switchTab(${tab.id})" title="${escapeHtml(tab.url)}">
+        <span class="browser-tab-favicon">${tab.icon}</span>
+        <span class="browser-tab-title">${escapeHtml(tab.title)}</span>
+        <button class="browser-tab-close${isHighlight ? ' phish-close-highlight' : ''}" onclick="closeTab(${tab.id}, event)" title="${isHighlight ? 'Close phishing tab' : 'Close tab'}">✕</button>
+      </div>
+    `;
+  }).join('') +
   `<button class="browser-new-tab-btn" onclick="createNewBrowserTab()" title="New Tab">+</button>`;
 }
 
@@ -760,6 +774,13 @@ function _applyPageToContent(url) {
     return;
   }
 
+  // 4b. Instagram Simulated Web App (Pia's Social Media Profile)
+  if (/instagram\.com/i.test(url)) {
+    setTabMeta('Pia (@pia.cyber) • Instagram photos and videos', '📸', '🔒 Secure', 'secure');
+    content.innerHTML = renderInstagramSite();
+    return;
+  }
+
   // 5. Official Threat Intel & Cybersecurity Guides
   if (/recognize-and-report-phishing|secure-our-world/i.test(url)) {
     setTabMeta('Recognize and Report Phishing | CISA', '🛡️', '🔒 Secure', 'secure');
@@ -798,6 +819,22 @@ function _applyPageToContent(url) {
 }
 
 function openBrowserDefault() {
+  // If user is on the post-award checklist, ensure any lingering phishing tabs are closed
+  if (window._awardClaimed && Array.isArray(browserTabs)) {
+    const hasPhish = browserTabs.some(t => typeof isPhishingUrl === 'function' && isPhishingUrl(t.url));
+    if (hasPhish) {
+      browserTabs = browserTabs.filter(t => typeof isPhishingUrl === 'function' && !isPhishingUrl(t.url));
+      if (browserTabs.length === 0) {
+        initBrowserTabs();
+      } else {
+        if (!browserTabs.some(t => t.id === browserActiveTabId)) {
+          browserActiveTabId = browserTabs[0].id;
+        }
+        renderTabStrip();
+        renderActiveTab();
+      }
+    }
+  }
   openApp('browser');
   focusWindow('browser');
   if (!browserTabs || browserTabs.length === 0) {
@@ -914,9 +951,12 @@ function browserGo(raw) {
   const trimmed = (raw || '').trim();
   if (!trimmed) return;
 
-  if (window._awardClaimed && window._postAwardTasks && trimmed.toLowerCase().includes('phish')) {
+  const isPhish = typeof isPhishingUrl === 'function' && isPhishingUrl(trimmed);
+  const isSearch = isSearchQuery(trimmed) || /^https?:\/\/(www\.)?google\.com\/search/i.test(trimmed);
+
+  // User need to search: only mark checklist complete if they actually performed a search, NOT opening a phishing link
+  if (window._awardClaimed && window._postAwardTasks && !isPhish && isSearch) {
     window._postAwardTasks.phishingSearched = true;
-    window._postAwardTasks.phishingVisited = true;
     if (typeof _refreshPostAwardChecklist === 'function') _refreshPostAwardChecklist();
   }
 
@@ -2398,3 +2438,234 @@ function returnToGmail() {
   openApp('gmail');
   focusWindow('gmail');
 }
+
+// ── INSTAGRAM SIMULATED PROFILE (PIA'S SOCIAL MEDIA) ──
+function renderInstagramSite() {
+  return `
+    <div class="insta-app-wrap" style="background:#090e18;color:#f1f5f9;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding-bottom:40px;">
+      <!-- Instagram Header -->
+      <header style="position:sticky;top:0;z-index:100;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="browserGo('https://www.instagram.com/pia.cyber/')">
+          <img src="assets/icons/Chapter 3 new apps/instagram.svg" alt="Instagram" style="width:28px;height:28px;">
+          <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Instagram</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 14px;font-size:12.5px;color:#94a3b8;display:flex;align-items:center;gap:8px;width:240px;">
+          <span>🔍</span> <span>Search</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;font-size:18px;">
+          <span style="cursor:pointer;" title="Home" onclick="showToast('🏠 Home feed refreshed','info')">🏠</span>
+          <span style="cursor:pointer;" title="Direct Messages" onclick="openApp('comms')">💬</span>
+          <span style="cursor:pointer;" title="Explore" onclick="showToast('🧭 Explore feed: #cybersecurity #manila','info')">🧭</span>
+          <span style="cursor:pointer;" title="Activity" onclick="showToast('❤️ 14 new likes on your posts','info')">❤️</span>
+          <img src="assets/Character/Pia.png" alt="Profile" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #38bdf8;">
+        </div>
+      </header>
+
+      <div style="max-width:880px;margin:0 auto;padding:24px 20px;">
+        <!-- Cyber Security Warning Banner -->
+        <div style="background:linear-gradient(135deg,rgba(234,179,8,0.12),rgba(245,158,11,0.06));border:1px solid rgba(234,179,8,0.3);border-radius:12px;padding:12px 18px;margin-bottom:24px;display:flex;align-items:flex-start;gap:12px;">
+          <span style="font-size:22px;flex-shrink:0;">⚠️</span>
+          <div style="font-size:12.5px;line-height:1.45;color:#fef08a;">
+            <strong style="color:#fbbf24;">Social Engineering Vulnerability Note:</strong>
+            Oversharing work locations, routine schedules, and equipment on public profiles provides attackers with Open-Source Intelligence (OSINT) to launch targeted pretexting and identity impersonation.
+          </div>
+        </div>
+
+        <!-- Profile Header Block -->
+        <div style="display:flex;gap:40px;align-items:center;padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;">
+          <!-- Avatar with Story Ring -->
+          <div style="position:relative;width:120px;height:120px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);flex-shrink:0;">
+            <img src="assets/Character/Pia.png" alt="Pia" style="width:100%;height:100%;border-radius:50%;object-fit:cover;background:#0f172a;border:2px solid #090e18;">
+            <div style="position:absolute;bottom:4px;right:4px;background:#22c55e;width:16px;height:16px;border-radius:50%;border:2px solid #090e18;" title="Online"></div>
+          </div>
+
+          <!-- Profile Details -->
+          <div style="flex:1;min-width:260px;">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+              <h2 style="font-size:20px;font-weight:700;margin:0;color:#ffffff;">pia.cyber</h2>
+              <span style="background:rgba(56,189,248,0.2);color:#38bdf8;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">Verified Intern</span>
+              <button type="button" style="background:#0284c7;color:#fff;border:none;padding:6px 16px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;" onclick="showToast('Following @pia.cyber','success')">Following</button>
+              <button type="button" style="background:rgba(255,255,255,0.1);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;" onclick="openApp('comms')">Message</button>
+            </div>
+
+            <!-- Stats -->
+            <div style="display:flex;gap:24px;margin-bottom:14px;font-size:14px;">
+              <span><strong>6</strong> posts</span>
+              <span><strong>3,842</strong> followers</span>
+              <span><strong>419</strong> following</span>
+            </div>
+
+            <!-- Bio -->
+            <div style="font-size:13.5px;line-height:1.5;color:#cbd5e1;">
+              <div style="font-weight:700;color:#ffffff;">Pia | Threat Intel Trainee 🔍</div>
+              <div>🛡️ Cybersecurity Recruit @ Business Inc.</div>
+              <div>☕ Coffee fanatic · Tech & travel enthusiast 📸</div>
+              <div>📍 Manila, Philippines · Exploring wireless security</div>
+              <a href="#" onclick="showToast('🔗 Corporate directory profile verified','info');return false;" style="color:#38bdf8;text-decoration:none;font-weight:600;">business-inc.example/team/pia</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Highlights Row -->
+        <div style="display:flex;gap:20px;padding:20px 0;overflow-x:auto;">
+          <div style="text-align:center;font-size:11.5px;color:#cbd5e1;cursor:pointer;" onclick="showToast('☕ Highlight: Coffee runs & study sessions','info')">
+            <div style="width:58px;height:58px;border-radius:50%;background:#1e293b;border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">☕</div>
+            <span>Café</span>
+          </div>
+          <div style="text-align:center;font-size:11.5px;color:#cbd5e1;cursor:pointer;" onclick="showToast('💻 Highlight: Security Operations Center','info')">
+            <div style="width:58px;height:58px;border-radius:50%;background:#1e293b;border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">💻</div>
+            <span>Lab</span>
+          </div>
+          <div style="text-align:center;font-size:11.5px;color:#cbd5e1;cursor:pointer;" onclick="showToast('🎓 Highlight: Security Certifications','info')">
+            <div style="width:58px;height:58px;border-radius:50%;background:#1e293b;border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">🎓</div>
+            <span>Certs</span>
+          </div>
+          <div style="text-align:center;font-size:11.5px;color:#cbd5e1;cursor:pointer;" onclick="showToast('🌆 Highlight: Manila Tech Scene','info')">
+            <div style="width:58px;height:58px;border-radius:50%;background:#1e293b;border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">🌆</div>
+            <span>Manila</span>
+          </div>
+          <div style="text-align:center;font-size:11.5px;color:#cbd5e1;cursor:pointer;" onclick="showToast('🛡️ Highlight: Social Engineering Defense','info')">
+            <div style="width:58px;height:58px;border-radius:50%;background:#1e293b;border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">🛡️</div>
+            <span>Defend</span>
+          </div>
+        </div>
+
+        <!-- Feed Tabs -->
+        <div style="border-top:1px solid rgba(255,255,255,0.08);display:flex;justify-content:center;gap:36px;font-size:12.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+          <div style="padding:12px 0;border-top:2px solid #ffffff;color:#ffffff;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <span>▦</span> <span>POSTS</span>
+          </div>
+          <div style="padding:12px 0;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="showToast('Reels section is empty','info')">
+            <span>🎬</span> <span>REELS</span>
+          </div>
+          <div style="padding:12px 0;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="showToast('Saved posts are private','info')">
+            <span>🔖</span> <span>SAVED</span>
+          </div>
+          <div style="padding:12px 0;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="showToast('No tagged posts yet','info')">
+            <span>🏷️</span> <span>TAGGED</span>
+          </div>
+        </div>
+
+        <!-- Posts Grid (3 Columns) -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;">
+          <!-- Post 1 (Crucial Chapter 3 Connection: Coffee Shop & Free Wi-Fi) -->
+          <div class="insta-post-card" style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="showToast('💡 Threat Insight: Pia tagged her café location and announced using Free Public Wi-Fi — a prime target for Wi-Fi sniffing attacks!','warning')">
+            <div style="position:relative;padding-top:100%;background:#1e293b;">
+              <img src="assets/background/Coffe shop.png" alt="Coffee Shop" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+              <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);padding:2px 7px;border-radius:4px;font-size:10px;color:#facc15;">📍 Location Tag</div>
+            </div>
+            <div style="padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.4;">
+              <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                <span>❤️ 248 likes</span>
+                <span>💬 19 comments</span>
+              </div>
+              <div><strong style="color:#fff;">pia.cyber</strong> Study session at local café ☕ Loving the free public Wi-Fi! Time to finish the security report 💻 #coffee #remoteWork</div>
+            </div>
+          </div>
+
+          <!-- Post 2: Badge & Workstation -->
+          <div class="insta-post-card" style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="showToast('💡 Threat Insight: Posting workplace ID badges or company doors reveals physical security protocols to attackers!','info')">
+            <div style="position:relative;padding-top:100%;background:#1e293b;">
+              <img src="assets/Cover.png" alt="Office Entrance" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div style="padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.4;">
+              <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                <span>❤️ 412 likes</span>
+                <span>💬 38 comments</span>
+              </div>
+              <div><strong style="color:#fff;">pia.cyber</strong> Day 1 at Business Inc.! Orientation complete with Alex, Ethan, and mentor Ryan. Ready to monitor threat feeds 🛡️</div>
+            </div>
+          </div>
+
+          <!-- Post 3: Portrait Selfie -->
+          <div class="insta-post-card" style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="showToast('❤️ Liked Pia\'s post!','success')">
+            <div style="position:relative;padding-top:100%;background:#0f172a;">
+              <img src="assets/Character/Pia.png" alt="Pia Portrait" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div style="padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.4;">
+              <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                <span>❤️ 519 likes</span>
+                <span>💬 27 comments</span>
+              </div>
+              <div><strong style="color:#fff;">pia.cyber</strong> Morning team sync ready! Working on digital forensics and social engineering awareness. ✨📸</div>
+            </div>
+          </div>
+
+          <!-- Post 4: Team Retreat -->
+          <div class="insta-post-card" style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="showToast('❤️ Liked team retreat photo!','success')">
+            <div style="position:relative;padding-top:100%;background:#1e293b;">
+              <img src="assets/background/Coffe shop.png" alt="Team Meetup" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;filter:hue-rotate(30deg);">
+            </div>
+            <div style="padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.4;">
+              <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                <span>❤️ 310 likes</span>
+                <span>💬 14 comments</span>
+              </div>
+              <div><strong style="color:#fff;">pia.cyber</strong> Weekend team building with the cohort! Great energy all around 🎉 #teambuilding #cybersecurity</div>
+            </div>
+          </div>
+
+          <!-- Post 5: Multi-monitor Setup -->
+          <div class="insta-post-card" style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="showToast('❤️ Liked setup post!','success')">
+            <div style="position:relative;padding-top:100%;background:#1e293b;">
+              <img src="assets/Desktop/Default.png" alt="Monitoring Station" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div style="padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.4;">
+              <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                <span>❤️ 195 likes</span>
+                <span>💬 8 comments</span>
+              </div>
+              <div><strong style="color:#fff;">pia.cyber</strong> Multi-monitor monitoring station setup complete 🖥️ Watching network telemetry live! #sysadmin #threatintel</div>
+            </div>
+          </div>
+
+          <!-- Post 6: Cyber Tip & Infosec -->
+          <div class="insta-post-card" style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="showToast('🛡️ Security Tip: Always verify identity before sharing sensitive credentials!','info')">
+            <div style="position:relative;padding-top:100%;background:linear-gradient(135deg,#0284c7,#1e1b4b);display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;">
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;">
+                <div style="font-size:32px;margin-bottom:6px;">🔐</div>
+                <div style="font-size:12px;font-weight:800;color:#ffffff;line-height:1.3;">NEVER SHARE MFA CODES</div>
+                <div style="font-size:10px;color:#93c5fd;margin-top:4px;">#CyberTip</div>
+              </div>
+            </div>
+            <div style="padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.4;">
+              <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:11px;margin-bottom:4px;">
+                <span>❤️ 521 likes</span>
+                <span>💬 42 comments</span>
+              </div>
+              <div><strong style="color:#fff;">pia.cyber</strong> Reminder to everyone: Use strong passphrases and MFA! Never share verification codes over the phone 🔐 #CyberSecurityTips</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── DESKTOP APP LAUNCHERS FOR CHAPTER 3 ──
+function openInstagramApp() {
+  openApp('browser');
+  const win = document.getElementById('win-browser');
+  if (win) {
+    win.style.left = '120px';
+    win.style.top = '70px';
+  }
+  if (typeof browserGo === 'function') {
+    browserGo('https://www.instagram.com/pia.cyber/');
+  }
+  if (typeof showToast === 'function') {
+    showToast('📸 Opened Instagram — Pia\'s Social Profile', 'info');
+  }
+}
+window.openInstagramApp = openInstagramApp;
+
+function openPicturesFolder() {
+  openApp('folder');
+  if (typeof switchExplorerFolder === 'function') {
+    switchExplorerFolder('pictures');
+  }
+  if (typeof showToast === 'function') {
+    showToast('🖼️ Opened Pictures folder', 'info');
+  }
+}
+window.openPicturesFolder = openPicturesFolder;
