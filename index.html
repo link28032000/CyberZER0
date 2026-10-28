@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -109,22 +109,33 @@
       </div>
     </div>
 
-    <!-- Column 3: Ch2 Only — Ethan's Gaming Apps (hidden until Ch2 malware phase) -->
+    <!-- Column 3: Ch2 gaming apps (Ch2 only) and Ch3 social apps (Ch3+) -->
     <div class="desktop-icons-col ch2-only" id="desktop-col-ch2">
-      <div class="desktop-icon" id="icon-steam" title="Steam — Game Library">
+      <!-- Chapter 2 only: Ethan's gaming apps — hidden when Chapter 3 starts -->
+      <div class="desktop-icon ch2-not-ch3" id="icon-steam" title="Steam — Game Library">
         <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/steam.svg" alt="Steam"></div>
         <span>Steam</span>
       </div>
-      <div class="desktop-icon" id="icon-gta6" title="GTA 6 — Action Game">
+      <div class="desktop-icon ch2-not-ch3" id="icon-gta6" title="GTA 6 — Action Game">
         <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/GTA6.svg" alt="GTA 6"></div>
         <span>GTA 6</span>
       </div>
-      <div class="desktop-icon" id="icon-games-folder" onclick="openApp('folder'); switchExplorerFolder('games');" title="Games Folder">
+      <div class="desktop-icon ch2-not-ch3" id="icon-games-folder" onclick="openApp('folder'); switchExplorerFolder('games');" title="Games Folder">
         <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/games_folder.svg" alt="Games"></div>
         <span>Games</span>
       </div>
+      <!-- Chapter 3 only: Pia's social apps — hidden in Ch2, visible in Ch3 only -->
+      <div class="desktop-icon ch3-only" id="icon-instagram" ondblclick="openInstagramApp()" onclick="openInstagramApp()" title="Instagram — Social Media">
+        <div class="icon-img"><img src="assets/icons/Chapter 3 new apps/instagram.svg" alt="Instagram"></div>
+        <span>Instagram</span>
+      </div>
+      <div class="desktop-icon ch3-only" id="icon-pictures" ondblclick="openPicturesFolder()" onclick="openPicturesFolder()" title="Pictures Folder">
+        <div class="icon-img"><img src="assets/icons/Chapter 3 new apps/pictures_folder.svg" alt="Pictures"></div>
+        <span>Pictures</span>
+      </div>
     </div>
   </div>
+
 
   <!-- Sticky Note: Microsoft Sticky Notes replica from user screenshot -->
   <div id="sticky-note" class="sticky-note hidden">
@@ -713,10 +724,10 @@
 
         <!-- Expandable Details -->
         <div id="smartscreen-more-info-panel" class="smartscreen-more-info-panel hidden">
-          <div class="ss-info-line"><span class="ss-info-label">App:</span> <strong id="smartscreen-app-name">Scholarship_Grant_Form.pdf.exe</strong></div>
+          <div class="ss-info-line"><span class="ss-info-label">App:</span> <strong id="smartscreen-app-name">Scholarship_Form.pdf.exe</strong></div>
           <div class="ss-info-line"><span class="ss-info-label">Publisher:</span> <span id="smartscreen-app-publisher">Unknown publisher</span></div>
           <div class="ss-more-actions">
-            <button type="button" class="ss-more-btn" onclick="smartscreenQuarantine()">Quarantine Threat</button>
+            <button type="button" class="ss-more-btn" onclick="smartscreenQuarantine()">Delete Now</button>
           </div>
         </div>
       </div>
@@ -744,7 +755,7 @@
           </div>
         </div>
         <div class="bdt-file-info">
-          <div class="bdt-file-name" id="bdt-file-name">Scholarship_Grant_Form.pdf.exe</div>
+          <div class="bdt-file-name" id="bdt-file-name">Scholarship_Form.pdf.exe</div>
           <div class="bdt-progress-wrap">
             <div class="bdt-progress-bar">
               <div class="bdt-progress-fill" id="bdt-progress-fill"></div>
@@ -757,8 +768,8 @@
         <button type="button" class="bdt-action-btn bdt-open-btn" onclick="openDownloadedFileFromTray()">
           <span>▶ Run / Open</span>
         </button>
-        <button type="button" class="bdt-action-btn bdt-folder-btn" onclick="openFolderFromTray()">
-          <span>📁 Show in folder</span>
+        <button type="button" class="bdt-action-btn bdt-folder-btn" onclick="deleteDownloadedFileFromTray()">
+          <span>🗑️ Delete Now</span>
         </button>
       </div>
     </div>
@@ -803,7 +814,7 @@
               <div class="installer-info-box">
                 <div class="installer-info-row">
                   <span class="inst-label">Package Name:</span>
-                  <span class="inst-val">Scholarship_Grant_Form.pdf.exe</span>
+                  <span class="inst-val">Scholarship_Form.pdf.exe</span>
                 </div>
                 <div class="installer-info-row">
                   <span class="inst-label">Target Award:</span>
@@ -865,7 +876,7 @@
               <div class="installer-alert-card">
                 <div class="iac-title">⚠️ What just happened?</div>
                 <p class="iac-desc">
-                  You opened <code>Scholarship_Grant_Form.pdf.exe</code>. Although it showed a document name and claimed to be a PDF grant form, its true file type is a <strong>Windows Executable Application (.exe)</strong>.
+                  You opened <code>Scholarship_Form.pdf.exe</code>. Although it showed a document name and claimed to be a PDF grant form, its true file type is a <strong>Windows Executable Application (.exe)</strong>.
                 </p>
                 <div class="iac-breakdown">
                   <div class="iac-item">
@@ -880,7 +891,7 @@
               </div>
             </div>
             <div class="installer-step-footer alert-footer">
-              <button type="button" class="inst-btn inst-btn-quarantine" onclick="quarantineScholarshipMalware()">🛡️ Quarantine Threat</button>
+              <button type="button" class="inst-btn inst-btn-quarantine" onclick="quarantineScholarshipMalware()">🗑️ Delete Now</button>
               <button type="button" class="inst-btn inst-btn-primary" onclick="returnToZmailFromInstaller()">📧 Back to Zmail (Flag Evidence)</button>
             </div>
           </div>
@@ -1147,7 +1158,7 @@
           <div class="ws-status-row">
             <div>
               <div class="ws-status-label-primary">Bluetooth</div>
-              <div class="ws-status-label-secondary" id="ws-bt-state-label">On — Student Headset connected</div>
+              <div class="ws-status-label-secondary" id="ws-bt-state-label">On — Mobile Phone connected</div>
             </div>
             <button type="button" id="ws-bt-toggle-btn" onclick="wsToggleBluetooth()" class="ws-toggle-btn">Turn Off</button>
           </div>
@@ -1155,33 +1166,13 @@
           <div class="bt-device-list">
             <div class="bt-device-row-connected">
               <div class="bt-device-info-wrap">
-                <img src="assets/icons/networks/bluetooth.svg" alt="Bluetooth" class="bt-icon-img">
+                <img src="assets/icons/apps/Smartphone.svg" alt="Mobile Phone" class="bt-icon-img">
                 <div>
-                  <div class="bt-device-name">Student Headset</div>
-                  <div class="bt-device-status-connected">Connected • Audio device</div>
+                  <div class="bt-device-name">Mobile Phone</div>
+                  <div class="bt-device-status-connected">Connected • Paired phone</div>
                 </div>
               </div>
-              <button type="button" onclick="showToast('🎧 Student Headset is already connected.','info')" class="bt-btn-connected">Connected</button>
-            </div>
-            <div class="bt-device-row">
-              <div class="bt-device-info-wrap">
-                <img src="assets/icons/networks/bluetooth.svg" alt="Bluetooth" class="bt-icon-img-dim">
-                <div>
-                  <div class="bt-device-name">CyberLab Printer</div>
-                  <div class="bt-device-status-muted">Available • Printer</div>
-                </div>
-              </div>
-              <button type="button" onclick="showToast('🖨️ Connecting to CyberLab Printer...','info')" class="bt-btn-pair">Pair</button>
-            </div>
-            <div class="bt-device-row">
-              <div class="bt-device-info-wrap">
-                <img src="assets/icons/networks/bluetooth.svg" alt="Bluetooth" class="bt-icon-img-dim">
-                <div>
-                  <div class="bt-device-name">Unknown Device (BT-4F2A)</div>
-                  <div class="bt-device-status-warn">⚠️ Unrecognized — Do not pair</div>
-                </div>
-              </div>
-              <button type="button" onclick="showToast('⚠️ Unknown Bluetooth device detected. Do not pair with unrecognized devices.','warning')" class="bt-btn-inspect">Inspect</button>
+              <button type="button" onclick="showToast('📱 Mobile Phone is already connected.','info')" class="bt-btn-connected">Connected</button>
             </div>
           </div>
         </div>
@@ -1230,70 +1221,70 @@
           </div>
         </div>
 
-        <!-- Display Tab (placeholder) -->
+        <!-- Display Tab -->
         <div id="wstab-display" class="hidden-init">
           <div class="settings-page-title">🖥️ Display</div>
           <div class="settings-section-header">Brightness &amp; Color</div>
           <div class="settings-desc">Display settings are managed by your hardware. Adjust brightness using the keyboard function keys.</div>
           <div class="ws-status-row ws-status-row-mt">
-            <div><div class="ws-status-label-primary">Night Light</div><div class="ws-status-label-secondary">Reduces blue light in the evening</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🌙 Night Light toggled','info')">Turn On</button>
+            <div><div class="ws-status-label-primary">Night Light</div><div class="ws-status-label-secondary" id="ws-nightlight-label">Off — Reduces blue light in the evening</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-nightlight-btn" onclick="wsToggleNightLight()">Turn On</button>
           </div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Scale</div><div class="ws-status-label-secondary">150% (Recommended)</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('📐 Scale settings require sign-out to apply.','info')">Edit</button>
+            <div><div class="ws-status-label-primary">Scale and layout</div><div class="ws-status-label-secondary" id="ws-scale-label">Change the size of text and apps: 150% (Recommended)</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-scale-btn" onclick="wsToggleScale()">Change</button>
           </div>
         </div>
 
-        <!-- Sound Tab (placeholder) -->
+        <!-- Sound Tab -->
         <div id="wstab-sound" class="hidden-init">
           <div class="settings-page-title">🔊 Sound</div>
           <div class="settings-section-header">Output</div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Speakers</div><div class="ws-status-label-secondary">Default — Realtek HD Audio</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🔊 Volume mixer opened','info')">Configure</button>
+            <div><div class="ws-status-label-primary">Speakers</div><div class="ws-status-label-secondary" id="ws-speakers-label">On — Realtek HD Audio (Speakers)</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-speakers-btn" onclick="wsToggleSpeakers()">Turn Off</button>
           </div>
           <div class="settings-section-header settings-section-header-mt">Input</div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Microphone</div><div class="ws-status-label-secondary">Default — Internal Mic</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🎤 Microphone settings','info')">Configure</button>
+            <div><div class="ws-status-label-primary">Microphone</div><div class="ws-status-label-secondary" id="ws-mic-label">On — Internal Microphone</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-mic-btn" onclick="wsToggleMicrophone()">Turn Off</button>
           </div>
         </div>
 
-        <!-- Power Tab (placeholder) -->
+        <!-- Power Tab -->
         <div id="wstab-power" class="hidden-init">
           <div class="settings-page-title">🔋 Power &amp; Sleep</div>
           <div class="settings-section-header">Battery</div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Battery Saver</div><div class="ws-status-label-secondary">Turns on automatically at 20%</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🔋 Battery Saver updated','info')">Turn On</button>
+            <div><div class="ws-status-label-primary">Battery Saver</div><div class="ws-status-label-secondary" id="ws-battery-label">Off — Turns on automatically at 20%</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-battery-btn" onclick="wsToggleBatterySaver()">Turn On</button>
           </div>
           <div class="settings-section-header settings-section-header-mt">Sleep</div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Sleep after</div><div class="ws-status-label-secondary">When plugged in: 30 minutes</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('⚡ Sleep timer saved','info')">Edit</button>
+            <div><div class="ws-status-label-primary">Screen Sleep</div><div class="ws-status-label-secondary" id="ws-sleep-label">When plugged in: 30 minutes</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-sleep-btn" onclick="wsToggleSleepTimer()">Change (30m)</button>
           </div>
         </div>
 
-        <!-- Privacy Tab (placeholder) -->
+        <!-- Privacy Tab -->
         <div id="wstab-privacy" class="hidden-init">
           <div class="settings-page-title">🔒 Privacy</div>
           <div class="settings-section-header">Permissions</div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Location</div><div class="ws-status-label-secondary">Apps can access your location</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('📍 Location access updated','info')">Turn Off</button>
+            <div><div class="ws-status-label-primary">Location</div><div class="ws-status-label-secondary" id="ws-priv-location-label">On — Apps can access your location</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-priv-location-btn" onclick="wsTogglePrivacy('location')">Turn Off</button>
           </div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Camera</div><div class="ws-status-label-secondary">Apps can use your camera</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('📷 Camera access updated','info')">Turn Off</button>
+            <div><div class="ws-status-label-primary">Camera</div><div class="ws-status-label-secondary" id="ws-priv-camera-label">On — Apps can use your camera</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-priv-camera-btn" onclick="wsTogglePrivacy('camera')">Turn Off</button>
           </div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Microphone</div><div class="ws-status-label-secondary">Apps can use your microphone</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🎤 Microphone access updated','info')">Turn Off</button>
+            <div><div class="ws-status-label-primary">Microphone</div><div class="ws-status-label-secondary" id="ws-priv-microphone-label">On — Apps can use your microphone</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-priv-microphone-btn" onclick="wsTogglePrivacy('microphone')">Turn Off</button>
           </div>
         </div>
 
-        <!-- Firewall/Windows Security Tab (placeholder) -->
+        <!-- Firewall/Windows Security Tab -->
         <div id="wstab-firewall" class="hidden-init">
           <div class="settings-page-title">🛡️ Windows Security</div>
           <div class="settings-section-header">Protection Areas</div>
@@ -1302,12 +1293,12 @@
             <button type="button" class="ws-toggle-btn" onclick="openApp('antivirus')">Open app</button>
           </div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">Firewall &amp; Network Protection</div><div class="ws-status-label-secondary" style="color:#4ade80">✓ Active on all networks</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🛡️ Firewall is active and monitoring all network connections.','info')">Manage</button>
+            <div><div class="ws-status-label-primary">Firewall &amp; Network Protection</div><div class="ws-status-label-secondary" id="ws-firewall-label" style="color:#4ade80">✓ Active on all networks</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-firewall-btn" onclick="wsToggleFirewall()">Turn Off</button>
           </div>
           <div class="ws-status-row">
-            <div><div class="ws-status-label-primary">App &amp; Browser Control</div><div class="ws-status-label-secondary" style="color:#fb923c">⚠️ SmartScreen is off</div></div>
-            <button type="button" class="ws-toggle-btn" onclick="showToast('🛡️ App &amp; Browser Control settings opened','info')">Fix now</button>
+            <div><div class="ws-status-label-primary">App &amp; Browser Control</div><div class="ws-status-label-secondary" id="ws-smartscreen-label" style="color:#fb923c">⚠️ SmartScreen is off</div></div>
+            <button type="button" class="ws-toggle-btn" id="ws-smartscreen-btn" onclick="wsToggleSmartScreen()">Turn On</button>
           </div>
         </div>
 
@@ -1444,7 +1435,7 @@
               </svg>
             </div>
             <div class="about10-hero-text">
-              <div class="about10-pc-name">CYBERZERO-PC</div>
+              <div class="about10-pc-name" id="about10-pc-name-display">Alex PC</div>
               <div class="about10-pc-sub">Intel Core i5-1235U · 8 GB RAM · Windows 10 Pro</div>
               <button type="button" class="about10-rename-btn" onclick="showToast('✏️ Rename your PC requires a restart to apply changes.','info')">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -1489,7 +1480,7 @@
           <div class="about10-spec-table">
             <div class="about10-spec-row">
               <div class="about10-spec-label">Device name</div>
-              <div class="about10-spec-value" id="abt-devname">CYBERZERO-PC</div>
+              <div class="about10-spec-value" id="abt-devname">Alex PC</div>
             </div>
             <div class="about10-spec-row">
               <div class="about10-spec-label">Processor</div>
