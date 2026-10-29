@@ -1,0 +1,915 @@
+/* ═══════════════════════════════════════════════════════════════
+   CYBERZERO — TASK MANAGER (Windows 11 Inspired Dark Theme)
+   Crisp Typography, Responsive Grid, Fullscreen Mode & Hi-DPI
+═══════════════════════════════════════════════════════════════ */
+
+/* Window body container */
+.tm-body {
+  padding: 0;
+  background: #0d121f;
+  background: radial-gradient(circle at 50% 0%, #151d30 0%, #0c111d 100%);
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', var(--font-main), -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #e2e8f0;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* Titlebar icon */
+.tm-titlebar-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.tm-title-text {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ─── Top Header Bar: Tabs & Quick System Status ──────────── */
+.tm-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: rgba(13, 19, 33, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  min-height: 42px;
+  gap: 12px;
+}
+
+.tm-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #8b9bb4;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  border-radius: 4px 4px 0 0;
+}
+.tm-tab:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.04);
+}
+.tm-tab.active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.06);
+}
+.tm-tab-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* System Resource Status Pills on top right */
+.tm-status-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tm-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  color: #8b9bb4;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.tm-status-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+.tm-status-pill strong {
+  color: #f1f5f9;
+  font-family: var(--font-mono, 'Consolas', monospace);
+  font-size: 11.5px;
+  margin-left: 2px;
+}
+
+.tm-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.tm-dot-cpu { background: #38bdf8; box-shadow: 0 0 6px rgba(56, 189, 248, 0.6); }
+.tm-dot-mem { background: #a78bfa; box-shadow: 0 0 6px rgba(167, 139, 250, 0.6); }
+.tm-dot-disk { background: #34d399; box-shadow: 0 0 6px rgba(52, 211, 153, 0.6); }
+.tm-dot-net { background: #fb923c; box-shadow: 0 0 6px rgba(251, 146, 60, 0.6); }
+
+
+/* ─── Command Bar (Search & Actions) ──────────────────────── */
+.tm-command-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(18, 25, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.tm-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 6px;
+  padding: 4px 8px;
+  width: 260px;
+  max-width: 100%;
+  transition: all 0.2s ease;
+}
+.tm-search-box:focus-within {
+  border-color: #38bdf8;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  width: 320px;
+}
+.tm-search-icon {
+  font-size: 12px;
+  color: #64748b;
+  margin-right: 6px;
+}
+.tm-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f1f5f9;
+  font-size: 11.5px;
+  width: 100%;
+  font-family: inherit;
+}
+.tm-search-box input::placeholder {
+  color: #64748b;
+}
+.tm-search-clear {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 10px;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.tm-search-clear:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tm-command-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tm-cmd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tm-cmd-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.tm-cmd-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+.tm-cmd-btn#tm-cmd-end-task:not(:disabled) {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.tm-cmd-btn#tm-cmd-end-task:not(:disabled):hover {
+  background: #dc2626;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+.tm-cmd-icon {
+  font-size: 11px;
+}
+.tm-cmd-efficiency {
+  opacity: 0.7;
+}
+
+
+/* ─── Panels ──────────────────────────────────────────────── */
+.tm-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+}
+.tm-panel.hidden {
+  display: none !important;
+}
+
+
+/* ─── Processes Tab ───────────────────────────────────────── */
+.tm-process-header {
+  display: grid;
+  grid-template-columns: minmax(200px, 2.8fr) minmax(90px, 1fr) minmax(100px, 1.1fr) minmax(110px, 1.2fr) minmax(80px, 0.9fr) minmax(85px, 0.9fr) minmax(90px, 0.9fr);
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  padding: 6px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0f1523;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+.tm-process-header span {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+.tm-process-header span:hover {
+  color: #cbd5e1;
+}
+.tm-sort-arrow {
+  font-size: 9px;
+  color: #38bdf8;
+  display: inline-block;
+  min-width: 10px;
+}
+
+/* Unified Scroll Container */
+.tm-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #27354f transparent;
+}
+.tm-scroll-body::-webkit-scrollbar {
+  width: 6px;
+}
+.tm-scroll-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tm-scroll-body::-webkit-scrollbar-thumb {
+  background: #27354f;
+  border-radius: 4px;
+}
+.tm-scroll-body::-webkit-scrollbar-thumb:hover {
+  background: #3b4e72;
+}
+
+/* Group Label */
+.tm-group-header {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #475569;
+  padding: 6px 14px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(13, 18, 31, 0.95);
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease;
+}
+.tm-group-header:hover {
+  color: #94a3b8;
+}
+.tm-group-arrow {
+  font-size: 9px;
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.tm-group-header.collapsed .tm-group-arrow {
+  transform: rotate(-90deg);
+}
+
+/* Process List */
+.tm-process-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Process Row */
+.tm-process-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 2.8fr) minmax(90px, 1fr) minmax(100px, 1.1fr) minmax(110px, 1.2fr) minmax(80px, 0.9fr) minmax(85px, 0.9fr) minmax(90px, 0.9fr);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  font-size: 11.5px;
+  color: #94a3b8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.1s ease, color 0.1s ease;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.tm-process-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+}
+.tm-process-row.selected-row {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-left-color: #38bdf8 !important;
+  color: #f0f9ff !important;
+}
+.tm-process-row-sm {
+  opacity: 0.88;
+}
+
+/* Suspicious Malware Row */
+.tm-process-row.suspicious-process {
+  background: rgba(239, 68, 68, 0.12);
+  border-left-color: #ef4444;
+  color: #fca5a5;
+  font-weight: 600;
+}
+.tm-process-row.suspicious-process:hover {
+  background: rgba(239, 68, 68, 0.18);
+}
+.tm-process-row.suspicious-process.selected-row {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-left-color: #f87171 !important;
+}
+.tm-process-row.terminated-process {
+  opacity: 0.45;
+  text-decoration: line-through;
+  pointer-events: none;
+}
+
+/* Name Cell */
+.tm-col-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  font-weight: 500;
+  color: #f1f5f9;
+}
+.tm-proc-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+.tm-icon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  display: block;
+}
+.tm-warn-badge {
+  color: #ef4444;
+  font-size: 12px;
+  margin-right: 2px;
+  animation: tm-pulse-warn 1.5s infinite ease-in-out;
+}
+@keyframes tm-pulse-warn {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+/* Status Pill */
+.tm-col-status {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+}
+.tm-status-running-tag {
+  color: #4ade80;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+.tm-status-running-tag::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+.tm-status-warn-tag {
+  color: #f87171;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tm-terminated-tag {
+  color: #4ade80;
+  font-weight: 700;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Metric Cells & Inline Bars */
+.tm-col-cpu,
+.tm-col-mem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, 'Consolas', monospace);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.tm-col-disk,
+.tm-col-net {
+  font-family: var(--font-mono, 'Consolas', monospace);
+  font-size: 11px;
+  color: #8b9bb4;
+  white-space: nowrap;
+}
+
+.tm-bar-wrap {
+  display: inline-block;
+  width: 38px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  vertical-align: middle;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.tm-bar {
+  height: 100%;
+  background: #38bdf8;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.tm-bar-blue { background: #a78bfa; }
+.tm-bar-red  { background: #ef4444; }
+
+/* End Task Inline Button */
+.tm-col-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.tm-end-btn {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.3);
+}
+.tm-end-btn:hover {
+  background: #b91c1c;
+  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.5);
+}
+
+/* Empty Search Results Notice */
+.tm-no-results {
+  padding: 28px 14px;
+  text-align: center;
+  color: #64748b;
+  font-size: 12px;
+}
+
+
+/* ─── Performance Tab ─────────────────────────────────────── */
+.tm-perf-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+}
+
+/* Left Sidebar */
+.tm-perf-sidebar {
+  width: 175px;
+  flex-shrink: 0;
+  background: #0f1523;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 6px;
+  gap: 4px;
+}
+
+.tm-perf-sidebar-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  background: transparent;
+}
+.tm-perf-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.tm-perf-sidebar-item.active {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+}
+
+.tm-perf-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.tm-perf-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tm-perf-icon {
+  font-size: 10px;
+}
+.tm-perf-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: var(--font-mono, 'Consolas', monospace);
+}
+.tm-perf-sublabel {
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-mini-graph-wrap {
+  width: 100%;
+  height: 38px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #090e1a;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tm-mini-graph {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Main Performance Area */
+.tm-perf-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+  overflow-y: auto;
+  min-height: 0;
+  gap: 12px;
+}
+
+.tm-perf-main-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.tm-perf-title-col {
+  display: flex;
+  flex-direction: column;
+}
+.tm-perf-main-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.3px;
+}
+.tm-perf-main-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 3px;
+}
+.tm-perf-highlight-stat {
+  text-align: right;
+}
+.tm-perf-highlight-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: #38bdf8;
+  font-family: var(--font-mono, 'Consolas', monospace);
+  line-height: 1.1;
+}
+.tm-perf-highlight-sub {
+  font-size: 11px;
+  color: #8b9bb4;
+  font-family: var(--font-mono, 'Consolas', monospace);
+}
+
+/* Graph Container Card */
+.tm-graph-card {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #080d19;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.tm-main-graph {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Graph Scale Overlays */
+.tm-graph-scale-top,
+.tm-graph-scale-mid,
+.tm-graph-scale-bot,
+.tm-graph-scale-time {
+  position: absolute;
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: var(--font-mono, 'Consolas', monospace);
+  pointer-events: none;
+  z-index: 2;
+}
+.tm-graph-scale-top { top: 6px; left: 8px; }
+.tm-graph-scale-mid { top: calc(50% - 6px); left: 8px; }
+.tm-graph-scale-bot { bottom: 6px; left: 8px; }
+.tm-graph-scale-time { bottom: 6px; right: 10px; }
+
+/* Stats Multi-Column Grid */
+.tm-perf-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tm-stat-block {
+  background: #111726;
+  border-radius: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.15s ease;
+}
+.tm-stat-block:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+.tm-stat-label {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-stat-val {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-family: var(--font-mono, 'Consolas', monospace);
+}
+
+
+/* ─── Details Tab ─────────────────────────────────────────── */
+.tm-details-header {
+  display: grid;
+  grid-template-columns: minmax(170px, 2.5fr) minmax(65px, 0.8fr) minmax(85px, 1fr) minmax(100px, 1.2fr) minmax(75px, 0.8fr) minmax(85px, 1fr) minmax(75px, 0.8fr);
+  align-items: center;
+  gap: 8px;
+}
+.tm-detail-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 2.5fr) minmax(65px, 0.8fr) minmax(85px, 1fr) minmax(100px, 1.2fr) minmax(75px, 0.8fr) minmax(85px, 1fr) minmax(75px, 0.8fr);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  font-size: 11.5px;
+  color: #94a3b8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.1s ease;
+}
+.tm-detail-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.tm-detail-row.selected-row {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-left-color: #38bdf8 !important;
+  color: #f0f9ff !important;
+}
+.tm-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.tm-status-dot.dot-warn {
+  background: #ef4444;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   FULLSCREEN / MAXIMIZED ADAPTATION RULES
+   Dynamic expansion across all components & screen dimensions
+═══════════════════════════════════════════════════════════════ */
+
+#win-taskmanager.maximized .tm-body {
+  height: calc(100% - 36px);
+}
+
+#win-taskmanager.maximized .tm-header-bar {
+  padding: 0 18px;
+  min-height: 46px;
+}
+#win-taskmanager.maximized .tm-tab {
+  font-size: 13px;
+  padding: 12px 18px;
+}
+#win-taskmanager.maximized .tm-status-pill {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+#win-taskmanager.maximized .tm-status-pill strong {
+  font-size: 12.5px;
+}
+
+#win-taskmanager.maximized .tm-command-bar {
+  padding: 8px 18px;
+}
+#win-taskmanager.maximized .tm-search-box {
+  width: 320px;
+}
+#win-taskmanager.maximized .tm-search-box:focus-within {
+  width: 420px;
+}
+#win-taskmanager.maximized .tm-cmd-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+/* Processes & Details Fullscreen Grids */
+#win-taskmanager.maximized .tm-process-header,
+#win-taskmanager.maximized .tm-process-row {
+  padding: 7px 22px;
+  font-size: 12.5px;
+  grid-template-columns: minmax(300px, 3.8fr) minmax(110px, 1fr) minmax(120px, 1.2fr) minmax(130px, 1.2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(110px, 1fr);
+  gap: 12px;
+}
+#win-taskmanager.maximized .tm-group-header {
+  padding: 8px 22px 6px;
+  font-size: 11.5px;
+}
+#win-taskmanager.maximized .tm-bar-wrap {
+  width: 56px;
+  height: 6px;
+}
+
+#win-taskmanager.maximized .tm-details-header,
+#win-taskmanager.maximized .tm-detail-row {
+  padding: 7px 22px;
+  font-size: 12.5px;
+  grid-template-columns: minmax(260px, 3fr) minmax(80px, 0.9fr) minmax(105px, 1.1fr) minmax(130px, 1.3fr) minmax(90px, 1fr) minmax(120px, 1.2fr) minmax(90px, 0.9fr);
+  gap: 12px;
+}
+
+/* Performance Tab Fullscreen */
+#win-taskmanager.maximized .tm-perf-sidebar {
+  width: 220px;
+  padding: 10px;
+  gap: 8px;
+}
+#win-taskmanager.maximized .tm-perf-sidebar-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+#win-taskmanager.maximized .tm-mini-graph-wrap {
+  height: 46px;
+}
+#win-taskmanager.maximized .tm-perf-main {
+  padding: 18px 24px;
+  gap: 16px;
+}
+#win-taskmanager.maximized .tm-perf-main-title {
+  font-size: 24px;
+}
+#win-taskmanager.maximized .tm-perf-highlight-val {
+  font-size: 26px;
+}
+
+/* Expand Main Graph proportionally in fullscreen */
+#win-taskmanager.maximized .tm-graph-card {
+  flex: 1;
+  min-height: 280px;
+  max-height: 480px;
+  height: calc(100vh - 380px);
+}
+
+/* 6-column stats grid in fullscreen to eliminate void space */
+#win-taskmanager.maximized .tm-perf-stats-grid {
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+#win-taskmanager.maximized .tm-stat-block {
+  padding: 10px 14px;
+}
+#win-taskmanager.maximized .tm-stat-val {
+  font-size: 15px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE QUERIES FOR COMPACT / NARROW RESIZING
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .tm-status-pill:nth-child(n+3) {
+    display: none;
+  }
+  .tm-search-box {
+    width: 180px;
+  }
+  .tm-perf-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tm-process-header,
+  .tm-process-row {
+    grid-template-columns: minmax(160px, 2.5fr) minmax(70px, 1fr) minmax(80px, 1fr) minmax(90px, 1fr) minmax(70px, 1fr);
+  }
+  .tm-col-disk,
+  .tm-col-net {
+    display: none;
+  }
+}
+
