@@ -296,11 +296,18 @@ function restartCurrentChapterMission() {
     if (isCh2) {
       // ── Restart Chapter 2 (Ethan) from beginning ──
       window._currentChapterCategory = 'malware';
-      if (typeof openChapterDesktopDirect === 'function') {
-        openChapterDesktopDirect('malware');
+      if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.reset) {
+        Ch2Pretest.reset();
       }
-      if (typeof startMalwareMission === 'function') {
-        startMalwareMission();
+      if (typeof startMalwareChapter === 'function') {
+        startMalwareChapter();
+      } else {
+        if (typeof openChapterDesktopDirect === 'function') {
+          openChapterDesktopDirect('malware');
+        }
+        if (typeof startMalwareMission === 'function') {
+          startMalwareMission();
+        }
       }
 
       // Reset Phone Link group chat state to Chapter 2 baseline

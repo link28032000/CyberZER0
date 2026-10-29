@@ -40,7 +40,8 @@ function startAwarenessVideo() {
   vid.currentTime = 0;
   vid.volume = 1;
   vid.play().catch(() => {});
-  if (typeof window._notifyPostAwardVideoPlay === 'function') {
+  const isCh1 = (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing') === 'phishing';
+  if (!isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
     window._notifyPostAwardVideoPlay();
   }
 }
@@ -65,6 +66,10 @@ function _avOnTimeUpdate() {
   if (fillEl) fillEl.style.width = `${pct}%`;
   const thumbEl = document.getElementById('av-progress-thumb');
   if (thumbEl) thumbEl.style.left = `${pct}%`;
+
+  if (typeof window._ch1OnVideoTimeUpdate === 'function') {
+    window._ch1OnVideoTimeUpdate(vid);
+  }
 }
 
 function _avOnEnded() {
@@ -72,6 +77,10 @@ function _avOnEnded() {
   if (finEl) finEl.classList.remove('hidden');
   const btn = document.getElementById('av-play-btn');
   if (btn) btn.textContent = '▶';
+  if (typeof window._ch1OnVideoEnded === 'function') {
+    const vid = _avGetVideo();
+    window._ch1OnVideoEnded(vid);
+  }
 }
 
 function avTogglePlay() {
@@ -88,7 +97,11 @@ function avSeek(e) {
   if (!bar) return;
   const rect = bar.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  vid.currentTime = pct * vid.duration;
+  const newTime = pct * vid.duration;
+  if (typeof window._ch1OnVideoSeek === 'function') {
+    window._ch1OnVideoSeek(newTime, vid.currentTime, vid);
+  }
+  vid.currentTime = newTime;
 }
 
 function avToggleMute() {

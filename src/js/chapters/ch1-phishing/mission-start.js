@@ -214,6 +214,15 @@ function startMission(openGmail = false) {
     gcOpened:         false,
     postTestDone:     false
   };
+  window._ch1VideoTracker = {
+    duration: 0,
+    currentTime: 0,
+    actualSecondsWatched: 0,
+    lastPlayheadTime: 0,
+    hasSkippedForward: false,
+    completed: false,
+    _lastRefresh: 0
+  };
 
   try {
     localStorage.removeItem('cyberzero_phishing_progress');
@@ -293,7 +302,7 @@ function startMission(openGmail = false) {
       var ryanIntroPart1 = [
         { text: "Hi there! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions. Welcome to the team, I'm really glad you're here.", state: 'speaking' },
         { text: "Before we dive in, I'd like to know where you're starting from. That way I can guide you at a pace that feels right for you.", state: 'speaking' },
-        { text: "So I've put together a short pre-test: twenty quick questions about staying safe online.", state: 'thinking' },
+        { text: "So I put together twenty quick questions about staying safe online to help me see where you are starting from.", state: 'thinking' },
         { text: "There's no pass or fail, and nobody is judging you. If you're not sure about one, just pick your best guess. Honest answers help me the most.", state: 'speaking' },
         { text: "Take your time and breathe. Whenever you're ready, let's begin!", state: 'success', label: "Let's Begin" }
       ];
@@ -408,7 +417,17 @@ function openChapterDesktopDirect(chapterId) {
     if (typeof resetCh1ZmailInterface === 'function') {
       resetCh1ZmailInterface();
     }
+  } else if (chapterId === 'malware') {
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) {
+      RyanGuide.reset();
+    } else if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+      RyanGuide.dismiss(true);
+    }
   } else {
+    if (window._ryanCh2IntroTimer) {
+      clearTimeout(window._ryanCh2IntroTimer);
+      window._ryanCh2IntroTimer = null;
+    }
     if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
       RyanGuide.dismiss(true);
     }

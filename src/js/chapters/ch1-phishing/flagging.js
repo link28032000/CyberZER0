@@ -215,7 +215,7 @@ function toggleFlagMode() {
     btn.classList.add('active');
     btn.classList.remove('btn-pulse-highlight', 'tutorial-flag-blink');
     body.classList.add('flag-mode-active');
-    showToast('🚩 Flag Mode ON — click suspicious elements to flag them.', 'warning');
+    showToast('🚩 Flag Mode ON: click suspicious elements to flag them.', 'warning');
     // Notify tutorial that flag mode was turned on
     if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
       PhishTutorial.notify('flagModeOn');
@@ -305,7 +305,7 @@ function ryanExplainFlag(flagType, flagText, flagLabel) {
   if (typeof RyanGuide === 'undefined') return;
   const dialogues = {
     fake_sender: [
-      { text: "Good catch! 🎯 You flagged the sender's address. Phishers often use domains that look real at a glance — like 'paypa1.com' instead of 'paypal.com'. Always read the full email address carefully!", state: 'speaking' },
+      { text: "Good catch! 🎯 You flagged the sender address. Phishers often use lookalike domains such as 'paypa1.com' instead of 'paypal.com'. Always read the full email address carefully!", state: 'speaking' },
       { text: "Real companies will never ask for sensitive info from a free email domain like Gmail or Hotmail. A spoofed sender is one of the strongest signs of phishing.", state: 'thinking' }
     ],
     false_urgency: [
@@ -313,8 +313,8 @@ function ryanExplainFlag(flagType, flagText, flagLabel) {
       { text: "Attackers use urgency to bypass your logical thinking. Pause. A real organization gives you time to verify through official channels.", state: 'thinking' }
     ],
     suspicious_link: [
-      { text: "Great eye! 🔗 You flagged a suspicious link. Before clicking any link, hover over it to see the real destination URL. If the domain doesn't match the supposed sender — it's a trap.", state: 'speaking' },
-      { text: "Phishing links often use subdomains or misspelled names to look legitimate. For example: 'login.paypal.com.evil.net' is NOT a PayPal link — 'evil.net' is the real domain here.", state: 'thinking' }
+      { text: "Great eye! 🔗 You flagged a suspicious link. Before clicking any link, hover over it to see the real destination URL. If the domain does not match the sender, it is almost certainly a trap.", state: 'speaking' },
+      { text: "Phishing links often use subdomains or misspelled names to look legitimate. For example, 'login.paypal.com.evil.net' is NOT a PayPal link because 'evil.net' is the actual domain here.", state: 'thinking' }
     ]
   };
 
@@ -324,7 +324,7 @@ function ryanExplainFlag(flagType, flagText, flagLabel) {
 
   // First email only: guide the player that they need to submit Phishing or Non-phishing
   slides.push({
-    text: "Now that you've flagged evidence, you need to submit your verdict! Click 'Phishing' if you believe this email is an attack, or 'Non-phishing' if you think it's safe.",
+    text: "Now that you've flagged evidence, you need to submit your verdict! Click 'Phishing' if you believe this email is an attack, or choose safe if you think it is legitimate.",
     state: 'success'
   });
 
@@ -388,7 +388,7 @@ function getEmailMissedFlagInfo(email, evType) {
     icon = '👤';
     text = email.sender ? `${email.sender.name} <${email.sender.address}>` : 'Sender Address';
     if (email.capybaraAnalysis && email.capybaraAnalysis.fake_sender && email.capybaraAnalysis.fake_sender.missed) {
-      reason = email.capybaraAnalysis.fake_sender.missed.replace(/^🚩\s*MISSED\s*—\s*[^\n]+\n?/, '').trim();
+      reason = email.capybaraAnalysis.fake_sender.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
     } else {
       reason = 'The sender domain does not match the official organization domain.';
     }
@@ -399,7 +399,7 @@ function getEmailMissedFlagInfo(email, evType) {
     text = part ? part.text : 'Urgent deadline or account suspension threat';
     if (part && part.label) label = part.label;
     if (email.capybaraAnalysis && email.capybaraAnalysis.false_urgency && email.capybaraAnalysis.false_urgency.missed) {
-      reason = email.capybaraAnalysis.false_urgency.missed.replace(/^🚩\s*MISSED\s*—\s*[^\n]+\n?/, '').trim();
+      reason = email.capybaraAnalysis.false_urgency.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
     } else {
       reason = 'Manufactured time pressure designed to cause panic before verification.';
     }
@@ -410,7 +410,7 @@ function getEmailMissedFlagInfo(email, evType) {
     text = part ? (part.destination || part.text) : 'Suspicious link destination';
     if (part && part.label) label = part.label;
     if (email.capybaraAnalysis && email.capybaraAnalysis.suspicious_link && email.capybaraAnalysis.suspicious_link.missed) {
-      reason = email.capybaraAnalysis.suspicious_link.missed.replace(/^🚩\s*MISSED\s*—\s*[^\n]+\n?/, '').trim();
+      reason = email.capybaraAnalysis.suspicious_link.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
     } else {
       reason = 'Link leads to an unverified external portal designed to capture credentials.';
     }
@@ -524,7 +524,7 @@ function renderEvidencePanel() {
             <div class="evidence-item-header">
               <span class="evidence-status-pill pill-found">SAFE &amp; VERIFIED</span>
             </div>
-            <span class="evidence-item-text">Clean message — no phishing red flags present.</span>
+            <span class="evidence-item-text">Clean message: no phishing red flags present.</span>
             <div class="evidence-item-hint">Verified sender domain with standard non-urgent communication.</div>
           </div>`;
         list.appendChild(item);

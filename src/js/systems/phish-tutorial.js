@@ -43,7 +43,7 @@ const PhishTutorial = (() => {
     {
       id: 'flag_link',
       targetSelector: '.email-body-text .flaggable[data-flag-type="suspicious_link"]',
-      text: 'Inspect the suspicious link — hover or flag it to see where it really goes.',
+      text: 'Inspect the suspicious link by hovering or flagging it to see where it really goes.',
       requireAction: 'linkFlagged',
       state: 'speaking'
     },

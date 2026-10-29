@@ -50,7 +50,7 @@ function downloadEmailAttachment(filename, size) {
         const mb = ((pct / 100) * 2.4).toFixed(1);
         metaEl.textContent = `Downloading... ${pct}% (${mb} MB / ${fsize} • 3.4 MB/s)`;
       } else {
-        metaEl.innerHTML = `<strong style="color:#ef4444">⚠️ Suspicious File Detected — Possible Malware</strong> • ${fsize} • Saved to Downloads`;
+        metaEl.innerHTML = `<strong style="color:#ef4444">⚠️ Suspicious File Detected: Possible Malware</strong> • ${fsize} • Saved to Downloads`;
       }
     }
 
@@ -90,7 +90,7 @@ function downloadEmailAttachment(filename, size) {
       if (typeof RyanGuide !== 'undefined') {
         RyanGuide.speak([
           {
-            text: "🛑 <strong>STOP! Do not open that file!</strong><br><code>Scholarship_Form.pdf.exe</code> ends in <strong>.exe</strong> — attackers disguised malware as a PDF!",
+            text: "🛑 <strong>STOP! Do not open that file!</strong><br><code>Scholarship_Form.pdf.exe</code> ends in <strong>.exe</strong> because attackers disguised malware as a PDF!",
             state: 'concerned'
           },
           {

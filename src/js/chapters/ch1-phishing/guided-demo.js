@@ -21,7 +21,7 @@ const DEMO_SCRIPT = [
     step: 0,
     label: 'Welcome',
     objective: 'Meet your instructor',
-    speech: `<strong>Hey there, Student! 🎓</strong><br><br>I'm <strong>Detective Zero</strong>. I'll walk you through <strong>2 emails</strong> — one <span style="color:#ff6b6b">phishing</span>, one <span style="color:#69db7c">legitimate</span> — so you know what to look for.`,
+    speech: `<strong>Hey there, Student! 🎓</strong><br><br>I'm <strong>Detective Zero</strong>. I will walk you through <strong>2 sample emails</strong>, one <span style="color:#ff6b6b">phishing</span> and one <span style="color:#69db7c">legitimate</span>, so you know exactly what to look for.`,
     btn: "Let's Begin →",
     action: null
   },
@@ -29,7 +29,7 @@ const DEMO_SCRIPT = [
     step: 1,
     label: 'Read Phishing',
     objective: 'Read the email before judging it',
-    speech: `📧 <strong>READ EVERYTHING FIRST</strong><br><br>Never judge by the subject alone. Check the <strong>sender</strong>, <strong>subject</strong>, and <strong>body</strong> first.<br><br>This one already feels rushed and aggressive — that's a clue.`,
+    speech: `📧 <strong>READ EVERYTHING FIRST</strong><br><br>Never judge by the subject line alone. Check the <strong>sender</strong>, <strong>subject</strong>, and <strong>body</strong> first.<br><br>This message already feels rushed and aggressive, which is a major clue.`,
     btn: 'Show Me the Red Flags →',
     action: 'read'
   },
@@ -37,7 +37,7 @@ const DEMO_SCRIPT = [
     step: 2,
     label: 'Flag Sender',
     objective: 'Flag the fake sender address',
-    speech: `🔴 <strong>RED FLAG #1 — FAKE SENDER</strong><br><br><em>bpi.security.verification@gmail.com</em> uses a free public <strong>@gmail.com</strong> address instead of the official bank domain (<em>@bpi.com.ph</em>)! Legitimate banks NEVER email you from Gmail.<br><br>First, click 🚩 <strong>Flag Evidence</strong> to turn on flag mode, then flag it →`,
+    speech: `🔴 <strong>RED FLAG #1: FAKE SENDER</strong><br><br><em>bpi.security.verification@gmail.com</em> uses a free public <strong>@gmail.com</strong> address instead of the official bank domain (<em>@bpi.com.ph</em>)! Legitimate banks NEVER email you from Gmail.<br><br>First, click 🚩 <strong>Flag Evidence</strong> to turn on flag mode, then flag it →`,
     btn: 'Flag It & Continue →',
     action: 'flag-sender'
   },
@@ -45,7 +45,7 @@ const DEMO_SCRIPT = [
     step: 3,
     label: 'Flag Urgency',
     objective: 'Flag the false urgency tactic',
-    speech: `⚡ <strong>RED FLAG #2 — FALSE URGENCY</strong><br><br>"30 minutes or suspended" is pressure meant to stop you thinking. Real banks don't do 30-minute countdowns.<br><br>Flagging it →`,
+    speech: `⚡ <strong>RED FLAG #2: FALSE URGENCY</strong><br><br>"30 minutes or suspended" is pressure meant to stop you from thinking. Real banks never create a 30 minute countdown.<br><br>Flagging it →`,
     btn: 'Flag It & Continue →',
     action: 'flag-urgency'
   },
@@ -53,7 +53,7 @@ const DEMO_SCRIPT = [
     step: 4,
     label: 'Inspect Link',
     objective: 'Reveal the link\u2019s real destination',
-    speech: `🔗 <strong>RED FLAG #3 — INSPECT BEFORE YOU CLICK</strong><br><br>"Verify My BPI Account" is just a label — it can say anything. Let's reveal where it actually goes →`,
+    speech: `🔗 <strong>RED FLAG #3: INSPECT BEFORE YOU CLICK</strong><br><br>"Verify My BPI Account" is just button text that can say anything. Let's reveal where the link actually goes →`,
     btn: 'Inspect the Link →',
     action: 'inspect-link'
   },
@@ -61,7 +61,7 @@ const DEMO_SCRIPT = [
     step: 5,
     label: 'Flag Link',
     objective: 'Flag the mismatched link',
-    speech: `🕵️ <strong>CAUGHT IT.</strong><br><br>The real destination is <em>https://bpi-online-security.com/login</em> — a fake phishing portal built to steal banking credentials.<br><br>Flagging it as evidence #3 →`,
+    speech: `🕵️ <strong>CAUGHT IT.</strong><br><br>The real destination is <em>https://bpi-online-security.com/login</em>, which is a fake phishing portal built to steal your banking credentials.<br><br>Flagging it as evidence #3 →`,
     btn: 'Flag It & Continue →',
     action: 'flag-link'
   },
@@ -69,7 +69,7 @@ const DEMO_SCRIPT = [
     step: 6,
     label: 'Report Phishing',
     objective: 'Submit the verdict: Phishing',
-    speech: `✅ <strong>3 FLAGS PLACED — EVIDENCE COMPLETE</strong><br><br>→ Fake sender<br>→ False urgency<br>→ Suspicious link<br><br>Time to report this as <strong>Phishing</strong>.`,
+    speech: `✅ <strong>3 FLAGS PLACED: EVIDENCE COMPLETE</strong><br><br>• Fake sender<br>• False urgency<br>• Suspicious link<br><br>Time to report this as <strong>Phishing</strong>.`,
     btn: 'Submit Report →',
     action: 'report'
   },
@@ -77,7 +77,7 @@ const DEMO_SCRIPT = [
     step: 7,
     label: 'Legit Email',
     objective: 'Learn to recognize a safe email',
-    speech: `🛡️ <strong>NOT EVERYTHING IS A THREAT</strong><br><br>Flagging every email is just as useless as flagging none. Here's a routine HR email — let's check it for safety signals instead →`,
+    speech: `🛡️ <strong>NOT EVERYTHING IS A THREAT</strong><br><br>Flagging every email is just as unhelpful as flagging none. Here is a routine HR email. Let's check it for safety signals instead →`,
     btn: 'Show Legit Email →',
     action: 'show-legit'
   },
@@ -85,7 +85,7 @@ const DEMO_SCRIPT = [
     step: 8,
     label: 'Report Legit',
     objective: 'Submit the verdict: Legitimate',
-    speech: `✅ <strong>THE 5-POINT LEGITIMACY CHECK</strong><br><br>✔ Matching domain ✔ No urgency ✔ No shady links<br>✔ Routine content ✔ No credential requests<br><br>All clear — marking it <strong>Legitimate</strong>.`,
+    speech: `✅ <strong>THE 5 POINT LEGITIMACY CHECK</strong><br><br>✔ Matching domain ✔ No urgency ✔ No shady links<br>✔ Routine content ✔ No credential requests<br><br>All clear, so we can mark it <strong>Legitimate</strong>.`,
     btn: 'Mark as Legitimate →',
     action: 'check-legit'
   },
@@ -93,7 +93,7 @@ const DEMO_SCRIPT = [
     step: 9,
     label: 'Briefing',
     objective: 'Get ready for your real mission',
-    speech: `🏆 <strong>TRAINING COMPLETE, STUDENT!</strong><br><br>🔎 <strong>Spot phishing</strong> — fake senders, pressure tactics, bad links<br>🛡️ <strong>Recognize legit</strong> — verified domain, no urgency<br><br><strong>Your mission:</strong> 5 real emails. Read, flag the evidence, and submit your verdict.`,
+    speech: `🏆 <strong>TRAINING COMPLETE!</strong><br><br>🔎 <strong>Spot phishing:</strong> look for fake senders, pressure tactics, and bad links.<br>🛡️ <strong>Recognize safe emails:</strong> check for verified domains and zero urgency.<br><br><strong>Your mission:</strong> investigate real inbox cases. Read each message, flag suspicious clues, and submit your verdict.`,
     btn: 'START MY MISSION →',
     action: 'done'
   }
@@ -327,7 +327,7 @@ function executeDemoAction(action, callback) {
           const modal = document.getElementById('gdemo-report-modal');
           const flagsEl = document.getElementById('gdemo-rm-flags');
           flagsEl.innerHTML = gdemoFlags.map(f =>
-            `<div class="gdemo-rm-flag-item">${f.icon} <strong style="color:var(--accent-orange);margin-right:4px">${f.label}</strong> — ${f.text}</div>`
+            `<div class="gdemo-rm-flag-item">${f.icon} <strong style="color:var(--accent-orange);margin-right:4px">${f.label}:</strong> ${f.text}</div>`
           ).join('');
           modal.classList.remove('hidden');
           hideCursor();

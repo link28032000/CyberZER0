@@ -616,14 +616,22 @@ function _launchChapter2FromComic() {
         _playLoadingBeep(660, 0.12, 0.12);
         _playLoadingBeep(880, 0.18, 0.24);
       }
-      openChapterDesktopDirect('malware');
+      if (typeof startMalwareChapter === 'function') {
+        startMalwareChapter();
+      } else {
+        openChapterDesktopDirect('malware');
+      }
       setTimeout(() => {
         ls.classList.add('ls-leaving');
         setTimeout(() => ls.classList.remove('ls-active', 'ls-leaving'), 800);
       }, 300);
     }, DURATION);
   } else {
-    openChapterDesktopDirect('malware');
+    if (typeof startMalwareChapter === 'function') {
+      startMalwareChapter();
+    } else {
+      openChapterDesktopDirect('malware');
+    }
   }
 }
 

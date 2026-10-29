@@ -272,7 +272,7 @@ function shutdownGame() {
 
   let targetChapter = 'malware';
   let initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
-  let midNote = 'Workstation secured! Transitioning to Chapter 2: The Digital Trap…';
+  let midNote = 'Workstation secured! Transitioning to Chapter 2: The Hidden Threat…';
 
   if (isCh2) {
     const ch2Score = (typeof gameState !== 'undefined' && gameState.score) || 100;
@@ -328,7 +328,7 @@ function shutdownGame() {
     }
     targetChapter = 'malware';
     initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
-    midNote = 'Workstation secured! Transitioning to Chapter 2: The Digital Trap…';
+    midNote = 'Workstation secured! Transitioning to Chapter 2: The Hidden Threat…';
   }
 
   // Save categories progress and update locks

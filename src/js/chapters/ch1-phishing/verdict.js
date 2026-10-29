@@ -129,7 +129,7 @@ function submitReport(isPhishing) {
 
       const contradictionMsg = [
         {
-          text: `You flagged ${flagCount} red flag${flagCount > 1 ? 's' : ''} (${flagNames}) but then submitted this email as Non-Phishing.`,
+          text: `You flagged ${flagCount} red flag${flagCount > 1 ? 's' : ''} (${flagNames}) but then submitted this email as legitimate.`,
           state: 'concerned'
         },
         {
@@ -137,7 +137,7 @@ function submitReport(isPhishing) {
           state: 'speaking'
         },
         {
-          text: "Quick rule: if you added any flags, report it as Phishing. Only submit as Non-Phishing when you find zero red flags.",
+          text: "Quick rule: if you added any flags, report it as Phishing. Only confirm it as safe when you find zero red flags.",
           state: 'thinking'
         }
       ];
@@ -285,7 +285,7 @@ function submitReport(isPhishing) {
       banner.innerHTML = `
         <span class="vb-icon">${correctDecision ? '✅' : '❌'}</span>
         <div style="flex:1;">
-          <strong>${bannerTitle}</strong> — ${bannerMsg}
+          <strong>${bannerTitle}:</strong> ${bannerMsg}
         </div>
         <button type="button" class="btn btn-primary" onclick="nextEmail()" style="font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;background:var(--accent-blue,#4fc3f7);color:#000;font-weight:700;border:none;white-space:nowrap;align-self:center;">
           Next Email ➔
@@ -300,7 +300,7 @@ function submitReport(isPhishing) {
         source: 'Investigation Log',
         icon: correctDecision ? '✅' : '❌',
         iconType: 'shield',
-        title: (correctDecision ? '✅ Correct: ' : '❌ Incorrect: ') + (email.phishing ? 'Phishing' : 'Non-phishing') + ' — ' + subjShort,
+        title: (correctDecision ? '✅ Correct: ' : '❌ Incorrect: ') + (email.phishing ? 'Phishing' : 'Non-phishing') + ': ' + subjShort,
         body: correctDecision ? 'Decision recorded successfully.' : 'Decision recorded as incorrect.',
         time: 'Just now',
         app: 'gmail',
@@ -580,24 +580,24 @@ function showCapybaraResult(result, email) {
       verdictTitle.textContent = '✓ PHISHING CONFIRMED';
       verdictTitle.className = 'correct';
       decisionRow.className = 'review-decision-row correct';
-      decisionRow.innerHTML = '✓ Correct decision — You correctly identified this as a phishing email.';
+      decisionRow.innerHTML = '✓ Correct decision: You correctly identified this as a phishing email.';
     } else {
       verdictTitle.textContent = '✗ MISSED PHISHING';
       verdictTitle.className = 'incorrect';
       decisionRow.className = 'review-decision-row incorrect';
-      decisionRow.innerHTML = '✗ Incorrect — This was a phishing email. You marked it as non-phishing.';
+      decisionRow.innerHTML = '✗ Incorrect: This was a phishing email. You marked it as non-phishing.';
     }
   } else {
     if (correctDecision) {
       verdictTitle.textContent = '✓ NON-PHISHING EMAIL';
       verdictTitle.className = 'correct';
       decisionRow.className = 'review-decision-row correct';
-      decisionRow.innerHTML = '✓ Correct — You correctly identified this as a non-phishing email.';
+      decisionRow.innerHTML = '✓ Correct: You correctly identified this as a non-phishing email.';
     } else {
       verdictTitle.textContent = '✗ FALSE POSITIVE';
       verdictTitle.className = 'incorrect';
       decisionRow.className = 'review-decision-row incorrect';
-      decisionRow.innerHTML = '✗ Incorrect — This was a non-phishing email. You marked it as phishing.';
+      decisionRow.innerHTML = '✗ Incorrect: This was a non-phishing email. You marked it as phishing.';
     }
   }
 
@@ -645,7 +645,7 @@ function showCapybaraResult(result, email) {
       item.innerHTML = `
         <div class="review-flag-icon">⚠️</div>
         <div>
-          <div class="review-flag-title">INCORRECT FLAG — ${f.replace('_', ' ').toUpperCase()} (−10)</div>
+          <div class="review-flag-title">INCORRECT FLAG: ${f.replace('_', ' ').toUpperCase()} (−10)</div>
           <div class="review-flag-desc">${isPhishing
             ? 'This was not a recognised red flag for this email. Focus on fake sender addresses, false urgency, and suspicious links.'
             : 'This is a legitimate email. This element does not indicate phishing. Look for specific, concrete indicators, not general content.'
@@ -848,7 +848,7 @@ function finishMission() {
     const ryanMsgs = {
       S: '"Flawless. You are thinking like a real security analyst now."',
       A: '"Great work. You caught the threats that matter most. Keep that instinct sharp."',
-      B: '"Solid investigation. A few near-misses, but your instincts are getting there."',
+      B: '"Solid investigation. A few near misses, but your instincts are getting there."',
       C: '"Good start. Every mistake is a lesson. Review the ones you missed and try again."',
       D: '"Do not worry. Phishing is tricky by design. That is exactly why we practice."'
     };
@@ -923,7 +923,7 @@ function finishMission() {
       source: 'Mission Control',
       icon: earnedTier.icon,
       iconType: 'shield',
-      title: 'Chapter 1 Completed — Rank ' + rank,
+      title: 'Chapter 1 Completed: Rank ' + rank,
       body: `All ${EMAILS.length} emails analyzed with ${Math.round(pct * 100)}% accuracy. Earned ${earnedTier.title} (${earnedTier.rank})!`,
       time: 'Just now'
     });

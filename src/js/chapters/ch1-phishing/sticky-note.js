@@ -12,9 +12,132 @@ window._postAwardTasks      = {
   phishingVisited:  false,  // visited a phishing site in browser
   explorerOpened:   false,  // opened File Explorer
   videoFolderOpen:  false,  // navigated to Videos folder
-  videoPlayed:      false,  // played a video
+  videoPlayed:      false,  // watched required video completely (Chapter 1)
   gcOpened:         false,  // opened the "new intern team 2027" GC in Phone Link
   postTestDone:     false   // completed post-test
+};
+
+// ── Chapter 1 Video Playback Progress & Completion Tracking ──
+window._ch1VideoTracker = {
+  duration: 0,
+  currentTime: 0,
+  actualSecondsWatched: 0,
+  lastPlayheadTime: 0,
+  hasSkippedForward: false,
+  completed: false,
+  _lastRefresh: 0
+};
+
+function _isChapter1Active() {
+  const cat = window._currentChapterCategory ||
+              (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) ||
+              (typeof gameState !== 'undefined' ? gameState.phase : null) ||
+              'phishing';
+  return cat === 'phishing';
+}
+
+function _ch1FmtTime(sec) {
+  if (isNaN(sec) || sec < 0) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+window._ch1OnVideoMetadataLoaded = function(vid) {
+  if (!_isChapter1Active() || !vid) return;
+  const dur = vid.duration || 0;
+  if (dur > 0) {
+    window._ch1VideoTracker.duration = dur;
+    _refreshPostAwardChecklist();
+  }
+};
+
+window._ch1OnVideoTimeUpdate = function(vid) {
+  if (!_isChapter1Active() || !vid) return;
+  const cur = vid.currentTime || 0;
+  const dur = vid.duration || 0;
+  const tracker = window._ch1VideoTracker;
+
+  if (dur > 0) tracker.duration = dur;
+  tracker.currentTime = cur;
+
+  if (!tracker.completed && !window._postAwardTasks.videoPlayed) {
+    const delta = cur - tracker.lastPlayheadTime;
+    if (delta > 0) {
+      if (delta > 1.35) {
+        // Forward jump / skip detected
+        tracker.hasSkippedForward = true;
+      } else {
+        tracker.actualSecondsWatched += delta;
+      }
+    }
+    // If user rewinds back to the beginning (<= 1.5s), give them a fresh chance to watch properly
+    if (cur <= 1.5 && tracker.hasSkippedForward) {
+      tracker.hasSkippedForward = false;
+      tracker.actualSecondsWatched = cur;
+    }
+  }
+  tracker.lastPlayheadTime = cur;
+
+  // Throttle checklist refresh so sticky note updates smoothly while playing
+  const now = Date.now();
+  if (!tracker._lastRefresh || now - tracker._lastRefresh > 700) {
+    tracker._lastRefresh = now;
+    _refreshPostAwardChecklist();
+  }
+};
+
+window._ch1OnVideoSkip = function(secs) {
+  if (!_isChapter1Active()) return;
+  if (secs > 0) {
+    window._ch1VideoTracker.hasSkippedForward = true;
+    _refreshPostAwardChecklist();
+  }
+};
+
+window._ch1OnVideoSeek = function(newTime, oldTime) {
+  if (!_isChapter1Active()) return;
+  if (newTime > oldTime + 1.25) {
+    window._ch1VideoTracker.hasSkippedForward = true;
+    _refreshPostAwardChecklist();
+  }
+};
+
+window._ch1OnVideoEnded = function(vid) {
+  if (!_isChapter1Active()) return;
+  const tracker = window._ch1VideoTracker;
+  const dur = (vid && vid.duration) ? vid.duration : (tracker.duration || 0);
+  const cur = vid ? vid.currentTime : tracker.currentTime;
+
+  // Fully watched requirements:
+  // 1. Did not skip forward
+  // 2. Actually watched accumulated seconds close to full duration
+  // 3. Reached end of video (vid.ended || cur >= dur - 1.5)
+  const isFinished = !tracker.hasSkippedForward &&
+                     dur > 0 &&
+                     tracker.actualSecondsWatched >= Math.max(1, dur - 2.5) &&
+                     ((vid && vid.ended) || cur >= dur - 1.5);
+
+  if (isFinished) {
+    tracker.completed = true;
+    tracker.currentTime = dur;
+    window._postAwardTasks.videoPlayed = true;
+    if (typeof showToast === 'function') {
+      showToast('🎬 Awareness video watched completely! (+Checklist updated)', 'success');
+    }
+    _refreshPostAwardChecklist();
+  } else {
+    if (tracker.hasSkippedForward) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Skipping detected: Please watch the video from beginning to end without skipping.', 'warning');
+      }
+    } else if (cur < dur - 2) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Video ended before finishing. Please watch completely.', 'warning');
+      }
+    }
+    _refreshPostAwardChecklist();
+  }
 };
 
 // Checklist tasks are NOT clickable — user opens apps manually from the taskbar/desktop.
@@ -26,8 +149,8 @@ window._notifyPostAwardAppOpen = function(appName) {
   if (!window._awardClaimed) return;
   const t = window._postAwardTasks;
   // Do NOT auto-check browser here — only real navigation counts (see _notifyPostAwardBrowserNav)
-  if (appName === 'folder')     { t.explorerOpened = true; }
-  if (appName === 'videoplayer'){ t.videoPlayed = true; }
+  if (appName === 'folder') { t.explorerOpened = true; }
+  // Chapter 1 videoplayer must be watched completely to complete task — do not auto-check on open
   _refreshPostAwardChecklist();
 };
 
@@ -68,8 +191,11 @@ window._notifyPostAwardFolderSwitch = function(folderId) {
 // Called when video plays
 window._notifyPostAwardVideoPlay = function() {
   if (!window._awardClaimed) return;
-  window._postAwardTasks.videoPlayed = true;
-  _refreshPostAwardChecklist();
+  // For Chapter 1, playing alone does NOT complete the video; must watch completely.
+  if (!_isChapter1Active()) {
+    window._postAwardTasks.videoPlayed = true;
+    _refreshPostAwardChecklist();
+  }
 };
 
 // Called when player opens the "new intern team 2027" GC in Phone Link
@@ -105,7 +231,7 @@ window._checkAndTriggerPostTestDialogue = function() {
       RyanGuide.speak(
         [
           {
-            text: "Before you leave Alex, I have a post-test for you. I want to know what you learned.",
+            text: "Before you head out, Alex, I have a quick final quiz for you. Let's see what you picked up today!",
             state: 'speaking',
             label: 'TAP TO CONTINUE'
           },
@@ -152,6 +278,41 @@ function _buildPostAwardChecklistHTML() {
   const videoDone   = !!t.videoPlayed;
   const gcDone      = !!t.gcOpened;
 
+  const tracker = window._ch1VideoTracker || {};
+  if (!tracker.duration) {
+    const vEl = document.getElementById('videoplayer-video');
+    if (vEl && vEl.duration && !isNaN(vEl.duration)) {
+      tracker.duration = vEl.duration;
+    }
+  }
+
+  const curSec = tracker.currentTime || 0;
+  const durSec = tracker.duration || 0;
+  const curFmt = _ch1FmtTime(curSec);
+  const durFmt = durSec > 0 ? _ch1FmtTime(durSec) : '--:--';
+
+  let videoDesc = 'Open File Explorer → Videos folder → watch the awareness video.';
+  let videoBadge = videoDone ? '✓ Done' : 'Pending';
+
+  if (videoDone) {
+    videoBadge = '✓ Done';
+    videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#4ade80;font-weight:600;">⏱ ${durFmt} / ${durFmt} (Completed)</div>`;
+  } else if (durSec > 0) {
+    if (tracker.hasSkippedForward) {
+      videoBadge = `${curFmt} / ${durFmt}`;
+      videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#f59e0b;font-weight:500;">⏱ ${curFmt} / ${durFmt} (Skipping detected, please replay from the start)</div>`;
+    } else if (curSec > 0) {
+      const pctWatch = Math.min(99, Math.round((curSec / durSec) * 100));
+      videoBadge = `${curFmt} / ${durFmt}`;
+      videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#38bdf8;font-weight:500;">⏱ ${curFmt} / ${durFmt} (${pctWatch}%)</div>`;
+    } else {
+      videoBadge = `0:00 / ${durFmt}`;
+      videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#8b9bb4;">⏱ 0:00 / ${durFmt} (Watch completely from start to end)</div>`;
+    }
+  } else {
+    videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#8b9bb4;">⏱ 0:00 / 0:00 (Watch completely from start to end)</div>`;
+  }
+
   const tasks = [
     {
       id: 'browser',
@@ -164,7 +325,8 @@ function _buildPostAwardChecklistHTML() {
       id: 'explorer',
       icon: '📁',
       label: 'Open File Explorer &amp; Watch Video',
-      desc: 'Open File Explorer → Videos folder → watch the awareness video.',
+      desc: videoDesc,
+      badgeText: videoBadge,
       done: videoDone
     },
     {
@@ -193,13 +355,14 @@ function _buildPostAwardChecklistHTML() {
       <ul class="sn-checklist">`;
 
   tasks.forEach(function(task) {
+    const badgeText = task.badgeText || (task.done ? '&#10003; Done' : 'Pending');
     html += `
         <li class="sn-ach-item${task.done ? ' sn-ach-done' : ''}">
           <div class="sn-checkbox${task.done ? ' checked' : ''}" aria-hidden="true">${task.done ? '&#10003;' : ''}</div>
           <div class="sn-ach-body">
             <div class="sn-ach-header-row">
               <span class="sn-ach-label">${task.icon} ${task.label}</span>
-              <span class="sn-ach-prog-badge${task.done ? ' done' : ''}">${task.done ? '&#10003; Done' : 'Pending'}</span>
+              <span class="sn-ach-prog-badge${task.done ? ' done' : ''}">${badgeText}</span>
             </div>
             <div class="sn-ach-desc">${task.desc}</div>
           </div>
@@ -430,7 +593,7 @@ const PHISHING_ACHIEVEMENT_TIERS = {
     badge: '🥇 GOLD MEDAL · TOP DETECTIVE',
     label: 'PHISHING MASTER',
     sub: '4/4 Tasks Completed · Flawless Investigation',
-    desc: 'Exceptional mastery! You successfully completed all 4 investigation tasks with complete precision — detecting threats, verifying clean emails, documenting fake domains, and uncovering critical indicators.',
+    desc: 'Exceptional mastery! You successfully completed all 4 investigation tasks with complete precision by detecting threats, verifying clean emails, documenting fake domains, and uncovering critical indicators.',
     requiredTasks: 4
   },
   silver: {
@@ -441,7 +604,7 @@ const PHISHING_ACHIEVEMENT_TIERS = {
     title: 'Phishing Silver Medal',
     badge: '🥈 SILVER MEDAL · DISTINGUISHED DETECTIVE',
     label: 'PHISHING INVESTIGATOR',
-    sub: '2–3 Tasks Completed · Distinguished Detective',
+    sub: '2 to 3 Tasks Completed · Distinguished Detective',
     desc: 'Impressive detective performance! You completed key investigation tasks with sharp cybersecurity instincts, isolating deceptive emails and collecting vital threat evidence.',
     requiredTasks: 2
   },
@@ -454,7 +617,7 @@ const PHISHING_ACHIEVEMENT_TIERS = {
     badge: '🥉 BRONZE MEDAL · CYBER AWARENESS',
     label: 'PHISHING SENTINEL',
     sub: 'Investigation Completed · Awareness Merit',
-    desc: 'Email investigation completed! You analyzed real-world scam indicators, practiced threat verification, and built essential cyber defense skills.',
+    desc: 'Email investigation completed! You analyzed real world scam indicators, practiced threat verification, and built essential cyber defense skills.',
     requiredTasks: 1
   }
 };
@@ -760,6 +923,15 @@ function closePhishingTrophy() {
     gcOpened:         false,
     postTestDone:     false
   };
+  window._ch1VideoTracker = {
+    duration: 0,
+    currentTime: 0,
+    actualSecondsWatched: 0,
+    lastPlayheadTime: 0,
+    hasSkippedForward: false,
+    completed: false,
+    _lastRefresh: 0
+  };
 
   // Reset newbie GC state with clean empty messages
   try {
@@ -789,12 +961,18 @@ function closePhishingTrophy() {
     else if (t === 'silver' || t === 'medal') mainMenuTier = 'silver';
     else mainMenuTier = 'bronze';
 
+    // Use the tier object's title as the canonical medal name so the
+    // main menu achievement display matches the in-game award popup exactly.
+    const tierObj = PHISHING_ACHIEVEMENT_TIERS[mainMenuTier] || PHISHING_ACHIEVEMENT_TIERS.bronze;
+    const medalTitle = earned && earned.title ? earned.title : tierObj.title;
+
     const ACH_KEY = 'cyberzero_claimed_achievements';
     let claimedMap = {};
     try { claimedMap = JSON.parse(localStorage.getItem(ACH_KEY) || '{}'); } catch(e) {}
     if (!claimedMap['ach_phishing']) {
       claimedMap['ach_phishing'] = {
         tier: mainMenuTier,
+        medalTitle: medalTitle,
         claimedAt: Date.now(),
         claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
       };
@@ -883,7 +1061,7 @@ function triggerPostAchievementPostTestPrompt() {
         label: 'TAP TO CONTINUE'
       },
       {
-        text: "Before the Post-Test, complete the <strong>Mission Checklist</strong> in your Sticky Notes \uD83D\uDCCB. Complete all 3 tasks first!",
+        text: "Before the final quiz, check the <strong>Mission Checklist</strong> in your Sticky Notes \uD83D\uDCCB. Complete all 3 tasks first!",
         state: 'speaking',
         label: 'TAP TO CONTINUE'
       },
@@ -903,7 +1081,7 @@ function triggerPostAchievementPostTestPrompt() {
         label: 'TAP TO CONTINUE'
       },
       {
-        text: "Follow the checklist in your Sticky Notes! Once all 3 tasks are complete, Ryan will guide you straight into your Post-Test! 📝",
+        text: "Follow the checklist in your Sticky Notes! Once all 3 tasks are complete, I will guide you straight into your final quiz! 📝",
         state: 'success',
         label: 'GOT IT!'
       }
@@ -911,7 +1089,7 @@ function triggerPostAchievementPostTestPrompt() {
     {
       onDone: function() {
         if (typeof showToast === 'function') {
-          showToast('📋 Check Sticky Notes — complete all 3 tasks to unlock the Post-Test!', 'info');
+          showToast('📋 Check Sticky Notes: complete all 3 tasks to unlock the final quiz!', 'info');
         }
         // Silently create Phone Link group with NO glowing notice on desktop
         setTimeout(function() {
@@ -952,13 +1130,13 @@ function _silentlyCreatePhoneLinkGroup() {
 // ─── Post-Test Review Later Guidance Dialogue ────
 function triggerPostTestReviewLaterGuide() {
   if (typeof showToast === 'function') {
-    showToast('\uD83D\uDCCB Complete the Mission Checklist in Sticky Notes first, then take the Post-Test!', 'info');
+    showToast('\uD83D\uDCCB Complete the Mission Checklist in Sticky Notes first, then take the final quiz!', 'info');
   }
 
   if (typeof RyanGuide !== 'undefined') {
     RyanGuide.speak([
       {
-        text: "Take your time! Reviewing before the Post-Test is a great idea.",
+        text: "Take your time! Reviewing before the quiz is a great idea.",
         state: 'speaking'
       },
       {
@@ -970,7 +1148,7 @@ function triggerPostTestReviewLaterGuide() {
         state: 'speaking'
       },
       {
-        text: "Whenever you feel ready, open your Sticky Notes and click Begin Post-Test to start!",
+        text: "Whenever you feel ready, open your Sticky Notes and click Begin to start!",
         state: 'success'
       }
     ]);
@@ -1000,7 +1178,7 @@ function triggerPostAchievementPhoneLinkInvite() {
     RyanGuide.speak(
       [
         {
-          text: "You did it, Alex! 🎉 Outstanding job completing the Post-Test! You've really mastered spotting deceptive phishing indicators.",
+          text: "You did it, Alex! 🎉 Outstanding job completing the quiz! You really got the hang of spotting deceptive phishing indicators.",
           state: 'success',
           label: 'TAP TO CONTINUE'
         },
@@ -1161,7 +1339,7 @@ function toggleStickyNote() {
                           && typeof gameState !== 'undefined' && gameState.phase === 'mission'
                           && typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0;
   if (pretestRunning || ryanIntroActive) {
-    if (typeof showToast === 'function') showToast('Please complete the pre-test with Ryan first.', 'warning');
+    if (typeof showToast === 'function') showToast('Please complete the initial quiz with Ryan first.', 'warning');
     const bd = document.getElementById('ryan-pretest-backdrop');
     if (bd && pretestRunning) bd.style.zIndex = '99999';
     return;
@@ -1207,12 +1385,26 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
   // ── After award is claimed: hide medal/stats, show mission checklist ────────
   if (window._awardClaimed) {
     scrollEl.innerHTML = `<div id="sn-post-award-checklist">${_buildPostAwardChecklistHTML()}</div>`;
-    // Hook video play event once
+    // Hook video tracking events once
     setTimeout(function() {
       var vid = document.getElementById('videoplayer-video');
       if (vid && !vid._postAwardHooked) {
         vid._postAwardHooked = true;
-        vid.addEventListener('play', function() { window._notifyPostAwardVideoPlay(); });
+        vid.addEventListener('timeupdate', function() {
+          if (typeof window._ch1OnVideoTimeUpdate === 'function') {
+            window._ch1OnVideoTimeUpdate(vid);
+          }
+        });
+        vid.addEventListener('ended', function() {
+          if (typeof window._ch1OnVideoEnded === 'function') {
+            window._ch1OnVideoEnded(vid);
+          }
+        });
+        vid.addEventListener('loadedmetadata', function() {
+          if (typeof window._ch1OnVideoMetadataLoaded === 'function') {
+            window._ch1OnVideoMetadataLoaded(vid);
+          }
+        });
       }
     }, 500);
     return;

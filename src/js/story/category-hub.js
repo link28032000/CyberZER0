@@ -30,7 +30,7 @@ const CATEGORIES = [
     num: 2,
     chapterRange: '4-6',
     chapterTag: 'CHAPTER 4-6',
-    title: 'THE DIGITAL TRAP',
+    title: 'THE HIDDEN THREAT',
     subtitle: 'Chapters 4-6',
     accent: '#00e676',
     desc: 'More incidents arrive. Investigate a fake delivery SMS, expose a fraudulent online store, and recover a hijacked school account.',

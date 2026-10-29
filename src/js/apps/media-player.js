@@ -21,6 +21,11 @@ function openVideoPlayer(file) {
     // Wire up events once
     if (!vid._vpWired) {
       vid._vpWired = true;
+      vid.addEventListener('loadedmetadata', () => {
+        if (typeof window._ch1OnVideoMetadataLoaded === 'function') {
+          window._ch1OnVideoMetadataLoaded(vid);
+        }
+      });
       vid.addEventListener('timeupdate', _vpOnTimeUpdate);
       vid.addEventListener('ended', _vpOnEnded);
       vid.addEventListener('play', () => {
@@ -42,7 +47,9 @@ function openVideoPlayer(file) {
 
   openApp('videoplayer');
   focusWindow('videoplayer');
-  if (typeof window._notifyPostAwardVideoPlay === 'function') {
+
+  const isCh1 = (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing') === 'phishing';
+  if (!isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
     window._notifyPostAwardVideoPlay();
   }
   showToast(`🎬 Playing "${file.name}" in Media Player.`, 'success');
@@ -111,6 +118,9 @@ function vpTogglePlay() {
 function vpSkip(secs) {
   const vid = document.getElementById('videoplayer-video');
   if (!vid) return;
+  if (typeof window._ch1OnVideoSkip === 'function') {
+    window._ch1OnVideoSkip(secs, vid);
+  }
   vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + secs));
 }
 
@@ -121,7 +131,11 @@ function vpSeek(e) {
   if (!container) return;
   const rect = container.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  vid.currentTime = pct * vid.duration;
+  const newTime = pct * vid.duration;
+  if (typeof window._ch1OnVideoSeek === 'function') {
+    window._ch1OnVideoSeek(newTime, vid.currentTime, vid);
+  }
+  vid.currentTime = newTime;
 }
 
 function _vpOnTimeUpdate() {
@@ -130,20 +144,31 @@ function _vpOnTimeUpdate() {
   const cur = vid.currentTime;
   const dur = vid.duration || 0;
 
+  const fmtCur = typeof _avFmtTime === 'function' ? _avFmtTime(cur) : `${Math.floor(cur/60)}:${String(Math.floor(cur%60)).padStart(2,'0')}`;
+  const fmtDur = typeof _avFmtTime === 'function' ? _avFmtTime(dur) : `${Math.floor(dur/60)}:${String(Math.floor(dur%60)).padStart(2,'0')}`;
+
   const timeEl = document.getElementById('vp-time-display');
-  if (timeEl) timeEl.textContent = `${_avFmtTime(cur)} / ${_avFmtTime(dur)}`;
+  if (timeEl) timeEl.textContent = `${fmtCur} / ${fmtDur}`;
 
   const pct = dur > 0 ? (cur / dur) * 100 : 0;
   const fillEl = document.getElementById('vp-progress-fill');
   const thumbEl = document.getElementById('vp-progress-thumb');
   if (fillEl) fillEl.style.width = `${pct}%`;
   if (thumbEl) thumbEl.style.left = `${pct}%`;
+
+  if (typeof window._ch1OnVideoTimeUpdate === 'function') {
+    window._ch1OnVideoTimeUpdate(vid);
+  }
 }
 
 function _vpOnEnded() {
   const btn = document.getElementById('vp-play-btn');
   if (btn) btn.textContent = '▶';
   document.getElementById('vp-center-overlay')?.classList.remove('hidden');
+  if (typeof window._ch1OnVideoEnded === 'function') {
+    const vid = document.getElementById('videoplayer-video');
+    window._ch1OnVideoEnded(vid);
+  }
 }
 
 function vpToggleMute() {

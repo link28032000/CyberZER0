@@ -61,16 +61,23 @@ function g4StartInfection() {
 }
 
 function renderG4TaskManager() {
+  if (typeof initTaskManager === 'function') {
+    window._tmG4Mode = true;
+    initTaskManager();
+    return;
+  }
   const list = document.getElementById('tm-process-list');
   if (!list) return;
 
   list.innerHTML = G4_PROCESSES.map(p => `
     <div class="tm-process-row ${p.suspicious ? 'suspicious-process' : ''}">
       <span class="tm-col-name">${p.suspicious ? '⚠️ ' : ''}${p.name}</span>
+      <span class="tm-col-status">${p.status}</span>
       <span class="tm-col-cpu ${p.suspicious ? 'text-danger' : ''}">${p.cpu}</span>
       <span class="tm-col-mem">${p.mem}</span>
-      <span class="tm-col-status">${p.status}</span>
-      ${p.suspicious ? `<button class="btn-danger btn-sm" onclick="g4KillProcess('${p.pid}')">End Task</button>` : '<span style="width:80px"></span>'}
+      <span class="tm-col-disk">0 MB/s</span>
+      <span class="tm-col-net">0.0 Mbps</span>
+      <span class="tm-col-action">${p.suspicious ? `<button class="tm-end-btn" onclick="g4KillProcess('${p.pid}')">End Task</button>` : ''}</span>
     </div>
   `).join('');
 }
@@ -79,17 +86,20 @@ function g4KillProcess(pid) {
   g4State.processKilled = true;
   g4State.infectionInvestigated = true;
   g4State.score += 75;
-  showToast('✅ Suspicious process terminated! (+75 pts)', 'success');
-  const list = document.getElementById('tm-process-list');
-  if (list) {
-    renderG4TaskManager();
-    const rows = list.querySelectorAll('.suspicious-process');
-    rows.forEach(r => { r.style.opacity = '0.3'; r.style.textDecoration = 'line-through'; });
-    setTimeout(() => {
-      list.innerHTML = list.innerHTML.replace('suspicious-process', '') + `<div style="padding:8px;color:var(--accent-green);font-size:12px">✓ PremiumDesignTool.exe (PID 4092) terminated.</div>`;
-    }, 400);
+  if (typeof showToast === 'function') {
+    showToast('✅ Suspicious process terminated! (+75 pts)', 'success');
   }
-  g4CheckAllInfectionSteps();
+  if (typeof initTaskManager === 'function') {
+    initTaskManager();
+  } else {
+    const list = document.getElementById('tm-process-list');
+    if (list) {
+      renderG4TaskManager();
+    }
+  }
+  if (typeof g4CheckAllInfectionSteps === 'function') {
+    g4CheckAllInfectionSteps();
+  }
 }
 
 function g4CheckDownloads() {

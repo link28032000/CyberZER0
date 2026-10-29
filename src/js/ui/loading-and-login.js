@@ -237,11 +237,17 @@ function lsSignIn() {
         const bd = document.getElementById('overlay-backdrop');
         if (bd) bd.classList.remove('active');
 
-        // Start Chapter 1 mission or open clean desktop view for Chapters 2, 3, 4
+        // Start Chapter 1 mission, Chapter 2 mentor intro & desktop, or open desktop for Chapters 3, 4
         closeCategoryHub();
         if (catId === 'phishing') {
           startMission(false);
-        } else if (catId === 'malware' || catId === 'social_engineering' || catId === 'ransomware') {
+        } else if (catId === 'malware') {
+          if (typeof startMalwareChapter === 'function') {
+            startMalwareChapter();
+          } else {
+            openChapterDesktopDirect('malware');
+          }
+        } else if (catId === 'social_engineering' || catId === 'ransomware') {
           if (typeof window.clearWorkstationLogoffGuide === 'function') {
             window.clearWorkstationLogoffGuide();
           }
@@ -260,7 +266,13 @@ function lsSignIn() {
       closeCategoryHub();
       if (catId === 'phishing') {
         startMission(false);
-      } else if (catId === 'malware' || catId === 'social_engineering' || catId === 'ransomware') {
+      } else if (catId === 'malware') {
+        if (typeof startMalwareChapter === 'function') {
+          startMalwareChapter();
+        } else {
+          openChapterDesktopDirect('malware');
+        }
+      } else if (catId === 'social_engineering' || catId === 'ransomware') {
         openChapterDesktopDirect(catId);
       } else {
         openCategoryHub();

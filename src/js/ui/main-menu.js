@@ -649,19 +649,19 @@ const MISSION_ACHIEVEMENTS = [
       gold: {
         label: 'Gold Medal',
         tag: '🥇 GOLD MEDAL',
-        badgeTitle: 'Gold Phishing Sentinel',
+        badgeTitle: 'Phishing Gold Medal',
         detail: 'Rank S · Flawless Phishing Detection'
       },
       silver: {
         label: 'Silver Medal',
         tag: '🥈 SILVER MEDAL',
-        badgeTitle: 'Silver Phishing Sentinel',
+        badgeTitle: 'Phishing Silver Medal',
         detail: 'Rank A/B · Commended Threat Triage'
       },
       bronze: {
         label: 'Bronze Medal',
         tag: '🥉 BRONZE MEDAL',
-        badgeTitle: 'Bronze Phishing Sentinel',
+        badgeTitle: 'Phishing Bronze Medal',
         detail: 'Cleared · Threat Traps Reported'
       }
     }
@@ -1308,7 +1308,9 @@ function renderMainMenuAchievements() {
 
     const tierData = tier ? ach.tiers[tier] : null;
     const tierTag = tier ? tierData.tag : 'LOCKED';
-    const cardTitle = tier ? tierData.badgeTitle : ach.title;
+    // Prefer medalTitle saved at claim time so the nav list matches the award popup exactly.
+    const savedNavMedalTitle = item.claimedData && item.claimedData.medalTitle;
+    const cardTitle = tier ? (savedNavMedalTitle || tierData.badgeTitle) : ach.title;
 
     // Small SVG for nav item
     const miniSvg = isTrophy
@@ -1408,7 +1410,10 @@ function renderMainMenuAchievements() {
     ach_trophy_master: 'ALL 4 OPERATIONS'
   };
   const threatDisplayName = threatNameMap[selAch.id] || selAch.threatCategory || 'THREAT DEFENSE';
-  const heroTitle = selTier ? selTierData.badgeTitle : selAch.title;
+  // Prefer the medalTitle saved at claim time (set by the in-game award popup) so the
+  // name is always consistent with what the player saw when they claimed the reward.
+  const savedMedalTitle = selectedItem.claimedData && selectedItem.claimedData.medalTitle;
+  const heroTitle = selTier ? (savedMedalTitle || selTierData.badgeTitle) : selAch.title;
   const chapterBadgeText = selAch.catId ? `CHAPTER ${selAch.num}` : 'GRAND ACCOLADE';
 
   // Status Strip under Title
@@ -1635,7 +1640,7 @@ function closeMainMenuExit() {
  */
 const _CHAPTER_LABELS = {
   phishing:           'Ch.1 · The First Day',
-  malware:            'Ch.2 · The Digital Trap',
+  malware:            'Ch.2 · The Hidden Threat',
   social_engineering: 'Ch.3 · The System Collapse',
   ransomware:         'Ch.4 · The Last Login'
 };

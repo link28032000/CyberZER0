@@ -5,13 +5,16 @@
 // ═══════════════════════════════════════════════════════════
 
 const VN_CHARACTER_MAP = {
-  'NARRATOR':    null,
-  'CYBERZERO':   'assets/CyberZerØ.png',
-  'ZERO':        'assets/CyberZerØ.png',
-  'AI GUIDE ZERO':'assets/CyberZerØ.png',
-  'SYSTEM':      null,
-  'ALEX':        null,
-  'IT SUPPORT':  null,
+  'NARRATOR':      null,
+  'CYBERZERO':     'assets/CyberZerØ.png',
+  'ZERO':          'assets/CyberZerØ.png',
+  'AI GUIDE ZERO': 'assets/CyberZerØ.png',
+  'SYSTEM':        null,
+  'ALEX':          'assets/Character/Alex.png',
+  'ETHAN':         'assets/Character/Ethan.png',
+  'PIA':           'assets/Character/Pia.png',
+  'RYAN':          'assets/Character/Ryan.png',
+  'IT SUPPORT':    null,
 };
 
 const VN_STORIES = {
@@ -91,7 +94,7 @@ const VN_STORIES = {
       speaker: 'ZERO',
       tag: '🤖 AI SECURITY GUIDE',
       bg: 'assets/Cover.png',
-      text: 'Remember: Phishing emails use fake sender domains, create panic with deadlines, and redirect victims to credential-harvesting websites. Use your detective tools — flag every piece of evidence you find.',
+      text: 'Remember: Phishing emails use fake sender domains, create panic with deadlines, and redirect victims to fake websites designed to steal passwords. Use your detective tools and flag every piece of evidence you find.',
       speed: 24,
       scene: 'story'
     }
@@ -195,9 +198,13 @@ const vnState = {
 
 function playCategoryStory(categoryId) {
   if (categoryId === 'malware') {
-    // Remove narration on Chapter 2: directly open clean Chapter 2 desktop
+    // Start Chapter 2 desktop with Ryan's mentor intro
     hideAllOverlays();
-    openChapterDesktopDirect('malware');
+    if (typeof startMalwareChapter === 'function') {
+      startMalwareChapter();
+    } else {
+      openChapterDesktopDirect('malware');
+    }
     return;
   }
   activeCategoryStory = categoryId;
@@ -402,6 +409,7 @@ function vnPlayLine(index) {
     'PHILLIP':       '#ba68c8',
     'JONALD':        '#e57373',
     'SYSTEM':        'var(--accent-cyan)',
+    'RYAN':          '#4fc3f7',
   };
   speakerEl.style.color = colours[line.speaker] || 'var(--accent-cyan)';
 

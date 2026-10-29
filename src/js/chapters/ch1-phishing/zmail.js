@@ -298,7 +298,7 @@ function renderEmailList() {
       const actualType = result.isPhishing ? 'Phishing' : 'Non-phishing';
       const label = isCorrect ? '✓ CORRECT' : '✗ WRONG';
       const cls   = isCorrect ? 'correct' : 'wrong';
-      badgeHtml = `<span class="email-done-badge ${cls}" title="${isCorrect ? 'Correct' : 'Wrong'} — ${actualType}">${label}</span>`;
+      badgeHtml = `<span class="email-done-badge ${cls}" title="${isCorrect ? 'Correct' : 'Wrong'}: ${actualType}">${label}</span>`;
     } else if (isCurrent) {
       badgeHtml = `<div class="email-status-dot"></div>`;
     }
@@ -570,7 +570,7 @@ function openEmail(idx) {
       legitBtn.title = 'Verdict already submitted for this email.';
     }
     flagModeBtn.disabled = true;
-    flagModeBtn.title = 'Investigation concluded — verdict already submitted.';
+    flagModeBtn.title = 'Investigation concluded: verdict already submitted.';
   } else {
     if (reportBtn) {
       reportBtn.disabled = false;

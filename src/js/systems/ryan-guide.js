@@ -47,9 +47,13 @@ const RyanGuide = (() => {
   // Show / hide overlay
   function _show() {
     const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
-    if (activeCat !== 'phishing') return; // Only Chapter 1 has mentor guide Ryan
+    if (activeCat !== 'phishing' && activeCat !== 'malware') return; // Allow Chapter 1 and Chapter 2 mentor guide Ryan
     const o = el().overlay;
     if (!o) return;
+    const roleEl = o.querySelector('.ryan-role');
+    if (roleEl) {
+      roleEl.textContent = (activeCat === 'malware') ? 'CYBERSECURITY MENTOR' : 'IT SUPPORT MENTOR';
+    }
     _clearAnimHandler();
     const toast = document.getElementById('toast');
     if (toast) toast.classList.add('hidden'); // Clear any toast behind Ryan's dialogue
@@ -252,7 +256,7 @@ const RyanGuide = (() => {
    */
   function speak(messages, opts) {
     const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
-    if (activeCat !== 'phishing') {
+    if (activeCat !== 'phishing' && activeCat !== 'malware') {
       dismiss();
       return;
     }
@@ -412,9 +416,9 @@ const RYAN_DIALOGUES = {
 
   // Welcome on initial desktop display
   welcome: [
-    { text: "Hi! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions — it's great to have you on board!", state: 'speaking' },
-    { text: "I'll be guiding you through your training and teaching you how to recognize common cyber threats — starting today!", state: 'speaking' },
-    { text: "Your first mission is to investigate suspicious emails in your company inbox. Think carefully before acting — just like you would in a real workplace.", state: 'thinking' },
+    { text: "Hi! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions, and it's great to have you on board!", state: 'speaking' },
+    { text: "I'll be guiding you through your training and showing you how to spot common cyber threats starting today!", state: 'speaking' },
+    { text: "Your first mission is to investigate suspicious emails in your company inbox. Think carefully before taking action, just like you would in a real workplace.", state: 'thinking' },
     { text: "First, open your Detective's Notes on your desktop to review your tips and checklist. Opening your notes will unlock your first email! 💪", state: 'success' }
   ],
 
@@ -454,12 +458,12 @@ const RYAN_DIALOGUES = {
   missedPhishing: [
     { text: "Let's investigate that before making a final conclusion. That email actually had phishing indicators.", state: 'concerned' },
     { text: "Notice the sender address and the urgent threat to suspend the account. Attackers create panic so users don't think.", state: 'speaking' },
-    { text: "Don't worry - this is what training is for. Try checking the sender even more closely on the next one.", state: 'thinking' }
+    { text: "Don't worry, this is what training is for! Try checking the sender even more closely on the next one.", state: 'thinking' }
   ],
 
   // Player marked a legitimate email as phishing (false positive)
   falsePositive: [
-    { text: "Take a closer look - this was actually a legitimate internal message.", state: 'concerned' },
+    { text: "Take a closer look here. This was actually a safe internal message.", state: 'concerned' },
     { text: "Not every urgent or administrative notice is malicious. Verify the domain and technical indicators first.", state: 'speaking' },
     { text: "In IT Support, false alarms disrupt coworkers. You'll get sharper with each email.", state: 'thinking' }
   ],
