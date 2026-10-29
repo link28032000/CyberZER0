@@ -116,6 +116,10 @@ function openApp(appName) {
   win.classList.remove('hidden', 'minimized');
   focusWindow(appName);
   updateTaskbar();
+  // Refresh AV state for the current chapter when AV app opens
+  if (appName === 'antivirus' && typeof refreshAvForCurrentChapter === 'function') {
+    setTimeout(refreshAvForCurrentChapter, 50);
+  }
   if (typeof AudioManager !== 'undefined') AudioManager.playWindowSound(true);
 
   // Notify post-award mission checklist

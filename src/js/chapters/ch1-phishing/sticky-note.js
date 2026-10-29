@@ -404,6 +404,14 @@ function showStickyNote() {
 
   // Dismiss the icon attention glow when player opens the note
   if (typeof IconAttention !== 'undefined') IconAttention.hide('notes');
+  // Also explicitly clear pulse classes added directly to the desktop icon
+  if (icon) icon.classList.remove('icon-attention', 'btn-pulse-highlight');
+
+  // Ch2: mark sticky note as opened for the mission checklist tracker
+  if (window._currentChapterCategory === 'malware' || (typeof gameState !== 'undefined' && gameState.phase === 'malware')) {
+    if (!window._ch2Mission) window._ch2Mission = { stickyOpened: false, gamesOpened: false };
+    window._ch2Mission.stickyOpened = true;
+  }
 
   const titleEl = document.getElementById('sticky-note-title');
   if (titleEl) titleEl.textContent = 'Sticky Notes';
@@ -424,6 +432,13 @@ function showStickyNote() {
     else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
 
     renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
+    return;
+  }
+
+  // ── Chapter 2 (malware) — show mission checklist instead of Ch1 tasks ──
+  if (window._currentChapterCategory === 'malware' ||
+      (typeof gameState !== 'undefined' && gameState.phase === 'malware')) {
+    updateStickyNoteForPhase('malware');
     return;
   }
 
@@ -1673,20 +1688,53 @@ function updateStickyNoteForPhase(phase) {
     return;
   }
 
-  // Chapter 2 (malware) notes — No active mission currently
+  // Chapter 2 (malware) notes — Mission checklist (Ch1-style UI)
   if (phase === 'malware' || currentCat === 'malware') {
-    if (titleEl) titleEl.textContent = "📋 Workstation Notes";
-    scrollEl.innerHTML = `
-      <div class="sn-progress-card" style="border-color: rgba(148, 163, 184, 0.4);">
-        <div class="sn-progress-header">
-          <span class="sn-progress-title" style="color: #475569;">📋 Workstation Status</span>
-          <span class="sn-progress-count" style="color: #475569; background: #f1f5f9; border-color: rgba(148, 163, 184, 0.3);">Standby</span>
-        </div>
-      </div>
-      <div class="sn-rules-card">
-        <div class="sn-rules-title" style="color: #475569;">ℹ️ Notice</div>
-        <p style="font-size:12.5px;color:#64748b;line-height:1.5;margin:8px 0;">Chapter 2 currently has no active mission. You can freely explore the workstation tools and Phone Link.</p>
-      </div>`;
+    const _m = window._ch2Mission || { stickyOpened: false, gamesOpened: false, antivirusOff: false };
+    if (titleEl) titleEl.textContent = 'Sticky Notes';
+
+    const doneGames = !!_m.gamesOpened;
+    const doneAv    = !!_m.antivirusOff;
+    const completedCount = (doneGames ? 1 : 0) + (doneAv ? 1 : 0);
+    const totalGoals = 2;
+    const progressPercent = Math.round((completedCount / totalGoals) * 100);
+
+    // No button — player must open Antivirus app on desktop and turn it off there
+
+    scrollEl.innerHTML =
+      '<div class="sn-progress-card">' +
+        '<div class="sn-progress-header">' +
+          '<span class="sn-progress-title">📋 Checklist</span>' +
+          '<span class="sn-progress-count">' + completedCount + ' of ' + totalGoals + ' Done</span>' +
+        '</div>' +
+        '<div class="sn-progress-bar-track">' +
+          '<div class="sn-progress-bar-fill" style="width:' + progressPercent + '%;"></div>' +
+        '</div>' +
+      '</div>' +
+      '<ul class="sn-checklist">' +
+        // Task 1 — Open Games Folder
+        '<li class="sn-ach-item' + (doneGames ? ' sn-ach-done' : '') + '">' +
+          '<div class="sn-checkbox' + (doneGames ? ' checked' : '') + '" aria-hidden="true">' + (doneGames ? '✓' : '') + '</div>' +
+          '<div class="sn-ach-body">' +
+            '<div class="sn-ach-header-row">' +
+              '<span class="sn-ach-label">📁 Open Games Folder</span>' +
+              '<span class="sn-ach-prog-badge' + (doneGames ? ' done' : '') + '">' + (doneGames ? '1 / 1 ✓' : '0 / 1') + '</span>' +
+            '</div>' +
+            '<div class="sn-ach-desc">Open the Games folder on your desktop to explore the malware simulations.</div>' +
+          '</div>' +
+        '</li>' +
+        // Task 2 — Turn Off Antivirus
+        '<li class="sn-ach-item' + (doneAv ? ' sn-ach-done' : '') + '">' +
+          '<div class="sn-checkbox' + (doneAv ? ' checked' : '') + '" aria-hidden="true">' + (doneAv ? '✓' : '') + '</div>' +
+          '<div class="sn-ach-body">' +
+            '<div class="sn-ach-header-row">' +
+              '<span class="sn-ach-label">🛡️ Turn Off Antivirus</span>' +
+              '<span class="sn-ach-prog-badge' + (doneAv ? ' done' : '') + '">' + (doneAv ? '1 / 1 ✓' : '0 / 1') + '</span>' +
+            '</div>' +
+            '<div class="sn-ach-desc">Open the <strong>Anti-Virus</strong> app on your desktop and turn off the Protection toggle.</div>' +
+          '</div>' +
+        '</li>' +
+      '</ul>';
     return;
   }
 }

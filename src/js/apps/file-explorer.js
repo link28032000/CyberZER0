@@ -24,7 +24,12 @@ function getScholarshipGrantFileDef() {
 function getExplorerCurrentFiles() {
   // 'downloads' shows only its static folder entries (e.g. Games subfolder)
   if (currentExplorerFolder === 'downloads') {
-    return EXPLORER_ADDITIONAL_FILES['downloads'] || [];
+    const _dlFiles = EXPLORER_ADDITIONAL_FILES['downloads'] || [];
+    // Hide Games folder and simulation files in Chapter 1 — Ch2 only
+    if (window._currentChapterCategory !== 'malware') {
+      return _dlFiles.filter(function(f) { return f.id !== 'dl_games_folder' && !f.isSimulation; });
+    }
+    return _dlFiles;
   }
   // thispc_contents shows the actual C: folder list
   if (currentExplorerFolder === 'thispc_contents') {
@@ -264,11 +269,23 @@ function clearFolderSearch() {
 }
 
 function switchExplorerFolder(folderKey) {
+  // Block Games folder access in Chapter 1 — Ch2 only
+  if (folderKey === 'games' && window._currentChapterCategory !== 'malware') {
+    if (typeof showToast === 'function') {
+      showToast('📁 Games folder is not available in this chapter.', 'info');
+    }
+    return;
+  }
   currentExplorerFolder = folderKey;
 
-  // Notify post-award mission checklist
+  // Notify post-award mission checklist (Chapter 1)
   if (typeof window._notifyPostAwardFolderSwitch === 'function') {
     window._notifyPostAwardFolderSwitch(folderKey);
+  }
+
+  // Notify Chapter 2 mission tracker
+  if (typeof window._ch2NotifyFolderOpen === 'function') {
+    window._ch2NotifyFolderOpen(folderKey);
   }
 
   // Update history

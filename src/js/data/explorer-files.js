@@ -243,7 +243,67 @@ const EXPLORER_ADDITIONAL_FILES = {
       scanned: true
     }
   ],
-  games: [],               // Ethan's Games folder — empty
+  games: [
+    // ── Chapter 2 Malware Simulations ──────────────────────────────────────────
+    // Safe, fictional educational demos — no real files are harmed or infected.
+    {
+      id: 'sim_virus',
+      name: 'VirusSim_FileInfector.exe',
+      fakeExt: 'exe',
+      realExt: 'exe',
+      type: 'Educational Simulation (.exe)',
+      size: '1.2 MB',
+      date: '10/29/2026 08:00 AM',
+      icon: '🦠',
+      isMalware: false,
+      threatName: '[SIM] Virus.Win32.FileInfector',
+      threatCategory: 'SIMULATION — SAFE',
+      hash: 'SIM-VIRUS-EDUCATIONAL-CYBERZERO-CH2-001',
+      analysis: '🎓 EDUCATIONAL SIMULATION — This is a safe, controlled demo of a file-infecting Virus. It shows how a virus attaches itself to executable files and spreads when those files are opened. No real files are modified.',
+      quarantined: false,
+      scanned: false,
+      isSimulation: true,
+      simType: 'virus'
+    },
+    {
+      id: 'sim_worm',
+      name: 'WormSim_NetworkSpreader.exe',
+      fakeExt: 'exe',
+      realExt: 'exe',
+      type: 'Educational Simulation (.exe)',
+      size: '980 KB',
+      date: '10/29/2026 08:00 AM',
+      icon: '🐛',
+      isMalware: false,
+      threatName: '[SIM] Worm.Win32.NetworkSpreader',
+      threatCategory: 'SIMULATION — SAFE',
+      hash: 'SIM-WORM-EDUCATIONAL-CYBERZERO-CH2-002',
+      analysis: '🎓 EDUCATIONAL SIMULATION — This is a safe, controlled demo of a network-spreading Worm. It shows how a worm propagates across a network without any user interaction. No real network traffic is generated.',
+      quarantined: false,
+      scanned: false,
+      isSimulation: true,
+      simType: 'worm'
+    },
+    {
+      id: 'sim_trojan',
+      name: 'TrojanSim_HiddenPayload.exe',
+      fakeExt: 'exe',
+      realExt: 'exe',
+      type: 'Educational Simulation (.exe)',
+      size: '1.5 MB',
+      date: '10/29/2026 08:00 AM',
+      icon: '🐴',
+      isMalware: false,
+      threatName: '[SIM] Trojan.Win32.HiddenPayload',
+      threatCategory: 'SIMULATION — SAFE',
+      hash: 'SIM-TROJAN-EDUCATIONAL-CYBERZERO-CH2-003',
+      analysis: '🎓 EDUCATIONAL SIMULATION — This is a safe, controlled demo of a Trojan Horse. It shows how a Trojan disguises itself as legitimate software while carrying a hidden payload. No real system changes are made.',
+      quarantined: false,
+      scanned: false,
+      isSimulation: true,
+      simType: 'trojan'
+    }
+  ],               // Ethan's Games folder — 3 malware education simulations
   thispc: [
     {
       id: 'pc_perflogs',

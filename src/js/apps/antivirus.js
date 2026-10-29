@@ -2,6 +2,47 @@
 
 
 function toggleAntiVirusProtection() {
+  // ── Chapter 2: use a SEPARATE AV flag — never touch gameState.antivirusProtection ──
+  if (window._currentChapterCategory === 'malware' && window._ch2Mission) {
+    const wasOff = !!window._ch2Mission.antivirusOff;
+    window._ch2Mission.antivirusOff = !wasOff;
+    updateAntiVirusProtectionUI();
+
+    if (!window._ch2Mission.antivirusOff) {
+      // Turned back ON
+      showToast('🛡️ Real-Time Protection ENABLED. Threat scanner active.', 'success');
+    } else {
+      // Turned OFF — Ch2 simulation mode
+      showToast('⚠️ Real-Time Protection DISABLED. Simulations can now run.', 'warning');
+      // Re-render sticky note if open
+      var note = document.getElementById('sticky-note');
+      if (note && !note.classList.contains('hidden')) {
+        if (typeof updateStickyNoteForPhase === 'function') {
+          updateStickyNoteForPhase('malware');
+        }
+      }
+      // Ryan confirms Antivirus is off
+      setTimeout(function() {
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+          RyanGuide.speak([
+            {
+              text: 'Antivirus has been turned off. Now the simulations can run without being blocked — just like real malware disables security tools on a victim\'s PC.',
+              state: 'speaking',
+              label: 'TAP TO CONTINUE'
+            },
+            {
+              text: 'Go ahead and <strong>click on the simulation files</strong> inside the Games folder to see how each type of malware behaves. Stay safe — these are educational only! 🎓',
+              state: 'success',
+              label: 'GOT IT!'
+            }
+          ]);
+        }
+      }, 500);
+    }
+    return; // ← Ch2 handled — Ch1 state untouched
+  }
+
+  // ── Chapter 1 (and default): use gameState.antivirusProtection as normal ──
   gameState.antivirusProtection = !gameState.antivirusProtection;
   updateAntiVirusProtectionUI();
   if (gameState.antivirusProtection) {
@@ -21,7 +62,12 @@ function updateAntiVirusProtectionUI() {
   const statusText = document.getElementById('av-quarantine-status-text');
   const statsBadge = document.getElementById('av-stats-badge');
 
-  if (gameState.antivirusProtection) {
+  // Determine effective protection state:
+  // Ch2 uses its own separate flag; Ch1 uses gameState.antivirusProtection
+  const _isCh2 = window._currentChapterCategory === 'malware' && window._ch2Mission;
+  const _avOn = _isCh2 ? !window._ch2Mission.antivirusOff : !!gameState.antivirusProtection;
+
+  if (_avOn) {
     if (toggleBtn) toggleBtn.classList.add('active');
     if (toggleText) toggleText.textContent = 'ON';
     if (banner) banner.classList.remove('disabled');
@@ -49,7 +95,7 @@ function updateAntiVirusProtectionUI() {
   const tileAvStatus = document.getElementById('tile-antivirus-status');
   const tileAvBadge = document.getElementById('tile-antivirus-badge');
   if (tileAv) {
-    if (gameState.antivirusProtection) {
+    if (_avOn) {
       tileAv.classList.add('active');
       if (tileAvStatus) tileAvStatus.textContent = 'On';
       if (tileAvBadge) tileAvBadge.textContent = 'ON';
@@ -59,6 +105,28 @@ function updateAntiVirusProtectionUI() {
       if (tileAvBadge) tileAvBadge.textContent = 'OFF';
     }
   }
+}
+
+// ── Called every time the Antivirus app window is opened ──────────────────────
+// Ensures Ch1 always shows ON + disabled toggle; Ch2 shows its own state
+function refreshAvForCurrentChapter() {
+  const isCh2 = window._currentChapterCategory === 'malware' && window._ch2Mission;
+
+  if (!isCh2) {
+    // Chapter 1: default AV to ON when app opens — user can still toggle it
+    gameState.antivirusProtection = true;
+  }
+  // Both chapters: toggle button is always enabled and clickable
+  const toggleBtn = document.getElementById('av-realtime-toggle');
+  if (toggleBtn) {
+    toggleBtn.disabled = false;
+    toggleBtn.title = 'Click to turn Real-Time Protection ON or OFF';
+    toggleBtn.style.opacity = '';
+    toggleBtn.style.cursor = '';
+  }
+
+  // Always refresh the UI to show the correct state
+  updateAntiVirusProtectionUI();
 }
 
 let scanInProgress = false;

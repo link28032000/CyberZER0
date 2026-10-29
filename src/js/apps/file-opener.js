@@ -38,6 +38,21 @@ function openFileFromFolder(fileId) {
 
   // 1. DANGEROUS MALWARE / EXECUTABLE / SCRIPT
   if (file.isMalware || ext === 'exe' || ext === 'scr' || ext === 'vbs' || file.id === 'f_scholarship_grant') {
+    // Ch2 simulation files: only show SmartScreen when Antivirus is ON
+    // When Antivirus is OFF, skip SmartScreen and run the simulation directly
+    if (file.isSimulation) {
+      // Ch2 AV state is tracked separately in _ch2Mission.antivirusOff
+      // gameState.antivirusProtection belongs to Ch1 only
+      const _ch2AvOff = window._ch2Mission && !!window._ch2Mission.antivirusOff;
+      if (!_ch2AvOff) {
+        // Antivirus is ON — block with SmartScreen as expected
+        showSmartScreenWarning(file);
+      } else {
+        // Antivirus is OFF (Ch2 simulation mode) — run the simulation
+        runMalwareSimulation(file);
+      }
+      return;
+    }
     showSmartScreenWarning(file);
     return;
   }
@@ -231,4 +246,97 @@ function setWordZoom(val) {
     page.style.transform = `scale(${val / 100})`;
     page.style.transformOrigin = 'top center';
   }
+}
+
+// ─── Ch2: Malware Simulation Runner ─────────────────────────
+// Called when player double-clicks a simulation .exe with Antivirus OFF
+function runMalwareSimulation(file) {
+  if (!file || !file.isSimulation) return;
+
+  const simType = file.simType || 'virus';
+  const simData = {
+    virus: {
+      icon: '🦠',
+      name: 'Virus — File Infector',
+      color: '#ef4444',
+      steps: [
+        '📂 Scanning for executable files on C:\\...',
+        '🔗 Attaching viral payload to notepad.exe...',
+        '🔗 Attaching viral payload to explorer.exe...',
+        '🔗 Attaching viral payload to winword.exe...',
+        '⚠️ Infected files will spread virus on next launch.',
+        '✅ Simulation complete — no real files were harmed.'
+      ],
+      desc: 'A <strong>Virus</strong> attaches itself to legitimate executable files. When those infected files are opened, the virus spreads to more files — just like a biological virus infecting cells.'
+    },
+    worm: {
+      icon: '🐛',
+      name: 'Worm — Network Spreader',
+      color: '#f59e0b',
+      steps: [
+        '🌐 Scanning local network for open shares...',
+        '🖥️ Found device: DESKTOP-PC02 (192.168.1.12)',
+        '🖥️ Found device: LAPTOP-ETHAN (192.168.1.15)',
+        '📤 Copying self to \\\\DESKTOP-PC02\\Users\\Public...',
+        '📤 Copying self to \\\\LAPTOP-ETHAN\\Downloads...',
+        '✅ Simulation complete — no real network traffic sent.'
+      ],
+      desc: 'A <strong>Worm</strong> spreads automatically across networks without any user action. Unlike a virus, it does not need to attach to a file — it copies itself directly to other devices.'
+    },
+    trojan: {
+      icon: '🐴',
+      name: 'Trojan Horse — Hidden Payload',
+      color: '#8b5cf6',
+      steps: [
+        '🎭 Disguised as: "FreeGameInstaller.exe"',
+        '🔓 Opening backdoor on port 4444...',
+        '📡 Connecting to remote C2 server: 185.220.x.x...',
+        '📤 Exfiltrating: Documents\\passwords.txt',
+        '📤 Exfiltrating: AppData\\Chrome\\Login Data',
+        '✅ Simulation complete — no real data was stolen.'
+      ],
+      desc: 'A <strong>Trojan Horse</strong> disguises itself as a legitimate program. Once opened, it secretly installs a backdoor, giving attackers remote access to steal files and passwords.'
+    }
+  };
+
+  const sim = simData[simType] || simData.virus;
+
+  // Build and show simulation modal
+  const existing = document.getElementById('ch2-sim-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'ch2-sim-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);';
+  modal.innerHTML = `
+    <div style="background:#0f172a;border:2px solid ${sim.color};border-radius:12px;width:440px;max-width:95vw;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+      <div style="background:${sim.color};padding:12px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">${sim.icon}</span>
+        <div>
+          <div style="color:#fff;font-weight:700;font-size:14px;">🎓 EDUCATIONAL SIMULATION</div>
+          <div style="color:rgba(255,255,255,0.85);font-size:12px;">${sim.name}</div>
+        </div>
+        <span style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">SAFE — NO REAL HARM</span>
+      </div>
+      <div style="padding:16px;">
+        <p style="color:#cbd5e1;font-size:12.5px;line-height:1.6;margin:0 0 14px;">${sim.desc}</p>
+        <div id="ch2-sim-log" style="background:#020617;border:1px solid #1e293b;border-radius:6px;padding:10px;font-family:monospace;font-size:11px;color:#4ade80;min-height:80px;max-height:160px;overflow-y:auto;line-height:1.8;"></div>
+        <div style="margin-top:14px;text-align:right;">
+          <button onclick="document.getElementById('ch2-sim-modal').remove()" style="background:${sim.color};color:#fff;border:none;border-radius:6px;padding:8px 20px;font-weight:700;font-size:13px;cursor:pointer;">Close Simulation</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  // Animate log steps
+  const log = modal.querySelector('#ch2-sim-log');
+  if (typeof AudioManager !== 'undefined' && AudioManager.playWrong) AudioManager.playWrong();
+  sim.steps.forEach((step, i) => {
+    setTimeout(() => {
+      if (log && document.getElementById('ch2-sim-modal')) {
+        log.innerHTML += step + '\n';
+        log.scrollTop = log.scrollHeight;
+      }
+    }, i * 700);
+  });
 }
