@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="src/css/story/comic-strip.css">
   <link rel="stylesheet" href="src/css/chapters/ch1-guided-demo.css">
   <link rel="stylesheet" href="src/css/chapters/ch2-malware-demo.css">
+  <link rel="stylesheet" href="src/css/chapters/ch2-pretest.css">
   <link rel="stylesheet" href="src/css/components/demo-shared.css">
   <link rel="stylesheet" href="src/css/apps/file-explorer.css">
   <link rel="stylesheet" href="src/css/apps/doc-viewer.css">
@@ -46,6 +47,7 @@
   <link rel="stylesheet" href="src/css/story/awareness-video.css">
   <link rel="stylesheet" href="src/css/chapters/ch3-phone-link.css">
   <link rel="stylesheet" href="src/css/apps/settings.css">
+  <link rel="stylesheet" href="src/css/apps/task-manager.css">
   <link rel="stylesheet" href="src/css/chapters/ch3-infection.css">
   <link rel="stylesheet" href="src/css/ui/main-menu.css">
   <link rel="stylesheet" href="src/css/ui/game-loading.css">
@@ -278,7 +280,7 @@
           </div>
           <div class="browser-actions-strip">
             <button type="button" class="browser-action-icon-btn" onclick="toggleBrowserBookmark()" title="Bookmark this tab">⭐</button>
-            <button type="button" class="browser-action-icon-btn" onclick="showToast('🧩 Extensions: CyberShield Active', 'info')" title="Extensions">🧩</button>
+            <button type="button" class="browser-action-icon-btn" onclick="showToast('🟩 Extensions: CyberShield Active', 'info')" title="Extensions">🟩</button>
           </div>
         </div>
       </div>
@@ -531,7 +533,7 @@
             <button type="button" class="ribbon-mini-btn active" title="Bold"><b>B</b></button>
             <button type="button" class="ribbon-mini-btn" title="Italic"><i>I</i></button>
             <button type="button" class="ribbon-mini-btn" title="Underline"><u>U</u></button>
-            <button type="button" class="ribbon-mini-btn" title="Highlight">🖊️</button>
+            <button type="button" class="ribbon-mini-btn" title="Highlight">ðŸ–Šï¸</button>
           </div>
           <div class="font-row">
             <button type="button" class="ribbon-mini-btn" title="Align Left">⫷</button>
@@ -1216,7 +1218,7 @@
             </div>
           </div>
           <div class="g4-narrator-tip air-narrator-tip">
-            <span class="g4-narrator-icon">🎙️</span>
+            <span class="g4-narrator-icon">🎙️</span>
             <p>"Airplane Mode disables all wireless transmitters — Wi-Fi, Bluetooth, and mobile data. Enable it only when required in restricted areas."</p>
           </div>
         </div>
@@ -1580,7 +1582,7 @@
       <div class="settings-main">
         <div class="settings-page-title">Network Sharing Options</div>
         <div class="g4-narrator-tip" id="sec-narrator-tip">
-          <span class="g4-narrator-icon">🎙️</span>
+          <span class="g4-narrator-icon">🎙️</span>
           <p>"You're connected to a public network. Before continuing your work, check how your laptop is exposed."</p>
         </div>
         <div class="settings-section-header settings-section-header-mt14">Sharing &amp; Discovery</div>
@@ -1595,12 +1597,12 @@
     </div>
   </div>
 
-  <!-- ── TASK MANAGER WINDOW (Group 4 — Stage 5 Infection) ── -->
+  <!-- ── TASK MANAGER WINDOW ── -->
   <div id="win-taskmanager" class="app-window hidden" data-app="taskmanager">
     <div class="win-titlebar" id="titlebar-taskmanager">
       <div class="win-title">
-        <span class="win-icon"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="TM" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></span>
-        <span>Task Manager</span>
+        <span class="win-icon"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="TM" class="tm-titlebar-icon"></span>
+        <span class="tm-title-text">Task Manager</span>
       </div>
       <div class="win-controls">
         <button type="button" class="win-btn win-minimize" onclick="minimizeApp('taskmanager')" title="Minimize">─</button>
@@ -1610,14 +1612,62 @@
     </div>
     <div class="win-body tm-body">
 
-      <!-- TM Nav Tabs -->
-      <div class="tm-tabs">
-        <span class="tm-tab active" id="tm-tab-processes" onclick="tmSwitchTab('processes')">Processes</span>
-        <span class="tm-tab" id="tm-tab-performance" onclick="tmSwitchTab('performance')">Performance</span>
-        <span class="tm-tab" id="tm-tab-details" onclick="tmSwitchTab('details')">Details</span>
+      <!-- Top Header: Nav Tabs & Realtime System Resource Badges -->
+      <div class="tm-header-bar">
+        <div class="tm-tabs" role="tablist">
+          <button type="button" class="tm-tab active" id="tm-tab-processes" onclick="tmSwitchTab('processes')">
+            <span class="tm-tab-icon">☷</span>
+            <span>Processes</span>
+          </button>
+          <button type="button" class="tm-tab" id="tm-tab-performance" onclick="tmSwitchTab('performance')">
+            <span class="tm-tab-icon">📈</span>
+            <span>Performance</span>
+          </button>
+          <button type="button" class="tm-tab" id="tm-tab-details" onclick="tmSwitchTab('details')">
+            <span class="tm-tab-icon">☰</span>
+            <span>Details</span>
+          </button>
+        </div>
         <div class="tm-status-bar-right">
-          <span id="tm-cpu-status">CPU <strong>--</strong></span>
-          <span id="tm-mem-status">Memory <strong>--</strong></span>
+          <div class="tm-status-pill" id="tm-pill-cpu" title="Total CPU Utilization">
+            <span class="tm-pill-dot tm-dot-cpu"></span>
+            <span id="tm-cpu-status">CPU <strong>--</strong></span>
+          </div>
+          <div class="tm-status-pill" id="tm-pill-mem" title="Physical Memory Usage">
+            <span class="tm-pill-dot tm-dot-mem"></span>
+            <span id="tm-mem-status">Memory <strong>--</strong></span>
+          </div>
+          <div class="tm-status-pill" id="tm-pill-disk" title="Active Disk Utilization">
+            <span class="tm-pill-dot tm-dot-disk"></span>
+            <span id="tm-disk-status">Disk <strong>0%</strong></span>
+          </div>
+          <div class="tm-status-pill" id="tm-pill-net" title="Network Activity">
+            <span class="tm-pill-dot tm-dot-net"></span>
+            <span id="tm-net-status">Network <strong>0.0 Mbps</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Command Bar (Search Filter & Task Actions) -->
+      <div class="tm-command-bar">
+        <div class="tm-search-box">
+          <span class="tm-search-icon">🔍</span>
+          <input type="text" id="tm-search-input" placeholder="Type to filter processes by name or PID..." oninput="tmFilterProcesses(this.value)" autocomplete="off" spellcheck="false">
+          <button type="button" id="tm-search-clear" class="tm-search-clear hidden" onclick="tmClearSearch()" title="Clear filter">✕</button>
+        </div>
+        <div class="tm-command-actions">
+          <button type="button" class="tm-cmd-btn" id="tm-cmd-end-task" onclick="tmEndSelectedTask()" disabled title="End selected process">
+            <span class="tm-cmd-icon">✕</span>
+            <span>End task</span>
+          </button>
+          <button type="button" class="tm-cmd-btn" id="tm-cmd-run-task" onclick="tmRunNewTask()" title="Run new task">
+            <span class="tm-cmd-icon">▶</span>
+            <span>Run new task</span>
+          </button>
+          <button type="button" class="tm-cmd-btn tm-cmd-efficiency" title="Efficiency mode">
+            <span class="tm-cmd-icon">🍃</span>
+            <span>Efficiency mode</span>
+          </button>
         </div>
       </div>
 
@@ -1625,19 +1675,31 @@
       <div id="tm-panel-processes" class="tm-panel">
         <!-- Sticky column header -->
         <div class="tm-process-header">
-          <span class="tm-col-name">Name</span>
-          <span class="tm-col-cpu">CPU</span>
-          <span class="tm-col-mem">Memory</span>
+          <span class="tm-col-name" onclick="tmSortProcesses('name')" title="Sort by Name">
+            Name <span class="tm-sort-arrow" id="tm-sort-arrow-name">▲</span>
+          </span>
+          <span class="tm-col-status">Status</span>
+          <span class="tm-col-cpu" onclick="tmSortProcesses('cpu')" title="Sort by CPU Usage">
+            CPU <span class="tm-sort-arrow" id="tm-sort-arrow-cpu"></span>
+          </span>
+          <span class="tm-col-mem" onclick="tmSortProcesses('mem')" title="Sort by Memory Usage">
+            Memory <span class="tm-sort-arrow" id="tm-sort-arrow-mem"></span>
+          </span>
           <span class="tm-col-disk">Disk</span>
           <span class="tm-col-net">Network</span>
-          <span class="tm-col-action"></span>
+          <span class="tm-col-action">Action</span>
         </div>
         <!-- Single unified scroll container -->
-        <div class="tm-scroll-body">
-          <div class="tm-group-header" id="tm-group-apps">Apps (8)</div>
+        <div class="tm-scroll-body" id="tm-processes-scroll">
+          <div class="tm-group-header" id="tm-group-apps" onclick="tmToggleGroup('apps')">
+            <span class="tm-group-arrow">▼</span> Apps (<span id="tm-apps-count">8</span>)
+          </div>
           <div id="tm-process-list"></div>
-          <div class="tm-group-header" id="tm-group-bg">Background processes (12)</div>
+          <div class="tm-group-header" id="tm-group-bg" onclick="tmToggleGroup('bg')">
+            <span class="tm-group-arrow">▼</span> Background processes (<span id="tm-bg-count">12</span>)
+          </div>
           <div id="tm-bg-list"></div>
+          <div id="tm-no-results" class="tm-no-results hidden">No matching processes found</div>
         </div>
       </div>
 
@@ -1646,42 +1708,84 @@
         <div class="tm-perf-layout">
           <!-- Left sidebar -->
           <div class="tm-perf-sidebar">
-            <div class="tm-perf-sidebar-item active" onclick="tmPerfSelect('cpu', this)">
-              <div class="tm-perf-label">CPU</div>
-              <canvas class="tm-mini-graph" id="tm-mini-cpu" width="120" height="40"></canvas>
-              <div class="tm-perf-value" id="tm-perf-cpu-pct">--</div>
+            <div class="tm-perf-sidebar-item active" id="tm-perf-nav-cpu" onclick="tmPerfSelect('cpu', this)">
+              <div class="tm-perf-sidebar-header">
+                <span class="tm-perf-label"><span class="tm-perf-icon">⚡</span> CPU</span>
+                <span class="tm-perf-value" id="tm-perf-cpu-pct">--</span>
+              </div>
+              <div class="tm-perf-sublabel" id="tm-perf-cpu-sub">Intel Core i5</div>
+              <div class="tm-mini-graph-wrap">
+                <canvas class="tm-mini-graph" id="tm-mini-cpu"></canvas>
+              </div>
             </div>
-            <div class="tm-perf-sidebar-item" onclick="tmPerfSelect('mem', this)">
-              <div class="tm-perf-label">Memory</div>
-              <canvas class="tm-mini-graph" id="tm-mini-mem" width="120" height="40"></canvas>
-              <div class="tm-perf-value" id="tm-perf-mem-pct">--</div>
+            <div class="tm-perf-sidebar-item" id="tm-perf-nav-mem" onclick="tmPerfSelect('mem', this)">
+              <div class="tm-perf-sidebar-header">
+                <span class="tm-perf-label"><span class="tm-perf-icon">💾</span> Memory</span>
+                <span class="tm-perf-value" id="tm-perf-mem-pct">--</span>
+              </div>
+              <div class="tm-perf-sublabel" id="tm-perf-mem-sub">16.0 GB DDR4</div>
+              <div class="tm-mini-graph-wrap">
+                <canvas class="tm-mini-graph" id="tm-mini-mem"></canvas>
+              </div>
             </div>
-            <div class="tm-perf-sidebar-item" onclick="tmPerfSelect('disk', this)">
-              <div class="tm-perf-label">Disk 0 (C:)</div>
-              <canvas class="tm-mini-graph" id="tm-mini-disk" width="120" height="40"></canvas>
-              <div class="tm-perf-value" id="tm-perf-disk-pct">--</div>
+            <div class="tm-perf-sidebar-item" id="tm-perf-nav-disk" onclick="tmPerfSelect('disk', this)">
+              <div class="tm-perf-sidebar-header">
+                <span class="tm-perf-label"><span class="tm-perf-icon">💿</span> Disk 0 (C:)</span>
+                <span class="tm-perf-value" id="tm-perf-disk-pct">--</span>
+              </div>
+              <div class="tm-perf-sublabel" id="tm-perf-disk-sub">NVMe SSD</div>
+              <div class="tm-mini-graph-wrap">
+                <canvas class="tm-mini-graph" id="tm-mini-disk"></canvas>
+              </div>
             </div>
-            <div class="tm-perf-sidebar-item" onclick="tmPerfSelect('net', this)">
-              <div class="tm-perf-label">Ethernet</div>
-              <canvas class="tm-mini-graph" id="tm-mini-net" width="120" height="40"></canvas>
-              <div class="tm-perf-value" id="tm-perf-net-pct">--</div>
+            <div class="tm-perf-sidebar-item" id="tm-perf-nav-net" onclick="tmPerfSelect('net', this)">
+              <div class="tm-perf-sidebar-header">
+                <span class="tm-perf-label"><span class="tm-perf-icon">🌐</span> Ethernet</span>
+                <span class="tm-perf-value" id="tm-perf-net-pct">--</span>
+              </div>
+              <div class="tm-perf-sublabel" id="tm-perf-net-sub">GbE Family</div>
+              <div class="tm-mini-graph-wrap">
+                <canvas class="tm-mini-graph" id="tm-mini-net"></canvas>
+              </div>
             </div>
           </div>
 
           <!-- Main graph area -->
           <div class="tm-perf-main" id="tm-perf-main">
             <div class="tm-perf-main-header">
-              <div class="tm-perf-main-title" id="tm-perf-main-title">CPU</div>
-              <div class="tm-perf-main-sub" id="tm-perf-main-sub">Intel Core i5-12400F · 6 Cores, 12 Logical processors</div>
+              <div class="tm-perf-title-col">
+                <div class="tm-perf-main-title" id="tm-perf-main-title">CPU</div>
+                <div class="tm-perf-main-sub" id="tm-perf-main-sub">Intel Core i5-12400F · 6 Cores, 12 Logical processors</div>
+              </div>
+              <div class="tm-perf-highlight-stat">
+                <div class="tm-perf-highlight-val" id="tm-perf-highlight-val">--%</div>
+                <div class="tm-perf-highlight-sub" id="tm-perf-highlight-sub">-- GHz</div>
+              </div>
             </div>
-            <canvas class="tm-main-graph" id="tm-main-graph" width="500" height="200"></canvas>
+
+            <!-- Responsive Chart Container -->
+            <div class="tm-graph-card">
+              <div class="tm-graph-scale-top">100%</div>
+              <div class="tm-graph-scale-mid">50%</div>
+              <div class="tm-graph-scale-bot">0%</div>
+              <div class="tm-graph-scale-time">60 seconds</div>
+              <canvas class="tm-main-graph" id="tm-main-graph"></canvas>
+            </div>
+
+            <!-- Dynamic Multi-Column Stats Grid -->
             <div class="tm-perf-stats-grid" id="tm-perf-stats">
               <div class="tm-stat-block"><div class="tm-stat-label">Utilization</div><div class="tm-stat-val" id="tm-stat-util">--%</div></div>
               <div class="tm-stat-block"><div class="tm-stat-label">Speed</div><div class="tm-stat-val" id="tm-stat-speed">-- GHz</div></div>
-              <div class="tm-stat-block"><div class="tm-stat-label">Processes</div><div class="tm-stat-val">18</div></div>
-              <div class="tm-stat-block"><div class="tm-stat-label">Threads</div><div class="tm-stat-val">214</div></div>
-              <div class="tm-stat-block"><div class="tm-stat-label">Handles</div><div class="tm-stat-val">7,482</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Processes</div><div class="tm-stat-val" id="tm-stat-processes">18</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Threads</div><div class="tm-stat-val" id="tm-stat-threads">214</div></div>
+              <div class="tm-stat-block"><div class="tm-stat-label">Handles</div><div class="tm-stat-val" id="tm-stat-handles">7,482</div></div>
               <div class="tm-stat-block"><div class="tm-stat-label">Up time</div><div class="tm-stat-val" id="tm-stat-uptime">0:00:00</div></div>
+              <div class="tm-stat-block tm-stat-extra"><div class="tm-stat-label" id="tm-stat-extra-lbl-1">Base speed</div><div class="tm-stat-val" id="tm-stat-extra-val-1">2.50 GHz</div></div>
+              <div class="tm-stat-block tm-stat-extra"><div class="tm-stat-label" id="tm-stat-extra-lbl-2">Sockets</div><div class="tm-stat-val" id="tm-stat-extra-val-2">1</div></div>
+              <div class="tm-stat-block tm-stat-extra"><div class="tm-stat-label" id="tm-stat-extra-lbl-3">Cores</div><div class="tm-stat-val" id="tm-stat-extra-val-3">6</div></div>
+              <div class="tm-stat-block tm-stat-extra"><div class="tm-stat-label" id="tm-stat-extra-lbl-4">Logical processors</div><div class="tm-stat-val" id="tm-stat-extra-val-4">12</div></div>
+              <div class="tm-stat-block tm-stat-extra"><div class="tm-stat-label" id="tm-stat-extra-lbl-5">Virtualization</div><div class="tm-stat-val" id="tm-stat-extra-val-5">Enabled</div></div>
+              <div class="tm-stat-block tm-stat-extra"><div class="tm-stat-label" id="tm-stat-extra-lbl-6">L3 Cache</div><div class="tm-stat-val" id="tm-stat-extra-val-6">18.0 MB</div></div>
             </div>
           </div>
         </div>
@@ -1689,17 +1793,23 @@
 
       <!-- ── DETAILS TAB ── -->
       <div id="tm-panel-details" class="tm-panel hidden">
-        <div class="tm-process-header" style="grid-template-columns: 2fr .7fr .7fr 1.5fr 1fr;">
-          <span>Name</span><span>PID</span><span>Status</span><span>User name</span><span>CPU</span>
+        <div class="tm-process-header tm-details-header">
+          <span class="tm-col-name" onclick="tmSortDetails('name')">Name <span class="tm-sort-arrow" id="tm-details-sort-name">▲</span></span>
+          <span class="tm-col-pid" onclick="tmSortDetails('pid')">PID <span class="tm-sort-arrow" id="tm-details-sort-pid"></span></span>
+          <span class="tm-col-status">Status</span>
+          <span class="tm-col-user">User name</span>
+          <span class="tm-col-cpu" onclick="tmSortDetails('cpu')">CPU <span class="tm-sort-arrow" id="tm-details-sort-cpu"></span></span>
+          <span class="tm-col-mem">Memory</span>
+          <span class="tm-col-arch">Architecture</span>
         </div>
-        <div class="tm-scroll-body">
+        <div class="tm-scroll-body" id="tm-details-scroll">
           <div class="tm-process-list" id="tm-details-list"></div>
+          <div id="tm-details-no-results" class="tm-no-results hidden">No matching processes found</div>
         </div>
       </div>
 
     </div>
   </div>
-
 
   <!-- ── SECURITY SCANNER WINDOW (Group 4 — Stage 5 Infection) ── -->
   <div id="win-scanner" class="app-window hidden" data-app="scanner">
@@ -2728,7 +2838,7 @@
           </div>
           <div class="ss-card-footer">
             <div class="ss-chapter-label">CHAPTER 2</div>
-            <div class="ss-chapter-title">THE DIGITAL TRAP</div>
+            <div class="ss-chapter-title">THE HIDDEN THREAT</div>
             <div class="ss-card-dots">
               <span class="ss-dot ss-dot-active"></span>
               <span class="ss-dot ss-dot-active"></span>
@@ -2944,7 +3054,7 @@
   <div class="intro-modal-backdrop">
     <div class="intro-card-shell">
       <div class="intro-header">
-        <div class="intro-header-icon intro-narrator-icon">🎙️</div>
+        <div class="intro-header-icon intro-narrator-icon">🎙️</div>
         <div>
           <div class="intro-narrator-badge">NARRATOR</div>
           <h2 class="intro-title">WELCOME TO CYBERZERØ</h2>
@@ -2954,7 +3064,7 @@
 
       <div class="intro-body">
         <div class="intro-section intro-narrator-box">
-          <div class="intro-section-title">🎙️ NARRATOR'S BRIEFING</div>
+          <div class="intro-section-title">🎙️ NARRATOR'S BRIEFING</div>
           <p class="intro-text">
             Welcome to <strong>CyberZerØ</strong> — an interactive web simulation game designed to enhance <strong>cybersecurity knowledge and awareness</strong>.
           </p>
@@ -2965,7 +3075,7 @@
 
         <div class="intro-badges-row">
           <span class="intro-chip">🛡️ Phishing Detection</span>
-          <span class="intro-chip">🦠 Malware Analysis</span>
+          <span class="intro-chip">🖠 Malware Analysis</span>
           <span class="intro-chip">🎭 Social Engineering</span>
           <span class="intro-chip">🔒 Ransomware Defense</span>
         </div>
@@ -3102,7 +3212,7 @@
         <div class="vcall-quadrant vcall-quad-nishren" id="vcall-quad-nishren" data-speaker="NISHREN">
           <div class="vcall-speaker-frame"></div>
           <div class="vcall-speaker-tag">
-            <span class="vcall-mic-pulse">🎙️</span>
+            <span class="vcall-mic-pulse">🎙️</span>
             <span class="vcall-name-label">Nishren</span>
             <div class="vcall-speaking-wave"><span></span><span></span><span></span></div>
           </div>
@@ -3112,7 +3222,7 @@
         <div class="vcall-quadrant vcall-quad-ace" id="vcall-quad-ace" data-speaker="ACE">
           <div class="vcall-speaker-frame"></div>
           <div class="vcall-speaker-tag">
-            <span class="vcall-mic-pulse">🎙️</span>
+            <span class="vcall-mic-pulse">🎙️</span>
             <span class="vcall-name-label">Ace</span>
             <div class="vcall-speaking-wave"><span></span><span></span><span></span></div>
           </div>
@@ -3122,7 +3232,7 @@
         <div class="vcall-quadrant vcall-quad-phillip" id="vcall-quad-phillip" data-speaker="PHILLIP">
           <div class="vcall-speaker-frame"></div>
           <div class="vcall-speaker-tag">
-            <span class="vcall-mic-pulse">🎙️</span>
+            <span class="vcall-mic-pulse">🎙️</span>
             <span class="vcall-name-label">Phillip</span>
             <div class="vcall-speaking-wave"><span></span><span></span><span></span></div>
           </div>
@@ -3132,7 +3242,7 @@
         <div class="vcall-quadrant vcall-quad-jonald" id="vcall-quad-jonald" data-speaker="JONALD">
           <div class="vcall-speaker-frame"></div>
           <div class="vcall-speaker-tag">
-            <span class="vcall-mic-pulse">🎙️</span>
+            <span class="vcall-mic-pulse">🎙️</span>
             <span class="vcall-name-label">Jonald</span>
             <div class="vcall-speaking-wave"><span></span><span></span><span></span></div>
           </div>
@@ -3474,7 +3584,7 @@
 <!-- ── TRAINING SLIDES ── -->
 <div id="overlay-training" class="overlay">
   <div class="training-card">
-    <div class="capy-avatar">🕵️</div>
+    <div class="capy-avatar">ðŸ•µï¸</div>
     <div class="capy-bubble" id="training-bubble">
       <!-- JS fills this -->
     </div>
@@ -3549,7 +3659,7 @@
 
     <!-- Left: Detective panel -->
     <div class="gdemo-capy-panel">
-      <div class="gdemo-capy-avatar" id="gdemo-capy">🕵️</div>
+      <div class="gdemo-capy-avatar" id="gdemo-capy">ðŸ•µï¸</div>
       <div class="gdemo-speech-bubble" id="gdemo-speech">
         <div class="gdemo-speech-arrow"></div>
         <div id="gdemo-speech-text" class="gdemo-speech-text"></div>
@@ -3565,7 +3675,7 @@
       <div class="gdemo-win-header">
         <div class="gdemo-win-title">
           <span class="win-icon">📧</span>
-          <span>Zmail — Phishing Investigation Tutorial</span>
+          <span>Zmail: Phishing Investigation Tutorial</span>
         </div>
         <span class="gdemo-phase-badge">EMAIL DEMO</span>
       </div>
@@ -3641,23 +3751,23 @@
           <div class="gdemo-legit-title">✅ Why this email is LEGITIMATE:</div>
           <div class="gdemo-legit-item" id="gdemo-lcheck-1">
             <span class="gdemo-lcheck-icon">⬜</span>
-            <div><strong>Sender matches company domain</strong> — <code>hr@techsolutions.com</code> is an internal corporate address</div>
+            <div><strong>Sender matches company domain:</strong> <code>hr@techsolutions.com</code> is an internal corporate address</div>
           </div>
           <div class="gdemo-legit-item" id="gdemo-lcheck-2">
             <span class="gdemo-lcheck-icon">⬜</span>
-            <div><strong>No false urgency</strong> — No countdown timers, no threats, no panic-inducing language</div>
+            <div><strong>No false urgency:</strong> No countdown timers, no threats, and no panic inducing language</div>
           </div>
           <div class="gdemo-legit-item" id="gdemo-lcheck-3">
             <span class="gdemo-lcheck-icon">⬜</span>
-            <div><strong>No suspicious links</strong> — Directs you to the <em>normal internal HR portal</em>, no external URLs</div>
+            <div><strong>No suspicious links:</strong> Directs you to the <em>normal internal HR portal</em> without external URLs</div>
           </div>
           <div class="gdemo-legit-item" id="gdemo-lcheck-4">
             <span class="gdemo-lcheck-icon">⬜</span>
-            <div><strong>Routine, expected content</strong> — Monthly benefits update is a normal HR communication</div>
+            <div><strong>Routine, expected content:</strong> A monthly benefits update is normal HR communication</div>
           </div>
           <div class="gdemo-legit-item" id="gdemo-lcheck-5">
             <span class="gdemo-lcheck-icon">⬜</span>
-            <div><strong>No credential requests</strong> — Doesn't ask you to verify, reset, or submit any passwords</div>
+            <div><strong>No credential requests:</strong> Does not ask you to verify, reset, or submit any passwords</div>
           </div>
         </div>
       </div>
@@ -3719,7 +3829,7 @@
 
     <!-- Left: Detective Panel -->
     <div class="gdemo-capy-panel">
-      <div class="gdemo-capy-avatar">🕵️</div>
+      <div class="gdemo-capy-avatar">ðŸ•µï¸</div>
       <div class="gdemo-speech-bubble">
         <div class="gdemo-speech-arrow"></div>
         <div id="gdemo-malware-speech-text" class="gdemo-speech-text"></div>
@@ -4121,7 +4231,7 @@
             <span class="gcp-char">Chapters 1–3</span>
           </div>
           <div class="grand-cert-pill">
-            <span class="gcp-icon">🦠</span>
+            <span class="gcp-icon">🖠</span>
             <span class="gcp-title">Malware Analysis</span>
             <span class="gcp-char">Chapters 4–6</span>
           </div>
@@ -4156,7 +4266,7 @@
             <span class="team-name">CyberZerØ (AI Guide)</span>
           </div>
           <div class="team-avatar-box">
-            <div style="width:50px;height:50px;border-radius:50%;background:rgba(0,229,255,0.15);border:2px solid var(--accent-cyan);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">👨‍💻</div>
+            <div style="width:50px;height:50px;border-radius:50%;background:rgba(0,229,255,0.15);border:2px solid var(--accent-cyan);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">ðŸ‘¨â€💻</div>
             <span class="team-name">Alex (IT Support)</span>
           </div>
         </div>
@@ -4348,6 +4458,43 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════
+     CHAPTER 2 MALWARE PRETEST — The Hidden Threat
+════════════════════════════════════════════════════════ -->
+<div id="overlay-ch2-pretest" class="ch2-pretest-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Chapter 2 Malware Pretest">
+  <div class="ch2pt-panel" id="ch2-pretest-panel">
+
+    <!-- Header: Ryan portrait + Chapter 2 title -->
+    <div class="ch2pt-header">
+      <div class="ch2pt-portrait-wrap">
+        <div class="ch2pt-portrait-ring"></div>
+        <div class="ch2pt-portrait">
+          <img src="assets/Character/Ryan.png" alt="Ryan, Cybersecurity Mentor">
+        </div>
+      </div>
+      <div class="ch2pt-title-block">
+        <div class="ch2pt-label">Ryan &middot; Cybersecurity Mentor</div>
+        <div class="ch2pt-title" id="ch2-pt-title">Pre-Test</div>
+        <div class="ch2pt-subtitle" id="ch2pt-subtitle">Malware Awareness Pretest</div>
+      </div>
+    </div>
+
+    <!-- Progress bar & question counter -->
+    <div class="ch2pt-progress-wrap" id="ch2-pt-progress-wrap">
+      <div class="ch2pt-progress-row">
+        <span class="ch2pt-q-counter" id="ch2-pt-q-counter">Question 1 / 20</span>
+      </div>
+      <div class="ch2pt-progress-bar">
+        <div class="ch2pt-progress-fill" id="ch2-pt-progress-fill" style="width: 5%"></div>
+      </div>
+    </div>
+
+    <!-- Dynamic question / results container -->
+    <div id="ch2-pt-body" class="ch2pt-body"></div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
      RYAN POST-TEST CONFIRMATION MODAL ("Are you sure?")
 ════════════════════════════════════════════════════════ -->
 <div id="ryan-posttest-confirm-backdrop" style="display:none" aria-modal="true" role="dialog" aria-label="Confirm Post-Test">
@@ -4471,6 +4618,7 @@
 <script src="src/js/systems/ryan-guide.js"></script>
 <script src="src/js/systems/ryan-pretest.js"></script>
 <script src="src/js/systems/ryan-posttest.js"></script>
+<script src="src/js/chapters/ch2-malware/pretest.js"></script>
 <script src="src/js/systems/runtime-patches.js"></script>
 <script src="src/js/systems/ryan-welcome.js"></script>
 <script src="src/js/apps/settings-about.js"></script>
@@ -4480,3 +4628,4 @@
 <script src="src/js/systems/auth.js"></script>
 </body>
 </html>
+
