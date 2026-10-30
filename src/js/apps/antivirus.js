@@ -26,14 +26,14 @@ function toggleAntiVirusProtection() {
         if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
           RyanGuide.speak([
             {
-              text: 'Antivirus has been turned off. Now the simulations can run without being blocked — just like real malware disables security tools on a victim\'s PC.',
+              text: 'The antivirus is now turned off. The simulations can run without being blocked so you can observe their behavior.',
               state: 'speaking',
               label: 'TAP TO CONTINUE'
             },
             {
-              text: 'Go ahead and <strong>click on the simulation files</strong> inside the Games folder to see how each type of malware behaves. Stay safe — these are educational only! 🎓',
+              text: 'Head back to the Games folder and <strong>click on the simulation files</strong> to see how each malware type behaves.',
               state: 'success',
-              label: 'GOT IT!'
+              label: 'GOT IT'
             }
           ]);
         }

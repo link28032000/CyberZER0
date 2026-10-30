@@ -29,14 +29,17 @@ function downloadEmailAttachment(filename, size) {
 
   showToast(`⬇️ Starting download: "${fname}" (${fsize})...`, 'warning');
 
-  // Immediately warn the player to be careful downloading attachments
-  if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
-    RyanGuide.speak([
-      {
-        text: "⚠️ <strong>Be careful downloading attachments!</strong> Look closely at that file: <code>" + fname + "</code>. Notice that double extension? Attackers disguise dangerous executables (.exe) as PDF documents!",
-        state: 'concerned'
-      }
-    ]);
+  // Immediately warn the player to be careful downloading attachments (ONLY ONCE)
+  if (!window._downloadAttachmentWarnedOnce) {
+    window._downloadAttachmentWarnedOnce = true;
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+      RyanGuide.speak([
+        {
+          text: "⚠️ <strong>Be careful downloading attachments!</strong> That was a dangerous phishing email with malware hiding inside the file.",
+          state: 'concerned'
+        }
+      ]);
+    }
   }
 
   let pct = 0;

@@ -50,7 +50,7 @@ const PhishTutorial = (() => {
     // 5. Decision — all 3 evidence flags done; highlight classification buttons and show final message.
     {
       id: 'decision',
-      text: "Great job investigating the evidence! Now decide whether this email is phishing or legitimate. Choose one of the highlighted buttons.",
+      text: "Great job investigating all the evidence! Now report this email as Phishing using the highlighted button.",
       requireAction: 'verdictSubmitted',
       state: 'speaking'
     }

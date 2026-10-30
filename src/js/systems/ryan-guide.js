@@ -31,8 +31,8 @@ const RyanGuide = (() => {
   let _dismissTimer   = null;
   let _opts           = {};
 
-  const CHAR_DELAY  = 18;  // responsive, smooth typing speed
-  const MAX_CHARS   = 1000; // allow full text animation for long coaching messages
+  const CHAR_DELAY  = 22;  // smooth video-game dialogue speed (22ms per char)
+  const MAX_CHARS   = 2000; // animate up to 2000 chars before going instant
 
   let _animHandler = null;
 
@@ -52,7 +52,7 @@ const RyanGuide = (() => {
     if (!o) return;
     const roleEl = o.querySelector('.ryan-role');
     if (roleEl) {
-      roleEl.textContent = (activeCat === 'malware') ? 'CYBERSECURITY MENTOR' : 'IT SUPPORT MENTOR';
+      roleEl.textContent = 'IT SUPPORT MENTOR';
     }
     _clearAnimHandler();
     const toast = document.getElementById('toast');
@@ -97,99 +97,94 @@ const RyanGuide = (() => {
     }
   }
 
-  // Typewriter effect
+  // Typewriter effect — smooth rAF-based video-game dialogue
   function _typeText(fullText, onComplete) {
     const textEl = el().text;
     if (!textEl) return;
     textEl.innerHTML = '';
 
+    // Very long texts: show instantly
     if (fullText.length > MAX_CHARS) {
       textEl.innerHTML = fullText;
       if (onComplete) onComplete();
       return;
     }
 
-    _typing = true;
+    _typing  = true;
+    _typeTimeout = null;
 
-    // Support typewriter animation for HTML-formatted dialogues (e.g. <strong>)
+    // ── Smooth plain-text typewriter (requestAnimationFrame) ──────────────
+    // Handles both plain text and HTML content uniformly via a char array.
+    // rAF fires every ~16ms; we accumulate elapsed time to print the right
+    // number of characters per frame — silky, jitter-free animation.
+
+    // Flatten HTML into a sequence of [char|tag] tokens
+    const tokens = [];
     if (fullText.includes('<')) {
-      const tokens = [];
-      const regex = /(<[^>]+>|[^<]+)/g;
-      let m;
-      while ((m = regex.exec(fullText)) !== null) {
-        tokens.push({ isTag: m[0].startsWith('<'), text: m[0] });
-      }
-
-      let tIdx = 0;
-      let cIdx = 0;
-      let builtHtml = '';
-
-      _cursorEl = document.createElement('span');
-      _cursorEl.className = 'ryan-cursor';
-      textEl.appendChild(_cursorEl);
-
-      function tickHtml() {
-        if (tIdx >= tokens.length) {
-          _typing = false;
-          textEl.innerHTML = fullText;
-          if (_cursorEl && _cursorEl.parentNode) _cursorEl.parentNode.removeChild(_cursorEl);
-          if (onComplete) onComplete();
-          return;
-        }
-
-        const tok = tokens[tIdx];
-        if (tok.isTag) {
-          builtHtml += tok.text;
-          tIdx++;
-          tickHtml();
-          return;
-        }
-
-        if (cIdx < tok.text.length) {
-          builtHtml += tok.text[cIdx];
-          cIdx++;
-          textEl.innerHTML = builtHtml;
-          textEl.appendChild(_cursorEl);
-          if (cIdx % 2 === 0 && typeof AudioManager !== 'undefined' && AudioManager.playNarratorTyping) {
-            AudioManager.playNarratorTyping();
-          }
-          _typeTimeout = setTimeout(tickHtml, CHAR_DELAY);
+      const re = /(<[^>]+>|[^<]+)/g;
+      let mm;
+      while ((mm = re.exec(fullText)) !== null) {
+        if (mm[0].startsWith('<')) {
+          tokens.push({ tag: true, val: mm[0] });
         } else {
-          tIdx++;
-          cIdx = 0;
-          tickHtml();
+          for (const ch of mm[0]) tokens.push({ tag: false, val: ch });
         }
       }
-      tickHtml();
-      return;
+    } else {
+      for (const ch of fullText) tokens.push({ tag: false, val: ch });
     }
 
-    let i = 0;
+    let pos      = 0;          // next token index
+    let built    = '';         // HTML string built so far
+    let lastTime = null;       // timestamp of last rAF callback
+    let rafId    = null;       // current rAF handle
 
     _cursorEl = document.createElement('span');
     _cursorEl.className = 'ryan-cursor';
-    textEl.appendChild(_cursorEl);
 
-    function tick() {
-      if (i >= fullText.length) {
+    function rafTick(ts) {
+      if (!_typing) return;   // cancelled by skip/dismiss
+
+      if (lastTime === null) lastTime = ts;
+      const elapsed = ts - lastTime;
+
+      // How many chars to print this frame (at least 1 so it always moves)
+      let toAdd = Math.max(1, Math.round(elapsed / CHAR_DELAY));
+
+      while (toAdd > 0 && pos < tokens.length) {
+        const t = tokens[pos];
+        pos++;
+        if (t.tag) {
+          built += t.val;   // insert whole HTML tag instantly, no count
+        } else {
+          built += t.val;
+          toAdd--;
+        }
+      }
+
+      textEl.innerHTML = built;
+      textEl.appendChild(_cursorEl);
+      lastTime = ts;
+
+      if (pos < tokens.length) {
+        rafId = requestAnimationFrame(rafTick);
+        _typeTimeout = { _raf: true, _id: rafId };
+      } else {
+        // Done — clean up cursor and fire callback
         _typing = false;
+        textEl.innerHTML = fullText;   // ensure final HTML is exact
         if (_cursorEl && _cursorEl.parentNode) _cursorEl.parentNode.removeChild(_cursorEl);
         if (onComplete) onComplete();
-        return;
       }
-      textEl.insertBefore(document.createTextNode(fullText[i]), _cursorEl);
-      if (i % 2 === 0 && typeof AudioManager !== 'undefined' && AudioManager.playNarratorTyping) {
-        AudioManager.playNarratorTyping();
-      }
-      i++;
-      _typeTimeout = setTimeout(tick, CHAR_DELAY);
     }
-    tick();
+
+    rafId = requestAnimationFrame(rafTick);
+    _typeTimeout = { _raf: true, _id: rafId };
   }
 
   function _skipTyping() {
     if (!_typing) return;
-    clearTimeout(_typeTimeout);
+    (function(h){ if(h && h._raf){ cancelAnimationFrame(h._id); } else { clearTimeout(h); } })(_typeTimeout);
     _typing = false;
     const textEl = el().text;
     if (!textEl) return;
@@ -270,8 +265,23 @@ const RyanGuide = (() => {
 
     if (!messages || messages.length === 0) return;
 
+    // ── Single-show guard: "Take a closer look at this message..." only shows ONCE per session ──
+    if (Array.isArray(messages)) {
+      const hasCloserLook = messages.some(function(m) {
+        const txt = (typeof m === 'string') ? m : (m && m.text ? String(m.text) : '');
+        return txt.includes('Take a closer look at this message') ||
+               txt.includes('Always think carefully before you report or mark an email as legitimate!');
+      });
+      if (hasCloserLook) {
+        if (window._ch1CloserLookDialogueShown) {
+          return; // Strictly show once only!
+        }
+        window._ch1CloserLookDialogueShown = true;
+      }
+    }
+
     // ── FIX: Clear any running typing animation to prevent race conditions ──
-    clearTimeout(_typeTimeout);
+    (function(h){ if(h && h._raf){ cancelAnimationFrame(h._id); } else { clearTimeout(h); } })(_typeTimeout);
     clearTimeout(_dismissTimer);
     _dismissTimer = null;
     _typing = false;
@@ -317,7 +327,7 @@ const RyanGuide = (() => {
 
     // If still typing, stop immediately and show full text
     if (_typing) {
-      clearTimeout(_typeTimeout);
+      (function(h){ if(h && h._raf){ cancelAnimationFrame(h._id); } else { clearTimeout(h); } })(_typeTimeout);
       _typing = false;
       const textEl = el().text;
       const step = _queue[0];
@@ -365,7 +375,7 @@ const RyanGuide = (() => {
   }
 
   function dismiss(skipCallback = false) {
-    clearTimeout(_typeTimeout);
+    (function(h){ if(h && h._raf){ cancelAnimationFrame(h._id); } else { clearTimeout(h); } })(_typeTimeout);
     clearTimeout(_dismissTimer);
     _dismissTimer = null;
     _typing = false;
@@ -416,10 +426,10 @@ const RYAN_DIALOGUES = {
 
   // Welcome on initial desktop display
   welcome: [
-    { text: "Hi! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions, and it's great to have you on board!", state: 'speaking' },
-    { text: "I'll be guiding you through your training and showing you how to spot common cyber threats starting today!", state: 'speaking' },
+    { text: "Hi. I'm Ryan, your IT support mentor here at Technical Solutions. It's great to have you on board!", state: 'speaking' },
+    { text: "I'll be guiding you through your training and showing you how to spot common cyber threats.", state: 'speaking' },
     { text: "Your first mission is to investigate suspicious emails in your company inbox. Think carefully before taking action, just like you would in a real workplace.", state: 'thinking' },
-    { text: "First, open your Detective's Notes on your desktop to review your tips and checklist. Opening your notes will unlock your first email! 💪", state: 'success' }
+    { text: "First, open your Detective's Notes on your desktop to review your tips and checklist. Opening your notes will unlock your first email.", state: 'success' }
   ],
 
   // First time opening Gmail
@@ -430,15 +440,14 @@ const RYAN_DIALOGUES = {
 
   // First time opening Detective Notes / Sticky Notes
   stickyNoteOpen: [
-    { text: "Good observation checking your notes! 📒 Keep this checklist open as your guide.", state: 'speaking' },
-    { text: "I've sent your first email to Zmail. Open your Inbox (1 new email) to start investigating!", state: 'thinking' }
+    { text: "Good observation checking your notes. Keep this checklist open as your guide.", state: 'speaking' }
   ],
 
   // First email detail view
   firstEmailRead: [
     { text: "Take a closer look at this message. Always think carefully before you report or mark an email as legitimate!", state: 'thinking' },
     { text: "Does the sender's actual address match the company they claim to represent? What stands out to you?", state: 'speaking' },
-    { text: "Remember: you need to add a flag to report as phishing. Click '🚩 Flag Mode' to tag suspicious clues first!", state: 'speaking' }
+    { text: "Remember: you need to add a flag to report as phishing. Click 'Flag Mode' to tag suspicious clues first.", state: 'speaking' }
   ],
 
   // Player clicked an unverified or phishing link

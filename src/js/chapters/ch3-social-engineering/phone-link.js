@@ -1228,6 +1228,14 @@ function sendPlayerGcMessage(text) {
     showToast(`💬 Sent: "${msgText}"`, 'success');
   }
 
+  // Notify Chapter 1 post-award checklist that player sent a message in Phone Link
+  if (typeof window._notifyPostAwardHelloSent === 'function') {
+    const isHello = (msgText || '').toLowerCase().includes('hello');
+    if (isHello || (curChar && curChar.id === 'alex')) {
+      window._notifyPostAwardHelloSent();
+    }
+  }
+
   // Trigger simulated teammate replies
   triggerTeammateReplies(curChar, msgText);
 }

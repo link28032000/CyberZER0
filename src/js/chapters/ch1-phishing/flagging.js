@@ -220,11 +220,15 @@ function toggleFlagMode() {
     if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
       PhishTutorial.notify('flagModeOn');
     } else if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
-      RyanGuide.once('flag-mode-guide', function() {
-        setTimeout(function() {
-          RyanGuide.speak(RYAN_DIALOGUES.firstEmailRead);
-        }, 200);
-      });
+      const isFirstEmail = (gameState.currentEmail === 0 && (!gameState.emailResults || gameState.emailResults.length === 0));
+      if (isFirstEmail && !window._ch1CloserLookDialogueShown) {
+        window._ch1CloserLookDialogueShown = true;
+        RyanGuide.once('flag-mode-guide', function() {
+          setTimeout(function() {
+            RyanGuide.speak(RYAN_DIALOGUES.firstEmailRead);
+          }, 200);
+        });
+      }
     }
   } else {
     btn.classList.remove('active');
@@ -322,9 +326,9 @@ function ryanExplainFlag(flagType, flagText, flagLabel) {
     { text: `Good find! You flagged "${flagLabel}". Every red flag you identify builds a stronger case.`, state: 'speaking' }
   ];
 
-  // First email only: guide the player that they need to submit Phishing or Non-phishing
+  // First email only: guide the player that they need to submit Phishing
   slides.push({
-    text: "Now that you've flagged evidence, you need to submit your verdict! Click 'Phishing' if you believe this email is an attack, or choose safe if you think it is legitimate.",
+    text: "Now that you've flagged the evidence, click 'Phishing' to report this threat and complete your first case!",
     state: 'success'
   });
 
@@ -386,7 +390,14 @@ function getEmailMissedFlagInfo(email, evType) {
   if (evType === 'fake_sender') {
     label = 'FAKE SENDER';
     icon = '👤';
-    text = email.sender ? `${email.sender.name} <${email.sender.address}>` : 'Sender Address';
+    if (email.sender) {
+      const sName = email.sender.name || 'Unknown Sender';
+      const sAddr = email.sender.address || email.sender.email || '';
+      // Ensure <email@domain> is escaped as &lt;...&gt; so the browser displays the email address @
+      text = sAddr ? `${sName} &lt;${sAddr}&gt;` : sName;
+    } else {
+      text = 'Sender Address';
+    }
     if (email.capybaraAnalysis && email.capybaraAnalysis.fake_sender && email.capybaraAnalysis.fake_sender.missed) {
       reason = email.capybaraAnalysis.fake_sender.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
     } else {
@@ -507,6 +518,7 @@ function renderEvidencePanel() {
               <span class="evidence-item-type">${mInfo.label}</span>
             </div>
             <span class="evidence-item-text">${mInfo.text}</span>
+            ${mInfo.reason ? `<div class="evidence-item-hint">${mInfo.reason}</div>` : ''}
           </div>`;
         list.appendChild(item);
       });

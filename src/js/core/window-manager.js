@@ -339,10 +339,16 @@ function closeApp(appName) {
   }
   if (appName === 'browser') {
     const activeTab = typeof getActiveTab === 'function' ? getActiveTab() : null;
-    const wasPhish = activeTab && typeof isPhishingUrl === 'function' && isPhishingUrl(activeTab.url);
+    const isPhishTab = activeTab && typeof isPhishingUrl === 'function' && isPhishingUrl(activeTab.url);
+    const hasAnyPhishTab = Array.isArray(window.browserTabs) && window.browserTabs.some(t => typeof isPhishingUrl === 'function' && isPhishingUrl(t.url));
+    const wasPhish = isPhishTab || hasAnyPhishTab;
     if (wasPhish) {
-      if (typeof showToast === 'function') {
-        showToast('🛡️ Good defensive practice: You closed the browser to exit the phishing site!', 'success');
+      // Only show this good defensive practice toast ONCE per Chapter 1 session
+      if (!window._phishBrowserCloseToastShown) {
+        window._phishBrowserCloseToastShown = true;
+        if (typeof showToast === 'function') {
+          showToast('🛡️ Good defensive practice: You closed the browser to exit the phishing site!', 'success');
+        }
       }
     }
     if (typeof updateBrowserPhishingNotice === 'function') {

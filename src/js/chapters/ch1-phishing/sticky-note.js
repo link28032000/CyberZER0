@@ -14,6 +14,7 @@ window._postAwardTasks      = {
   videoFolderOpen:  false,  // navigated to Videos folder
   videoPlayed:      false,  // watched required video completely (Chapter 1)
   gcOpened:         false,  // opened the "new intern team 2027" GC in Phone Link
+  helloSent:        false,  // sent "Hello po." in newbie GC
   postTestDone:     false   // completed post-test
 };
 
@@ -148,9 +149,15 @@ window.quickOpenChecklistTask = function() { /* no-op */ };
 window._notifyPostAwardAppOpen = function(appName) {
   if (!window._awardClaimed) return;
   const t = window._postAwardTasks;
-  // Do NOT auto-check browser here — only real navigation counts (see _notifyPostAwardBrowserNav)
+  if (appName === 'browser') {
+    t.browserOpened = true;
+    // Note: Do NOT complete checklist on opening browser; user must search in browser!
+  }
   if (appName === 'folder') { t.explorerOpened = true; }
-  // Chapter 1 videoplayer must be watched completely to complete task — do not auto-check on open
+  if (appName === 'comms') {
+    t.phoneLinkOpened = true;
+    // Note: Do NOT complete checklist on opening comms; user must send "Hello po."!
+  }
   _refreshPostAwardChecklist();
 };
 
@@ -158,6 +165,7 @@ window._notifyPostAwardAppOpen = function(appName) {
 window._notifyPostAwardBrowserNav = function(url) {
   if (!window._awardClaimed) return;
   const t = window._postAwardTasks;
+  t.browserOpened = true;
   const trimmed = (url || '').trim();
   if (!trimmed || trimmed === 'about:blank' || trimmed === '#') return;
 
@@ -172,9 +180,13 @@ window._notifyPostAwardBrowserNav = function(url) {
   // User must actually search: verify it is a search query in Google
   const isSearch = /^https?:\/\/(www\.)?google\.com\/search/i.test(trimmed);
   if (isSearch) {
+    const wasAlreadyDone = t.phishingSearched;
     t.phishingSearched = true;
-    _refreshPostAwardChecklist();
+    if (!wasAlreadyDone && typeof showToast === 'function') {
+      showToast('🌐 Searched in browser! (+Checklist updated)', 'success');
+    }
   }
+  _refreshPostAwardChecklist();
 };
 
 // Called by switchExplorerFolder wrapper
@@ -202,17 +214,82 @@ window._notifyPostAwardVideoPlay = function() {
 window._notifyPostAwardGcOpen = function() {
   if (!window._awardClaimed) return;
   window._postAwardTasks.gcOpened = true;
+  // Opening the GC alone does NOT mark the checklist task done; player must send "Hello po."!
   _refreshPostAwardChecklist();
 };
+
+// Called when player sends "Hello po." in newbie GC
+window._notifyPostAwardHelloSent = function() {
+  if (!window._awardClaimed) return;
+  const t = window._postAwardTasks;
+  const wasAlreadyDone = t.helloSent;
+  t.helloSent = true;
+  if (!wasAlreadyDone && typeof showToast === 'function') {
+    showToast('💬 "Hello po." sent! (+Checklist updated)', 'success');
+  }
+  _refreshPostAwardChecklist();
+};
+
+// Dynamic hook to ensure any message sent in Phone Link triggers helloSent
+(function _initPhoneLinkChecklistHook() {
+  function hookSend() {
+    if (typeof window.sendPlayerGcMessage === 'function' && !window.sendPlayerGcMessage._postAwardHooked) {
+      const origSend = window.sendPlayerGcMessage;
+      window.sendPlayerGcMessage = function(text) {
+        const res = origSend.apply(this, arguments);
+        try {
+          if (typeof window._notifyPostAwardHelloSent === 'function') {
+            const msg = (typeof text === 'string' ? text : '').toLowerCase();
+            if (msg.includes('hello') || !msg || typeof loadNewbieGcState === 'function') {
+              window._notifyPostAwardHelloSent();
+            }
+          }
+        } catch(e) {}
+        return res;
+      };
+      window.sendPlayerGcMessage._postAwardHooked = true;
+    }
+  }
+  hookSend();
+  window.addEventListener('load', hookSend);
+  document.addEventListener('DOMContentLoaded', hookSend);
+})();
+
+// Helper to determine if player has sent "hello" in GC
+function _isGcHelloSent() {
+  const t = window._postAwardTasks;
+  if (t && t.helloSent) return true;
+  if (typeof loadNewbieGcState === 'function') {
+    try {
+      const s = loadNewbieGcState();
+      if (s && Array.isArray(s.playerMessages)) {
+        const hasHello = s.playerMessages.some(m =>
+          (m.from === 'alex' || m.isPlayer) && (m.text || '').toLowerCase().includes('hello')
+        );
+        if (hasHello) {
+          if (t) t.helloSent = true;
+          return true;
+        }
+      }
+    } catch(e) {}
+  }
+  return false;
+}
 
 // Check if all post-award checklist tasks are complete
 function _allChecklistTasksDone() {
   const t = window._postAwardTasks;
   if (!t) return false;
-  // User must actually search in browser — opening phishing links does NOT count
+
+  // Browser: Must have performed a search
   const browserDone = !!t.phishingSearched;
+
+  // Video: Must have watched the awareness video completely without skipping
   const videoDone   = !!t.videoPlayed;
-  const gcDone      = !!t.gcOpened;
+
+  // Phone Link: Must have sent "Hello po."
+  const gcDone      = _isGcHelloSent();
+
   return !!(browserDone && videoDone && gcDone);
 }
 
@@ -276,7 +353,7 @@ function _buildPostAwardChecklistHTML() {
 
   const browserDone = !!t.phishingSearched;
   const videoDone   = !!t.videoPlayed;
-  const gcDone      = !!t.gcOpened;
+  const gcDone      = _isGcHelloSent();
 
   const tracker = window._ch1VideoTracker || {};
   if (!tracker.duration) {
@@ -291,40 +368,37 @@ function _buildPostAwardChecklistHTML() {
   const curFmt = _ch1FmtTime(curSec);
   const durFmt = durSec > 0 ? _ch1FmtTime(durSec) : '--:--';
 
-  let videoDesc = 'Open File Explorer → Videos folder → watch the awareness video.';
+  let videoDesc = 'Watch video in File Explorer → Videos.';
   let videoBadge = videoDone ? '✓ Done' : 'Pending';
 
   if (videoDone) {
     videoBadge = '✓ Done';
-    videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#4ade80;font-weight:600;">⏱ ${durFmt} / ${durFmt} (Completed)</div>`;
+    videoDesc = 'Awareness video watched completely.';
   } else if (durSec > 0) {
     if (tracker.hasSkippedForward) {
-      videoBadge = `${curFmt} / ${durFmt}`;
-      videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#f59e0b;font-weight:500;">⏱ ${curFmt} / ${durFmt} (Skipping detected, please replay from the start)</div>`;
+      videoBadge = 'Replay';
+      videoDesc = 'Skipping detected. Replay from the start.';
     } else if (curSec > 0) {
-      const pctWatch = Math.min(99, Math.round((curSec / durSec) * 100));
-      videoBadge = `${curFmt} / ${durFmt}`;
-      videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#38bdf8;font-weight:500;">⏱ ${curFmt} / ${durFmt} (${pctWatch}%)</div>`;
+      videoBadge = curFmt + ' / ' + durFmt;
+      videoDesc = 'Watching awareness video...';
     } else {
-      videoBadge = `0:00 / ${durFmt}`;
-      videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#8b9bb4;">⏱ 0:00 / ${durFmt} (Watch completely from start to end)</div>`;
+      videoBadge = '0:00 / ' + durFmt;
+      videoDesc = 'Watch video in File Explorer → Videos.';
     }
-  } else {
-    videoDesc += `<div class="sn-video-progress-line" style="margin-top:3px;font-size:11px;font-family:var(--font-mono,'Consolas',monospace);color:#8b9bb4;">⏱ 0:00 / 0:00 (Watch completely from start to end)</div>`;
   }
 
   const tasks = [
     {
       id: 'browser',
       icon: '🌐',
-      label: 'Open Browser &amp; Try to Search',
-      desc: 'Open the Browser and search to explore cybersecurity tips.',
+      label: 'Open Browser &amp; Search',
+      desc: browserDone ? 'Search performed in browser.' : 'Search for cyber tips in browser.',
       done: browserDone
     },
     {
       id: 'explorer',
       icon: '📁',
-      label: 'Open File Explorer &amp; Watch Video',
+      label: 'Watch Awareness Video',
       desc: videoDesc,
       badgeText: videoBadge,
       done: videoDone
@@ -332,8 +406,8 @@ function _buildPostAwardChecklistHTML() {
     {
       id: 'phonelink',
       icon: '💬',
-      label: 'Open Phone Link &amp; Open Your GC',
-      desc: 'Open Phone Link → open team GC → send "Hello po." to Ryan.',
+      label: 'Open Phone Link &amp; Say "Hello po"',
+      desc: gcDone ? '"Hello po." sent in team GC.' : 'Open team GC and send "Hello po."',
       done: gcDone
     }
   ];
@@ -341,37 +415,37 @@ function _buildPostAwardChecklistHTML() {
   const doneCount = tasks.filter(task => task.done).length;
   const pct = Math.round((doneCount / tasks.length) * 100);
 
-  let html = `
-    <div style="display:flex;flex-direction:column;gap:6px;overflow:hidden;">
-      <div class="sn-progress-card">
-        <div class="sn-progress-header">
-          <span class="sn-progress-title">&#128203; Mission Checklist</span>
-          <span class="sn-progress-count">${doneCount} of ${tasks.length} Done</span>
-        </div>
-        <div class="sn-progress-bar-track">
-          <div class="sn-progress-bar-fill" style="width:${pct}%;"></div>
-        </div>
-      </div>
-      <ul class="sn-checklist">`;
+  let html =
+    '<div style="display:flex;flex-direction:column;gap:6px;overflow:hidden;">' +
+      '<div class="sn-progress-card">' +
+        '<div class="sn-progress-header">' +
+          '<span class="sn-progress-title">📋 Checklist</span>' +
+          '<span class="sn-progress-count">' + doneCount + ' of ' + tasks.length + ' Done</span>' +
+        '</div>' +
+        '<div class="sn-progress-bar-track">' +
+          '<div class="sn-progress-bar-fill" style="width:' + pct + '%;"></div>' +
+        '</div>' +
+      '</div>' +
+      '<ul class="sn-checklist">';
 
   tasks.forEach(function(task) {
     const badgeText = task.badgeText || (task.done ? '&#10003; Done' : 'Pending');
-    html += `
-        <li class="sn-ach-item${task.done ? ' sn-ach-done' : ''}">
-          <div class="sn-checkbox${task.done ? ' checked' : ''}" aria-hidden="true">${task.done ? '&#10003;' : ''}</div>
-          <div class="sn-ach-body">
-            <div class="sn-ach-header-row">
-              <span class="sn-ach-label">${task.icon} ${task.label}</span>
-              <span class="sn-ach-prog-badge${task.done ? ' done' : ''}">${badgeText}</span>
-            </div>
-            <div class="sn-ach-desc">${task.desc}</div>
-          </div>
-        </li>`;
+    html +=
+      '<li class="sn-ach-item' + (task.done ? ' sn-ach-done' : '') + '">' +
+        '<div class="sn-checkbox' + (task.done ? ' checked' : '') + '" aria-hidden="true">' + (task.done ? '&#10003;' : '') + '</div>' +
+        '<div class="sn-ach-body">' +
+          '<div class="sn-ach-header-row">' +
+            '<span class="sn-ach-label">' + task.icon + ' ' + task.label + '</span>' +
+            '<span class="sn-ach-prog-badge' + (task.done ? ' done' : '') + '">' + badgeText + '</span>' +
+          '</div>' +
+          '<div class="sn-ach-desc">' + task.desc + '</div>' +
+        '</div>' +
+      '</li>';
   });
 
-  html += `
-      </ul>
-    </div>`;
+  html +=
+      '</ul>' +
+    '</div>';
 
   return html;
 }
@@ -936,6 +1010,7 @@ function closePhishingTrophy() {
     videoFolderOpen:  false,
     videoPlayed:      false,
     gcOpened:         false,
+    helloSent:        false,
     postTestDone:     false
   };
   window._ch1VideoTracker = {
@@ -1562,10 +1637,12 @@ function startPostTestFromSticky(event) {
   if (window._awardClaimed && !_allChecklistTasksDone()) {
     const t = window._postAwardTasks || {};
     const browserDone = !!t.phishingSearched;
+    const videoDone   = !!t.videoPlayed;
+    const gcDone      = _isGcHelloSent();
     const pending = [];
-    if (!browserDone)    pending.push('🌐 Open Browser & Try to Search');
-    if (!t.videoPlayed)  pending.push('📁 Watch awareness video in File Explorer');
-    if (!t.gcOpened)     pending.push('💬 Open Phone Link & open your GC');
+    if (!browserDone) pending.push('🌐 Open Browser & Search');
+    if (!videoDone)   pending.push('📁 Watch awareness video');
+    if (!gcDone)      pending.push('💬 Say "Hello po" in Phone Link');
     if (typeof showToast === 'function') {
       showToast('⚠️ Complete the checklist first: ' + pending.join(' • '), 'warning');
     }

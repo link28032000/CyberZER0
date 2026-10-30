@@ -183,6 +183,8 @@ function startMission(openGmail = false) {
   ch1MistakeCount              = 0;
   ch1InvestigationTutorialDone = false; // Reset investigation tutorial flag
   ch1CloserLookWarnedOnce      = false; // Reset closer look warning tracker
+  window._ch1CloserLookDialogueShown = false;
+  window._downloadAttachmentWarnedOnce = false;
   ch1FlaggedLegitWarnedOnce    = false;
   ch1SecondEmailNotesHintDone  = false;
   window._stickyHintShownOnce  = false;
@@ -300,58 +302,56 @@ function startMission(openGmail = false) {
       // into the 20-question pre-test. After the test he reacts to the score
       // (see RYAN_PRETEST_REACTIONS) and then bridges into the lesson.
       var ryanIntroPart1 = [
-        { text: "Hi there! 👋 I'm Ryan, your cybersecurity mentor here at Technical Solutions. Welcome to the team, I'm really glad you're here.", state: 'speaking' },
-        { text: "Before we dive in, I'd like to know where you're starting from. That way I can guide you at a pace that feels right for you.", state: 'speaking' },
-        { text: "So I put together twenty quick questions about staying safe online to help me see where you are starting from.", state: 'thinking' },
-        { text: "There's no pass or fail, and nobody is judging you. If you're not sure about one, just pick your best guess. Honest answers help me the most.", state: 'speaking' },
-        { text: "Take your time and breathe. Whenever you're ready, let's begin!", state: 'success', label: "Let's Begin" }
+        { text: "Hi there. I'm Ryan, your IT support mentor here at Technical Solutions. Welcome to the team! I'm glad you're here.", state: 'speaking' },
+        { text: "Before we dive in, I want to get a sense of what you already know so I can guide you at the right pace.", state: 'speaking' },
+        { text: "I've put together twenty quick questions on common online threats to establish your baseline.", state: 'thinking' },
+        { text: "There's no pass or fail, and nobody is judging you. If you're unsure about an answer, just make your best guess. Honest answers help us most.", state: 'speaking' },
+        { text: "Take your time and breathe. Whenever you're ready, let's begin.", state: 'success', label: "Let's Begin" }
       ];
 
       // What Ryan says right after the result screen, by score tier
       var ryanReactions = {
         perfect: [
-          { text: "Twenty out of twenty! Wow, that is really impressive.", state: 'success' },
-          { text: "You clearly know your stuff already. I will still walk you through how attackers think, because the best defenders never stop learning.", state: 'speaking' }
+          { text: "Twenty out of twenty! Outstanding work.", state: 'success' },
+          { text: "You clearly have strong security instincts already. We will still explore how attackers operate in practice, because the best defenders always stay sharp.", state: 'speaking' }
         ],
         great: [
-          { text: "Great job! You already know a good amount, and that is a solid start.", state: 'success' },
-          { text: "A few things might still feel a bit unclear, and that is perfectly fine. We will work through them together.", state: 'speaking' }
+          { text: "Great job! You have a solid grasp of cybersecurity basics.", state: 'success' },
+          { text: "A few tricky scenarios might still need fine-tuning, and that is completely normal. We will work through them together.", state: 'speaking' }
         ],
         ok: [
-          { text: "Nice work. You have a good base to build on.", state: 'success' },
-          { text: "Some of these topics might be new to you, and that is exactly why I am here. We will go step by step, no rush at all.", state: 'speaking' }
+          { text: "Good effort on the pretest. You have a workable foundation to build on.", state: 'success' },
+          { text: "Some of these concepts may be brand new to you, and that is exactly why I'm here. We will take everything step by step.", state: 'speaking' }
         ],
         low: [
-          { text: "Thank you for being honest. That is exactly what this test is for.", state: 'speaking' },
-          { text: "This score is just your starting point, not a measure of what you can do. Everyone begins somewhere.", state: 'speaking' },
-          { text: "Stay curious and keep at it, and you will be surprised how fast things click. I will be right here with you.", state: 'success' }
+          { text: "Thank you for answering honestly. That is exactly what this pretest is designed for.", state: 'speaking' },
+          { text: "This score is just a starting baseline, not a reflection of your potential. Everyone begins somewhere.", state: 'speaking' },
+          { text: "Stay curious, and you will be surprised how quickly everything starts to make sense. I'll be right beside you the whole way.", state: 'success' }
         ]
       };
 
       var ryanIntroPart2 = [
         // === Bridge from the pre-test into the lesson ===
-        { text: "Here is an important idea: cyber threats are not always about complicated technology.", state: 'thinking' },
-        { text: "Attackers often go after people directly, using trust, urgency, fear, curiosity, or plain deception.", state: 'concerned' },
+        { text: "Here is an important takeaway: cyber threats are rarely just about complex code or hacking tools.", state: 'thinking' },
+        { text: "Attackers usually target people directly, exploiting trust, urgency, fear, or simple curiosity.", state: 'concerned' },
         // === Common Threats ===
-        { text: "Remember the very first question on the test? Phishing. An attacker pretends to be someone you trust and tries to get you to click a link, open a file, or give away information.", state: 'speaking' },
-        { text: "Vishing is voice phishing. An attacker might call you pretending to be IT support, your manager, a bank, or someone else you trust.", state: 'speaking' },
-        { text: "Smishing is phishing through text messages or SMS.", state: 'speaking' },
-        { text: "Attackers also use malicious attachments, fake websites, impersonation, social engineering, and stolen passwords.", state: 'concerned' },
+        { text: "That brings us to phishing. An attacker impersonates a trusted entity to lure you into clicking a link, downloading a file, or sharing credentials.", state: 'speaking' },
+        { text: "When they attempt this through phone calls, it is called vishing. When it arrives through text messages, it is smishing.", state: 'speaking' },
+        { text: "Beyond fraudulent messages, attackers deploy weaponized attachments, spoofed login portals, and social engineering ploys.", state: 'concerned' },
         // === Why It Matters ===
-        { text: "Your account and your choices can affect more than just you.", state: 'thinking' },
-        { text: "One successful attack could expose company information, customer data, employee accounts, or important business systems.", state: 'concerned' },
-        { text: "Cybersecurity is not only an IT thing. Everyone has a role in keeping the organization safe.", state: 'speaking' },
-        { text: "Your awareness can help protect you, your coworkers, and the whole organization.", state: 'success' },
+        { text: "Your daily decisions have a real impact on our security perimeter.", state: 'thinking' },
+        { text: "A single compromised login can expose company records, client data, and internal networks.", state: 'concerned' },
+        { text: "Cybersecurity is not just an IT department task. Every team member serves as an active defender.", state: 'speaking' },
+        { text: "Your vigilance helps keep you, your teammates, and the entire organization safe.", state: 'success' },
         // === STOP → CHECK → VERIFY → ACT ===
-        { text: "Whenever something feels off, remember four simple steps. They cover most of the situations you will face.", state: 'thinking' },
-        { text: "STOP before reacting.", state: 'speaking' },
-        { text: "CHECK the details.", state: 'speaking' },
-        { text: "VERIFY through a trusted method.", state: 'speaking' },
-        { text: "Then ACT safely.", state: 'speaking' },
-        { text: "Do not let urgency make the decision for you.", state: 'concerned' },
+        { text: "Whenever an email or message feels slightly unusual, remember four simple steps.", state: 'thinking' },
+        { text: "First, STOP before reacting. Never let manufactured urgency force a hasty decision.", state: 'speaking' },
+        { text: "Second, CHECK the details. Inspect sender addresses, hover over links, and verify the context.", state: 'speaking' },
+        { text: "Third, VERIFY through an official, independent channel if anything seems off.", state: 'speaking' },
+        { text: "Fourth, ACT safely by reporting confirmed threats to IT.", state: 'speaking' },
         // === Transition to Zmail ===
-        { text: "Now let's put that to the test.", state: 'speaking' },
-        { text: "Open Zmail to start going through the incoming cases. You can also check your Detective's Notes on the desktop anytime for tips and your checklist.", state: 'thinking' }
+        { text: "Now, let's put these principles into practice.", state: 'speaking' },
+        { text: "Open Zmail on your desktop to begin reviewing incoming cases. You can also refer to your Sticky Notes anytime for tips and your checklist.", state: 'thinking' }
       ];
 
       var ryanFinishLesson = function() {
@@ -390,7 +390,7 @@ function startMission(openGmail = false) {
           }
         }
       });
-    }, 3000);
+    }, 2000);
   }
 
   if (openGmail) {

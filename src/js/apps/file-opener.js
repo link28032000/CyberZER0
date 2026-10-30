@@ -256,46 +256,46 @@ function runMalwareSimulation(file) {
   const simType = file.simType || 'virus';
   const simData = {
     virus: {
-      icon: '🦠',
-      name: 'Virus — File Infector',
+      icon: 'Virus',
+      name: 'Virus (File Infector)',
       color: '#ef4444',
       steps: [
-        '📂 Scanning for executable files on C:\\...',
-        '🔗 Attaching viral payload to notepad.exe...',
-        '🔗 Attaching viral payload to explorer.exe...',
-        '🔗 Attaching viral payload to winword.exe...',
-        '⚠️ Infected files will spread virus on next launch.',
-        '✅ Simulation complete — no real files were harmed.'
+        'Scanning for executable files on C:\\...',
+        'Attaching viral payload to notepad.exe...',
+        'Attaching viral payload to explorer.exe...',
+        'Attaching viral payload to winword.exe...',
+        'Infected files will spread virus on next launch.',
+        'Simulation complete. No real files were modified.'
       ],
-      desc: 'A <strong>Virus</strong> attaches itself to legitimate executable files. When those infected files are opened, the virus spreads to more files — just like a biological virus infecting cells.'
+      desc: 'A <strong>virus</strong> attaches itself to legitimate executable files. When an infected file is opened, the code executes and spreads to additional files on the system.'
     },
     worm: {
-      icon: '🐛',
-      name: 'Worm — Network Spreader',
+      icon: 'Worm',
+      name: 'Worm (Network Spreader)',
       color: '#f59e0b',
       steps: [
-        '🌐 Scanning local network for open shares...',
-        '🖥️ Found device: DESKTOP-PC02 (192.168.1.12)',
-        '🖥️ Found device: LAPTOP-ETHAN (192.168.1.15)',
-        '📤 Copying self to \\\\DESKTOP-PC02\\Users\\Public...',
-        '📤 Copying self to \\\\LAPTOP-ETHAN\\Downloads...',
-        '✅ Simulation complete — no real network traffic sent.'
+        'Scanning local network for open shares...',
+        'Found device: DESKTOP-PC02 (192.168.1.12)',
+        'Found device: LAPTOP-ETHAN (192.168.1.15)',
+        'Copying self to \\\\DESKTOP-PC02\\Users\\Public...',
+        'Copying self to \\\\LAPTOP-ETHAN\\Downloads...',
+        'Simulation complete. No real network traffic was sent.'
       ],
-      desc: 'A <strong>Worm</strong> spreads automatically across networks without any user action. Unlike a virus, it does not need to attach to a file — it copies itself directly to other devices.'
+      desc: 'A <strong>worm</strong> spreads across networks automatically. Unlike a virus, it does not require a host file or user interaction to copy itself to other devices.'
     },
     trojan: {
-      icon: '🐴',
-      name: 'Trojan Horse — Hidden Payload',
+      icon: 'Trojan',
+      name: 'Trojan Horse (Disguised Payload)',
       color: '#8b5cf6',
       steps: [
-        '🎭 Disguised as: "FreeGameInstaller.exe"',
-        '🔓 Opening backdoor on port 4444...',
-        '📡 Connecting to remote C2 server: 185.220.x.x...',
-        '📤 Exfiltrating: Documents\\passwords.txt',
-        '📤 Exfiltrating: AppData\\Chrome\\Login Data',
-        '✅ Simulation complete — no real data was stolen.'
+        'Disguised as: "FreeGameInstaller.exe"',
+        'Opening backdoor on port 4444...',
+        'Connecting to remote C2 server: 185.220.x.x...',
+        'Exfiltrating: Documents\\passwords.txt',
+        'Exfiltrating: AppData\\Chrome\\Login Data',
+        'Simulation complete. No real data was stolen.'
       ],
-      desc: 'A <strong>Trojan Horse</strong> disguises itself as a legitimate program. Once opened, it secretly installs a backdoor, giving attackers remote access to steal files and passwords.'
+      desc: 'A <strong>Trojan horse</strong> disguises itself as legitimate software. Once opened, it silently installs a backdoor that allows attackers to access files and credentials.'
     }
   };
 

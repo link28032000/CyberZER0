@@ -675,7 +675,7 @@ function renderEmailContent(email) {
       <span class="email-meta-label">FROM</span>
       <span class="email-meta-value">
         <span class="${senderClass}" data-flag-id="sender" data-flag-type="fake_sender" data-flag-label="FAKE SENDER"
-          data-flag-text="${email.sender.address}"
+          data-flag-text="${email.sender.name} &lt;${email.sender.address}&gt;"
           onclick="handleFlaggableClick(this)">${email.sender.name} &lt;${email.sender.address}&gt;</span>
       </span>
     </div>

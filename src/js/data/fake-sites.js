@@ -231,10 +231,6 @@ const FAKE_SITES = {
                  text-align:center; font-size:11px; color:#475569; }
 </style>
 <div class="fakesite" style="background:#0f172a;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>business-account-verify.net</code> is NOT <code>business.com</code> &mdash; fake corporate phishing portal!</span>
-  </div>
   <div class="corp-page">
     <div class="corp-topbar">
       <div class="corp-scan"></div>
@@ -314,10 +310,6 @@ const FAKE_SITES = {
   .ms-footer a:hover { text-decoration:underline; }
 </style>
 <div class="fakesite" style="background:linear-gradient(135deg,#f3d9d5 0%,#dce8f5 30%,#d5ecd5 60%,#f0e6d0 100%);">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>m1crosoft-account-verify.com</code> uses digit &ldquo;1&rdquo; not letter &ldquo;i&rdquo;! Real Microsoft = <code>microsoft.com</code>.</span>
-  </div>
   <div class="ms-page">
     <div class="ms-main">
       <div class="ms-card">
@@ -391,10 +383,6 @@ const FAKE_SITES = {
   .bk-footer a { color:#d4a0a0; text-decoration:none; margin:0 6px; }
 </style>
 <div class="fakesite" style="background:#f5f5f5;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>bankng-secure-verify.xyz</code> is NOT <code>bpi.com.ph</code> &mdash; misspelled domain &amp; fake <code>.xyz</code> TLD!</span>
-  </div>
   <div class="bk-page">
     <header style="background:linear-gradient(90deg,#8a0011,#b3001b);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(138,0,17,.4);">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -487,10 +475,6 @@ const FAKE_SITES = {
                text-align:center; font-size:11px; color:#94a3b8; }
 </style>
 <div class="fakesite" style="background:#f8fafc;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>business-it-support.com</code> is NOT <code>business.com</code> &mdash; spear-phishing domain!</span>
-  </div>
   <div class="it-page">
     <header class="it-header">
       <div class="it-logo">&#128737;&#65039; Business Inc. &mdash; IT Security <span class="it-logo-b">COMPLIANCE</span></div>
@@ -565,10 +549,6 @@ const FAKE_SITES = {
   .bpi-footer a { color:#d4a0a0; text-decoration:none; margin:0 6px; }
 </style>
 <div class="fakesite" style="background:#f5f5f5;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>bpi-online-security.com</code> is NOT <code>bpi.com.ph</code> &mdash; fake BPI phishing site!</span>
-  </div>
   <div class="bpi-page">
     <header class="bpi-hdr">
       <div class="bpi-logo">
@@ -647,10 +627,6 @@ const FAKE_SITES = {
   .pp2-footer a { color:#0070ba; text-decoration:none; }
 </style>
 <div class="fakesite" style="background:#f5f7fa;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>paypal-account-check.com</code> is NOT <code>paypal.com</code> &mdash; fake PayPal clone!</span>
-  </div>
   <div class="pp2-page">
     <div class="pp2-card">
       <div class="pp2-logo">
@@ -733,10 +709,6 @@ const FAKE_SITES = {
                text-align:center; font-size:11px; color:#9ca3af; }
 </style>
 <div class="fakesite" style="background:#f0f4ff;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>gcash-claim-rewards.com</code> is a fake GCash MPIN harvesting scam! Real GCash = <code>gcash.com</code>.</span>
-  </div>
   <div class="gc-page">
     <header class="gc-hdr">
       <div class="gc-logo">
@@ -878,10 +850,6 @@ const FAKE_SITES = {
   .gv-footer a { color:#005cfc; text-decoration:none; margin:0 6px; }
 </style>
 <div class="fakesite" style="background:#f0f4ff;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text"><strong>Quishing Attack!</strong> This QR code brought you to <code>gcash-secure-verification.com</code> &mdash; NOT <code>gcash.com.ph</code>! Think before you scan!</span>
-  </div>
   <div class="gv-page">
 
     <header class="gv-hdr">
@@ -1014,10 +982,6 @@ ${_NF_AD_STYLES}
                text-align:center; font-size:11px; color:#475569; }
 </style>
 <div class="fakesite" style="background:#0f172a;">
-  <div class="phish-sim-banner">
-    <span class="phish-banner-icon">&#128680;</span>
-    <span class="phish-banner-text">URL <code>northfield-scholarship.com</code> is distributing malware disguised as a PDF (.pdf.exe)!</span>
-  </div>
   <div class="nf-page">
     <header class="nf-hdr">
       <div class="nf-logo">&#127891; Northfield Scholarship Foundation <span style="font-size:10px;font-weight:400;color:#64748b;">(SIMULATED MALICIOUS DOMAIN)</span></div>

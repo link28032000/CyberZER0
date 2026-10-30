@@ -49,19 +49,18 @@ function updateBrowserPhishingNotice(isPhishing, url) {
   }
 }
 
-const _lastPhishAwarenessTime = {};
+// Fires ONCE for the very first phishing site visit — all others are silent
+let _phishAwarenessShown = false;
 
 function triggerRyanPhishingAwareness(url) {
   if (typeof RyanGuide === 'undefined') return;
   const curCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
   if (curCat !== 'phishing') return;
 
+  // Show dialogue ONCE ever (first phishing site only) — all others are silent
+  if (_phishAwarenessShown) return;
+  _phishAwarenessShown = true;
   const host = extractHostFromUrl(url);
-  const now = Date.now();
-  if (_lastPhishAwarenessTime[host] && (now - _lastPhishAwarenessTime[host] < 20000)) {
-    return; // Prevent duplicate rapid triggers on tab switches
-  }
-  _lastPhishAwarenessTime[host] = now;
 
   const lower = (url || '').toLowerCase();
   let dialogue;
@@ -109,18 +108,23 @@ function triggerRyanPhishingAwareness(url) {
   }, 450);
 }
 
+// Show the "good practice" close feedback ONCE only per session
+let _phishTabCloseFeedbackShown = false;
+
 function onPhishTabClosed() {
+  // Toast and dialogue only fire the very first time a phishing tab is closed
+  if (_phishTabCloseFeedbackShown) return;
+  _phishTabCloseFeedbackShown = true;
+
   if (typeof showToast === 'function') {
     showToast('🛡️ Excellent! You safely closed the suspicious phishing website.', 'success');
   }
   if (typeof RyanGuide !== 'undefined' && (window._currentChapterCategory || activeCategoryStory) === 'phishing') {
-    RyanGuide.once('phish-tab-closed-reinforce', function() {
-      setTimeout(function() {
-        RyanGuide.speak([
-          { text: "Good decision closing that phishing tab! 🛡️ In a real workplace, closing unverified sites prevents accidental credential theft.", state: 'success' }
-        ]);
-      }, 300);
-    });
+    setTimeout(function() {
+      RyanGuide.speak([
+        { text: "Good decision closing that phishing tab! 🛡️ In a real workplace, closing unverified sites prevents accidental credential theft.", state: 'success' }
+      ]);
+    }, 300);
   }
 }
 
@@ -1535,6 +1539,10 @@ window.BROWSER_HOME_HTML = BROWSER_HOME_HTML;
 function switchGoogleSearchTab(tabName, query) {
   const cleanQ = (query || 'phishing').trim();
   const targetUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanQ)}&tab=${encodeURIComponent(tabName)}`;
+  if (window._awardClaimed && window._postAwardTasks) {
+    window._postAwardTasks.phishingSearched = true;
+    if (typeof _refreshPostAwardChecklist === 'function') _refreshPostAwardChecklist();
+  }
   const tab = getActiveTab();
   if (tab) {
     renderPageIntoTab(tab, targetUrl);

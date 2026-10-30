@@ -27,29 +27,71 @@ function submitReportPhishing() {
     return;
   }
 
-  // ── Require at least one flag to report as phishing (only phishing button requires flag) ──
-  if (!gameState.currentEmailFlags || gameState.currentEmailFlags.length === 0) {
-    const flagBtn = document.getElementById('flag-mode-btn');
-    if (flagBtn) {
-      flagBtn.classList.remove('btn-pulse-highlight');
-      void flagBtn.offsetWidth;
-      flagBtn.classList.add('btn-pulse-highlight');
-      setTimeout(() => flagBtn.classList.remove('btn-pulse-highlight'), 3200);
-    }
+  // ── FIRST EMAIL ONLY: require ALL evidence to be flagged before submitting phishing ──
+  const _isFirstEmailSubmit = (email.id === 1 || gameState.emailResults.length === 0);
+  if (_isFirstEmailSubmit) {
+    const _requiredEvidence = (email.evidence && email.evidence.length > 0) ? email.evidence : ['fake_sender', 'false_urgency', 'suspicious_link'];
+    const _flaggedTypes = (gameState.currentEmailFlags || []).map(f => f.type);
+    const _missingFlags = _requiredEvidence.filter(ev => !_flaggedTypes.includes(ev));
 
-    if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
-      const toast = document.getElementById('toast');
-      if (toast) toast.classList.add('hidden');
+    if (_missingFlags.length > 0) {
+      const flagBtn = document.getElementById('flag-mode-btn');
+      if (flagBtn) {
+        flagBtn.classList.remove('btn-pulse-highlight');
+        void flagBtn.offsetWidth;
+        flagBtn.classList.add('btn-pulse-highlight');
+        setTimeout(() => flagBtn.classList.remove('btn-pulse-highlight'), 3200);
+      }
 
-      RyanGuide.speak([
-        { text: "Hold on! You need to add a flag before reporting an email as phishing.", state: 'concerned' },
-        { text: "Think before you report. In a real investigation you cannot submit a phishing report without any evidence.", state: 'thinking' },
-        { text: "Flag what made you suspicious first. Check the sender's domain, look for urgency pressure, or inspect any links.", state: 'speaking' }
-      ]);
-    } else {
-      showToast('Flag at least one suspicious clue before reporting as phishing.', 'warning');
+      if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
+        const toast = document.getElementById('toast');
+        if (toast) toast.classList.add('hidden');
+
+        if (_flaggedTypes.length === 0) {
+          // No flags at all yet
+          RyanGuide.speak([
+            { text: "Hold on! For your first email you need to flag all the suspicious evidence before reporting as phishing.", state: 'concerned' },
+            { text: "Think before you report. In a real investigation you cannot submit a phishing report without gathering evidence first.", state: 'thinking' },
+            { text: "Use 🚩 Flag Evidence and click: the fake sender address, the urgency pressure text, and the suspicious link.", state: 'speaking' }
+          ]);
+        } else {
+          // Some flags placed but not all
+          const _missingLabels = _missingFlags.map(f => f.replace(/_/g, ' ')).join(', ');
+          RyanGuide.speak([
+            { text: `Good start! But you still need to flag: ${_missingLabels}. Find and flag all evidence on this first email before submitting.`, state: 'thinking' },
+            { text: "Flag all suspicious clues on the first email to build a complete case. That's how a real investigator works!", state: 'speaking' }
+          ]);
+        }
+      } else {
+        showToast('Flag all suspicious evidence before reporting the first email as phishing.', 'warning');
+      }
+      return;
     }
-    return;
+  } else {
+    // ── ALL OTHER EMAILS (except first email): require AT LEAST ONE evidence flagged before submitting phishing ──
+    if (!gameState.currentEmailFlags || gameState.currentEmailFlags.length === 0) {
+      const flagBtn = document.getElementById('flag-mode-btn');
+      if (flagBtn) {
+        flagBtn.classList.remove('btn-pulse-highlight');
+        void flagBtn.offsetWidth;
+        flagBtn.classList.add('btn-pulse-highlight');
+        setTimeout(() => flagBtn.classList.remove('btn-pulse-highlight'), 3200);
+      }
+
+      if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
+        const toast = document.getElementById('toast');
+        if (toast) toast.classList.add('hidden');
+
+        RyanGuide.speak([
+          { text: "Hold on! You need to flag at least one suspicious clue before reporting an email as phishing.", state: 'concerned' },
+          { text: "Think before you report. In a real investigation you cannot submit a phishing report without any evidence.", state: 'thinking' },
+          { text: "Click 🚩 Flag Evidence and tag what made you suspicious first — check the sender domain, look for urgency pressure, or inspect any links.", state: 'speaking' }
+        ]);
+      } else {
+        showToast('Flag at least one suspicious clue before reporting as phishing.', 'warning');
+      }
+      return;
+    }
   }
 
   submitReport(true);
@@ -76,7 +118,33 @@ function submitMarkLegitimate() {
     return;
   }
 
-  // After completing the first email, user can flag and submit to non-phishing button freely
+  // ── FIRST EMAIL GUARD: Cannot submit first email as Non-phishing! ──
+  // The first email is a confirmed phishing attack — player can ONLY submit as Phishing
+  const _isFirstEmail = (email.id === 1 || gameState.emailResults.length === 0);
+  if (_isFirstEmail) {
+    const reportBtn = document.getElementById('report-btn');
+    if (reportBtn) {
+      reportBtn.classList.remove('btn-pulse-highlight');
+      void reportBtn.offsetWidth;
+      reportBtn.classList.add('btn-pulse-highlight');
+      setTimeout(() => reportBtn.classList.remove('btn-pulse-highlight'), 3200);
+    }
+
+    if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
+      const toast = document.getElementById('toast');
+      if (toast) toast.classList.add('hidden');
+
+      RyanGuide.speak([
+        { text: "Hold on! This first email is a confirmed phishing attack — you cannot submit it as Non-phishing.", state: 'concerned' },
+        { text: "Notice the fake sender address, the urgency pressure, and the suspicious link. Flag all 3 clues and submit it as Phishing!", state: 'thinking' }
+      ]);
+    } else {
+      showToast('⚠️ The first email is a phishing threat. You can only submit it as Phishing.', 'warning');
+    }
+    return;
+  }
+
+  // All other emails: player can submit Non-phishing freely, even if evidence was flagged!
   submitReport(false);
 }
 
@@ -115,86 +183,31 @@ function submitReport(isPhishing) {
   try {
     const correctDecision = (isPhishing === email.phishing);
 
-    // ── Contradiction check: flagged red flags but submitting as Non-Phishing ──
-    const hasFlags = gameState.currentEmailFlags && gameState.currentEmailFlags.length > 0;
-    if (!isPhishing && hasFlags) {
-      // Force wrong — you can't flag suspicious elements and call it safe
-      if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
-      ch1MistakeCount++;
-
-      const flagCount = gameState.currentEmailFlags.length;
-      const flagNames = gameState.currentEmailFlags
-        .map(f => f.type ? f.type.replace(/-/g, ' ') : 'unknown')
-        .join(', ');
-
-      const contradictionMsg = [
-        {
-          text: `You flagged ${flagCount} red flag${flagCount > 1 ? 's' : ''} (${flagNames}) but then submitted this email as legitimate.`,
-          state: 'concerned'
-        },
-        {
-          text: "If you found something suspicious enough to flag, that is a strong signal this email could be a threat. Flagging something and calling it safe at the same time does not add up.",
-          state: 'speaking'
-        },
-        {
-          text: "Quick rule: if you added any flags, report it as Phishing. Only confirm it as safe when you find zero red flags.",
-          state: 'thinking'
-        }
-      ];
-
-      // Save as wrong result
-      const result = {
-        emailId: email.id,
-        emailIdx: gameState.currentEmail,
-        isPhishing: email.phishing,
-        playerDecision: false,
-        correctDecision: false,   // forced wrong due to contradiction
-        contradictionPenalty: true,
-        playerFlags: gameState.currentEmailFlags.map(f => f.type),
-        savedFlags: [...gameState.currentEmailFlags]
-      };
-      gameState.emailResults.push(result);
-
-      if (typeof RyanGuide !== 'undefined') {
-        RyanGuide.speak(contradictionMsg, {
-          onDone: function() {
-            // Continue normal post-verdict flow after Ryan explains
-            updateHUD();
-            updateFolderCounts();
-            if (gameState.emailResults.length >= 1) updateStickyNoteForPhase('phishing');
-            updateStickyChecklist();
-            savePhishingProgress();
-
-            const detailView = document.getElementById('email-detail-view');
-            const listView   = document.getElementById('email-list-view');
-            if (detailView) detailView.classList.remove('active');
-            if (listView)   listView.classList.add('active');
-
-            gameState.currentEmailFlags = [];
-            gameState.flagModeActive = false;
-            const flagModeBtn = document.getElementById('flag-mode-btn');
-            if (flagModeBtn) { flagModeBtn.disabled = true; flagModeBtn.classList.remove('active'); }
-
-            // Check wave progression
-            const reviewedInWave = ch1InboxEmails.length > 0 &&
-              ch1InboxEmails.every(e => gameState.emailResults.some(r => r.emailId === e.id));
-            if (reviewedInWave) {
-              let nextWave = ch1Stage + 1;
-              if (nextWave <= 1) nextWave = 2;
-              if (nextWave <= 4 && CH1_WAVE_DEFS[nextWave]) {
-                renderEmailList(); updateHUD(); ch1InjectWave(nextWave);
-              } else { finishMission(); }
-            } else {
-              renderEmailList(); updateHUD();
-            }
-          }
-        });
+    // ── First email guard: cannot submit Non-phishing ──
+    const isFirstEmail = (email.id === 1 || gameState.emailResults.length === 0);
+    if (!isPhishing && isFirstEmail) {
+      const reportBtn = document.getElementById('report-btn');
+      if (reportBtn) {
+        reportBtn.classList.remove('btn-pulse-highlight');
+        void reportBtn.offsetWidth;
+        reportBtn.classList.add('btn-pulse-highlight');
+        setTimeout(() => reportBtn.classList.remove('btn-pulse-highlight'), 3200);
+      }
+      if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
+        const toast = document.getElementById('toast');
+        if (toast) toast.classList.add('hidden');
+        RyanGuide.speak([
+          { text: "Hold on! This first email is a confirmed phishing attack — you cannot submit it as Non-phishing.", state: 'concerned' },
+          { text: "Notice the fake sender address, the urgency pressure, and the suspicious link. Flag all 3 clues and submit it as Phishing!", state: 'thinking' }
+        ]);
+      } else {
+        showToast('⚠️ The first email is a phishing threat. You can only submit it as Phishing.', 'warning');
       }
       return;
     }
 
+    // All other emails: user can submit Non-phishing freely, even if evidence was flagged!
     // ── First Email Tutorial: show "Take a closer look before deciding" ONLY ONCE ──
-    const isFirstEmail = (email.id === 1 || gameState.emailResults.length === 0);
     if (!correctDecision && isFirstEmail && !ch1CloserLookWarnedOnce) {
       ch1CloserLookWarnedOnce = true;
       if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
@@ -461,11 +474,21 @@ function submitReport(isPhishing) {
         return;
       }
 
-      setTimeout(() => {
-        RyanGuide.speak(messages, {
-          autoDismiss: 6000
-        });
-      }, 150);
+      // ── User requirement: ONLY First, Second, Quishing, and Last emails have verdict dialogue ──
+      const isFirstEmail    = (email.id === 1 || gameState.emailResults.length === 1);
+      const isSecondEmail   = (email.id === 2);
+      const isQuishingEmail = (email.id === 8 || (email.body && email.body.some(b => b.type === 'qr')));
+      const isLastEmail     = isFinalEmail || (email.id === 10) || (gameState.emailResults.length >= EMAILS.length);
+
+      const hasVerdictDialogue = isFirstEmail || isSecondEmail || isQuishingEmail || isLastEmail;
+
+      if (hasVerdictDialogue) {
+        setTimeout(() => {
+          RyanGuide.speak(messages, {
+            autoDismiss: 6000
+          });
+        }, 150);
+      }
     } else {
       if (gameState.emailResults.length >= EMAILS.length) {
         renderEmailList();
@@ -972,6 +995,7 @@ function playAgain(showVN = false) {
     desktop.style.opacity = '1';
   }
   // Reset state
+  window._phishBrowserCloseToastShown = false;
   updateStickyNoteForPhase('phishing');
   gameState.phase = 'welcome';
   gameState.currentEmail = 0;

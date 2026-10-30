@@ -431,13 +431,19 @@ const RyanPosttest = (() => {
     );
   }
 
-  function _close() {
+  function _close(fadeConfetti) {
+    if (_raf) { cancelAnimationFrame(_raf); _raf = 0; }
     _timers.forEach(clearTimeout);
     _timers = [];
+    Confetti.stop(!fadeConfetti);
     const bd = $('ryan-posttest-backdrop');
     if (bd) {
       bd.classList.remove('rpost-active');
       bd.style.display = 'none';
+    }
+    const panel = $('ryan-posttest-panel');
+    if (panel) {
+      panel.classList.remove('rpost-result-mode', 'rpost-celebrate', 'rpost-tier-mastery', 'rpost-tier-expert', 'rpost-tier-competent', 'rpost-tier-developing');
     }
     document.removeEventListener('keydown', _onKey, true);
     _running = false;
@@ -522,7 +528,7 @@ const RyanPosttest = (() => {
     const k = String(e.key).toLowerCase();
 
     if (_mode === 'result') {
-      if (k === 'enter' || k === ' ') {
+      if ((k === 'enter' || k === ' ') && _canContinue) {
         e.preventDefault();
         e.stopPropagation();
         _complete();
@@ -567,9 +573,236 @@ const RyanPosttest = (() => {
     _showResult(result);
   }
 
+  // ══════════════════════════════════════════════════════════
+  // CONFETTI CELEBRATION ENGINE
+  // ══════════════════════════════════════════════════════════
+  const Confetti = (() => {
+    const COLORS = ['#38bdf8', '#ffd700', '#10b981', '#f472b6', '#a78bfa', '#fb923c', '#f8fafc'];
+    const MAX = 450;
+    let canvas = null, ctx = null, parts = [], raf = 0, last = 0;
+    let w = 0, h = 0, dpr = 1, rainUntil = 0, fading = false, fadeAlpha = 1;
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+
+    function resize() {
+      if (!canvas) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function ensure() {
+      if (canvas) return;
+      canvas = document.createElement('canvas');
+      canvas.id = 'rpost-confetti';
+      canvas.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(canvas);
+      ctx = canvas.getContext('2d');
+      resize();
+      window.addEventListener('resize', resize);
+    }
+
+    function add(x, y, vx, vy, life) {
+      if (parts.length >= MAX) return;
+      parts.push({
+        x: x, y: y, vx: vx, vy: vy,
+        rot: rand(0, Math.PI * 2), vr: rand(-9, 9),
+        tilt: rand(0, Math.PI * 2), vt: rand(5, 11),
+        w: rand(7, 13), h: rand(4, 8),
+        color: COLORS[(Math.random() * COLORS.length) | 0],
+        shape: Math.random() < 0.25 ? 1 : 0,
+        life: life, max: life, sway: rand(0, Math.PI * 2)
+      });
+    }
+
+    function cannon(x, y, angleDeg, count) {
+      for (let i = 0; i < count; i++) {
+        const a = (angleDeg + rand(-24, 24)) * Math.PI / 180;
+        const v = rand(0.9, 1.7) * h;
+        add(x, y, Math.cos(a) * v, Math.sin(a) * v, rand(3.2, 5.2));
+      }
+    }
+
+    function burst() {
+      ensure();
+      cannon(w * 0.05, h * 0.98, -60, 65);
+      cannon(w * 0.95, h * 0.98, -120, 65);
+      _sfx('playConfettiPop');
+      start();
+    }
+
+    function rain(ms) {
+      ensure();
+      rainUntil = performance.now() + ms;
+      start();
+    }
+
+    function start() {
+      if (raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.033);
+      last = now;
+
+      if (now < rainUntil) {
+        const n = Math.round(100 * dt + (Math.random() < 0.5 ? 1 : 0));
+        for (let i = 0; i < n; i++) add(rand(0, w), -14, rand(-60, 60), rand(40, 160), rand(4.5, 7));
+      }
+
+      ctx.clearRect(0, 0, w, h);
+      if (fading) {
+        fadeAlpha -= dt * 2.2;
+        if (fadeAlpha <= 0) { teardown(); return; }
+      }
+
+      const g = 1100 * (h / 800);
+      const drag = Math.pow(0.05, dt);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.life -= dt;
+        p.vx *= drag;
+        p.vy = p.vy * drag + g * dt;
+        p.sway += dt * 3;
+        p.x += (p.vx + Math.sin(p.sway) * 38) * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+        p.tilt += p.vt * dt;
+
+        if (p.life <= 0 || p.y > h + 30) { parts.splice(i, 1); continue; }
+
+        const alpha = Math.min(1, p.life / 0.8) * (fading ? Math.max(fadeAlpha, 0) : 1);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.scale(1, Math.cos(p.tilt));
+        ctx.fillStyle = p.color;
+        if (p.shape === 1) {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.h * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        ctx.restore();
+      }
+
+      if (parts.length === 0 && now >= rainUntil) { teardown(); return; }
+      raf = requestAnimationFrame(frame);
+    }
+
+    function teardown() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      parts = [];
+      rainUntil = 0;
+      fading = false;
+      fadeAlpha = 1;
+      window.removeEventListener('resize', resize);
+      if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas);
+      canvas = null;
+      ctx = null;
+    }
+
+    function stop(immediate) {
+      if (!canvas) return;
+      rainUntil = 0;
+      if (immediate) teardown();
+      else { fading = true; }
+    }
+
+    return { burst, rain, stop };
+  })();
+
+  let _raf = 0;
+  let _canContinue = false;
+
+  function _countUp(result, tier, numEl, barEl, contBtn) {
+    const total = result.total || 20;
+    const dur = 1200;
+    const delay = 350;
+
+    const setVal = (v) => {
+      if (numEl) numEl.textContent = String(Math.round(v));
+      if (barEl) {
+        const offset = RING_C * (1 - Math.min(v, total) / total);
+        barEl.style.strokeDashoffset = offset.toFixed(2);
+      }
+    };
+
+    setVal(0);
+
+    setTimeout(() => {
+      const t0 = performance.now();
+      let lastInt = -1;
+      let lastTick = 0;
+
+      const step = (now) => {
+        const t = Math.min((now - t0) / dur, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const v = result.score * eased;
+        setVal(v);
+        const iv = Math.round(v);
+        if (iv !== lastInt) {
+          lastInt = iv;
+          if (iv > 0 && now - lastTick > 50) {
+            lastTick = now;
+            _sfx('playResultTick', iv, result.score || 1);
+          }
+        }
+        if (t < 1) {
+          _raf = requestAnimationFrame(step);
+        } else {
+          _raf = 0;
+          setVal(result.score);
+          _celebrate(tier, contBtn);
+        }
+      };
+      _raf = requestAnimationFrame(step);
+    }, delay);
+  }
+
+  function _celebrate(tier, contBtn) {
+    const panel = $('ryan-posttest-panel');
+    if (panel) panel.classList.add('rpost-celebrate');
+
+    if (tier === 'mastery') {
+      _sfx('playPerfectFanfare');
+      Confetti.burst();
+      setTimeout(() => { if (_running) Confetti.burst(); }, 650);
+      setTimeout(() => { if (_running) Confetti.rain(2400); }, 900);
+    } else if (tier === 'expert') {
+      _sfx('playResultGood');
+      Confetti.burst();
+      setTimeout(() => { if (_running) Confetti.rain(1600); }, 500);
+    } else if (tier === 'competent') {
+      _sfx('playResultGood');
+    } else {
+      _sfx('playResultEncourage');
+    }
+
+    setTimeout(() => {
+      _canContinue = true;
+      if (contBtn) {
+        contBtn.disabled = false;
+        contBtn.classList.add('rpost-btn-ready');
+        try { contBtn.focus({ preventScroll: true }); } catch (e) {}
+      }
+    }, 500);
+  }
+
   function _showResult(result) {
     _mode = 'result';
     _result = result;
+    _canContinue = false;
 
     const tier = result.tier;
     const copy = RESULT[tier];
@@ -577,21 +810,35 @@ const RyanPosttest = (() => {
     const body = $('rpost-body');
     if (!panel || !body) return;
 
+    panel.classList.remove('rpost-tier-mastery', 'rpost-tier-expert', 'rpost-tier-competent', 'rpost-tier-developing', 'rpost-celebrate');
     panel.classList.add('rpost-result-mode', 'rpost-tier-' + tier);
 
     const fill = $('rpost-progress-fill');
     if (fill) fill.style.width = '100%';
     const sub = $('rpost-subtitle');
-    if (sub) sub.textContent = 'Post-Test Complete! Here is your phishing awareness evaluation.';
+    if (sub) sub.textContent = 'Mission Assessment Complete · Phishing Defense Evaluation';
 
     body.innerHTML = '';
 
     const wrap = _el('div', 'rpost-result');
 
-    // Circular animated score ring
+    // ── Left Column: Hero Score & Rank ──
+    const hero = _el('div', 'rpost-result-hero');
+
     const badge = _el('div', 'rpost-badge');
     const icon = _el('div', 'rpost-badge-icon', copy.icon);
     badge.appendChild(icon);
+
+    // Sparkles circling badge for high scores
+    if (tier === 'mastery' || tier === 'expert') {
+      const angles = [15, 60, 120, 165, 210, 255, 300, 345];
+      angles.forEach((a, idx) => {
+        const s = _el('span', 'rpost-spark', '✦');
+        s.style.setProperty('--a', a + 'deg');
+        s.style.setProperty('--d', (idx * 0.22) + 's');
+        badge.appendChild(s);
+      });
+    }
 
     const ringBox = _el('div', 'rpost-ring-box');
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -618,26 +865,60 @@ const RyanPosttest = (() => {
     ringBox.appendChild(svg);
 
     const numWrap = _el('div', 'rpost-score-num');
-    const num = _el('span', 'rpost-num', String(result.score));
+    const num = _el('span', 'rpost-num', '0');
     const denom = _el('span', 'rpost-denom', `/ ${result.total}`);
     numWrap.appendChild(num);
     numWrap.appendChild(denom);
     ringBox.appendChild(numWrap);
 
     badge.appendChild(ringBox);
-    wrap.appendChild(badge);
+    hero.appendChild(badge);
 
-    // Rank & headlines
     const rankTag = _el('div', 'rpost-rank-tag', copy.rank);
-    wrap.appendChild(rankTag);
+    hero.appendChild(rankTag);
 
     const head = _el('div', 'rpost-headline', copy.headline);
-    wrap.appendChild(head);
+    hero.appendChild(head);
 
-    const note = _el('div', 'rpost-ryan-note', copy.ryan);
-    wrap.appendChild(note);
+    // Tactical HUD Stat Chips
+    const hudStats = _el('div', 'rpost-hud-stats');
+    const statAcc = _el('div', 'rpost-hud-chip');
+    statAcc.appendChild(_el('span', 'rpost-hud-lbl', 'Accuracy'));
+    statAcc.appendChild(_el('span', 'rpost-hud-val', `${result.percent}%`));
+    hudStats.appendChild(statAcc);
 
-    // Growth comparison card against pre-test baseline
+    const statStatus = _el('div', 'rpost-hud-chip');
+    statStatus.appendChild(_el('span', 'rpost-hud-lbl', 'Status'));
+    const statusText = (result.score >= 16) ? 'Verified' : (result.score >= 12 ? 'Passed' : 'Reviewed');
+    statStatus.appendChild(_el('span', 'rpost-hud-val rpost-hud-status', statusText));
+    hudStats.appendChild(statStatus);
+
+    hero.appendChild(hudStats);
+    wrap.appendChild(hero);
+
+    // ── Right Column: Mentor Note, Growth Card & Actions ──
+    const details = _el('div', 'rpost-result-details');
+
+    // 1. Ryan Mentor Debrief Card
+    const noteCard = _el('div', 'rpost-ryan-note-card');
+    const noteHeader = _el('div', 'rpost-ryan-note-header');
+    const ryanThumb = _el('img', 'rpost-ryan-thumb');
+    ryanThumb.src = 'assets/Character/Ryan.png';
+    ryanThumb.alt = 'Ryan, IT Support Mentor';
+
+    const ryanMeta = _el('div', 'rpost-ryan-meta');
+    ryanMeta.appendChild(_el('div', 'rpost-ryan-meta-name', 'Ryan · IT Support Mentor'));
+    ryanMeta.appendChild(_el('div', 'rpost-ryan-meta-title', 'Phishing Defense Evaluation'));
+
+    noteHeader.appendChild(ryanThumb);
+    noteHeader.appendChild(ryanMeta);
+    noteCard.appendChild(noteHeader);
+
+    const note = _el('div', 'rpost-ryan-note', `"${copy.ryan}"`);
+    noteCard.appendChild(note);
+    details.appendChild(noteCard);
+
+    // 2. Growth comparison card against pre-test baseline
     const preResult = (typeof RyanPretest !== 'undefined' && RyanPretest.getResult)
       ? RyanPretest.getResult()
       : (typeof gameState !== 'undefined' ? gameState.preTestResult : null);
@@ -646,8 +927,12 @@ const RyanPosttest = (() => {
     const postPct = result.percent;
 
     const growthCard = _el('div', 'rpost-growth-card');
-    const gTitle = _el('div', 'rpost-growth-title', '📈 Post-Test Growth Analysis');
-    growthCard.appendChild(gTitle);
+    const gHeader = _el('div', 'rpost-growth-header');
+    const gTitle = _el('div', 'rpost-growth-title', '⚡ Defense Capability Progression');
+    const gBadge = _el('div', 'rpost-growth-badge', 'Training Impact');
+    gHeader.appendChild(gTitle);
+    gHeader.appendChild(gBadge);
+    growthCard.appendChild(gHeader);
 
     const gRow = _el('div', 'rpost-growth-row');
 
@@ -656,51 +941,80 @@ const RyanPosttest = (() => {
     preCol.appendChild(_el('span', 'rpost-growth-val', prePct !== null ? `${prePct}%` : 'Baseline'));
     gRow.appendChild(preCol);
 
-    gRow.appendChild(_el('div', 'rpost-growth-arrow', '➔'));
+    const arrowWrap = _el('div', 'rpost-growth-arrow-wrap');
+    arrowWrap.appendChild(_el('div', 'rpost-growth-arrow', '➔'));
+    gRow.appendChild(arrowWrap);
 
     const postCol = _el('div', 'rpost-growth-col');
     postCol.appendChild(_el('span', 'rpost-growth-label', 'Post-Test'));
-    postCol.appendChild(_el('span', 'rpost-growth-val', `${postPct}%`));
+    postCol.appendChild(_el('span', 'rpost-growth-val rpost-growth-post-val', `${postPct}%`));
     gRow.appendChild(postCol);
 
     growthCard.appendChild(gRow);
 
-    if (prePct !== null) {
-      const diff = postPct - prePct;
-      const deltaText = diff >= 0
-        ? `+${diff}% Awareness Improvement after Investigation!`
-        : `Baseline Comparison: Solid effort across threat scenarios.`;
-      const gDelta = _el('div', 'rpost-growth-delta', deltaText);
-      growthCard.appendChild(gDelta);
+    // Mini comparison progress bars
+    const barsWrap = _el('div', 'rpost-growth-bars');
+
+    const preBarRow = _el('div', 'rpost-growth-bar-row');
+    preBarRow.appendChild(_el('span', 'rpost-growth-bar-name', 'Baseline'));
+    const preTrack = _el('div', 'rpost-growth-bar-track');
+    const preFill = _el('div', 'rpost-growth-bar-fill-pre');
+    preFill.style.width = `${Math.max(4, prePct !== null ? prePct : 50)}%`;
+    preTrack.appendChild(preFill);
+    preBarRow.appendChild(preTrack);
+    barsWrap.appendChild(preBarRow);
+
+    const postBarRow = _el('div', 'rpost-growth-bar-row');
+    postBarRow.appendChild(_el('span', 'rpost-growth-bar-name', 'Post-Test'));
+    const postTrack = _el('div', 'rpost-growth-bar-track');
+    const postFill = _el('div', 'rpost-growth-bar-fill-post');
+    postFill.style.width = '0%';
+    postTrack.appendChild(postFill);
+    postBarRow.appendChild(postTrack);
+    barsWrap.appendChild(postBarRow);
+
+    growthCard.appendChild(barsWrap);
+
+    // Animate post-test bar width slightly after open
+    setTimeout(() => {
+      if (postFill) postFill.style.width = `${Math.max(4, postPct)}%`;
+    }, 400);
+
+    const diff = prePct !== null ? (postPct - prePct) : null;
+    let deltaText = '';
+    if (diff !== null && diff > 0) {
+      deltaText = `▲ +${diff}% Awareness Improvement after Investigation!`;
+    } else if (diff !== null && diff === 0 && postPct >= 90) {
+      deltaText = `★ Maintained Flawless Defense Proficiency across All Scenarios!`;
+    } else {
+      deltaText = `✓ Phishing Defense Training Completed & Evaluated`;
     }
+    const gDelta = _el('div', 'rpost-growth-delta', deltaText);
+    growthCard.appendChild(gDelta);
 
-    wrap.appendChild(growthCard);
+    details.appendChild(growthCard);
 
-    // Continue button: Guide to shutdown & save
-    const contBtn = _el('button', 'rpost-continue-btn', '🎉 Complete & Proceed to Save');
+    // 3. Continue button: Guide to shutdown & save
+    const contBtn = _el('button', 'rpost-continue-btn', 'Proceed to Save Progress ➔');
     contBtn.type = 'button';
+    contBtn.disabled = true;
     contBtn.addEventListener('click', _complete);
-    wrap.appendChild(contBtn);
+    details.appendChild(contBtn);
 
+    wrap.appendChild(details);
     body.appendChild(wrap);
 
-    // Animate the circular progress ring
-    setTimeout(() => {
-      const targetOffset = RING_C * (1 - (result.score / result.total));
-      bar.style.strokeDashoffset = String(targetOffset);
-    }, 150);
+    panel.scrollTop = 0;
 
-    if (tier === 'mastery' || tier === 'expert') {
-      _sfx('playTrophyFanfare');
-    } else {
-      _sfx('playCorrect');
-    }
+    // Run score count up and trigger celebrations
+    _countUp(result, tier, num, bar, contBtn);
   }
 
   function _complete() {
+    if (_mode !== 'result' || !_canContinue) return;
     const cb = _onDone;
     const res = _result;
-    _close();
+    _close(true);
     if (typeof updateStickyNoteAfterPostTest === 'function') {
       try { updateStickyNoteAfterPostTest(res); } catch (e) {}
     } else if (typeof updateStickyChecklist === 'function') {
@@ -729,6 +1043,41 @@ const RyanPosttest = (() => {
     _close();
   }
 
+  /**
+   * QA & Preview Helper: jump straight to the post-test result screen with a mock score.
+   * e.g. RyanPosttest.preview(20) -> perfect score with confetti & fanfare
+   */
+  function preview(score, onDone) {
+    if (_running) return;
+    const bd = $('ryan-posttest-backdrop');
+    if (!bd || !$('rpost-body')) return;
+    const questionsList = QUESTIONS;
+    const total = questionsList.length;
+    const s = Math.max(0, Math.min(total, Math.round(Number(score) || 0)));
+    const tier = tierOf(s, total);
+    const result = {
+      score: s,
+      total: total,
+      percent: Math.round((s / total) * 100),
+      tier: tier,
+      rank: RESULT[tier].rank,
+      answers: [],
+      completedAt: new Date().toISOString()
+    };
+    _timers.forEach(clearTimeout);
+    _timers = [];
+    _onDone = onDone || null;
+    _running = true;
+    _index = 0;
+    
+    bd.style.display = 'flex';
+    void bd.offsetHeight;
+    bd.classList.add('rpost-active');
+    document.addEventListener('keydown', _onKey, true);
+
+    _showResult(result);
+  }
+
   return {
     launch,
     confirmAndLaunch,
@@ -736,7 +1085,13 @@ const RyanPosttest = (() => {
     getResult,
     isRunning,
     tierOf,
-    reset
+    reset,
+    preview
   };
 
 })();
+
+if (typeof window !== 'undefined') {
+  window.RyanPosttest = RyanPosttest;
+}
+

@@ -153,6 +153,7 @@ function restartEntireGame() {
     if (passInp) passInp.value = '';
 
     // Reset chapter tracking so Ryan fires fresh next time Chapter 1 is loaded
+    window._phishBrowserCloseToastShown = false;
     window._currentChapterCategory = null;
     window._currentChapterCharacter = null;
 
@@ -422,6 +423,7 @@ function restartCurrentChapterMission() {
 
     } else {
       // ── Restart Chapter 1 (Alex) from beginning ──
+      window._phishBrowserCloseToastShown = false;
       window._currentChapterCategory = 'phishing';
       if (typeof openChapterDesktopDirect === 'function') {
         openChapterDesktopDirect('phishing');
