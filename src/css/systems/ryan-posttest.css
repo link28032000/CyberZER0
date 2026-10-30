@@ -757,84 +757,31 @@
   color: #4ade80;
 }
 
-/* Right Details Column: Mentor Note, Growth Card & Actions */
+/* Right Details Column: Growth Card & Actions */
 .rpost-result-details {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
-}
-
-/* Mentor note card */
-.rpost-ryan-note-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(10, 18, 36, 0.9) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-left: 3px solid var(--tier);
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-}
-
-.rpost-ryan-note-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.rpost-ryan-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1.5px solid #38bdf8;
-  background: #0f172a;
-  object-fit: cover;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
-}
-
-.rpost-ryan-meta {
-  display: flex;
-  flex-direction: column;
-}
-
-.rpost-ryan-meta-name {
-  font-size: 11px;
-  font-weight: 800;
-  color: #38bdf8;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-}
-
-.rpost-ryan-meta-title {
-  font-size: 10px;
-  font-weight: 600;
-  color: #94a3b8;
-  line-height: 1.2;
-  margin-top: 1px;
-}
-
-.rpost-ryan-note {
-  font-size: 13px;
-  line-height: 1.5;
-  color: #cbd5e1;
-  margin: 0;
-  font-style: italic;
+  height: 100%;
 }
 
 /* Defense Capability Progression Card */
 .rpost-growth-card {
   width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(10, 18, 36, 0.9) 100%);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-top: 2px solid var(--tier);
+  border-radius: 14px;
+  padding: 16px 20px;
   margin: 0;
   box-sizing: border-box;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .rpost-growth-header {
@@ -1015,11 +962,11 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   RESPONSIVE DESIGN: NOT FULLSCREEN / COMPACT SCREENS
+   RESPONSIVE DESIGN: COMPACT VIEWPORTS (< 680px OR < 560px)
    ══════════════════════════════════════════════════════════ */
-@media (max-width: 768px), (max-height: 720px) {
+@media (max-width: 680px), (max-height: 560px) {
   #ryan-posttest-panel.rpost-result-mode {
-    max-width: 520px;
+    max-width: 500px;
     padding: 14px 18px 16px;
     max-height: 94vh;
     border-radius: 14px;
@@ -1033,8 +980,8 @@
 
   #ryan-posttest-panel.rpost-result-mode .rpost-portrait-wrap,
   #ryan-posttest-panel.rpost-result-mode .rpost-portrait {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
   }
 
   #ryan-posttest-panel.rpost-result-mode .rpost-title {
@@ -1102,20 +1049,6 @@
     width: 100%;
   }
 
-  .rpost-ryan-note-card {
-    padding: 10px 14px;
-  }
-
-  .rpost-ryan-thumb {
-    width: 28px;
-    height: 28px;
-  }
-
-  .rpost-ryan-note {
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
   .rpost-growth-card {
     padding: 10px 14px;
   }
@@ -1151,26 +1084,8 @@
   }
 }
 
-/* Fullscreen Explicit Rules */
-body.is-fullscreen #ryan-posttest-panel.rpost-result-mode,
-:root:fullscreen #ryan-posttest-panel.rpost-result-mode {
-  max-width: 840px;
-  padding: 20px 26px 24px;
-}
-
-body.is-fullscreen .rpost-result,
-:root:fullscreen .rpost-result {
-  grid-template-columns: 290px 1fr;
-  gap: 20px;
-}
-
-body.is-fullscreen .rpost-hud-stats,
-:root:fullscreen .rpost-hud-stats {
-  display: grid;
-}
-
-/* Ultra-compact for short viewports (height < 600px) */
-@media (max-height: 600px) {
+/* Ultra-compact for short viewports (height < 500px) */
+@media (max-height: 500px) {
   #ryan-posttest-panel.rpost-result-mode {
     padding: 8px 12px 10px;
   }
@@ -1197,12 +1112,311 @@ body.is-fullscreen .rpost-hud-stats,
   .rpost-growth-bars {
     display: none;
   }
-  .rpost-ryan-note-card {
-    padding: 6px 10px;
-  }
   .rpost-growth-card {
     padding: 6px 10px;
   }
+}
+
+/* ══════════════════════════════════════════════════════════
+   FULLSCREEN MODE: PROPORTIONALLY SCALED 2-COLUMN GAME UI
+   Maintains exact same design & alignment, scaled up for fullscreen
+   ══════════════════════════════════════════════════════════ */
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode,
+:fullscreen #ryan-posttest-panel.rpost-result-mode {
+  max-width: 1040px;
+  width: min(94vw, 1040px);
+  max-height: 90vh;
+  padding: 24px 34px 26px;
+  border-radius: 18px;
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, 0.96),
+    0 0 55px var(--tier-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* Scaled Header */
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-header,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-header,
+:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-header {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  gap: 16px;
+}
+
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-portrait-wrap,
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-portrait,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-portrait-wrap,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-portrait,
+:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-portrait-wrap,
+:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-portrait {
+  width: 56px;
+  height: 56px;
+}
+
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-label,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-label,
+:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-label {
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+}
+
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-title,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-title,
+:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-title {
+  font-size: 19px;
+  letter-spacing: 0.03em;
+}
+
+body.is-fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-subtitle,
+:root:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-subtitle,
+:fullscreen #ryan-posttest-panel.rpost-result-mode .rpost-subtitle {
+  font-size: 13.5px;
+}
+
+/* Scaled 2-Column Grid (Maintains exact proportional ratio as windowed view) */
+body.is-fullscreen .rpost-result,
+:root:fullscreen .rpost-result,
+:fullscreen .rpost-result {
+  display: grid !important;
+  grid-template-columns: 350px 1fr !important;
+  gap: 24px !important;
+  align-items: stretch !important;
+  text-align: left !important;
+}
+
+/* Scaled Left Hero Column */
+body.is-fullscreen .rpost-result-hero,
+:root:fullscreen .rpost-result-hero,
+:fullscreen .rpost-result-hero {
+  padding: 20px 18px 22px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(8, 14, 28, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 2px solid var(--tier);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body.is-fullscreen .rpost-badge,
+:root:fullscreen .rpost-badge,
+:fullscreen .rpost-badge {
+  width: 165px;
+  height: 165px;
+  margin: 10px 0 14px;
+}
+
+body.is-fullscreen .rpost-badge-icon,
+:root:fullscreen .rpost-badge-icon,
+:fullscreen .rpost-badge-icon {
+  top: -16px;
+  left: 50%;
+  margin-left: -21px;
+  width: 42px;
+  font-size: 34px;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.8));
+}
+
+body.is-fullscreen .rpost-spark,
+:root:fullscreen .rpost-spark,
+:fullscreen .rpost-spark {
+  width: 16px;
+  font-size: 15px;
+}
+
+body.is-fullscreen .rpost-celebrate .rpost-spark,
+:root:fullscreen .rpost-celebrate .rpost-spark,
+:fullscreen .rpost-celebrate .rpost-spark {
+  animation: rpost-spark-anim-fs 2s ease-out infinite;
+  animation-delay: var(--d, 0s);
+}
+
+body.is-fullscreen .rpost-ring-box,
+body.is-fullscreen .rpost-ring,
+:root:fullscreen .rpost-ring-box,
+:root:fullscreen .rpost-ring,
+:fullscreen .rpost-ring-box,
+:fullscreen .rpost-ring {
+  width: 165px;
+  height: 165px;
+}
+
+body.is-fullscreen .rpost-num,
+:root:fullscreen .rpost-num,
+:fullscreen .rpost-num {
+  font-size: 46px;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+body.is-fullscreen .rpost-denom,
+:root:fullscreen .rpost-denom,
+:fullscreen .rpost-denom {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+body.is-fullscreen .rpost-rank-tag,
+:root:fullscreen .rpost-rank-tag,
+:fullscreen .rpost-rank-tag {
+  font-size: 11.5px;
+  padding: 5px 18px;
+  letter-spacing: 0.14em;
+  margin-bottom: 8px;
+}
+
+body.is-fullscreen .rpost-headline,
+:root:fullscreen .rpost-headline,
+:fullscreen .rpost-headline {
+  font-size: 22px;
+  margin: 0 0 10px 0;
+}
+
+body.is-fullscreen .rpost-hud-stats,
+:root:fullscreen .rpost-hud-stats,
+:fullscreen .rpost-hud-stats {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+body.is-fullscreen .rpost-hud-chip,
+:root:fullscreen .rpost-hud-chip,
+:fullscreen .rpost-hud-chip {
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.75);
+}
+
+body.is-fullscreen .rpost-hud-lbl,
+:root:fullscreen .rpost-hud-lbl,
+:fullscreen .rpost-hud-lbl {
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+}
+
+body.is-fullscreen .rpost-hud-val,
+:root:fullscreen .rpost-hud-val,
+:fullscreen .rpost-hud-val {
+  font-size: 15.5px;
+}
+
+/* Scaled Right Details Column */
+body.is-fullscreen .rpost-result-details,
+:root:fullscreen .rpost-result-details,
+:fullscreen .rpost-result-details {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  min-width: 0 !important;
+  height: 100% !important;
+}
+
+body.is-fullscreen .rpost-growth-card,
+:root:fullscreen .rpost-growth-card,
+:fullscreen .rpost-growth-card {
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-top: 2.5px solid var(--tier);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body.is-fullscreen .rpost-growth-header,
+:root:fullscreen .rpost-growth-header,
+:fullscreen .rpost-growth-header {
+  margin-bottom: 12px;
+}
+
+body.is-fullscreen .rpost-growth-title,
+:root:fullscreen .rpost-growth-title,
+:fullscreen .rpost-growth-title {
+  font-size: 12.5px;
+  letter-spacing: 0.09em;
+}
+
+body.is-fullscreen .rpost-growth-badge,
+:root:fullscreen .rpost-growth-badge,
+:fullscreen .rpost-growth-badge {
+  font-size: 10.5px;
+  padding: 3px 10px;
+  border-radius: 5px;
+}
+
+body.is-fullscreen .rpost-growth-row,
+:root:fullscreen .rpost-growth-row,
+:fullscreen .rpost-growth-row {
+  gap: 16px;
+}
+
+body.is-fullscreen .rpost-growth-label,
+:root:fullscreen .rpost-growth-label,
+:fullscreen .rpost-growth-label {
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+}
+
+body.is-fullscreen .rpost-growth-val,
+:root:fullscreen .rpost-growth-val,
+:fullscreen .rpost-growth-val {
+  font-size: 24px;
+}
+
+body.is-fullscreen .rpost-growth-arrow,
+:root:fullscreen .rpost-growth-arrow,
+:fullscreen .rpost-growth-arrow {
+  font-size: 20px;
+}
+
+body.is-fullscreen .rpost-growth-bars,
+:root:fullscreen .rpost-growth-bars,
+:fullscreen .rpost-growth-bars {
+  margin-top: 12px;
+  gap: 7px;
+}
+
+body.is-fullscreen .rpost-growth-bar-row,
+:root:fullscreen .rpost-growth-bar-row,
+:fullscreen .rpost-growth-bar-row {
+  gap: 10px;
+  font-size: 11px;
+}
+
+body.is-fullscreen .rpost-growth-bar-name,
+:root:fullscreen .rpost-growth-bar-name,
+:fullscreen .rpost-growth-bar-name {
+  width: 74px;
+  font-size: 10.5px;
+}
+
+body.is-fullscreen .rpost-growth-bar-track,
+:root:fullscreen .rpost-growth-bar-track,
+:fullscreen .rpost-growth-bar-track {
+  height: 8px;
+}
+
+body.is-fullscreen .rpost-growth-delta,
+:root:fullscreen .rpost-growth-delta,
+:fullscreen .rpost-growth-delta {
+  margin-top: 12px;
+  padding-top: 12px;
+  font-size: 13px;
+}
+
+body.is-fullscreen .rpost-continue-btn,
+:root:fullscreen .rpost-continue-btn,
+:fullscreen .rpost-continue-btn {
+  font-size: 15px;
+  padding: 14px 34px;
+  border-radius: 12px;
+}
+
+@keyframes rpost-spark-anim-fs {
+  0%   { opacity: 0; transform: rotate(var(--a)) translateY(-84px) scale(0.2); }
+  35%  { opacity: 1; transform: rotate(var(--a)) translateY(-92px) scale(1.1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-110px) scale(0.3); }
 }
 
 /* Ryan Guide dialogue choice button styling for Begin Post-Test */

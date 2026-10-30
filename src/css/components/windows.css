@@ -48,6 +48,15 @@
   max-height: calc(100vh - 48px);
 }
 
+#win-control-panel {
+  width: 840px;
+  max-width: 100vw;
+  height: min(530px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  min-width: 540px;
+  min-height: 380px;
+}
+
 #win-taskmanager {
   width: 860px;
   max-width: 100vw;
