@@ -896,29 +896,10 @@ const RyanPosttest = (() => {
     hero.appendChild(hudStats);
     wrap.appendChild(hero);
 
-    // ── Right Column: Mentor Note, Growth Card & Actions ──
+    // ── Right Column: Growth Progression Card & Actions ──
     const details = _el('div', 'rpost-result-details');
 
-    // 1. Ryan Mentor Debrief Card
-    const noteCard = _el('div', 'rpost-ryan-note-card');
-    const noteHeader = _el('div', 'rpost-ryan-note-header');
-    const ryanThumb = _el('img', 'rpost-ryan-thumb');
-    ryanThumb.src = 'assets/Character/Ryan.png';
-    ryanThumb.alt = 'Ryan, IT Support Mentor';
-
-    const ryanMeta = _el('div', 'rpost-ryan-meta');
-    ryanMeta.appendChild(_el('div', 'rpost-ryan-meta-name', 'Ryan · IT Support Mentor'));
-    ryanMeta.appendChild(_el('div', 'rpost-ryan-meta-title', 'Phishing Defense Evaluation'));
-
-    noteHeader.appendChild(ryanThumb);
-    noteHeader.appendChild(ryanMeta);
-    noteCard.appendChild(noteHeader);
-
-    const note = _el('div', 'rpost-ryan-note', `"${copy.ryan}"`);
-    noteCard.appendChild(note);
-    details.appendChild(noteCard);
-
-    // 2. Growth comparison card against pre-test baseline
+    // Growth comparison card against pre-test baseline
     const preResult = (typeof RyanPretest !== 'undefined' && RyanPretest.getResult)
       ? RyanPretest.getResult()
       : (typeof gameState !== 'undefined' ? gameState.preTestResult : null);

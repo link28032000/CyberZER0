@@ -227,6 +227,16 @@ const RyanGuide = (() => {
     // Guard: ensure text is always a valid string before typing
     const safeText = (step.text !== undefined && step.text !== null) ? String(step.text) : '';
     step._fullText = safeText;
+
+    // Trigger step onShow callback if present
+    if (typeof step.onShow === 'function') {
+      try { step.onShow(); } catch (e) { console.error('[RyanGuide] step.onShow failed:', e); }
+    }
+    // Chapter 2: trigger checklist unlock when Ryan talks about opening Sticky Notes
+    if (safeText.includes('Sticky Notes') && (window._currentChapterCategory === 'malware' || (typeof gameState !== 'undefined' && gameState.phase === 'malware'))) {
+      window._ch2ChecklistUnlocked = true;
+      if (typeof updateStickyNoteForPhase === 'function') updateStickyNoteForPhase('malware');
+    }
     _typeText(safeText, function() {
       // Called when message typing is completely finished
       if (_opts && _opts.autoDismiss) {
@@ -300,7 +310,8 @@ const RyanGuide = (() => {
           text: (m.text !== undefined && m.text !== null) ? String(m.text) : '',
           state: (typeof m.state === 'string') ? m.state : 'speaking',
           action: m.action || null,
-          label: (typeof m.label === 'string' && m.label.length > 0) ? m.label : null
+          label: (typeof m.label === 'string' && m.label.length > 0) ? m.label : null,
+          onShow: typeof m.onShow === 'function' ? m.onShow : null
         };
       }
       return { text: '', state: 'speaking' };

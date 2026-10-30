@@ -233,15 +233,141 @@ function vpSetSpeed(speed) {
   if (vid) vid.playbackRate = parseFloat(speed);
 }
 
+let _vpIsFullscreen = false;
+let _vpHideTimer = null;
+let _vpLastClickTime = 0;
+
+function vpOnStageClick(e) {
+  const now = Date.now();
+  if (now - _vpLastClickTime < 320) {
+    _vpLastClickTime = 0;
+    vpToggleFullscreen();
+    return;
+  }
+  _vpLastClickTime = now;
+  vpTogglePlay();
+}
+
 function vpToggleFullscreen() {
-  const stage = document.getElementById('vp-stage');
-  if (!stage) return;
-  if (!document.fullscreenElement) {
-    stage.requestFullscreen().catch(() => {});
+  if (_vpIsFullscreen) {
+    vpExitFullscreen();
   } else {
-    document.exitFullscreen().catch(() => {});
+    vpEnterFullscreen();
   }
 }
+
+function vpEnterFullscreen() {
+  const win = document.getElementById('win-videoplayer');
+  if (!win) return;
+
+  _vpIsFullscreen = true;
+  win.classList.add('vp-fullscreen-mode');
+
+  // Save inline position/bounds to restore accurately later
+  win.dataset.savedInlineLeft = win.style.left || '';
+  win.dataset.savedInlineTop = win.style.top || '';
+  win.dataset.savedInlineWidth = win.style.width || '';
+  win.dataset.savedInlineHeight = win.style.height || '';
+
+  // Update button icon & tooltip
+  const btn = document.getElementById('vp-fullscreen-btn');
+  if (btn) {
+    btn.innerHTML = '🗗';
+    btn.title = 'Exit Fullscreen (Esc)';
+    btn.classList.add('active');
+  }
+
+  // Setup auto-hiding controls during playback
+  win.addEventListener('mousemove', _vpOnMouseMove);
+  win.addEventListener('mouseenter', _vpOnMouseMove);
+  document.addEventListener('keydown', _vpOnKeyDown, true);
+
+  _vpResetControlsTimer();
+}
+
+function vpExitFullscreen() {
+  const win = document.getElementById('win-videoplayer');
+  if (!win) return;
+
+  _vpIsFullscreen = false;
+  win.classList.remove('vp-fullscreen-mode', 'vp-controls-hidden');
+
+  if (_vpHideTimer) {
+    clearTimeout(_vpHideTimer);
+    _vpHideTimer = null;
+  }
+
+  win.removeEventListener('mousemove', _vpOnMouseMove);
+  win.removeEventListener('mouseenter', _vpOnMouseMove);
+  document.removeEventListener('keydown', _vpOnKeyDown, true);
+
+  // Restore inline styles if saved
+  if (win.dataset.savedInlineLeft !== undefined) {
+    win.style.left = win.dataset.savedInlineLeft;
+    win.style.top = win.dataset.savedInlineTop;
+    win.style.width = win.dataset.savedInlineWidth;
+    win.style.height = win.dataset.savedInlineHeight;
+    delete win.dataset.savedInlineLeft;
+    delete win.dataset.savedInlineTop;
+    delete win.dataset.savedInlineWidth;
+    delete win.dataset.savedInlineHeight;
+  }
+
+  // Update button icon & tooltip
+  const btn = document.getElementById('vp-fullscreen-btn');
+  if (btn) {
+    btn.innerHTML = '⛶';
+    btn.title = 'Fullscreen';
+    btn.classList.remove('active');
+  }
+
+  // Re-center window to keep layout clean
+  if (typeof centerWindow === 'function') {
+    centerWindow('videoplayer');
+  }
+}
+
+function _vpOnMouseMove() {
+  if (!_vpIsFullscreen) return;
+  const win = document.getElementById('win-videoplayer');
+  if (!win) return;
+
+  win.classList.remove('vp-controls-hidden');
+  _vpResetControlsTimer();
+}
+
+function _vpResetControlsTimer() {
+  if (_vpHideTimer) {
+    clearTimeout(_vpHideTimer);
+    _vpHideTimer = null;
+  }
+  if (!_vpIsFullscreen) return;
+
+  const vid = document.getElementById('videoplayer-video');
+  if (vid && !vid.paused && !vid.ended) {
+    _vpHideTimer = setTimeout(() => {
+      const win = document.getElementById('win-videoplayer');
+      if (win && _vpIsFullscreen) {
+        win.classList.add('vp-controls-hidden');
+      }
+    }, 2500);
+  }
+}
+
+function _vpOnKeyDown(e) {
+  if (!_vpIsFullscreen) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    vpExitFullscreen();
+  }
+}
+
+window.vpOnStageClick = vpOnStageClick;
+window.vpToggleFullscreen = vpToggleFullscreen;
+window.vpEnterFullscreen = vpEnterFullscreen;
+window.vpExitFullscreen = vpExitFullscreen;
+window.isVpFullscreen = () => _vpIsFullscreen;
 
 function scanCurrentVideoInAV() {
   if (gameState.selectedFolderFileId) {

@@ -66,5 +66,7 @@ const appState = {
   scanner: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   docviewer: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   imageviewer: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
-  videoplayer: { open: false, minimized: false, maximized: false, hasBeenPositioned: false }
+  videoplayer: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
+  'control-panel': { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
+  control_panel: { open: false, minimized: false, maximized: false, hasBeenPositioned: false }
 };

@@ -37,6 +37,7 @@ function restartEntireGame() {
   if (typeof resetCh1ZmailInterface === 'function') {
     resetCh1ZmailInterface();
   }
+  try { localStorage.removeItem('cyberzero_uninstalled_apps'); } catch (e) {}
   if (typeof resetPhoneLinkChat === 'function') {
     resetPhoneLinkChat();
   }
@@ -257,7 +258,7 @@ function restartCurrentChapterMission() {
   }
 
   // Close open app windows
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner'].forEach(a => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner', 'control-panel'].forEach(a => {
     if (typeof appState !== 'undefined' && appState[a]) {
       appState[a].open = false;
       appState[a].minimized = false;

@@ -269,6 +269,14 @@ function _tmRenderProcesses() {
   var isMalwareTerminated = (typeof g4State !== 'undefined' && g4State.processKilled);
 
   var apps = TM_APPS.slice();
+  if (typeof getUninstalledAppIds === 'function') {
+    var _uninst = getUninstalledAppIds();
+    apps = apps.filter(function(p) {
+      if (p.name === 'GTA 6' && _uninst.includes('gta6')) return false;
+      if (p.name === 'Steam' && _uninst.includes('steam')) return false;
+      return true;
+    });
+  }
   if (_tmG4Mode) {
     apps.push(TM_MALWARE_PROC);
   }
@@ -386,6 +394,14 @@ function _tmRenderDetails() {
   var isMalwareTerminated = (typeof g4State !== 'undefined' && g4State.processKilled);
 
   var all = TM_APPS.concat(TM_BG);
+  if (typeof getUninstalledAppIds === 'function') {
+    var _uninst2 = getUninstalledAppIds();
+    all = all.filter(function(p) {
+      if (p.name === 'GTA 6' && _uninst2.includes('gta6')) return false;
+      if (p.name === 'Steam' && _uninst2.includes('steam')) return false;
+      return true;
+    });
+  }
   if (_tmG4Mode) all.push(TM_MALWARE_PROC);
 
   if (_tmSearchFilter) {

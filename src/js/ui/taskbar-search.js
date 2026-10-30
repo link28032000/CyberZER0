@@ -12,6 +12,7 @@ const TASKBAR_SEARCH_INDEX = [
   { label: 'Antivirus',     sub: 'Application', icon: 'assets/icons/apps/windows_defender.svg', action: () => taskbarClick('antivirus') },
   { label: 'Phone Link',    sub: 'Application', icon: 'assets/icons/apps/Smartphone.svg',       action: () => taskbarClick('comms')     },
   { label: 'Sticky Notes',  sub: 'Application', icon: 'assets/icons/apps/note.svg',             action: () => toggleStickyNote() },
+  { label: 'Control Panel', sub: 'System Configuration', icon: 'assets/icons/Chapter 2 new apps/control_panel.svg', action: () => openApp('control-panel') },
   { label: 'Settings',      sub: 'Network · Wi-Fi', icon: 'assets/icons/apps/settings.svg',         action: () => { if (typeof openApp === 'function') openApp('wifi-settings'); else showToast('Settings is not available yet.', 'info'); } },
 ];
 

@@ -313,7 +313,7 @@ function runMalwareSimulation(file) {
       <div style="background:${sim.color};padding:12px 16px;display:flex;align-items:center;gap:10px;">
         <span style="font-size:22px;">${sim.icon}</span>
         <div>
-          <div style="color:#fff;font-weight:700;font-size:14px;">🎓 EDUCATIONAL SIMULATION</div>
+          <div style="color:#fff;font-weight:700;font-size:14px;">🛡️ MALWARE SIMULATION</div>
           <div style="color:rgba(255,255,255,0.85);font-size:12px;">${sim.name}</div>
         </div>
         <span style="margin-left:auto;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">SAFE — NO REAL HARM</span>

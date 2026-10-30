@@ -373,7 +373,7 @@ function shutdownGame() {
   }
 
   // Close open app windows
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner'].forEach(a => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner', 'control-panel'].forEach(a => {
     if (typeof appState !== 'undefined' && appState[a]) {
       appState[a].open = false;
       appState[a].minimized = false;

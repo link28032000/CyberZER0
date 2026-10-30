@@ -70,6 +70,7 @@ function updateAppLockStates() {
 }
 
 function openApp(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
   // ── Block all apps while the pretest or posttest is running ──
   const pretestRunning = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
   const posttestRunning = typeof RyanPosttest !== 'undefined' && RyanPosttest.isRunning && RyanPosttest.isRunning();
@@ -192,6 +193,10 @@ function openApp(appName) {
     if (typeof initTaskManager === 'function') initTaskManager();
   }
 
+  if (appName === 'control-panel') {
+    if (typeof initControlPanel === 'function') initControlPanel();
+  }
+
   // Clear manual drag tracker so window auto-centers properly
   delete win.dataset.userDragged;
 
@@ -202,6 +207,7 @@ function openApp(appName) {
 
 // Centers a window on the desktop, always ensuring it fits within available space.
 function centerWindow(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
   const win = document.getElementById(`win-${appName}`);
   const desktop = document.getElementById('desktop');
   const taskbar = document.getElementById('taskbar');
@@ -331,9 +337,11 @@ function adjustAppsForDialogue(hasDialogue) {
 }
 
 function closeApp(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
   const win = document.getElementById(`win-${appName}`);
   if (!win) return;
   if (appName === 'videoplayer') {
+    if (typeof vpExitFullscreen === 'function') vpExitFullscreen();
     const vid = document.getElementById('videoplayer-video');
     if (vid) vid.pause();
   }
@@ -376,6 +384,8 @@ function closeApp(appName) {
 }
 
 function minimizeApp(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
+  if (appName === 'videoplayer' && typeof vpExitFullscreen === 'function') vpExitFullscreen();
   const win = document.getElementById(`win-${appName}`);
   appState[appName].minimized = true;
   win.classList.add('minimized');
@@ -385,6 +395,7 @@ function minimizeApp(appName) {
 }
 
 function toggleMaximize(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
   const win = document.getElementById(`win-${appName}`);
   const state = appState[appName];
   const maxBtn = win.querySelector('.win-maximize');
@@ -418,6 +429,7 @@ function toggleMaximize(appName) {
 let highestWindowZIndex = 220;
 
 function focusWindow(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
   if (!appName) return;
   document.querySelectorAll('.app-window').forEach(w => w.classList.remove('focused'));
   const win = document.getElementById(`win-${appName}`);
@@ -448,6 +460,7 @@ function focusStickyNote() {
 }
 
 function taskbarClick(appName) {
+  if (appName === 'control_panel') appName = 'control-panel';
   if (appName === 'comms' && typeof unhighlightPhoneLinkApp === 'function') {
     unhighlightPhoneLinkApp();
   }
@@ -487,7 +500,7 @@ function minimizeApp_restore(appName) {
 
 function updateTaskbar() {
   updateAppLockStates();
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer'].forEach(appName => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'control-panel'].forEach(appName => {
     const btn = document.getElementById(`taskbar-${appName}`);
     if (!btn) return;
     const state = appState[appName];
@@ -503,7 +516,7 @@ function updateTaskbar() {
         btn.classList.add('active');
       }
     } else {
-      if (appName === 'docviewer' || appName === 'imageviewer' || appName === 'videoplayer') {
+      if (appName === 'docviewer' || appName === 'imageviewer' || appName === 'videoplayer' || appName === 'control-panel') {
         btn.classList.add('hidden');
       }
     }

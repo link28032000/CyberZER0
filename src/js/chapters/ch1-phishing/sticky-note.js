@@ -493,8 +493,16 @@ function showStickyNote() {
   const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
   if (!scrollEl) return;
 
-  // ── If all emails are completed and award claimed, display the post-award checklist ──
-  if (gameState.emailResults && gameState.emailResults.length >= EMAILS.length && window._awardClaimed) {
+  // ── Chapter 2 (malware) — check FIRST so Ch1 results never leak into Ch2 ──
+  if (window._currentChapterCategory === 'malware' ||
+      (typeof gameState !== 'undefined' && gameState.phase === 'malware') ||
+      !_isChapter1Active()) {
+    updateStickyNoteForPhase('malware');
+    return;
+  }
+
+  // ── Chapter 1: If all emails are completed and award claimed, display the post-award checklist ──
+  if (_isChapter1Active() && gameState.emailResults && gameState.emailResults.length >= EMAILS.length && window._awardClaimed) {
     const total = EMAILS.length;
     const correct = gameState.correctDecisions;
     const pct = correct / total;
@@ -506,13 +514,6 @@ function showStickyNote() {
     else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
 
     renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
-    return;
-  }
-
-  // ── Chapter 2 (malware) — show mission checklist instead of Ch1 tasks ──
-  if (window._currentChapterCategory === 'malware' ||
-      (typeof gameState !== 'undefined' && gameState.phase === 'malware')) {
-    updateStickyNoteForPhase('malware');
     return;
   }
 
@@ -1767,8 +1768,15 @@ function updateStickyNoteForPhase(phase) {
 
   // Chapter 2 (malware) notes — Mission checklist (Ch1-style UI)
   if (phase === 'malware' || currentCat === 'malware') {
-    const _m = window._ch2Mission || { stickyOpened: false, gamesOpened: false, antivirusOff: false };
     if (titleEl) titleEl.textContent = 'Sticky Notes';
+
+    // In Chapter 2, start completely empty until Ryan's dialogue talks about opening sticky notes
+    if (!window._ch2ChecklistUnlocked) {
+      scrollEl.innerHTML = '';
+      return;
+    }
+
+    const _m = window._ch2Mission || { stickyOpened: false, gamesOpened: false, antivirusOff: false };
 
     const doneGames = !!_m.gamesOpened;
     const doneAv    = !!_m.antivirusOff;

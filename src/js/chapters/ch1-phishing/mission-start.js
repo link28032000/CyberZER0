@@ -418,6 +418,17 @@ function openChapterDesktopDirect(chapterId) {
       resetCh1ZmailInterface();
     }
   } else if (chapterId === 'malware') {
+    window._ch2ChecklistUnlocked = false;
+    if (typeof closeStickyNote === 'function') closeStickyNote();
+    const sNote = document.getElementById('sticky-note');
+    if (sNote) {
+      sNote.classList.add('hidden');
+      sNote.classList.remove('highlight-attention');
+      const sScroll = sNote.querySelector('.sticky-note-scroll');
+      if (sScroll) sScroll.innerHTML = '';
+    }
+    const notesIcon = document.getElementById('icon-notes');
+    if (notesIcon) notesIcon.classList.remove('icon-attention', 'btn-pulse-highlight');
     if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) {
       RyanGuide.reset();
     } else if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
@@ -454,7 +465,7 @@ function openChapterDesktopDirect(chapterId) {
   }
 
   // Close all app windows to ensure completely clean desktop view
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner'].forEach(a => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner', 'control-panel'].forEach(a => {
     if (typeof appState !== 'undefined' && appState[a]) {
       appState[a].open = false;
       appState[a].minimized = false;
