@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="src/css/chapters/ch3-phone-link.css">
   <link rel="stylesheet" href="src/css/apps/settings.css">
   <link rel="stylesheet" href="src/css/apps/task-manager.css">
+  <link rel="stylesheet" href="src/css/apps/control-panel.css">
   <link rel="stylesheet" href="src/css/chapters/ch3-infection.css">
   <link rel="stylesheet" href="src/css/ui/main-menu.css">
   <link rel="stylesheet" href="src/css/ui/game-loading.css">
@@ -122,9 +123,14 @@
         <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/GTA6.svg" alt="GTA 6"></div>
         <span>GTA 6</span>
       </div>
-      <div class="desktop-icon ch2-not-ch3" id="icon-games-folder" onclick="openApp('folder'); switchExplorerFolder('games');" title="Games Folder">
+      <div class="desktop-icon ch2-not-ch3" id="icon-games-folder" onclick="openApp('folder'); switchExplorerFolder('games');" ondblclick="openApp('folder'); switchExplorerFolder('games');" title="Games Folder">
         <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/games_folder.svg" alt="Games"></div>
         <span>Games</span>
+      </div>
+      <!-- Chapter 2 only: Control Panel -->
+      <div class="desktop-icon ch2-only" id="icon-control-panel" onclick="openApp('control-panel')" title="Control Panel">
+        <div class="icon-img"><img src="assets/icons/Chapter 2 new apps/control_panel.svg" alt="Control Panel"></div>
+        <span>Control Panel</span>
       </div>
       <!-- Chapter 3 only: Pia's social apps — hidden in Ch2, visible in Ch3 only -->
       <div class="desktop-icon ch3-only" id="icon-instagram" ondblclick="openInstagramApp()" onclick="openInstagramApp()" title="Instagram — Social Media">
@@ -652,7 +658,7 @@
     </div>
     <div class="win-body videoplayer-body">
       <!-- Video Stage -->
-      <div class="vp-stage" id="vp-stage" onclick="vpTogglePlay()">
+      <div class="vp-stage" id="vp-stage" onclick="vpOnStageClick(event)">
         <video id="videoplayer-video" src="assets/video/video3.mp4" playsinline preload="auto"></video>
         <!-- Audio Mode Visualizer Stage -->
         <div class="vp-audio-stage hidden" id="vp-audio-stage">
@@ -708,7 +714,7 @@
               <option value="1.25">1.25x</option>
               <option value="1.5">1.5x</option>
             </select>
-            <button type="button" class="vp-btn" onclick="vpToggleFullscreen()" title="Fullscreen">⛶</button>
+            <button type="button" class="vp-btn" id="vp-fullscreen-btn" onclick="vpToggleFullscreen()" title="Fullscreen">⛶</button>
           </div>
         </div>
       </div>
@@ -1597,6 +1603,64 @@
     </div>
   </div>
 
+  <!-- ── CONTROL PANEL WINDOW (Chapter 2+ System App) ── -->
+  <div id="win-control-panel" class="app-window hidden" data-app="control-panel">
+    <div class="win-titlebar" id="titlebar-control-panel">
+      <div class="win-title">
+        <span class="win-icon"><img src="assets/icons/Chapter 2 new apps/control_panel.svg" alt="Control Panel" class="cp-titlebar-icon"></span>
+        <span class="cp-title-text">Control Panel</span>
+      </div>
+      <div class="win-controls">
+        <button type="button" class="win-btn win-minimize" onclick="minimizeApp('control-panel')" title="Minimize">─</button>
+        <button type="button" class="win-btn win-maximize" onclick="toggleMaximize('control-panel')" title="Maximize">□</button>
+        <button type="button" class="win-btn win-close" onclick="closeApp('control-panel')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body cp-body">
+      <!-- Top Navigation & Search Toolbar -->
+      <div class="cp-toolbar">
+        <div class="cp-nav-btns">
+          <button type="button" class="cp-nav-btn" id="cp-btn-back" onclick="openCpSubpage('main')" title="Back" disabled>←</button>
+          <button type="button" class="cp-nav-btn" id="cp-btn-forward" title="Forward" disabled>→</button>
+        </div>
+        <div class="cp-breadcrumb">
+          <img src="assets/icons/Chapter 2 new apps/control_panel.svg" alt="" class="cp-crumb-icon">
+          <div id="cp-breadcrumb-content"><span class="cp-crumb-current">Control Panel</span></div>
+        </div>
+        <div class="cp-search-wrap">
+          <input type="text" class="cp-search-input" id="cp-search-input" placeholder="Search Control Panel" oninput="filterControlPanel(this.value)">
+          <span class="cp-search-icon">🔍</span>
+        </div>
+      </div>
+
+      <!-- Secondary Header / View Switcher -->
+      <div class="cp-view-header">
+        <div class="cp-headline">
+          <span>Adjust your computer's settings</span>
+        </div>
+        <div class="cp-view-controls">
+          <span>View by:</span>
+          <select class="cp-view-select" id="cp-view-mode-select" onchange="setCpViewMode(this.value)">
+            <option value="category">Category</option>
+            <option value="large_icons">Large icons</option>
+            <option value="small_icons">Small icons</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Scrollable Content -->
+      <div class="cp-main-scroll" id="cp-main-scroll">
+        <!-- Rendered dynamically by control-panel.js -->
+      </div>
+
+      <!-- Bottom Status Bar -->
+      <div class="cp-statusbar">
+        <div class="cp-status-pill">System Status: Protected &amp; Active</div>
+        <div>CyberZero Endpoint Workstation</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── TASK MANAGER WINDOW ── -->
   <div id="win-taskmanager" class="app-window hidden" data-app="taskmanager">
     <div class="win-titlebar" id="titlebar-taskmanager">
@@ -1908,6 +1972,9 @@
       <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-videoplayer" onclick="taskbarClick('videoplayer')" title="Media Player">
         <span style="font-size:22px;">🎬</span>
       </button>
+          <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-control-panel" onclick="taskbarClick('control-panel')" title="Control Panel">
+        <span><img src="assets/icons/Chapter 2 new apps/control_panel.svg" alt="Control Panel" class="taskbar-icon-img-lg"></span>
+      </button>
     </div>
     <div class="taskbar-tray">
 
@@ -1971,6 +2038,11 @@
         <div class="start-tile-name">Task Manager</div>
       </div>
 
+            <div class="start-app-tile ch2-only" onclick="startMenuOpenApp('control-panel')" id="start-app-control-panel" title="Control Panel">
+        <div class="start-tile-icon"><img src="assets/icons/Chapter 2 new apps/control_panel.svg" alt="Control Panel" class="start-tile-img"></div>
+        <div class="start-tile-name">Control Panel</div>
+      </div>
+
       <div class="start-app-tile" onclick="startMenuOpenApp('gmail')" id="start-app-gmail" title="Open Zmail">
         <div class="start-tile-icon"><img src="assets/icons/apps/mail.svg" alt="Zmail" class="start-tile-img"></div>
         <div class="start-tile-name">Zmail</div>
@@ -2019,6 +2091,12 @@
         <div class="rec-file-icon"><img src="assets/icons/Chapter 2 new apps/Task Manager.svg" alt="Task Manager" class="rec-icon-img"></div>
         <div class="rec-file-info">
           <div class="rec-file-name">Task Manager</div>
+        </div>
+      </div>
+            <div class="start-recommended-item ch2-only" onclick="startMenuOpenApp('control-panel')" title="Control Panel" id="rec-app-control-panel">
+        <div class="rec-file-icon"><img src="assets/icons/Chapter 2 new apps/control_panel.svg" alt="Control Panel" class="rec-icon-img"></div>
+        <div class="rec-file-info">
+          <div class="rec-file-name">Control Panel</div>
         </div>
       </div>
       <div class="start-recommended-item" onclick="startMenuOpenApp('gmail')" title="Open Zmail">
@@ -4599,6 +4677,7 @@
 <script src="src/js/chapters/ch3-social-engineering/wifi-security.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/phone-link.js"></script>
 <script src="src/js/apps/task-manager.js"></script>
+<script src="src/js/apps/control-panel.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/infection.js"></script>
 <script src="src/js/chapters/ch3-social-engineering/comms-feed.js"></script>
 <script src="src/js/chapters/ch4-ransomware/ransomware.js"></script>
