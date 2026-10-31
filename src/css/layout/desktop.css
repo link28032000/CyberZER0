@@ -266,6 +266,14 @@
   display: none;
 }
 
+/* ═══════════════════════════════════════════════
+   DESKTOP ICON SELECTION (Windows-style)
+═══════════════════════════════════════════════ */
+.desktop-icon.selected {
+  background: rgba(79, 195, 247, 0.16) !important;
+  border-color: rgba(79, 195, 247, 0.42) !important;
+}
+
 .desktop-icon.ch2-only {
   animation: ch2IconsFadeIn 0.45s ease forwards;
 }
