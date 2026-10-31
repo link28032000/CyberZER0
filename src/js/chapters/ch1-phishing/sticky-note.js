@@ -1425,6 +1425,21 @@ window.updateShutdownGuideStep = function(step) {
 function toggleStickyNote() {
   // ── Block during pretest / Ryan intro dialogue ──
 
+  const ch2IntroActive = typeof isCh2IntroActive === 'function' ? isCh2IntroActive() : !!window._ch2IntroActive;
+  const ch2PretestRunning = typeof Ch2Pretest !== 'undefined' && Ch2Pretest.isRunning && Ch2Pretest.isRunning();
+  if (ch2PretestRunning) {
+    if (typeof showToast === 'function') showToast('Please complete the pre-test with Ryan before opening other apps.', 'warning');
+    const bd2 = document.getElementById('overlay-ch2-pretest');
+    if (bd2) bd2.style.zIndex = '99999';
+    if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
+    return;
+  }
+  if (ch2IntroActive) {
+    if (typeof showToast === 'function') showToast('Please finish the introduction dialogue with Ryan before opening apps.', 'warning');
+    if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
+    return;
+  }
+
   const pretestRunning  = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
   const ryanIntroActive = typeof RyanGuide   !== 'undefined' && RyanGuide.isActive   && RyanGuide.isActive()
                           && typeof gameState !== 'undefined' && gameState.phase === 'mission'

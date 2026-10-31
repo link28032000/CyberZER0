@@ -269,6 +269,9 @@ function clearFolderSearch() {
 }
 
 function switchExplorerFolder(folderKey) {
+  if (typeof isCh2IntroActive === 'function' && isCh2IntroActive()) {
+    return;
+  }
   // Block Games folder access in Chapter 1 — Ch2 only
   if (folderKey === 'games' && window._currentChapterCategory !== 'malware') {
     if (typeof showToast === 'function') {

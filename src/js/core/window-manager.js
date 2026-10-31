@@ -72,6 +72,27 @@ function updateAppLockStates() {
 function openApp(appName) {
   if (appName === 'control_panel') appName = 'control-panel';
   // ── Block all apps while the pretest or posttest is running ──
+  // ── Block Chapter 2 apps while intro dialogue or Ch2 pretest is running ──
+  const ch2IntroActive = typeof isCh2IntroActive === 'function' ? isCh2IntroActive() : !!window._ch2IntroActive;
+  const ch2PretestRunning = typeof Ch2Pretest !== 'undefined' && Ch2Pretest.isRunning && Ch2Pretest.isRunning();
+
+  if (ch2PretestRunning) {
+    if (typeof showToast === 'function') {
+      showToast('Please complete the pre-test with Ryan before opening other apps.', 'warning');
+    }
+    const bd2 = document.getElementById('overlay-ch2-pretest');
+    if (bd2) bd2.style.zIndex = '99999';
+    if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
+    return;
+  }
+  if (ch2IntroActive) {
+    if (typeof showToast === 'function') {
+      showToast('Please finish the introduction dialogue with Ryan before opening apps.', 'warning');
+    }
+    if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
+    return;
+  }
+
   const pretestRunning = typeof RyanPretest !== 'undefined' && RyanPretest.isRunning && RyanPretest.isRunning();
   const posttestRunning = typeof RyanPosttest !== 'undefined' && RyanPosttest.isRunning && RyanPosttest.isRunning();
   const ryanIntroActive = typeof RyanGuide !== 'undefined' && RyanGuide.isActive && RyanGuide.isActive()
