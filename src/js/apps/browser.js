@@ -1562,8 +1562,271 @@ function toggleBrowserBookmark() {
 }
 window.toggleBrowserBookmark = toggleBrowserBookmark;
 
+// ── MASTER BROWSER IMAGES DATABASE (assets/Browser/Images/) ──
+const BROWSER_IMAGE_DATABASE = [
+  // ── MALWARE INFOGRAPHICS ──
+  {
+    id: 'malware-1',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 1.png',
+    title: 'Types of Malware: Ransomware, Spyware, Adware, Worms, Trojans & Botnets',
+    tag: 'Infographic',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Educational visual breakdown detailing the core categories of malicious software: Ransomware, Spyware, Adware, Worms, Trojans, and Botnet networks.',
+    keywords: ['malware', 'types of malware', 'ransomware', 'spyware', 'adware', 'worms', 'trojans', 'trojan', 'botnets', 'botnet', 'virus', 'infection']
+  },
+  {
+    id: 'malware-2',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 2.png',
+    title: 'Common Types of Malware: Definitions, Behaviors & Infection Vectors',
+    tag: 'Linprofs Intel',
+    res: '1672 × 941',
+    source: 'linprofs.com',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Comprehensive threat guide by Linprofs classifying Virus, Worm, Trojan, Ransomware, Spyware, and Adware replication mechanisms.',
+    keywords: ['malware', 'common types of malware', 'virus', 'worm', 'trojan', 'ransomware', 'spyware', 'adware', 'linprofs', 'vectors']
+  },
+  {
+    id: 'malware-3',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 3.png',
+    title: 'Malware Taxonomy: Fileless Threats, Rootkits, Botnets & Keyloggers',
+    tag: 'Architecture',
+    res: '1672 × 941',
+    source: 'sans.org',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'In-depth taxonomy examining advanced persistence threats: Fileless In-Memory Malware, Kernel Rootkits, Botnet Command Nodes, and Keystroke Loggers.',
+    keywords: ['malware', 'fileless malware', 'rootkit', 'keylogger', 'botnet', 'virus', 'worm', 'trojan', 'spyware', 'adware', 'ransomware']
+  },
+  {
+    id: 'malware-4',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 4.png',
+    title: 'Virus vs. Malware: Comparison, User Triggering & Self-Replication',
+    tag: 'Concepts',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Clear comparative diagram distinguishing user-executed viruses from broader autonomous malware classifications like Trojans and spyware.',
+    keywords: ['malware', 'virus vs malware', 'virus', 'trojan', 'self-replicating', 'concepts', 'difference']
+  },
+  {
+    id: 'malware-5',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 5.png',
+    title: 'Business Impact of Malware: Financial Losses, Downtime & Legal Liability',
+    tag: 'Risk Analysis',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Enterprise impact analysis highlighting four catastrophic attack outcomes: Direct Financial Loss, Extended Downtime, Reputation Harm, and Regulatory Fines.',
+    keywords: ['malware', 'impact of malware', 'financial loss', 'downtime', 'reputation damage', 'legal consequences', 'business risk']
+  },
+  {
+    id: 'malware-6',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 6.png',
+    title: 'Malware Protection Best Practices & Endpoint Hardening Framework',
+    tag: 'Defense',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Multi-layered defense strategy: active antivirus protection, systematic system patches, automated cold backups, MFA, and download scrutiny.',
+    keywords: ['malware', 'malware protection', 'best practices', 'defense', 'antivirus', 'updates', 'backups', 'passwords', 'mfa', 'network security']
+  },
+  {
+    id: 'malware-7',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 7.png',
+    title: 'Signs of Malware Infection: Sluggish Performance, Crashes & Popup Ads',
+    tag: 'Detection',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Warning indicators that an endpoint has been compromised: frequent blue screens, disabled security scanners, unauthorized toolbars, and disk throttling.',
+    keywords: ['malware', 'signs of malware', 'symptoms', 'infection', 'slowdown', 'crashes', 'blue screen', 'popups', 'antivirus disabled', 'disk space']
+  },
+  {
+    id: 'malware-8',
+    category: 'malware',
+    src: 'assets/Browser/Images/Malware 8.png',
+    title: 'How to Prevent Malware: Multi-Factor Authentication & Link Hygiene',
+    tag: 'Prevention',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/topics/malware',
+    desc: 'Practical 6-pillar defense guide: enforce MFA, avoid clicking untrusted links, configure email filtering, maintain offline backups, and purge risky downloads.',
+    keywords: ['malware', 'how to prevent malware', 'prevention', 'mfa', 'suspicious links', 'email security', 'backup', 'updates', 'hygiene']
+  },
+
+  // ── PHISHING INFOGRAPHICS ──
+  {
+    id: 'phishing-1',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 1.png',
+    title: 'Visualizing Phishing: Deceptive Baiting of Passwords, Emails & SMS',
+    tag: 'Illustration',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+    desc: 'Conceptual illustration of cyber adversaries using deceptive email lures, phone numbers, and harvested credential portals to compromise employee workstations.',
+    keywords: ['phishing', 'visualizing phishing', 'baiting', 'credentials', 'password', 'email lure', 'scam', 'social engineering']
+  },
+  {
+    id: 'phishing-2',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 2.png',
+    title: 'What is Phishing? Brand Impersonation, Data Theft & Social Engineering',
+    tag: 'Overview',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+    desc: 'Core educational definition covering entity impersonation (banks, executive colleagues), credential theft, and psychological manipulation tactics.',
+    keywords: ['phishing', 'what is phishing', 'impersonation', 'data theft', 'social engineering', 'credentials', 'human psychology']
+  },
+  {
+    id: 'phishing-3',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 3.png',
+    title: 'Personal Data Theft via Phishing Hooks & Counterfeit Web Portals',
+    tag: 'Threat Model',
+    res: '1672 × 941',
+    source: 'consumer.ftc.gov',
+    link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing',
+    desc: 'Diagram depicting how malicious actors angle for sensitive corporate records, personal identity data, and banking credentials over unauthorized remote sessions.',
+    keywords: ['phishing', 'personal data', 'data theft', 'phishing hook', 'fake portal', 'identity theft', 'scam']
+  },
+  {
+    id: 'phishing-4',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 4.png',
+    title: 'Protect Yourself from Phishing on Facebook & Social Media (DICT Advisory)',
+    tag: 'DICT Advisory',
+    res: '1672 × 941',
+    source: 'dict.gov.ph',
+    link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+    desc: 'Official advisory from DICT Cybersecurity Bureau on social media phishing: never click account verification links, always use official apps, and update patches.',
+    keywords: ['phishing', 'facebook phishing', 'social media', 'dict', 'philippines', 'account verification', 'scam links', 'social engineering']
+  },
+  {
+    id: 'phishing-5',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 5.png',
+    title: '8 Red Flags of Phishing Scams: Sender Spoofing to Urgent Threats (DICT)',
+    tag: 'Red Flags',
+    res: '1672 × 941',
+    source: 'dict.gov.ph',
+    link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing',
+    desc: 'Essential 8-point detection checklist by DICT: suspicious sender emails, generic greetings, artificial urgency, data requests, grammar flaws, and fake offers.',
+    keywords: ['phishing', 'red flags', 'phishing scams', '8 red flags', 'sender spoofing', 'urgency', 'generic greetings', 'fake offers', 'email red flags', 'dict']
+  },
+  {
+    id: 'phishing-6',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 6.png',
+    title: 'The Phishing Spectrum: Email Phishing vs. Vishing (Phone) vs. Smishing (SMS)',
+    tag: 'Channels',
+    res: '1672 × 941',
+    source: 'cisa.gov',
+    link: 'https://www.cisa.gov/secure-our-world',
+    desc: 'Comprehensive multi-channel comparison explaining traditional email phishing, phone call voice phishing (vishing), and mobile SMS text phishing (smishing).',
+    keywords: ['phishing', 'vishing', 'smishing', 'voice phishing', 'sms phishing', 'channels', 'phone scam', 'text scam', 'social engineering']
+  },
+  {
+    id: 'phishing-7',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 7.png',
+    title: 'Understanding Vishing: Voice Phishing Phone Scams & Prevention (DICT)',
+    tag: 'Vishing Guide',
+    res: '1672 × 941',
+    source: 'dict.gov.ph',
+    link: 'https://www.cisa.gov/secure-our-world',
+    desc: 'Official DICT Cybersecurity Bureau public advisory defining vishing phone deception and providing reporting hotlines for reporting fraudulent callers.',
+    keywords: ['phishing', 'vishing', 'voice phishing', 'phone call', 'dict', 'philippines', 'cert-ph', 'telecom fraud', 'social engineering']
+  },
+  {
+    id: 'phishing-8',
+    category: 'phishing',
+    src: 'assets/Browser/Images/Phishing 8.png',
+    title: 'Quishing: QR-Code Based Phishing Scams & Prevention Guidelines (DICT #40)',
+    tag: 'Quishing Guide',
+    res: '1672 × 941',
+    source: 'dict.gov.ph',
+    link: 'https://www.cisa.gov/secure-our-world',
+    desc: 'DICT Cybersecurity Pagebook #40 advisory on Quishing: dangers of scanning public stickers/posters, downloading payload via QR, and using preview scanners.',
+    keywords: ['phishing', 'quishing', 'qr code', 'qr phishing', 'dict', 'pagebook', 'scan scam', 'malicious qr', 'social engineering']
+  }
+];
+
+// Helper to filter and rank images according to user search query
+function getFilteredBrowserImages(query) {
+  const qClean = (query || '').trim().toLowerCase();
+  if (!qClean || qClean === 'all' || qClean === 'cyber' || qClean === 'cybersecurity' || qClean === 'security') {
+    return BROWSER_IMAGE_DATABASE.slice();
+  }
+
+  // Exact base query matches preserve natural catalog sequence
+  if (qClean === 'phishing' || qClean === 'phish') {
+    return BROWSER_IMAGE_DATABASE.filter(img => img.category === 'phishing');
+  }
+  if (qClean === 'malware') {
+    return BROWSER_IMAGE_DATABASE.filter(img => img.category === 'malware');
+  }
+
+  const tokens = qClean.split(/[\s,+-]+/).filter(Boolean);
+
+  const isPhishingQuery = /phish|email|vishing|smishing|quishing|social(\s+engineering)?|bait|spoof/i.test(qClean);
+  const isMalwareQuery = /malware|virus|trojan|worm|ransomware|spyware|adware|botnet|rootkit|keylogger|dropper/i.test(qClean);
+
+  if (isPhishingQuery && !isMalwareQuery) {
+    const list = BROWSER_IMAGE_DATABASE.filter(img => img.category === 'phishing');
+    return list.sort((a, b) => scoreImageRelevance(b, tokens, qClean) - scoreImageRelevance(a, tokens, qClean));
+  }
+
+  if (isMalwareQuery && !isPhishingQuery) {
+    const list = BROWSER_IMAGE_DATABASE.filter(img => img.category === 'malware');
+    return list.sort((a, b) => scoreImageRelevance(b, tokens, qClean) - scoreImageRelevance(a, tokens, qClean));
+  }
+
+  const scored = BROWSER_IMAGE_DATABASE.map(img => ({
+    img,
+    score: scoreImageRelevance(img, tokens, qClean)
+  }));
+
+  const positive = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score).map(s => s.img);
+  if (positive.length > 0) {
+    return positive;
+  }
+
+  return BROWSER_IMAGE_DATABASE.slice();
+}
+
+function scoreImageRelevance(img, tokens, fullQuery) {
+  let score = 0;
+  const titleLower = img.title.toLowerCase();
+  const descLower = img.desc.toLowerCase();
+  const tagLower = img.tag.toLowerCase();
+
+  if (titleLower.includes(fullQuery)) score += 35;
+  if (descLower.includes(fullQuery)) score += 15;
+
+  tokens.forEach(t => {
+    if (t.length < 2) return;
+    if (img.category === t) score += 20;
+    if (img.keywords.some(k => k === t || k.includes(t))) score += 25;
+    if (titleLower.includes(t)) score += 12;
+    if (tagLower.includes(t)) score += 10;
+    if (descLower.includes(t)) score += 6;
+  });
+
+  return score;
+}
+
 // ── IMAGE PREVIEW LIGHTBOX HELPER ──
-function openImagePreviewModal(title, source, res, icon, desc, link) {
+function openImagePreviewModal(title, source, res, iconOrTag, desc, link, imgSrc) {
   const modalId = 'browser-image-preview-modal';
   let modal = document.getElementById(modalId);
   if (!modal) {
@@ -1571,39 +1834,72 @@ function openImagePreviewModal(title, source, res, icon, desc, link) {
     modal.id = modalId;
     modal.style.cssText = `
       position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100050;
-      display: flex; align-items: center; justify-content: center; padding: 24px;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      backdrop-filter: blur(4px);
     `;
     document.body.appendChild(modal);
   }
 
+  // Determine actual image source
+  let resolvedImg = imgSrc;
+  if (!resolvedImg && iconOrTag && (iconOrTag.includes('.png') || iconOrTag.includes('assets/'))) {
+    resolvedImg = iconOrTag;
+  }
+
+  // Backdrop click closes modal
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+
+  // Escape key closes modal
+  const handleEsc = (e) => {
+    if (e.key === 'Escape') {
+      const m = document.getElementById(modalId);
+      if (m) m.remove();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  };
+  document.addEventListener('keydown', handleEsc);
+
   modal.innerHTML = `
-    <div style="background:#ffffff;border-radius:14px;max-width:720px;width:100%;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.5);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-      <div style="background:#0f172a;color:#ffffff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:#ffffff;border-radius:14px;max-width:860px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 50px rgba(0,0,0,0.6);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+      <div style="background:#0f172a;color:#ffffff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:20px;">🖼️</span>
-          <strong style="font-size:15px;">Google Images — Detailed Intelligence View</strong>
+          <span style="font-size:18px;">🖼️</span>
+          <strong style="font-size:14.5px;letter-spacing:0.2px;">Google Images — Intelligence Inspection</strong>
         </div>
-        <button onclick="document.getElementById('${modalId}').remove()" style="background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
+        <button onclick="document.getElementById('${modalId}').remove()" style="background:transparent;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:2px 8px;border-radius:4px;transition:color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'" title="Close">✕</button>
       </div>
-      <div style="padding:28px 24px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;border-bottom:1px solid #e2e8f0;">
-        <div style="font-size:64px;margin-bottom:12px;">${icon || '🛡️'}</div>
-        <div style="font-size:18px;font-weight:800;color:#0f172a;text-align:center;max-width:540px;">${escapeHtml(title)}</div>
-        <div style="margin-top:8px;font-size:12px;color:#64748b;display:flex;gap:12px;">
-          <span>Resolution: <strong>${res || '1200 × 800'}</strong></span>
-          <span>Source: <strong>${source || 'cisa.gov'}</strong></span>
+
+      <div style="background:#020617;padding:12px;display:flex;align-items:center;justify-content:center;max-height:55vh;min-height:220px;overflow:hidden;position:relative;">
+        ${resolvedImg ? `
+          <img src="${resolvedImg}" alt="${escapeHtml(title)}" style="max-height:53vh;max-width:100%;object-fit:contain;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.5);" />
+        ` : `
+          <div style="font-size:64px;color:#fff;">${iconOrTag || '🛡️'}</div>
+        `}
+      </div>
+
+      <div style="padding:18px 22px;background:#ffffff;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#0f172a;line-height:1.35;">${escapeHtml(title)}</div>
+          <div style="margin-top:6px;font-size:12px;color:#64748b;display:flex;gap:14px;flex-wrap:wrap;">
+            <span>Resolution: <strong style="color:#0f172a;">${res || '1672 × 941'}</strong></span>
+            <span>Source: <strong style="color:#0f172a;">${source || 'cisa.gov'}</strong></span>
+            <span>Format: <strong style="color:#0284c7;">PNG Infographic</strong></span>
+          </div>
         </div>
-      </div>
-      <div style="padding:20px 24px;">
-        <p style="font-size:14px;line-height:1.6;color:#334155;margin:0 0 18px;">${desc || 'Official visual diagram illustrating cybersecurity threat vectors, defensive indicators, and red-flag identification techniques.'}</p>
-        <div style="display:flex;justify-content:flex-end;gap:10px;">
-          <button onclick="document.getElementById('${modalId}').remove()" style="padding:8px 18px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:#475569;">Close</button>
-          <button onclick="document.getElementById('${modalId}').remove(); browserGo('${link || 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'}');" style="padding:8px 20px;background:#1a73e8;border:none;border-radius:6px;font-size:13px;font-weight:700;color:#ffffff;cursor:pointer;">Visit Website ➔</button>
+        <p style="font-size:13px;line-height:1.55;color:#475569;margin:2px 0 10px;">${desc || 'Official visual diagram illustrating cybersecurity threat vectors, defensive indicators, and red-flag identification techniques.'}</p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:auto;padding-top:10px;border-top:1px solid #f1f5f9;">
+          <button onclick="document.getElementById('${modalId}').remove()" style="padding:8px 18px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;color:#475569;transition:all 0.15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Close</button>
+          <button onclick="document.getElementById('${modalId}').remove(); browserGo('${link || 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'}');" style="padding:8px 20px;background:#1a73e8;border:none;border-radius:6px;font-size:12.5px;font-weight:700;color:#ffffff;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#1557b0'" onmouseout="this.style.background='#1a73e8'">Visit Website ➔</button>
         </div>
       </div>
     </div>
   `;
 }
 window.openImagePreviewModal = openImagePreviewModal;
+window.BROWSER_IMAGE_DATABASE = BROWSER_IMAGE_DATABASE;
+window.getFilteredBrowserImages = getFilteredBrowserImages;
 
 // ── VIDEO PLAY HELPER ──
 function playGoogleVideoDemo(title, channel, duration, link) {
@@ -1869,112 +2165,79 @@ function renderGoogleResults(query, activeTab = 'all') {
   // 1. IMAGES TAB
   // ──────────────────────────────────────────────────────────
   if (currentTab === 'images') {
-    const imageCards = [
-      {
-        icon: '🚩',
-        bg: 'bg-blue',
-        tag: 'Infographic',
-        res: '1200 × 800',
-        title: 'Anatomy of a Phishing Email: 4 Red Flags Breakdown',
-        desc: 'Official visual diagram illustrating suspicious sender lookalikes, manufactured urgency, fake prize disbursements, and hidden hyperlinks.',
-        source: 'cisa.gov',
-        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
-      },
-      {
-        icon: '🔤',
-        bg: 'bg-red',
-        tag: 'Domain Intel',
-        res: '1080 × 720',
-        title: 'Typosquatting Examples: Detecting Look-Alike Domains',
-        desc: 'Visual side-by-side comparison of authentic paypal.com with green TLS padlock vs counterfeit paypa1.com with digit 1.',
-        source: 'cybersecurity.org',
-        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
-      },
-      {
-        icon: '🦠',
-        bg: 'bg-amber',
-        tag: 'Architecture',
-        res: '1400 × 900',
-        title: 'Malware Infection Vectors: Trojan Dropper Lifecycle',
-        desc: 'Step-by-step schematic of disguised game utilities leading to Trojan execution, registry persistence, and credential exfiltration.',
-        source: 'sans.org',
-        link: 'https://www.cisa.gov/topics/malware'
-      },
-      {
-        icon: '🏢',
-        bg: 'bg-purple',
-        tag: 'Phishing Clones',
-        res: '960 × 640',
-        title: 'Credential Harvesting: Spotting Fake SSO Login Portals',
-        desc: 'Comparison of legitimate Single Sign-On corporate login forms versus counterfeit credential-harvesting pages.',
-        source: 'consumer.ftc.gov',
-        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing'
-      },
-      {
-        icon: '📱',
-        bg: 'bg-cyan',
-        tag: 'Education',
-        res: '1280 × 720',
-        title: 'Social Engineering Spectrum: Phishing, Vishing, Smishing',
-        desc: 'Visual matrix explaining voice scams, SMS phishing, executive whaling, and corporate defense frameworks.',
-        source: 'cisa.gov',
-        link: 'https://www.cisa.gov/secure-our-world'
-      },
-      {
-        icon: '📧',
-        bg: 'bg-blue',
-        tag: 'Forensics',
-        res: '1150 × 750',
-        title: 'How to Read Email Headers for Phishing Clues',
-        desc: 'Forensic breakdown of From, Return-Path, DKIM signatures, and SPF authentication headers.',
-        source: 'ic3.gov',
-        link: 'https://www.cisa.gov/secure-our-world/recognize-and-report-phishing'
-      },
-      {
-        icon: '🔒',
-        bg: 'bg-green',
-        tag: 'Mitigation',
-        res: '1200 × 675',
-        title: 'Ransomware Defense Playbook & 3-2-1 Cold Backups',
-        desc: 'Immutable offline storage topology and rapid network isolation guidelines during active cryptolocker incidents.',
-        source: 'cisa.gov',
-        link: 'https://www.cisa.gov/topics/malware#ransomware'
-      },
-      {
-        icon: '📋',
-        bg: 'bg-amber',
-        tag: 'Checklist',
-        res: '1024 × 768',
-        title: 'Quick Phishing Identification Checklist for Interns',
-        desc: 'Practical five-point verification routine before opening email attachments or typing organizational credentials.',
-        source: 'consumer.ftc.gov',
-        link: 'https://www.consumer.ftc.gov/articles/how-recognize-phishing'
-      }
-    ];
+    const images = getFilteredBrowserImages(cleanQ);
 
-    const cardsHtml = imageCards.map(img => `
-      <div class="gimage-card" onclick="openImagePreviewModal('${escapeHtml(img.title)}', '${img.source}', '${img.res}', '${img.icon}', '${escapeHtml(img.desc)}', '${img.link}')">
-        <div class="gimage-thumb-box ${img.bg}">
-          <span class="gimage-tag-badge">${img.tag}</span>
-          <span class="gimage-thumb-icon">${img.icon}</span>
-          <span class="gimage-thumb-text">${escapeHtml(img.title)}</span>
+    const isPhishingQuery = /phish|email|vishing|smishing|quishing|social(\s+engineering)?|bait|spoof/i.test(cleanQ);
+    const isMalwareQuery = /malware|virus|trojan|worm|ransomware|spyware|adware|botnet|rootkit|keylogger|dropper/i.test(cleanQ);
+
+    let chips = [];
+    if (isPhishingQuery && !isMalwareQuery) {
+      chips = [
+        { label: 'All Phishing', q: 'phishing', active: (cleanQ === 'phishing') },
+        { label: 'Red Flags', q: 'phishing red flags', active: cleanQ.includes('red flag') },
+        { label: 'Social Media', q: 'phishing facebook social media', active: cleanQ.includes('facebook') || cleanQ.includes('social') },
+        { label: 'Vishing & Smishing', q: 'vishing smishing phone phishing', active: cleanQ.includes('vishing') || cleanQ.includes('smishing') },
+        { label: 'Quishing (QR)', q: 'quishing qr code phishing', active: cleanQ.includes('quishing') || cleanQ.includes('qr') },
+        { label: 'Switch to Malware', q: 'malware', active: false }
+      ];
+    } else if (isMalwareQuery && !isPhishingQuery) {
+      chips = [
+        { label: 'All Malware', q: 'malware', active: (cleanQ === 'malware') },
+        { label: 'Types of Malware', q: 'types of malware classifications', active: cleanQ.includes('types') },
+        { label: 'Trojans & Viruses', q: 'malware trojan virus dropper', active: cleanQ.includes('trojan') || cleanQ.includes('virus') },
+        { label: 'Infection Signs', q: 'signs of malware infection symptoms', active: cleanQ.includes('signs') || cleanQ.includes('symptoms') },
+        { label: 'Prevention & Defense', q: 'malware protection prevention best practices', active: cleanQ.includes('protect') || cleanQ.includes('prevent') },
+        { label: 'Switch to Phishing', q: 'phishing', active: false }
+      ];
+    } else {
+      chips = [
+        { label: 'All Infographics', q: 'cybersecurity', active: true },
+        { label: 'Phishing', q: 'phishing', active: false },
+        { label: 'Malware', q: 'malware', active: false },
+        { label: 'Red Flags', q: 'red flags phishing', active: false },
+        { label: 'Ransomware', q: 'ransomware malware', active: false },
+        { label: 'Vishing & Voice', q: 'vishing phone phishing', active: false },
+        { label: 'Protection & Defense', q: 'malware protection prevention', active: false }
+      ];
+    }
+
+    const chipsHtml = `
+      <div class="gimages-filter-chips">
+        ${chips.map(c => `
+          <button type="button" class="gfilter-chip ${c.active ? 'active' : ''}" onclick="switchGoogleSearchTab('images', '${escapeHtml(c.q)}')">
+            ${escapeHtml(c.label)}
+          </button>
+        `).join('')}
+      </div>
+    `;
+
+    const cardsHtml = images.map(img => `
+      <div class="gimage-card" onclick="openImagePreviewModal('${escapeHtml(img.title)}', '${img.source}', '${img.res}', '${escapeHtml(img.tag)}', '${escapeHtml(img.desc)}', '${img.link}', '${encodeURI(img.src)}')">
+        <div class="gimage-thumb-box">
+          <img src="${encodeURI(img.src)}" alt="${escapeHtml(img.title)}" class="gimage-thumb-img" loading="lazy" />
+          <span class="gimage-tag-badge">${escapeHtml(img.tag)}</span>
           <span class="gimage-res-badge">${img.res}</span>
         </div>
         <div class="gimage-info">
-          <div class="gimage-title">${escapeHtml(img.title)}</div>
+          <div class="gimage-title" title="${escapeHtml(img.title)}">${escapeHtml(img.title)}</div>
           <div class="gimage-source-row">
             <span class="gimage-source">${img.source}</span>
-            <span>Click to inspect ➔</span>
+            <span class="gimage-click-hint">Click to inspect ➔</span>
           </div>
         </div>
       </div>
     `).join('');
 
+    const statsText = images.length > 0
+      ? `Showing ${images.length} visual cyber intelligence results for "${q}"`
+      : `No direct image matches found for "${q}". Showing essential cyber threat diagrams:`;
+
     return `
       <div class="gresults">
         ${headerHtml}
         <div class="gresults-inner">
-          <div class="gresults-stats">Showing visual cyber intelligence results for "${q}"</div>
+          ${chipsHtml}
+          <div class="gresults-stats">${statsText}</div>
           <div class="gimages-grid">
             ${cardsHtml}
           </div>
