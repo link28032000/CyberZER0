@@ -1022,16 +1022,40 @@
 }
 
 .gimage-thumb-box {
-  height: 160px;
+  height: 165px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 14px;
   box-sizing: border-box;
   color: #ffffff;
   overflow: hidden;
+  background: #090e1a;
+  padding: 0;
+}
+
+.gimage-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gimage-card:hover .gimage-thumb-img {
+  transform: scale(1.05);
+}
+
+.gimage-click-hint {
+  font-size: 11px;
+  color: #1a73e8;
+  font-weight: 500;
+  transition: transform 0.15s ease;
+}
+
+.gimage-card:hover .gimage-click-hint {
+  transform: translateX(2px);
 }
 .gimage-thumb-box.bg-blue   { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); }
 .gimage-thumb-box.bg-red    { background: linear-gradient(135deg, #450a0a 0%, #991b1b 100%); }
