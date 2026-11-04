@@ -110,7 +110,7 @@ function updateLoginScreenForChapter(categoryId) {
       if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
       const powerBtn = document.getElementById('start-power-btn');
       if (powerBtn) powerBtn.classList.remove('power-attention');
-      const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+      const shutdownBtn = document.getElementById("start-shutdown-btn") || document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
       if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
     }
   }
@@ -188,12 +188,20 @@ function updateDesktopBackgroundForPhase(phase) {
   desktop.style.backgroundPosition = "";
 }
 
-function openCategoryHub() {
-  _goToStorySelect(false);
+function openCategoryHub(targetChapter) {
+  if (typeof showStorySelectionScreen === 'function') {
+    showStorySelectionScreen(targetChapter || 'malware');
+  } else if (typeof _goToStorySelect === 'function') {
+    _goToStorySelect(false);
+  }
 }
 
-function openCategoryHubFromDesktop() {
-  _goToStorySelect(true);
+function openCategoryHubFromDesktop(targetChapter) {
+  if (typeof showStorySelectionScreen === 'function') {
+    showStorySelectionScreen(targetChapter || 'malware');
+  } else if (typeof _goToStorySelect === 'function') {
+    _goToStorySelect(true);
+  }
 }
 
 function _openCategoryHubInternal(fromDesktop) {
@@ -262,6 +270,16 @@ function completeCategory(catId, score, rank) {
   refreshStorySelectLocks(); // keep Story Selection screen in sync
   if (typeof updateAchievementNotificationBadge === 'function') {
     updateAchievementNotificationBadge();
+  }
+
+  // Save completion & unlocked chapters to Firestore immediately
+  if (typeof window.saveProgress === 'function') {
+    window.saveProgress().catch(() => {});
+  }
+  if (typeof updateStartButton === 'function') {
+    updateStartButton();
+  } else if (typeof window.updateStartButton === 'function') {
+    window.updateStartButton();
   }
 }
 
@@ -367,3 +385,6 @@ function openChapterDesktopDirect(categoryId) {
   }
 }
 window.openChapterDesktopDirect = openChapterDesktopDirect;
+
+window.openCategoryHub = openCategoryHub;
+window.openCategoryHubFromDesktop = openCategoryHubFromDesktop;

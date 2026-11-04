@@ -476,6 +476,17 @@ window._onPostAwardTaskClick = function(taskId) {
   }
 };
 
+
+function renderEmptyStickyNote() {
+  const note = document.getElementById('sticky-note');
+  const titleEl = document.getElementById('sticky-note-title');
+  const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
+  if (!scrollEl) return;
+  if (titleEl) titleEl.textContent = 'Sticky Notes';
+  scrollEl.innerHTML = `<div id="sticky-note-content" class="sticky-note-content" contenteditable="true" spellcheck="false" aria-label="Sticky note text" data-placeholder="Take a note..."></div>`;
+}
+window.renderEmptyStickyNote = renderEmptyStickyNote;
+
 function showStickyNote() {
   const note = document.getElementById('sticky-note');
   const icon = document.getElementById('icon-notes');
@@ -527,18 +538,23 @@ function showStickyNote() {
     return;
   }
 
+  // ── Chapter 1: If desktop was loaded via Continue for an ALREADY COMPLETED chapter, show empty note ──
+  if (_isChapter1Active() && window._ch1CompletedSandbox) {
+    renderEmptyStickyNote();
+    return;
+  }
+
   // ── Chapter 1: If award has been claimed, display the 3-task post-award checklist ──
   if (_isChapter1Active() && window._awardClaimed) {
-    const total = EMAILS.length;
-    const correct = gameState.correctDecisions;
-    const pct = correct / total;
+    const total = (typeof EMAILS !== 'undefined' && EMAILS.length) ? EMAILS.length : 10;
+    const correct = (gameState && typeof gameState.correctDecisions === 'number') ? gameState.correctDecisions : 6;
+    const pct = total > 0 ? (correct / total) : 0.6;
     let rank, rankClass, rankLabel;
     if (pct >= 1.0)       { rank = 'S'; rankClass = 'rank-s'; rankLabel = 'CYBER DETECTIVE'; }
     else if (pct >= 0.85) { rank = 'A'; rankClass = '';       rankLabel = 'EXCELLENT DETECTIVE'; }
     else if (pct >= 0.70) { rank = 'B'; rankClass = 'rank-b'; rankLabel = 'GOOD DETECTIVE'; }
     else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
     else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
-
     renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
     return;
   }
@@ -981,9 +997,13 @@ function showAchievementToast(ach) {
 
 // ─── Phishing Achievement Modal (Big Medal + Confetti Celebration) ───────────
 function showPhishingAchievementModal(customAward, customCount) {
+  // Never show claim modal if already claimed
+  if (Boolean(window._awardClaimed) || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing'))) {
+    return;
+  }
   // Do not display rewards before all requirements are completed
   const isComplete = typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked();
-  const isClaimed = Boolean(window._awardClaimed);
+  const isClaimed = false;
 
   if (!isComplete && !isClaimed) {
     const missing = [];
@@ -1071,6 +1091,15 @@ function showPhishingAchievementModal(customAward, customCount) {
 }
 
 function attemptClaimPhishingAward() {
+  // Prevent duplicate claims
+  if (window._awardClaimed || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing'))) {
+    const modal = document.getElementById('phish-trophy-modal');
+    if (modal) modal.remove();
+    if (typeof showToast === 'function') {
+      showToast('Award already claimed!', 'info');
+    }
+    return;
+  }
   if (!isPhishingTrophyUnlocked()) {
     // DENIED: Do not play reward-claim sound! Keep trophy locked as silhouette.
     const missing = [];
@@ -1135,6 +1164,15 @@ function closePhishingTrophy() {
   }
 
   savePhishingProgress();
+  // Save progress to Firestore + update Start/Continue button immediately
+  if (typeof window.saveProgress === 'function') {
+    window.saveProgress().catch(() => {});
+  }
+  if (typeof updateStartButton === 'function') {
+    updateStartButton();
+  } else if (typeof window.updateStartButton === 'function') {
+    window.updateStartButton();
+  }
 
   // Close any lingering phishing tabs so the browser is fresh and clean for the new checklist
   try {
@@ -1492,7 +1530,7 @@ window.clearWorkstationLogoffGuide = function() {
   window._awaitingShutdownForChapter2 = false;
   const startBtn  = document.getElementById('start-btn');
   const powerBtn  = document.getElementById('start-power-btn');
-  const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+  const shutdownBtn = document.getElementById("start-shutdown-btn") || document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
   if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
   if (powerBtn) powerBtn.classList.remove('power-attention');
   if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
@@ -1529,7 +1567,7 @@ window.updateShutdownGuideStep = function(step) {
 
   const startBtn  = document.getElementById('start-btn');
   const powerBtn  = document.getElementById('start-power-btn');
-  const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+  const shutdownBtn = document.getElementById("start-shutdown-btn") || document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
 
   if (step === 1) {
     if (startBtn) startBtn.classList.add('start-attention', 'btn-pulse-highlight');

@@ -2497,7 +2497,7 @@
       <div id="start-power-dropdown" class="power-dropdown hidden">
         <button type="button" onclick="startMenuPower('restart')">🔄 Restart (Mission)</button>
         <button type="button" onclick="startMenuPower('lock')">🔒 Lock (Paused)</button>
-        <button type="button" onclick="startMenuPower('shutdown')">⏻ Shutdown (Save)</button>
+        <button type="button" id="start-shutdown-btn" onclick="startMenuPower('shutdown')">⏻ Shutdown (Save)</button>
       </div>
     </div>
   </div>
@@ -2908,7 +2908,7 @@
               <path d="M9 6.5 C9 5.3 10.3 4.6 11.3 5.2 L25.5 14.7 C26.4 15.3 26.4 16.7 25.5 17.3 L11.3 26.8 C10.3 27.4 9 26.7 9 25.5 Z" fill="#ffffff"/>
             </svg>
           </span>
-          <span class="mm-btn-label">Start</span>
+          <span class="mm-btn-label" id="mm-start-label">Start</span>
           <span class="mm-btn-spacer" aria-hidden="true"></span>
         </div>
       </button>
@@ -5065,8 +5065,140 @@
 <script src="src/js/apps/settings-about.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="src/js/systems/firebase-config.js"></script>
+<script src="src/js/systems/save-progress.js"></script>
 <script src="src/js/systems/auth.js"></script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     RESTART MISSION — SAVE DATA WARNING CONFIRMATION DIALOG
+     Shown by _showRestartConfirmDialog() in start-menu.js
+     ══════════════════════════════════════════════════════════════ -->
+<div id="cz-restart-confirm-modal" class="cz-rcd-overlay" role="dialog" aria-modal="true" aria-labelledby="cz-rcd-title">
+  <div class="cz-rcd-panel">
+    <!-- Warning icon -->
+    <div class="cz-rcd-icon" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="9" x2="12" y2="13" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="17" x2="12.01" y2="17" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h2 class="cz-rcd-title" id="cz-rcd-title">⚠️ Restart Mission?</h2>
+    <p class="cz-rcd-msg" id="cz-restart-confirm-msg">
+      Your saved progress for this mission will be permanently deleted from your account.
+      This cannot be undone.
+    </p>
+    <div class="cz-rcd-actions">
+      <button type="button" id="cz-restart-confirm-no"  class="cz-rcd-btn cz-rcd-btn-cancel">Cancel</button>
+      <button type="button" id="cz-restart-confirm-yes" class="cz-rcd-btn cz-rcd-btn-confirm">🔄 Yes, Restart &amp; Delete Save</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Restart-Confirm Dialog ─────────────────────────────────────── */
+.cz-rcd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  animation: czRcdFadeIn 0.18s ease;
+}
+.cz-rcd-overlay.cz-rcd-visible {
+  display: flex;
+}
+@keyframes czRcdFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cz-rcd-panel {
+  background: linear-gradient(145deg, #0d1b2e 0%, #0a1626 100%);
+  border: 1.5px solid rgba(249,115,22,0.45);
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(249,115,22,0.18), 0 8px 48px rgba(0,0,0,0.6);
+  padding: 36px 32px 28px;
+  max-width: 440px;
+  width: calc(100% - 48px);
+  text-align: center;
+  animation: czRcdSlideUp 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes czRcdSlideUp {
+  from { transform: translateY(24px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+
+.cz-rcd-icon {
+  margin-bottom: 14px;
+}
+.cz-rcd-icon svg {
+  filter: drop-shadow(0 0 8px rgba(249,115,22,0.6));
+}
+
+.cz-rcd-title {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f97316;
+  margin: 0 0 12px;
+  letter-spacing: 0.01em;
+}
+
+.cz-rcd-msg {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.93rem;
+  color: #c9d8e8;
+  line-height: 1.6;
+  margin: 0 0 26px;
+}
+
+.cz-rcd-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cz-rcd-btn {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s;
+}
+.cz-rcd-btn:hover  { transform: translateY(-1px); }
+.cz-rcd-btn:active { transform: translateY(0); opacity: 0.85; }
+
+.cz-rcd-btn-cancel {
+  background: rgba(255,255,255,0.08);
+  color: #a8bbd0;
+  border: 1.5px solid rgba(255,255,255,0.14);
+}
+.cz-rcd-btn-cancel:hover {
+  background: rgba(255,255,255,0.14);
+  color: #e2eaf2;
+}
+
+.cz-rcd-btn-confirm {
+  background: linear-gradient(135deg, #c2410c, #ea580c);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(234,88,12,0.4);
+}
+.cz-rcd-btn-confirm:hover {
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  box-shadow: 0 6px 24px rgba(249,115,22,0.5);
+}
+</style>
+
 </body>
 </html>
 

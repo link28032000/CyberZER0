@@ -460,7 +460,7 @@ function openChapterDesktopDirect(chapterId) {
       if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
       const powerBtn = document.getElementById('start-power-btn');
       if (powerBtn) powerBtn.classList.remove('power-attention');
-      const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+      const shutdownBtn = document.getElementById("start-shutdown-btn") || document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
       if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
     }
   }

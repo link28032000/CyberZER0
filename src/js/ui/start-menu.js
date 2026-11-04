@@ -267,11 +267,8 @@ function unlockPausedTerminal() {
 function startMenuPower(action) {
   closeStartMenu();
   if (action === 'restart') {
-    if (typeof restartCurrentChapterMission === 'function') {
-      restartCurrentChapterMission();
-    } else {
-      restartEntireGame();
-    }
+    // Show confirm dialog if the user has cloud-saved progress for this mission
+    _confirmRestartWithSaveCheck();
   } else if (action === 'lock') {
     lockTerminalPaused();
   } else if (action === 'shutdown') {
@@ -279,7 +276,119 @@ function startMenuPower(action) {
   }
 }
 
+/**
+ * Check whether a Firestore save exists for this user, then:
+ *   - If yes  → show the restart-confirmation modal warning that progress will be deleted
+ *   - If no   → restart immediately (no save to lose)
+ */
+function _confirmRestartWithSaveCheck() {
+  const doRestart = function () {
+    if (typeof restartCurrentChapterMission === 'function') {
+      restartCurrentChapterMission();
+    } else {
+      restartEntireGame();
+    }
+  };
+
+  if (typeof window.hasSavedProgress === 'function') {
+    window.hasSavedProgress().then(function (hasSave) {
+      if (hasSave) {
+        _showRestartConfirmDialog(doRestart);
+      } else {
+        doRestart();
+      }
+    }).catch(function () {
+      // Firestore check failed — just restart without blocking
+      doRestart();
+    });
+  } else {
+    // save-progress.js not loaded — restart immediately
+    doRestart();
+  }
+}
+
+/**
+ * Render and show the restart-confirm modal.
+ * @param {Function} onConfirm – called when player confirms restart
+ */
+function _showRestartConfirmDialog(onConfirm) {
+  // Detect chapter name for the warning message
+  const activeCat = window._currentChapterCategory ||
+    (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing';
+  const chapterLabels = {
+    phishing:          'Chapter 1: Phishing Investigation',
+    malware:           'Chapter 2: Malware Incident',
+    social_engineering:'Chapter 3: Social Engineering',
+    ransomware:        'Chapter 4: Ransomware Containment',
+  };
+  const chapterName = chapterLabels[activeCat] || 'this mission';
+
+  const modal = document.getElementById('cz-restart-confirm-modal');
+  const msgEl  = document.getElementById('cz-restart-confirm-msg');
+  if (!modal) {
+    // Fallback: browser confirm (should never happen if HTML is loaded)
+    if (window.confirm('Your saved progress for ' + chapterName + ' will be permanently deleted. Continue?')) {
+      window.deleteProgress ? window.deleteProgress().then(onConfirm) : onConfirm();
+    }
+    return;
+  }
+
+  if (msgEl) {
+    msgEl.textContent = 'Your saved progress for ' + chapterName +
+      ' will be permanently deleted from your account. This cannot be undone.';
+  }
+
+  modal.classList.add('cz-rcd-visible');
+
+  // Wire buttons (clone to remove old listeners)
+  const confirmBtn = document.getElementById('cz-restart-confirm-yes');
+  const cancelBtn  = document.getElementById('cz-restart-confirm-no');
+
+  function closeModal() {
+    modal.classList.remove('cz-rcd-visible');
+  }
+
+  function handleConfirm() {
+    closeModal();
+    // Delete cloud save then restart
+    if (typeof window.deleteProgress === 'function') {
+      window.deleteProgress().then(function () {
+        onConfirm();
+      }).catch(function () {
+        onConfirm(); // restart even if delete failed
+      });
+    } else {
+      onConfirm();
+    }
+    cleanup();
+  }
+
+  function handleCancel() {
+    closeModal();
+    cleanup();
+  }
+
+  function cleanup() {
+    if (confirmBtn) confirmBtn.removeEventListener('click', handleConfirm);
+    if (cancelBtn)  cancelBtn.removeEventListener('click', handleCancel);
+  }
+
+  if (confirmBtn) confirmBtn.addEventListener('click', handleConfirm);
+  if (cancelBtn)  cancelBtn.addEventListener('click', handleCancel);
+}
+
 function shutdownGame() {
+  // 💾 Save progress to Firestore before anything else.
+  // Suppress the success toast — the shutdown screen IS the visual feedback.
+  if (typeof window.saveProgress === 'function') {
+    window._suppressSaveToast = true;
+    window.saveProgress().then(function() {
+      window._suppressSaveToast = false;
+      if (typeof updateStartButton === 'function') updateStartButton();
+      else if (typeof window.updateStartButton === 'function') window.updateStartButton();
+    }).catch(function() { window._suppressSaveToast = false; });
+  }
+
   const sd = document.getElementById('overlay-shutdown-screen');
   const noteEl  = document.getElementById('shutdown-loading-note-text');
   const noteWrap = document.getElementById('shutdown-loading-note-wrap');
@@ -295,7 +404,7 @@ function shutdownGame() {
     if (startBtn) startBtn.classList.remove('start-attention', 'btn-pulse-highlight', 'active');
     const powerBtn = document.getElementById('start-power-btn');
     if (powerBtn) powerBtn.classList.remove('power-attention');
-    const shutdownBtn = document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
+    const shutdownBtn = document.getElementById("start-shutdown-btn") || document.querySelector("#start-power-dropdown button[onclick*='shutdown']");
     if (shutdownBtn) shutdownBtn.classList.remove('power-item-attention');
   }
 
@@ -358,21 +467,44 @@ function shutdownGame() {
     midNote = 'Workstation secured! Returning to Story Selection…';
   } else {
     // Chapter 1 (phishing)
-    if (typeof completeCategory === 'function') {
-      completeCategory('phishing', (typeof gameState !== 'undefined' && gameState.score) || 100, 'S');
+    // Detect whether Ch1 is already completed (player returning after finish)
+    const ch1AlreadyDone = (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted('phishing')) ||
+      (typeof CATEGORIES !== 'undefined' && CATEGORIES[0] && CATEGORIES[0].completed);
+
+    if (ch1AlreadyDone) {
+      // Ch1 already completed — save & return to Story Selection, no re-award
+      targetChapter = 'malware';
+      initialNote = 'Saving progress… Returning to Story Selection!';
+      midNote = 'Workstation secured! Returning to Story Selection…';
+    } else {
+      // Ch1 completing for the first time — award completion
+      if (typeof completeCategory === 'function') {
+        completeCategory('phishing', (typeof gameState !== 'undefined' && gameState.score) || 100, 'S');
+      }
+      if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
+        CATEGORIES[0].completed = true;
+        CATEGORIES[1].unlocked = true;
+      }
+      targetChapter = 'malware';
+      initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
+      midNote = 'Workstation secured! Transitioning to Chapter 2: The Hidden Threat…';
     }
-    if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
-      CATEGORIES[0].completed = true;
-      CATEGORIES[1].unlocked = true;
-    }
-    targetChapter = 'malware';
-    initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
-    midNote = 'Workstation secured! Transitioning to Chapter 2: The Hidden Threat…';
   }
 
   // Save categories progress and update locks
   if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
   if (typeof refreshStorySelectLocks === 'function') refreshStorySelectLocks();
+
+  // Save updated completion state and unlocked chapters to Firestore
+  // Toast still suppressed at this point (shutdown screen is running)
+  if (typeof window.saveProgress === 'function') {
+    window._suppressSaveToast = true;
+    window.saveProgress().then(function() {
+      window._suppressSaveToast = false;
+      if (typeof updateStartButton === 'function') updateStartButton();
+      else if (typeof window.updateStartButton === 'function') window.updateStartButton();
+    }).catch(function() { window._suppressSaveToast = false; });
+  }
 
   // Dismiss and reset Ryan guide immediately — it will restart fresh for Chapter 1
   if (typeof RyanGuide !== 'undefined') {
@@ -450,6 +582,10 @@ function shutdownGame() {
   _playLoadingBeep(160, 0.08, 0.38);
 
   // Show the shutdown overlay immediately
+  sd.style.display = 'flex';
+  sd.style.zIndex = '999999';
+  sd.style.visibility = 'visible';
+  sd.style.opacity = '1';
   sd.style.transition = 'none';
   sd.classList.remove('sd-leaving');
   sd.classList.add('sd-active');
@@ -478,6 +614,8 @@ function shutdownGame() {
     setTimeout(() => {
       // Remove overlay classes
       sd.classList.remove('sd-active', 'sd-leaving');
+      sd.style.display = 'none';
+      sd.style.visibility = 'hidden';
     }, 800);
 
     // Transition to Story Selection screen!
@@ -487,6 +625,9 @@ function shutdownGame() {
     } else {
       showMainMenu();
     }
+    // Refresh Start/Continue button after save has had 15s to commit to Firestore
+    if (typeof updateStartButton === 'function') updateStartButton();
+    else if (typeof window.updateStartButton === 'function') window.updateStartButton();
 
   }, SHUTDOWN_DURATION);
 }
@@ -502,3 +643,10 @@ window.addEventListener('keydown', (e) => {
     lockTerminalPaused();
   }
 });
+
+// Global Window Exports
+window.shutdownGame = shutdownGame;
+window.startMenuPower = startMenuPower;
+window.togglePowerMenu = togglePowerMenu;
+window.toggleStartMenu = toggleStartMenu;
+window.closeStartMenu = closeStartMenu;

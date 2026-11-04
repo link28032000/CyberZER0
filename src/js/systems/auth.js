@@ -388,12 +388,23 @@
   function enterAuthenticated() {
     closeOverlay();
     updateChip(auth.currentUser);
-    // Reveal main menu
-    if (typeof showMainMenu === 'function') {
-      showMainMenu();
+
+    // Load cloud save then show Main Menu.
+    // _czLoadProgressAndShowMenu is defined in save-progress.js which is now
+    // loaded BEFORE auth.js in index.html, so it is always defined here.
+    // The typeof guard is kept as a safety net only.
+    if (typeof window._czLoadProgressAndShowMenu === 'function') {
+      window._czLoadProgressAndShowMenu();
+    } else if (typeof window.loadAndApplyProgress === 'function') {
+      window.loadAndApplyProgress().catch(() => {}).finally(() => {
+        if (typeof showMainMenu === 'function') showMainMenu();
+        else { const mm = document.getElementById('overlay-main-menu'); if (mm) mm.classList.add('active'); }
+      });
     } else {
-      const mm = document.getElementById('overlay-main-menu');
-      if (mm) mm.classList.add('active');
+      // Last-resort fallback: show main menu without loading save
+      console.warn('[auth] save-progress.js not loaded — showing menu without cloud restore.');
+      if (typeof showMainMenu === 'function') showMainMenu();
+      else { const mm = document.getElementById('overlay-main-menu'); if (mm) mm.classList.add('active'); }
     }
   }
 

@@ -63,6 +63,9 @@ function showMainMenu() {
   const userBar = document.getElementById('mm-user-bar');
   if (userBar) userBar.hidden = false;
   if (typeof _syncUserBarModalVisibility === 'function') _syncUserBarModalVisibility();
+
+  // ── Refresh Start/Continue button state on every main-menu show ──
+  if (typeof updateStartButton === 'function') updateStartButton();
 }
 
 /** Hide the main menu overlay */
@@ -141,6 +144,10 @@ function showStorySelectionScreen(selectChapterId = 'malware') {
   if (typeof updateAchievementNotificationBadge === 'function') {
     updateAchievementNotificationBadge();
   }
+  // Pre-refresh Start/Continue button so it reads from Firestore while Story Select is visible,
+  // ensuring it shows "Continue" by the time the user clicks Back to Main Menu.
+  if (typeof updateStartButton === 'function') updateStartButton();
+  else if (typeof window.updateStartButton === 'function') window.updateStartButton();
 }
 window.showStorySelectionScreen = showStorySelectionScreen;
 
@@ -152,6 +159,28 @@ function mainMenuStart() {
   closeMainMenuExit();
   // Keep background music playing through loading into Story Selection
   if (typeof startMMBgMusic === 'function') startMMBgMusic();
+
+  // ── CONTINUE FAST-PATH ───────────────────────────────────────────────────
+  // If the player has saved progress, go to Story Selection screen so they
+  // can choose which chapter to resume. This preserves saved progress,
+  // achievements, and completed chapter status as shown in Story Selection.
+  if (window._continueChapterId) {
+    const contCatId = window._continueChapterId;
+    // Hide main menu
+    const mmEl = document.getElementById('overlay-main-menu');
+    if (mmEl) {
+      mmEl.classList.remove('active');
+      mmEl.style.display = 'none';
+    }
+    // Go to Story Selection, pre-selecting the saved chapter card
+    if (typeof showStorySelectionScreen === 'function') {
+      showStorySelectionScreen(contCatId);
+    } else {
+      // Fallback: load desktop directly
+      _continueSavedGame(contCatId);
+    }
+    return;
+  }
 
   const mm = document.getElementById('overlay-main-menu');
   const mmNav = document.querySelector('.mm-nav');
@@ -410,12 +439,14 @@ function selectStoryCard(cardEl, categoryId, chapterNum, playSound = true, allow
     // Immediately update profile to match the selected chapter
     updateLoginScreenForChapter(categoryId);
 
-    // Add START MISSION button in footer
+    // Add START MISSION / RESUME DESKTOP button in footer
     const footer = cardEl.querySelector('.ss-card-footer');
     if (footer && !footer.querySelector('.ss-play-btn')) {
       const playBtn = document.createElement('button');
       playBtn.className = 'ss-play-btn';
-      playBtn.innerHTML = `<span>START MISSION</span> <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+      const isChapterDone = (typeof _isCategoryCompleted === 'function') && _isCategoryCompleted(categoryId);
+      const btnLabel = isChapterDone ? 'RESUME DESKTOP' : 'START MISSION';
+      playBtn.innerHTML = `<span>${btnLabel}</span> <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
       playBtn.onclick = (e) => {
         e.stopPropagation();
         storySelectPlay(categoryId);
@@ -431,6 +462,30 @@ function storySelectPlay(categoryId) {
     AudioManager.unlock();
     AudioManager.playMouseClick();
   }
+
+  // ── Completed-chapter fast-path: skip ALL intro / comic / login ──────
+  // If this chapter is already finished, go straight to its saved desktop.
+  if (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted(categoryId)) {
+    const ss = document.getElementById('overlay-story-select');
+    if (ss) {
+      ss.style.transition = 'opacity 0.4s ease';
+      ss.style.opacity = '0';
+      setTimeout(() => {
+        ss.style.transition = '';
+        ss.style.opacity = '';
+        ss.classList.remove('active');
+        ss.style.display = 'none';
+        if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+        _continueSavedGame(categoryId);
+      }, 420);
+    } else {
+      if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+      _continueSavedGame(categoryId);
+    }
+    return;
+  }
+  // ─────────────────────────────────────────────────────────────────────
+
   // Stop background music as mission intro begins
   if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
 
@@ -681,7 +736,6 @@ const MISSION_ACHIEVEMENTS = [
       { id: 'task_fake_sender', label: 'Document 5 Fake Senders' },
       { id: 'task_phish_indicators', label: 'Flag 5 Threat Indicators' },
       { id: 'task_submit_all_verdicts', label: 'Submit all email verdicts' },
-      { id: 'task_collect_evidence', label: 'Collect All Required Evidence to Claim Rewards' }
     ]
   },
   {
@@ -767,7 +821,7 @@ function isChapterChecklistComplete(ach) {
       if (phishSaved) {
         const pData = JSON.parse(phishSaved);
         const unl = Array.isArray(pData.unlockedAchievements) ? pData.unlockedAchievements : [];
-        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts', 'task_collect_evidence'];
+        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts'];
         const allPresent = requiredTaskIds.every(id => unl.includes(id));
         if (pData.trophyUnlocked || unl.includes('task_all_complete') || allPresent) {
           savedAllTasks = true;
@@ -775,7 +829,9 @@ function isChapterChecklistComplete(ach) {
       }
     } catch (e) {}
 
-    const isComplete = (liveAllTasks || savedAllTasks) && (cat && cat.completed);
+    // Also unlock if the award was already claimed (desktop or Main Menu) — avoids double-claim
+    const alreadyClaimed = isAchievementClaimed('ach_phishing');
+    const isComplete = alreadyClaimed || ((liveAllTasks || savedAllTasks) && (cat && cat.completed));
     return !!isComplete;
   }
 
@@ -927,6 +983,13 @@ function claimAchievement(achId) {
     claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   };
   saveClaimedAchievementsMap(map);
+  // Save to Firestore & update Start/Continue button immediately
+  if (typeof window.saveProgress === 'function') {
+    window.saveProgress().catch(() => {});
+  }
+  if (typeof updateStartButton === 'function') {
+    updateStartButton();
+  }
 
   // If claiming phishing, also sync with chapter 1 in-game award state
   if (achId === 'ach_phishing') {
@@ -1018,6 +1081,14 @@ function claimAllAchievements() {
   if (newlyClaimed === 0) return;
 
   saveClaimedAchievementsMap(map);
+
+  // Save to Firestore & update Start/Continue button immediately
+  if (typeof window.saveProgress === 'function') {
+    window.saveProgress().catch(() => {});
+  }
+  if (typeof updateStartButton === 'function') {
+    updateStartButton();
+  }
 
   if (typeof AudioManager !== 'undefined') {
     try {
@@ -1374,56 +1445,408 @@ const _CHAPTER_LABELS = {
  * then updates the Start button to show "Continue" (with chapter hint)
  * or "New Game" for a fresh slate.
  */
-function updateStartButton() {
-  const labelEl    = document.getElementById('mm-start-label');
-  const subEl      = document.getElementById('mm-start-sublabel');
-  const wrapEl     = subEl && subEl.closest('.mm-btn-label-wrap');
-  const iconNew    = document.querySelector('.mm-start-icon-new');
-  const iconCont   = document.querySelector('.mm-start-icon-continue');
+window.updateStartButton = function() { return updateStartButton(); };
 
+function updateStartButton() {
+  const startBtn = document.getElementById('mm-btn-start');
+  const labelEl = document.getElementById('mm-start-label') || (startBtn && startBtn.querySelector('.mm-btn-label'));
   if (!labelEl) return;
 
-  // Detect saved progress
-  let savedCatId = null;
+  // ─── Helper: Apply button text and resume chapter pointer ─────────────
+  function _applyButtonState(savedCatId) {
+    if (savedCatId) {
+      labelEl.textContent = 'Continue';
+      window._continueChapterId = savedCatId;
+    } else {
+      labelEl.textContent = 'Start';
+      window._continueChapterId = null;
+    }
+  }
+
+  // ─── Helper: extract furthest active/unlocked chapter from array ───────
+  function _extractCatId(data) {
+    if (!Array.isArray(data)) return null;
+    const order = ['phishing', 'malware', 'social_engineering', 'ransomware'];
+    // Prefer unfinished unlocked chapter to resume
+    for (const id of order) {
+      const entry = data.find(c => c.id === id);
+      if (entry && entry.unlocked && !entry.completed) return id;
+    }
+    // Else last completed chapter
+    let lastComp = null;
+    for (const id of order) {
+      const entry = data.find(c => c.id === id);
+      if (entry && entry.completed) lastComp = id;
+    }
+    if (lastComp) return lastComp;
+    // Else any unlocked chapter
+    for (let i = order.length - 1; i >= 0; i--) {
+      const entry = data.find(c => c.id === order[i]);
+      if (entry && entry.unlocked) return order[i];
+    }
+    return null;
+  }
+
+  // ─── Helper: check if any reward has been claimed ─────────────────────
+  function _hasAnyClaimedReward() {
+    try {
+      const raw = localStorage.getItem('cyberzero_claimed_achievements');
+      if (raw) {
+        const map = JSON.parse(raw);
+        if (map && typeof map === 'object') {
+          if (Object.values(map).some(v => v && (v.claimed === true || v.tier))) return true;
+        }
+      }
+    } catch (e) {}
+    try {
+      const ph = localStorage.getItem('cyberzero_phishing_progress');
+      if (ph) {
+        const pd = JSON.parse(ph);
+        if (pd && pd.awardClaimed) return true;
+      }
+    } catch (e) {}
+    if (window._awardClaimed) return true;
+    return false;
+  }
+
+  // ─── Helper: check if any local progress exists ────────────────────────
+  function _hasAnyLocalProgress() {
+    if (_hasAnyClaimedReward()) return true;
+    try {
+      const raw = localStorage.getItem('cyberzero_categories');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data)) {
+          if (data.some(c => c.completed || (c.id !== 'phishing' && c.unlocked) || (c.score && c.score > 0))) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {}
+    try {
+      const ph = localStorage.getItem('cyberzero_phishing_progress');
+      if (ph) {
+        const pd = JSON.parse(ph);
+        if (pd && ((pd.unlockedAchievements && pd.unlockedAchievements.length > 0) || pd.trophyUnlocked)) {
+          return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  // ─── PASS 1: Immediate local check (synchronous, instant UI response) ───
+  let localCatId = null;
+  if (_hasAnyLocalProgress()) {
+    try {
+      const raw = localStorage.getItem('cyberzero_categories');
+      if (raw) localCatId = _extractCatId(JSON.parse(raw));
+    } catch (e) {}
+    if (!localCatId && (typeof window._currentChapterCategory !== 'undefined' && window._currentChapterCategory)) {
+      localCatId = window._currentChapterCategory;
+    }
+    if (!localCatId) localCatId = 'phishing';
+  }
+  _applyButtonState(localCatId);
+
+  // ─── PASS 2: Async Firestore check (Firestore is single source of truth) ─
+  (async function _firestorePass() {
+    try {
+      if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) return;
+      const auth = firebase.auth && firebase.auth();
+      if (!auth) return;
+      const user = auth.currentUser;
+      if (!user) return; // not authenticated yet
+
+      const db = firebase.firestore();
+      const doc = await db.collection('saves').doc(user.uid).get();
+
+      if (!doc.exists) {
+        // Firestore says no save document exists in cloud.
+        // If there is neither a claimed reward NOR local chapter progress, show Start.
+        if (!_hasAnyLocalProgress()) {
+          console.log('[updateStartButton] Firestore: No save document for user ' + user.uid + ' -> Start');
+          _applyButtonState(null);
+        } else {
+          console.log('[updateStartButton] Local progress found without Firestore doc -> Keeping Continue and syncing to Firestore');
+          if (typeof window.saveProgress === 'function') {
+            window.saveProgress().catch(() => {});
+          }
+        }
+        return;
+      }
+
+      // Cloud save document exists in Firestore!
+      const data = doc.data() || {};
+      console.log('[updateStartButton] Firestore: Save document found for user ' + user.uid + ' -> Continue');
+
+      let fsCatId = null;
+      if (data.ls && data.ls['cyberzero_categories']) {
+        try {
+          fsCatId = _extractCatId(JSON.parse(data.ls['cyberzero_categories']));
+        } catch (e) {}
+      }
+      if (!fsCatId && data.activeChapter) fsCatId = data.activeChapter;
+      if (!fsCatId) fsCatId = 'phishing';
+
+      // Restore localStorage blobs so game state stays synchronized
+      if (data.ls && typeof data.ls === 'object') {
+        const FS_LS_KEYS = [
+          'cyberzero_categories', 'cyberzero_phishing_progress',
+          'cyberzero_claimed_achievements', 'cyberzero_newbie_gc_state', 'cyberzero_ch2_pretest'
+        ];
+        FS_LS_KEYS.forEach(function(key) {
+          if (data.ls[key] !== undefined && data.ls[key] !== null) {
+            try { localStorage.setItem(key, data.ls[key]); } catch (_) {}
+          }
+        });
+      }
+      if (data.gameState && data.gameState.awardClaimed) {
+        window._awardClaimed = true;
+      }
+
+      _applyButtonState(fsCatId);
+    } catch (err) {
+      console.warn('[updateStartButton] Firestore pass error:', err);
+    }
+  })();
+}
+
+// ════════════════════════════════════════════════════════════
+//  CONTINUE SAVED GAME — HELPERS
+// ════════════════════════════════════════════════════════════
+
+/**
+ * Returns true if the given chapter category has been completed
+ * (checks live CATEGORIES array first, then localStorage as fallback).
+ */
+function _isCategoryCompleted(catId) {
+  try {
+    if (typeof CATEGORIES !== 'undefined' && Array.isArray(CATEGORIES)) {
+      const cat = CATEGORIES.find(c => c.id === catId);
+      if (cat && cat.completed) return true;
+    }
+  } catch (e) {}
+
   try {
     const raw = localStorage.getItem('cyberzero_categories');
     if (raw) {
       const data = JSON.parse(raw);
       if (Array.isArray(data)) {
-        // Find the furthest unlocked (but not yet completed) chapter, or last completed
-        const order = ['phishing', 'malware', 'social_engineering', 'ransomware'];
-        let best = null;
-        order.forEach(id => {
-          const entry = data.find(c => c.id === id);
-          if (entry && (entry.unlocked || entry.completed)) best = id;
-        });
-        savedCatId = best;
+        const entry = data.find(c => c.id === catId);
+        if (entry && entry.completed) return true;
       }
     }
-  } catch(e) { /* ignore */ }
+  } catch (e) {}
 
-  if (savedCatId) {
-    // Has save data — show Continue
-    labelEl.textContent = 'Continue';
-    if (subEl) {
-      subEl.textContent = _CHAPTER_LABELS[savedCatId] || savedCatId;
-      if (wrapEl) wrapEl.classList.add('has-sublabel');
-    }
-    if (iconNew)  iconNew.style.display  = 'none';
-    if (iconCont) iconCont.style.display = '';
-    // Store the chapter to resume so mainMenuStart() can use it
-    window._continueChapterId = savedCatId;
-  } else {
-    // No save — show New Game
-    labelEl.textContent = 'New Game';
-    if (subEl) {
-      subEl.textContent = '';
-      if (wrapEl) wrapEl.classList.remove('has-sublabel');
-    }
-    if (iconNew)  iconNew.style.display  = '';
-    if (iconCont) iconCont.style.display = 'none';
-    window._continueChapterId = null;
+  // For phishing (Ch.1): also check claimed achievements as a completion signal
+  if (catId === 'phishing') {
+    try {
+      const ach = localStorage.getItem('cyberzero_claimed_achievements');
+      if (ach) {
+        const map = JSON.parse(ach);
+        if (map && map['ach_phishing'] && (map['ach_phishing'].claimed || map['ach_phishing'].tier)) {
+          return true;
+        }
+      }
+    } catch (e) {}
+    // Also check phishing progress trophy flag
+    try {
+      const ph = localStorage.getItem('cyberzero_phishing_progress');
+      if (ph) {
+        const pd = JSON.parse(ph);
+        if (pd && pd.awardClaimed) return true;
+      }
+    } catch (e) {}
   }
+
+  return false;
+}
+
+/**
+ * Resume a saved game by going directly to the correct chapter desktop.
+ * Skips comic strips, pretest, mission intro, and login screen.
+ * For completed Chapter 1: shows empty sticky-note checklist (post-award state).
+ */
+function _continueSavedGame(catId) {
+  const mm = document.getElementById('overlay-main-menu');
+  const mmNav = mm && mm.querySelector('.mm-nav');
+
+  if (mmNav) mmNav.classList.add('mm-nav-exiting');
+  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+  if (typeof AudioManager !== 'undefined') {
+    try { AudioManager.unlock(); } catch (e) {}
+  }
+
+  setTimeout(() => {
+    if (mm) {
+      mm.classList.remove('active');
+      mm.style.display = 'none';
+    }
+    if (mmNav) mmNav.classList.remove('mm-nav-exiting');
+
+    try { if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress(); } catch (e) {}
+    try { if (typeof loadPhishingProgress === 'function') loadPhishingProgress(); } catch (e) {}
+
+    const isCompleted = _isCategoryCompleted(catId);
+
+    if (catId === 'phishing') {
+      window._currentChapterCategory = 'phishing';
+      if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'phishing';
+      if (typeof updateLoginScreenForChapter === 'function') updateLoginScreenForChapter('phishing');
+      if (typeof updateDesktopBackgroundForPhase === 'function') updateDesktopBackgroundForPhase('phishing');
+
+      // Open desktop overlay directly
+      if (typeof hideAllOverlays === 'function') hideAllOverlays(false);
+      document.querySelectorAll('.overlay').forEach(o => {
+        o.classList.remove('active');
+        o.style.display = 'none';
+      });
+      const desktop = document.getElementById('desktop');
+      if (desktop) {
+        desktop.style.visibility = 'visible';
+        desktop.style.opacity = '1';
+      }
+
+      // Close all app windows
+      ['gmail','browser','folder','antivirus','comms','ransomware','wifi-settings','docviewer','imageviewer','videoplayer','taskmanager','scanner','control-panel'].forEach(a => {
+        if (typeof appState !== 'undefined' && appState[a]) {
+          appState[a].open = false; appState[a].minimized = false; appState[a].maximized = false;
+        }
+        const w = document.getElementById('win-' + a);
+        if (w) { w.classList.add('hidden'); w.classList.remove('maximized','focused','minimized'); }
+      });
+      if (typeof updateTaskbar === 'function') updateTaskbar();
+
+      if (isCompleted) {
+        // ── Chapter 1 fully COMPLETED ── load directly into simulated desktop ──
+        // Do NOT restart mission, do NOT show intro, tests, dialogue, or checklist items
+        window._awardClaimed = true;
+        window._ryanGuideDismissed = true;
+        window._phishAutoModalShown = true;
+        // Mark as "completed sandbox mode" so sticky note shows empty (not checklist)
+        window._ch1CompletedSandbox = true;
+        // Do NOT set _postAwardPostTestDialogueFired; Shutdown (Save) must remain accessible
+
+        if (typeof updateDesktopTrophyDisplay === 'function') {
+          updateDesktopTrophyDisplay();
+        }
+
+        // Keep _awaitingShutdownForChapter2 FALSE on the completed desktop.
+        // Shutdown (Save) still works; this flag only drives guide highlights
+        // which we explicitly do NOT want on a completed-chapter free desktop.
+        window._awaitingShutdownForChapter2 = false;
+
+        // Render clean empty Sticky Note (no checklist items) and close it
+        if (typeof renderEmptyStickyNote === 'function') {
+          renderEmptyStickyNote();
+        } else {
+          const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
+          if (scrollEl) {
+            scrollEl.innerHTML = `<div id="sticky-note-content" class="sticky-note-content" contenteditable="true" spellcheck="false" aria-label="Sticky note text" data-placeholder="Take a note..."></div>`;
+          }
+        }
+        if (typeof closeStickyNote === 'function') {
+          closeStickyNote();
+        }
+
+        // Dismiss & reset any active mentor dialogue, pretest, posttest, audio
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+          try { RyanGuide.dismiss(true); } catch (e) {}
+        }
+        if (typeof RyanPretest !== 'undefined' && RyanPretest.reset) {
+          try { RyanPretest.reset(); } catch (e) {}
+        }
+        if (typeof RyanPosttest !== 'undefined' && RyanPosttest.reset) {
+          try { RyanPosttest.reset(); } catch (e) {}
+        }
+        if (typeof ComicAudio !== 'undefined' && ComicAudio.stop) {
+          try { ComicAudio.stop(); } catch (e) {}
+        }
+        const ryanModal = document.getElementById('ryan-guide-modal') || document.querySelector('.ryan-guide-container');
+        if (ryanModal) ryanModal.remove();
+
+        // ── Strip ALL tutorial highlights / glows from the desktop ──────────
+        // Run immediately and again after a short delay to catch anything
+        // that is added asynchronously (e.g. by startWorkstationLogoffGuide).
+        function _stripCh1TutorialHighlights() {
+          const HIGHLIGHT_CLASSES = [
+            'btn-pulse-highlight', 'start-attention', 'power-attention',
+            'power-item-attention', 'icon-attention', 'icon-attention-dismiss',
+            'highlight-attention', 'tutorial-flag-blink', 'phish-tutorial-highlight',
+            'verdict-btn-highlight', 'pl-icon-pulse'
+          ];
+
+          // Every element in the DOM that might carry a highlight class
+          const candidateIds = [
+            'start-btn', 'start-power-btn', 'start-shutdown-btn',
+            'taskbar-gmail', 'taskbar-notes', 'taskbar-comms',
+            'icon-gmail', 'icon-notes', 'icon-comms', 'icon-browser',
+            'icon-folder', 'icon-antivirus', 'icon-desktop',
+            'flag-mode-btn', 'report-btn', 'legit-btn',
+            'sticky-note', 'overlay-welcome',
+            'taskbar-phone-link', 'icon-phone-link'
+          ];
+
+          candidateIds.forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove(...HIGHLIGHT_CLASSES);
+          });
+
+          // Also sweep any element currently carrying one of these classes
+          HIGHLIGHT_CLASSES.forEach(function(cls) {
+            document.querySelectorAll('.' + cls).forEach(function(el) {
+              el.classList.remove(...HIGHLIGHT_CLASSES);
+            });
+          });
+
+          // Remove any injected logoff notice panel
+          const notice = document.getElementById('desktop-shutdown-notice');
+          if (notice) notice.remove();
+
+          // Clear the logoff guide state WITHOUT re-triggering highlights
+          window._awaitingShutdownForChapter2 = false;
+
+          // Stop any PhishTutorial that might re-add highlight classes
+          if (typeof PhishTutorial !== 'undefined' && PhishTutorial.reset) {
+            try { PhishTutorial.reset(); } catch (e) {}
+          }
+          // Stop ryan-welcome icon pulse
+          if (typeof RyanWelcome !== 'undefined' && RyanWelcome.stop) {
+            try { RyanWelcome.stop(); } catch (e) {}
+          }
+        }
+
+        _stripCh1TutorialHighlights();
+        // Run again after 300ms and 800ms to catch async highlight re-additions
+        setTimeout(_stripCh1TutorialHighlights, 300);
+        setTimeout(_stripCh1TutorialHighlights, 800);
+
+        // No toast — user already sees the desktop appearing; silent load.
+      } else {
+        // ── Chapter 1 UNFINISHED ── resume mission from latest saved progress ──
+        window._ryanGuideDismissed = true;
+        if (typeof startMission === 'function') {
+          startMission(false);
+        }
+        // Silent resume — no toast cluttering the desktop
+      }
+
+    } else {
+      // ── Chapters 2-4 ──
+      if (typeof openChapterDesktopDirect === 'function') {
+        openChapterDesktopDirect(catId);
+      }
+      if (isCompleted) {
+        if (typeof renderEmptyStickyNote === 'function') renderEmptyStickyNote();
+        if (typeof closeStickyNote === 'function') closeStickyNote();
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+          try { RyanGuide.dismiss(true); } catch (e) {}
+        }
+      }
+      // Silent resume for chapters 2–4 — no toast
+    }
+  }, 220);
 }
 
 // ════════════════════════════════════════════════════════════

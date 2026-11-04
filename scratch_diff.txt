@@ -1,0 +1,1058 @@
+diff --git a/index.html b/index.html
+index a7db377..76bfc87 100644
+--- a/index.html
++++ b/index.html
+@@ -2908,7 +2908,7 @@
+               <path d="M9 6.5 C9 5.3 10.3 4.6 11.3 5.2 L25.5 14.7 C26.4 15.3 26.4 16.7 25.5 17.3 L11.3 26.8 C10.3 27.4 9 26.7 9 25.5 Z" fill="#ffffff"/>
+             </svg>
+           </span>
+-          <span class="mm-btn-label">Start</span>
++          <span class="mm-btn-label" id="mm-start-label">Start</span>
+           <span class="mm-btn-spacer" aria-hidden="true"></span>
+         </div>
+       </button>
+@@ -5065,8 +5065,140 @@
+ <script src="src/js/apps/settings-about.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
++<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+ <script src="src/js/systems/firebase-config.js"></script>
++<script src="src/js/systems/save-progress.js"></script>
+ <script src="src/js/systems/auth.js"></script>
++
++<!-- ══════════════════════════════════════════════════════════════
++     RESTART MISSION — SAVE DATA WARNING CONFIRMATION DIALOG
++     Shown by _showRestartConfirmDialog() in start-menu.js
++     ══════════════════════════════════════════════════════════════ -->
++<div id="cz-restart-confirm-modal" class="cz-rcd-overlay" role="dialog" aria-modal="true" aria-labelledby="cz-rcd-title">
++  <div class="cz-rcd-panel">
++    <!-- Warning icon -->
++    <div class="cz-rcd-icon" aria-hidden="true">
++      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
++        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
++        <line x1="12" y1="9" x2="12" y2="13" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
++        <line x1="12" y1="17" x2="12.01" y2="17" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
++      </svg>
++    </div>
++    <h2 class="cz-rcd-title" id="cz-rcd-title">⚠️ Restart Mission?</h2>
++    <p class="cz-rcd-msg" id="cz-restart-confirm-msg">
++      Your saved progress for this mission will be permanently deleted from your account.
++      This cannot be undone.
++    </p>
++    <div class="cz-rcd-actions">
++      <button type="button" id="cz-restart-confirm-no"  class="cz-rcd-btn cz-rcd-btn-cancel">Cancel</button>
++      <button type="button" id="cz-restart-confirm-yes" class="cz-rcd-btn cz-rcd-btn-confirm">🔄 Yes, Restart &amp; Delete Save</button>
++    </div>
++  </div>
++</div>
++
++<style>
++/* ── Restart-Confirm Dialog ─────────────────────────────────────── */
++.cz-rcd-overlay {
++  display: none;
++  position: fixed;
++  inset: 0;
++  z-index: 99999;
++  background: rgba(0,0,0,0.72);
++  backdrop-filter: blur(6px);
++  -webkit-backdrop-filter: blur(6px);
++  align-items: center;
++  justify-content: center;
++  animation: czRcdFadeIn 0.18s ease;
++}
++.cz-rcd-overlay.cz-rcd-visible {
++  display: flex;
++}
++@keyframes czRcdFadeIn {
++  from { opacity: 0; }
++  to   { opacity: 1; }
++}
++
++.cz-rcd-panel {
++  background: linear-gradient(145deg, #0d1b2e 0%, #0a1626 100%);
++  border: 1.5px solid rgba(249,115,22,0.45);
++  border-radius: 16px;
++  box-shadow: 0 0 40px rgba(249,115,22,0.18), 0 8px 48px rgba(0,0,0,0.6);
++  padding: 36px 32px 28px;
++  max-width: 440px;
++  width: calc(100% - 48px);
++  text-align: center;
++  animation: czRcdSlideUp 0.22s cubic-bezier(0.34,1.56,0.64,1);
++}
++@keyframes czRcdSlideUp {
++  from { transform: translateY(24px) scale(0.96); opacity: 0; }
++  to   { transform: translateY(0)     scale(1);    opacity: 1; }
++}
++
++.cz-rcd-icon {
++  margin-bottom: 14px;
++}
++.cz-rcd-icon svg {
++  filter: drop-shadow(0 0 8px rgba(249,115,22,0.6));
++}
++
++.cz-rcd-title {
++  font-family: 'Segoe UI', system-ui, sans-serif;
++  font-size: 1.25rem;
++  font-weight: 700;
++  color: #f97316;
++  margin: 0 0 12px;
++  letter-spacing: 0.01em;
++}
++
++.cz-rcd-msg {
++  font-family: 'Segoe UI', system-ui, sans-serif;
++  font-size: 0.93rem;
++  color: #c9d8e8;
++  line-height: 1.6;
++  margin: 0 0 26px;
++}
++
++.cz-rcd-actions {
++  display: flex;
++  gap: 12px;
++  justify-content: center;
++  flex-wrap: wrap;
++}
++
++.cz-rcd-btn {
++  font-family: 'Segoe UI', system-ui, sans-serif;
++  font-size: 0.9rem;
++  font-weight: 600;
++  padding: 10px 22px;
++  border-radius: 8px;
++  border: none;
++  cursor: pointer;
++  transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s;
++}
++.cz-rcd-btn:hover  { transform: translateY(-1px); }
++.cz-rcd-btn:active { transform: translateY(0); opacity: 0.85; }
++
++.cz-rcd-btn-cancel {
++  background: rgba(255,255,255,0.08);
++  color: #a8bbd0;
++  border: 1.5px solid rgba(255,255,255,0.14);
++}
++.cz-rcd-btn-cancel:hover {
++  background: rgba(255,255,255,0.14);
++  color: #e2eaf2;
++}
++
++.cz-rcd-btn-confirm {
++  background: linear-gradient(135deg, #c2410c, #ea580c);
++  color: #fff;
++  box-shadow: 0 4px 18px rgba(234,88,12,0.4);
++}
++.cz-rcd-btn-confirm:hover {
++  background: linear-gradient(135deg, #ea580c, #f97316);
++  box-shadow: 0 6px 24px rgba(249,115,22,0.5);
++}
++</style>
++
+ </body>
+ </html>
+ 
+diff --git a/src/js/chapters/ch1-phishing/sticky-note.js b/src/js/chapters/ch1-phishing/sticky-note.js
+index 8483aef..b287fa3 100644
+--- a/src/js/chapters/ch1-phishing/sticky-note.js
++++ b/src/js/chapters/ch1-phishing/sticky-note.js
+@@ -476,6 +476,17 @@ window._onPostAwardTaskClick = function(taskId) {
+   }
+ };
+ 
++
++function renderEmptyStickyNote() {
++  const note = document.getElementById('sticky-note');
++  const titleEl = document.getElementById('sticky-note-title');
++  const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
++  if (!scrollEl) return;
++  if (titleEl) titleEl.textContent = 'Sticky Notes';
++  scrollEl.innerHTML = `<div id="sticky-note-content" class="sticky-note-content" contenteditable="true" spellcheck="false" aria-label="Sticky note text" data-placeholder="Take a note..."></div>`;
++}
++window.renderEmptyStickyNote = renderEmptyStickyNote;
++
+ function showStickyNote() {
+   const note = document.getElementById('sticky-note');
+   const icon = document.getElementById('icon-notes');
+@@ -527,19 +538,9 @@ function showStickyNote() {
+     return;
+   }
+ 
+-  // ── Chapter 1: If award has been claimed, display the 3-task post-award checklist ──
+-  if (_isChapter1Active() && window._awardClaimed) {
+-    const total = EMAILS.length;
+-    const correct = gameState.correctDecisions;
+-    const pct = correct / total;
+-    let rank, rankClass, rankLabel;
+-    if (pct >= 1.0)       { rank = 'S'; rankClass = 'rank-s'; rankLabel = 'CYBER DETECTIVE'; }
+-    else if (pct >= 0.85) { rank = 'A'; rankClass = '';       rankLabel = 'EXCELLENT DETECTIVE'; }
+-    else if (pct >= 0.70) { rank = 'B'; rankClass = 'rank-b'; rankLabel = 'GOOD DETECTIVE'; }
+-    else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
+-    else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
+-
+-    renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
++  // ── Chapter 1: If award has been claimed / completed, show empty Sticky Note (no checklist tasks) ──
++  if (_isChapter1Active() && (window._awardClaimed || (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted('phishing')))) {
++    renderEmptyStickyNote();
+     return;
+   }
+ 
+@@ -981,9 +982,13 @@ function showAchievementToast(ach) {
+ 
+ // ─── Phishing Achievement Modal (Big Medal + Confetti Celebration) ───────────
+ function showPhishingAchievementModal(customAward, customCount) {
++  // Never show claim modal if already claimed
++  if (Boolean(window._awardClaimed) || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing'))) {
++    return;
++  }
+   // Do not display rewards before all requirements are completed
+   const isComplete = typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked();
+-  const isClaimed = Boolean(window._awardClaimed);
++  const isClaimed = false;
+ 
+   if (!isComplete && !isClaimed) {
+     const missing = [];
+@@ -1071,6 +1076,15 @@ function showPhishingAchievementModal(customAward, customCount) {
+ }
+ 
+ function attemptClaimPhishingAward() {
++  // Prevent duplicate claims
++  if (window._awardClaimed || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing'))) {
++    const modal = document.getElementById('phish-trophy-modal');
++    if (modal) modal.remove();
++    if (typeof showToast === 'function') {
++      showToast('Award already claimed!', 'info');
++    }
++    return;
++  }
+   if (!isPhishingTrophyUnlocked()) {
+     // DENIED: Do not play reward-claim sound! Keep trophy locked as silhouette.
+     const missing = [];
+@@ -1135,6 +1149,15 @@ function closePhishingTrophy() {
+   }
+ 
+   savePhishingProgress();
++  // Save progress to Firestore + update Start/Continue button immediately
++  if (typeof window.saveProgress === 'function') {
++    window.saveProgress().catch(() => {});
++  }
++  if (typeof updateStartButton === 'function') {
++    updateStartButton();
++  } else if (typeof window.updateStartButton === 'function') {
++    window.updateStartButton();
++  }
+ 
+   // Close any lingering phishing tabs so the browser is fresh and clean for the new checklist
+   try {
+diff --git a/src/js/chapters/ch2-malware/mission-start.js b/src/js/chapters/ch2-malware/mission-start.js
+index ad3e424..6a641b4 100644
+--- a/src/js/chapters/ch2-malware/mission-start.js
++++ b/src/js/chapters/ch2-malware/mission-start.js
+@@ -7,43 +7,43 @@
+ 
+ const CH2_RYAN_INTRO = [
+   {
+-    text: "Hey Ethan. I see you are really into gaming, and I appreciate that enthusiasm. But I noticed something on your laptop that we need to talk about.",
++    text: "Hey, Ethan! I know you're really into gaming, and I can tell how excited you get about new releases. But I noticed something on your laptop that we need to talk about.",
+     state: 'speaking'
+   },
+   {
+-    text: "That GTA VI installer you downloaded? The game has not officially released yet. If a website claims to give you a full installer right now, it is not real. It is bait.",
++    text: "That GTA VI installer you downloaded? I get it, you're probably excited to finally play it. But GTA VI hasn't officially been released yet. So if a website is offering a full installer right now, something isn't right. It could be a trap.",
+     state: 'concerned'
+   },
+   {
+-    text: "Attackers target gamers all the time. They hide malicious software inside cracked games, mods, and pirated installers. You think you are downloading a game, but you are actually handing over access to your system.",
++    text: "A lot of gamers get targeted this way. Attackers hide malicious software inside cracked games, mods, and fake installers. You might think you're downloading your next favorite game, but you could actually be giving someone access to your computer.",
+     state: 'thinking'
+   },
+   {
+-    text: "Software designed to cause damage or steal data is called malware. Once it gets in, it runs quietly in the background and compromises your workstation.",
++    text: "These harmful programs are called malware. Once installed, they can secretly run in the background, steal your information, damage your files, or compromise your workstation.",
+     state: 'speaking'
+   },
+   {
+-    text: "Malware comes in several forms. A <strong>worm</strong> spreads across a network on its own without needing anyone to click it. A <strong>Trojan</strong> pretends to be legitimate software, like a mod or utility, to trick you into running it.",
++    text: "Malware comes in several forms. A <strong>worm</strong> spreads across a network on its own without needing anyone to click it. A <strong>Trojan</strong> pretends to be legitimate software, like a game mod or utility, to trick you into running it.",
+     state: 'thinking'
+   },
+   {
+-    text: "<strong>Spyware</strong> quietly tracks keystrokes, passwords, and accounts. <strong>Adware</strong> bombards your screen with unwanted popups. And <strong>ransomware</strong> locks up your files and demands payment to get them back.",
++    text: "<strong>Spyware</strong> secretly tracks your keystrokes, passwords, and accounts. <strong>Adware</strong> fills your screen with unwanted popups. And <strong>ransomware</strong> locks up your files and demands payment to get them back.",
+     state: 'concerned'
+   },
+   {
+-    text: "Here is the critical point: this laptop connects to our company network and files. An infected installer puts the entire organization at risk, not just your machine.",
++    text: "Here's why this is important, Ethan. Your laptop is connected to our company network and files. One infected game installer could put the entire organization at risk, not just your machine.",
+     state: 'concerned'
+   },
+   {
+-    text: "Watch for the warning signs: sudden system slowdowns, strange popups, unknown programs appearing, or your antivirus turning itself off.",
++    text: "Watch out for warning signs like sudden slowdowns, strange popups, unfamiliar programs appearing, or your antivirus unexpectedly turning itself off. These could mean your computer is infected.",
+     state: 'thinking'
+   },
+   {
+-    text: "If you ever suspect malware on a work device, stop what you are doing, do not launch any files, and report it to IT immediately.",
++    text: "If you ever suspect malware on a work device, stop what you're doing. Don't open or run any suspicious files, and report it to IT immediately.",
+     state: 'speaking'
+   },
+   {
+-    text: "Before we jump into the lab, let's see where your baseline knowledge is. I have a quick 20-question pretest for you. Answer honestly and take your time.",
++    text: "Alright, Ethan! Before we jump into the lab, let's see what you already know. I've prepared a quick 20-question pretest. Just answer honestly and take your time. Don't worry, this is all part of the learning process!",
+     state: 'success',
+     label: "Start Pretest"
+   }
+@@ -156,47 +156,47 @@ function startCh2RyanIntro() {
+ /** Post-pretest reaction lines — keyed by score tier */
+ var CH2_RYAN_REACTIONS = {
+   perfect: [
+-    { text: "Twenty out of twenty! Outstanding work, Ethan. You already understand malware theory very well.", state: 'success' },
+-    { text: "Knowing the concepts is great, but seeing how these threats behave live on a system is just as important. Let's move on to the practical side.", state: 'speaking' }
++    { text: "Wow, a perfect score! Twenty out of twenty, Ethan! Looks like you really know your stuff. Great job!", state: 'success' },
++    { text: "You've got the theory down. But knowing about malware is one thing; seeing how it actually behaves on a computer is another. Let's try the practical side!", state: 'speaking' }
+   ],
+   great: [
+-    { text: "Strong result! You have a solid grasp of the basics and know what red flags to look for.", state: 'success' },
+-    { text: "There are just a few details we can sharpen as we go. Watching how these programs operate in a safe simulation will make everything clear.", state: 'speaking' }
++    { text: "Nice work, Ethan! You've got a pretty good understanding of malware and know what warning signs to look out for.", state: 'success' },
++    { text: "Just a few things to brush up on, but that's perfectly fine. You'll understand them better once we see how these threats work in our simulation.", state: 'speaking' }
+   ],
+   ok: [
+-    { text: "Good effort on the pretest. You have a workable foundation to build on.", state: 'speaking' },
+-    { text: "Reading about malware is one thing, but seeing it in action makes it stick. We will walk through each concept step by step.", state: 'thinking' }
++    { text: "Not bad, Ethan! You've got some of the basics down, and that's a good place to start.", state: 'speaking' },
++    { text: "Don't worry if some questions were tricky. It's easier to understand malware when you actually see how it works. We'll go through everything together, one step at a time.", state: 'thinking' }
+   ],
+   low: [
+-    { text: "Do not worry about the initial score. That pretest simply helps me see where we should focus your training.", state: 'speaking' },
+-    { text: "Once you walk through today's simulations, these concepts will make a lot more sense. Let's get started.", state: 'success' }
++    { text: "Hey, don't be discouraged by your score, Ethan. That's what the pretest is for. It helps us figure out which topics need a little more attention.", state: 'speaking' },
++    { text: "No pressure. You'll have a chance to learn everything through today's simulations. Just stay curious, pay attention, and let's work through it together!", state: 'success' }
+   ]
+ };
+ 
+ /** Bridge dialogue — same for all tiers, follows the reaction lines */
+ var CH2_RYAN_MISSION_BRIEF = [
+   {
+-    text: "Now that we've checked your baseline, Alex, we have a serious real-world case on our hands.",
++    text: "Alright, Ethan. Now that we've checked what you know, let's take a look at what's happening on your computer. We've got a real case to investigate.",
+     state: 'speaking'
+   },
+   {
+-    text: "Ethan's computer looks completely normal on the surface. His desktop icons are fine, apps open up, and there are no scary warning pop-ups. But that is exactly how modern stealth malware operates.",
++    text: "At first glance, your computer looks perfectly fine. Your desktop is normal, your apps open without any problems, and there are no strange warning messages. But that doesn't necessarily mean everything is okay.",
+     state: 'thinking'
+   },
+   {
+-    text: "We suspect a hidden Trojan called <strong>TrojanCoinBitMiner</strong> slipped in. It disguises itself as legitimate software while secretly running in the background, hijacking the processor and graphics card to mine cryptocurrency.",
++    text: "We suspect something called <strong>TrojanCoinBitMiner</strong> has made its way into your system. It's a type of Trojan that disguises itself as legitimate software while secretly using your processor and graphics card to mine cryptocurrency.",
+     state: 'concerned'
+   },
+   {
+-    text: "When a cryptominer steals system resources, computers start lagging, apps respond slowly, and games turn into slideshows. Ethan noticed his favorite arcade game, <strong>Space Fighter</strong>, has been stuttering badly.",
++    text: "That could explain why your computer has been acting strangely. Remember when you mentioned that <strong>Space Fighter</strong> started lagging? When a cryptominer uses too much of your computer's resources, even simple apps and games can become painfully slow.",
+     state: 'thinking'
+   },
+   {
+-    text: "Your mission is to investigate this system: launch Space Fighter to observe performance, test security defenses, track down the rogue CoinBitMiner process in Task Manager, and permanently eradicate it from the machine.",
++    text: "So here's what I want you to do. We'll investigate your computer together. First, open Space Fighter and check its performance. Then we'll test the security defenses, find the suspicious CoinBitMiner process in Task Manager, and remove the threat from your system.",
+     state: 'speaking'
+   },
+   {
+-    text: "I set up an interactive investigation checklist on your <strong>Sticky Notes</strong>. We will tackle this together across two stages. Ready to dive in?",
++    text: "I've prepared a checklist in your <strong>Sticky Notes</strong> to help you keep track of everything. We'll work through the investigation in two stages, one step at a time. Ready to find out what's really going on with your PC?",
+     state: 'success',
+     label: 'Continue'
+   }
+diff --git a/src/js/story/category-hub.js b/src/js/story/category-hub.js
+index f9b09af..81f0261 100644
+--- a/src/js/story/category-hub.js
++++ b/src/js/story/category-hub.js
+@@ -263,6 +263,16 @@ function completeCategory(catId, score, rank) {
+   if (typeof updateAchievementNotificationBadge === 'function') {
+     updateAchievementNotificationBadge();
+   }
++
++  // Save completion & unlocked chapters to Firestore immediately
++  if (typeof window.saveProgress === 'function') {
++    window.saveProgress().catch(() => {});
++  }
++  if (typeof updateStartButton === 'function') {
++    updateStartButton();
++  } else if (typeof window.updateStartButton === 'function') {
++    window.updateStartButton();
++  }
+ }
+ 
+ /** Save CATEGORIES completion state to localStorage */
+diff --git a/src/js/systems/auth.js b/src/js/systems/auth.js
+index dd8ae30..9181f6e 100644
+--- a/src/js/systems/auth.js
++++ b/src/js/systems/auth.js
+@@ -388,12 +388,23 @@
+   function enterAuthenticated() {
+     closeOverlay();
+     updateChip(auth.currentUser);
+-    // Reveal main menu
+-    if (typeof showMainMenu === 'function') {
+-      showMainMenu();
++
++    // Load cloud save then show Main Menu.
++    // _czLoadProgressAndShowMenu is defined in save-progress.js which is now
++    // loaded BEFORE auth.js in index.html, so it is always defined here.
++    // The typeof guard is kept as a safety net only.
++    if (typeof window._czLoadProgressAndShowMenu === 'function') {
++      window._czLoadProgressAndShowMenu();
++    } else if (typeof window.loadAndApplyProgress === 'function') {
++      window.loadAndApplyProgress().catch(() => {}).finally(() => {
++        if (typeof showMainMenu === 'function') showMainMenu();
++        else { const mm = document.getElementById('overlay-main-menu'); if (mm) mm.classList.add('active'); }
++      });
+     } else {
+-      const mm = document.getElementById('overlay-main-menu');
+-      if (mm) mm.classList.add('active');
++      // Last-resort fallback: show main menu without loading save
++      console.warn('[auth] save-progress.js not loaded — showing menu without cloud restore.');
++      if (typeof showMainMenu === 'function') showMainMenu();
++      else { const mm = document.getElementById('overlay-main-menu'); if (mm) mm.classList.add('active'); }
+     }
+   }
+ 
+diff --git a/src/js/ui/main-menu.js b/src/js/ui/main-menu.js
+index b836682..d8ea576 100644
+--- a/src/js/ui/main-menu.js
++++ b/src/js/ui/main-menu.js
+@@ -63,6 +63,9 @@ function showMainMenu() {
+   const userBar = document.getElementById('mm-user-bar');
+   if (userBar) userBar.hidden = false;
+   if (typeof _syncUserBarModalVisibility === 'function') _syncUserBarModalVisibility();
++
++  // ── Refresh Start/Continue button state on every main-menu show ──
++  if (typeof updateStartButton === 'function') updateStartButton();
+ }
+ 
+ /** Hide the main menu overlay */
+@@ -153,6 +156,25 @@ function mainMenuStart() {
+   // Keep background music playing through loading into Story Selection
+   if (typeof startMMBgMusic === 'function') startMMBgMusic();
+ 
++  // ── CONTINUE FAST-PATH ───────────────────────────────────────────────────
++  // If the player has saved progress in a completed chapter, skip the full
++  // new-game flow (loading screen → comic strip → login → mission intro) and
++  // go directly to the chapter desktop with their state already loaded.
++  if (window._continueChapterId) {
++    const contCatId = window._continueChapterId;
++    const isCompleted = _isCategoryCompleted(contCatId);
++
++    if (isCompleted) {
++      // Chapter already completed — open desktop directly, no intro
++      _continueSavedGame(contCatId);
++      return;
++    } else {
++      // Chapter in-progress — open desktop directly but keep existing state
++      _continueSavedGame(contCatId);
++      return;
++    }
++  }
++
+   const mm = document.getElementById('overlay-main-menu');
+   const mmNav = document.querySelector('.mm-nav');
+   const loadScreen = document.getElementById('overlay-loading');
+@@ -681,7 +703,6 @@ const MISSION_ACHIEVEMENTS = [
+       { id: 'task_fake_sender', label: 'Document 5 Fake Senders' },
+       { id: 'task_phish_indicators', label: 'Flag 5 Threat Indicators' },
+       { id: 'task_submit_all_verdicts', label: 'Submit all email verdicts' },
+-      { id: 'task_collect_evidence', label: 'Collect All Required Evidence to Claim Rewards' }
+     ]
+   },
+   {
+@@ -767,7 +788,7 @@ function isChapterChecklistComplete(ach) {
+       if (phishSaved) {
+         const pData = JSON.parse(phishSaved);
+         const unl = Array.isArray(pData.unlockedAchievements) ? pData.unlockedAchievements : [];
+-        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts', 'task_collect_evidence'];
++        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts'];
+         const allPresent = requiredTaskIds.every(id => unl.includes(id));
+         if (pData.trophyUnlocked || unl.includes('task_all_complete') || allPresent) {
+           savedAllTasks = true;
+@@ -775,7 +796,9 @@ function isChapterChecklistComplete(ach) {
+       }
+     } catch (e) {}
+ 
+-    const isComplete = (liveAllTasks || savedAllTasks) && (cat && cat.completed);
++    // Also unlock if the award was already claimed (desktop or Main Menu) — avoids double-claim
++    const alreadyClaimed = isAchievementClaimed('ach_phishing');
++    const isComplete = alreadyClaimed || ((liveAllTasks || savedAllTasks) && (cat && cat.completed));
+     return !!isComplete;
+   }
+ 
+@@ -927,6 +950,13 @@ function claimAchievement(achId) {
+     claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+   };
+   saveClaimedAchievementsMap(map);
++  // Save to Firestore & update Start/Continue button immediately
++  if (typeof window.saveProgress === 'function') {
++    window.saveProgress().catch(() => {});
++  }
++  if (typeof updateStartButton === 'function') {
++    updateStartButton();
++  }
+ 
+   // If claiming phishing, also sync with chapter 1 in-game award state
+   if (achId === 'ach_phishing') {
+@@ -1019,6 +1049,14 @@ function claimAllAchievements() {
+ 
+   saveClaimedAchievementsMap(map);
+ 
++  // Save to Firestore & update Start/Continue button immediately
++  if (typeof window.saveProgress === 'function') {
++    window.saveProgress().catch(() => {});
++  }
++  if (typeof updateStartButton === 'function') {
++    updateStartButton();
++  }
++
+   if (typeof AudioManager !== 'undefined') {
+     try {
+       if (typeof AudioManager.playPerfectFanfare === 'function') {
+@@ -1374,56 +1412,356 @@ const _CHAPTER_LABELS = {
+  * then updates the Start button to show "Continue" (with chapter hint)
+  * or "New Game" for a fresh slate.
+  */
+-function updateStartButton() {
+-  const labelEl    = document.getElementById('mm-start-label');
+-  const subEl      = document.getElementById('mm-start-sublabel');
+-  const wrapEl     = subEl && subEl.closest('.mm-btn-label-wrap');
+-  const iconNew    = document.querySelector('.mm-start-icon-new');
+-  const iconCont   = document.querySelector('.mm-start-icon-continue');
++window.updateStartButton = function() { return updateStartButton(); };
+ 
++function updateStartButton() {
++  const startBtn = document.getElementById('mm-btn-start');
++  const labelEl = document.getElementById('mm-start-label') || (startBtn && startBtn.querySelector('.mm-btn-label'));
+   if (!labelEl) return;
+ 
+-  // Detect saved progress
+-  let savedCatId = null;
++  // ─── Helper: Apply button text and resume chapter pointer ─────────────
++  function _applyButtonState(savedCatId) {
++    if (savedCatId) {
++      labelEl.textContent = 'Continue';
++      window._continueChapterId = savedCatId;
++    } else {
++      labelEl.textContent = 'Start';
++      window._continueChapterId = null;
++    }
++  }
++
++  // ─── Helper: extract furthest active/unlocked chapter from array ───────
++  function _extractCatId(data) {
++    if (!Array.isArray(data)) return null;
++    const order = ['phishing', 'malware', 'social_engineering', 'ransomware'];
++    // Prefer unfinished unlocked chapter to resume
++    for (const id of order) {
++      const entry = data.find(c => c.id === id);
++      if (entry && entry.unlocked && !entry.completed) return id;
++    }
++    // Else last completed chapter
++    let lastComp = null;
++    for (const id of order) {
++      const entry = data.find(c => c.id === id);
++      if (entry && entry.completed) lastComp = id;
++    }
++    if (lastComp) return lastComp;
++    // Else any unlocked chapter
++    for (let i = order.length - 1; i >= 0; i--) {
++      const entry = data.find(c => c.id === order[i]);
++      if (entry && entry.unlocked) return order[i];
++    }
++    return null;
++  }
++
++  // ─── Helper: check if any reward has been claimed ─────────────────────
++  function _hasAnyClaimedReward() {
++    try {
++      const raw = localStorage.getItem('cyberzero_claimed_achievements');
++      if (raw) {
++        const map = JSON.parse(raw);
++        if (map && typeof map === 'object') {
++          if (Object.values(map).some(v => v && (v.claimed === true || v.tier))) return true;
++        }
++      }
++    } catch (e) {}
++    try {
++      const ph = localStorage.getItem('cyberzero_phishing_progress');
++      if (ph) {
++        const pd = JSON.parse(ph);
++        if (pd && pd.awardClaimed) return true;
++      }
++    } catch (e) {}
++    if (window._awardClaimed) return true;
++    return false;
++  }
++
++  // ─── Helper: check if any local progress exists ────────────────────────
++  function _hasAnyLocalProgress() {
++    if (_hasAnyClaimedReward()) return true;
++    try {
++      const raw = localStorage.getItem('cyberzero_categories');
++      if (raw) {
++        const data = JSON.parse(raw);
++        if (Array.isArray(data)) {
++          if (data.some(c => c.completed || (c.id !== 'phishing' && c.unlocked) || (c.score && c.score > 0))) {
++            return true;
++          }
++        }
++      }
++    } catch (e) {}
++    try {
++      const ph = localStorage.getItem('cyberzero_phishing_progress');
++      if (ph) {
++        const pd = JSON.parse(ph);
++        if (pd && ((pd.unlockedAchievements && pd.unlockedAchievements.length > 0) || pd.trophyUnlocked)) {
++          return true;
++        }
++      }
++    } catch (e) {}
++    return false;
++  }
++
++  // ─── PASS 1: Immediate local check (synchronous, instant UI response) ───
++  let localCatId = null;
++  if (_hasAnyLocalProgress()) {
++    try {
++      const raw = localStorage.getItem('cyberzero_categories');
++      if (raw) localCatId = _extractCatId(JSON.parse(raw));
++    } catch (e) {}
++    if (!localCatId && (typeof window._currentChapterCategory !== 'undefined' && window._currentChapterCategory)) {
++      localCatId = window._currentChapterCategory;
++    }
++    if (!localCatId) localCatId = 'phishing';
++  }
++  _applyButtonState(localCatId);
++
++  // ─── PASS 2: Async Firestore check (Firestore is single source of truth) ─
++  (async function _firestorePass() {
++    try {
++      if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) return;
++      const auth = firebase.auth && firebase.auth();
++      if (!auth) return;
++      const user = auth.currentUser;
++      if (!user) return; // not authenticated yet
++
++      const db = firebase.firestore();
++      const doc = await db.collection('saves').doc(user.uid).get();
++
++      if (!doc.exists) {
++        // Firestore says no save document exists in cloud.
++        // If there is neither a claimed reward NOR local chapter progress, show Start.
++        if (!_hasAnyLocalProgress()) {
++          console.log('[updateStartButton] Firestore: No save document for user ' + user.uid + ' -> Start');
++          _applyButtonState(null);
++        } else {
++          console.log('[updateStartButton] Local progress found without Firestore doc -> Keeping Continue and syncing to Firestore');
++          if (typeof window.saveProgress === 'function') {
++            window.saveProgress().catch(() => {});
++          }
++        }
++        return;
++      }
++
++      // Cloud save document exists in Firestore!
++      const data = doc.data() || {};
++      console.log('[updateStartButton] Firestore: Save document found for user ' + user.uid + ' -> Continue');
++
++      let fsCatId = null;
++      if (data.ls && data.ls['cyberzero_categories']) {
++        try {
++          fsCatId = _extractCatId(JSON.parse(data.ls['cyberzero_categories']));
++        } catch (e) {}
++      }
++      if (!fsCatId && data.activeChapter) fsCatId = data.activeChapter;
++      if (!fsCatId) fsCatId = 'phishing';
++
++      // Restore localStorage blobs so game state stays synchronized
++      if (data.ls && typeof data.ls === 'object') {
++        const FS_LS_KEYS = [
++          'cyberzero_categories', 'cyberzero_phishing_progress',
++          'cyberzero_claimed_achievements', 'cyberzero_newbie_gc_state', 'cyberzero_ch2_pretest'
++        ];
++        FS_LS_KEYS.forEach(function(key) {
++          if (data.ls[key] !== undefined && data.ls[key] !== null) {
++            try { localStorage.setItem(key, data.ls[key]); } catch (_) {}
++          }
++        });
++      }
++      if (data.gameState && data.gameState.awardClaimed) {
++        window._awardClaimed = true;
++      }
++
++      _applyButtonState(fsCatId);
++    } catch (err) {
++      console.warn('[updateStartButton] Firestore pass error:', err);
++    }
++  })();
++}
++
++// ════════════════════════════════════════════════════════════
++//  CONTINUE SAVED GAME — HELPERS
++// ════════════════════════════════════════════════════════════
++
++/**
++ * Returns true if the given chapter category has been completed
++ * (checks live CATEGORIES array first, then localStorage as fallback).
++ */
++function _isCategoryCompleted(catId) {
++  try {
++    if (typeof CATEGORIES !== 'undefined' && Array.isArray(CATEGORIES)) {
++      const cat = CATEGORIES.find(c => c.id === catId);
++      if (cat && cat.completed) return true;
++    }
++  } catch (e) {}
++
+   try {
+     const raw = localStorage.getItem('cyberzero_categories');
+     if (raw) {
+       const data = JSON.parse(raw);
+       if (Array.isArray(data)) {
+-        // Find the furthest unlocked (but not yet completed) chapter, or last completed
+-        const order = ['phishing', 'malware', 'social_engineering', 'ransomware'];
+-        let best = null;
+-        order.forEach(id => {
+-          const entry = data.find(c => c.id === id);
+-          if (entry && (entry.unlocked || entry.completed)) best = id;
+-        });
+-        savedCatId = best;
++        const entry = data.find(c => c.id === catId);
++        if (entry && entry.completed) return true;
+       }
+     }
+-  } catch(e) { /* ignore */ }
+-
+-  if (savedCatId) {
+-    // Has save data — show Continue
+-    labelEl.textContent = 'Continue';
+-    if (subEl) {
+-      subEl.textContent = _CHAPTER_LABELS[savedCatId] || savedCatId;
+-      if (wrapEl) wrapEl.classList.add('has-sublabel');
++  } catch (e) {}
++
++  // For phishing (Ch.1): also check claimed achievements as a completion signal
++  if (catId === 'phishing') {
++    try {
++      const ach = localStorage.getItem('cyberzero_claimed_achievements');
++      if (ach) {
++        const map = JSON.parse(ach);
++        if (map && map['ach_phishing'] && (map['ach_phishing'].claimed || map['ach_phishing'].tier)) {
++          return true;
++        }
++      }
++    } catch (e) {}
++    // Also check phishing progress trophy flag
++    try {
++      const ph = localStorage.getItem('cyberzero_phishing_progress');
++      if (ph) {
++        const pd = JSON.parse(ph);
++        if (pd && pd.awardClaimed) return true;
++      }
++    } catch (e) {}
++  }
++
++  return false;
++}
++
++/**
++ * Resume a saved game by going directly to the correct chapter desktop.
++ * Skips comic strips, pretest, mission intro, and login screen.
++ * For completed Chapter 1: shows empty sticky-note checklist (post-award state).
++ */
++function _continueSavedGame(catId) {
++  const mm = document.getElementById('overlay-main-menu');
++  const mmNav = mm && mm.querySelector('.mm-nav');
++
++  if (mmNav) mmNav.classList.add('mm-nav-exiting');
++  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
++  if (typeof AudioManager !== 'undefined') {
++    try { AudioManager.unlock(); } catch (e) {}
++  }
++
++  setTimeout(() => {
++    if (mm) {
++      mm.classList.remove('active');
++      mm.style.display = 'none';
+     }
+-    if (iconNew)  iconNew.style.display  = 'none';
+-    if (iconCont) iconCont.style.display = '';
+-    // Store the chapter to resume so mainMenuStart() can use it
+-    window._continueChapterId = savedCatId;
+-  } else {
+-    // No save — show New Game
+-    labelEl.textContent = 'New Game';
+-    if (subEl) {
+-      subEl.textContent = '';
+-      if (wrapEl) wrapEl.classList.remove('has-sublabel');
++    if (mmNav) mmNav.classList.remove('mm-nav-exiting');
++
++    try { if (typeof loadCategoriesProgress === 'function') loadCategoriesProgress(); } catch (e) {}
++    try { if (typeof loadPhishingProgress === 'function') loadPhishingProgress(); } catch (e) {}
++
++    const isCompleted = _isCategoryCompleted(catId);
++
++    if (catId === 'phishing') {
++      window._currentChapterCategory = 'phishing';
++      if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'phishing';
++      if (typeof updateLoginScreenForChapter === 'function') updateLoginScreenForChapter('phishing');
++      if (typeof updateDesktopBackgroundForPhase === 'function') updateDesktopBackgroundForPhase('phishing');
++
++      // Open desktop overlay directly
++      if (typeof hideAllOverlays === 'function') hideAllOverlays(false);
++      document.querySelectorAll('.overlay').forEach(o => {
++        o.classList.remove('active');
++        o.style.display = 'none';
++      });
++      const desktop = document.getElementById('desktop');
++      if (desktop) {
++        desktop.style.visibility = 'visible';
++        desktop.style.opacity = '1';
++      }
++
++      // Close all app windows
++      ['gmail','browser','folder','antivirus','comms','ransomware','wifi-settings','docviewer','imageviewer','videoplayer','taskmanager','scanner','control-panel'].forEach(a => {
++        if (typeof appState !== 'undefined' && appState[a]) {
++          appState[a].open = false; appState[a].minimized = false; appState[a].maximized = false;
++        }
++        const w = document.getElementById('win-' + a);
++        if (w) { w.classList.add('hidden'); w.classList.remove('maximized','focused','minimized'); }
++      });
++      if (typeof updateTaskbar === 'function') updateTaskbar();
++
++      if (isCompleted) {
++        // ── Chapter 1 fully COMPLETED ── load directly into simulated desktop ──
++        // Do NOT restart mission, do NOT show intro, tests, dialogue, or checklist items
++        window._awardClaimed = true;
++        window._ryanGuideDismissed = true;
++        window._phishAutoModalShown = true;
++        window._postAwardPostTestDialogueFired = true;
++
++        if (typeof updateDesktopTrophyDisplay === 'function') {
++          updateDesktopTrophyDisplay();
++        }
++
++        // Render clean empty Sticky Note (no checklist items) and close it
++        if (typeof renderEmptyStickyNote === 'function') {
++          renderEmptyStickyNote();
++        } else {
++          const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
++          if (scrollEl) {
++            scrollEl.innerHTML = `<div id="sticky-note-content" class="sticky-note-content" contenteditable="true" spellcheck="false" aria-label="Sticky note text" data-placeholder="Take a note..."></div>`;
++          }
++        }
++        if (typeof closeStickyNote === 'function') {
++          closeStickyNote();
++        }
++
++        // Dismiss & reset any active mentor dialogue, pretest, posttest, audio
++        if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
++          try { RyanGuide.dismiss(true); } catch (e) {}
++        }
++        if (typeof RyanPretest !== 'undefined' && RyanPretest.reset) {
++          try { RyanPretest.reset(); } catch (e) {}
++        }
++        if (typeof RyanPosttest !== 'undefined' && RyanPosttest.reset) {
++          try { RyanPosttest.reset(); } catch (e) {}
++        }
++        if (typeof ComicAudio !== 'undefined' && ComicAudio.stop) {
++          try { ComicAudio.stop(); } catch (e) {}
++        }
++        const ryanModal = document.getElementById('ryan-guide-modal') || document.querySelector('.ryan-guide-container');
++        if (ryanModal) ryanModal.remove();
++
++        if (typeof showToast === 'function') {
++          showToast('✅ Welcome back! Chapter 1 completed desktop loaded.', 'success');
++        }
++      } else {
++        // ── Chapter 1 UNFINISHED ── resume mission from latest saved progress ──
++        window._ryanGuideDismissed = true;
++        if (typeof startMission === 'function') {
++          startMission(false);
++        }
++        if (typeof showToast === 'function') {
++          showToast('🎮 Resuming your mission...', 'success');
++        }
++      }
++
++    } else {
++      // ── Chapters 2-4 ──
++      if (typeof openChapterDesktopDirect === 'function') {
++        openChapterDesktopDirect(catId);
++      }
++      if (isCompleted) {
++        if (typeof renderEmptyStickyNote === 'function') renderEmptyStickyNote();
++        if (typeof closeStickyNote === 'function') closeStickyNote();
++        if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
++          try { RyanGuide.dismiss(true); } catch (e) {}
++        }
++      }
++      if (typeof showToast === 'function') {
++        const labels = {
++          malware:            'Chapter 2',
++          social_engineering: 'Chapter 3',
++          ransomware:         'Chapter 4'
++        };
++        showToast('✅ Resuming ' + (labels[catId] || catId) + '...', 'success');
++      }
+     }
+-    if (iconNew)  iconNew.style.display  = '';
+-    if (iconCont) iconCont.style.display = 'none';
+-    window._continueChapterId = null;
+-  }
++  }, 220);
+ }
+ 
+ // ════════════════════════════════════════════════════════════
+diff --git a/src/js/ui/start-menu.js b/src/js/ui/start-menu.js
+index abfbdac..46df49c 100644
+--- a/src/js/ui/start-menu.js
++++ b/src/js/ui/start-menu.js
+@@ -267,19 +267,122 @@ function unlockPausedTerminal() {
+ function startMenuPower(action) {
+   closeStartMenu();
+   if (action === 'restart') {
++    // Show confirm dialog if the user has cloud-saved progress for this mission
++    _confirmRestartWithSaveCheck();
++  } else if (action === 'lock') {
++    lockTerminalPaused();
++  } else if (action === 'shutdown') {
++    shutdownGame();
++  }
++}
++
++/**
++ * Check whether a Firestore save exists for this user, then:
++ *   - If yes  → show the restart-confirmation modal warning that progress will be deleted
++ *   - If no   → restart immediately (no save to lose)
++ */
++function _confirmRestartWithSaveCheck() {
++  const doRestart = function () {
+     if (typeof restartCurrentChapterMission === 'function') {
+       restartCurrentChapterMission();
+     } else {
+       restartEntireGame();
+     }
+-  } else if (action === 'lock') {
+-    lockTerminalPaused();
+-  } else if (action === 'shutdown') {
+-    shutdownGame();
++  };
++
++  if (typeof window.hasSavedProgress === 'function') {
++    window.hasSavedProgress().then(function (hasSave) {
++      if (hasSave) {
++        _showRestartConfirmDialog(doRestart);
++      } else {
++        doRestart();
++      }
++    }).catch(function () {
++      // Firestore check failed — just restart without blocking
++      doRestart();
++    });
++  } else {
++    // save-progress.js not loaded — restart immediately
++    doRestart();
++  }
++}
++
++/**
++ * Render and show the restart-confirm modal.
++ * @param {Function} onConfirm – called when player confirms restart
++ */
++function _showRestartConfirmDialog(onConfirm) {
++  // Detect chapter name for the warning message
++  const activeCat = window._currentChapterCategory ||
++    (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing';
++  const chapterLabels = {
++    phishing:          'Chapter 1: Phishing Investigation',
++    malware:           'Chapter 2: Malware Incident',
++    social_engineering:'Chapter 3: Social Engineering',
++    ransomware:        'Chapter 4: Ransomware Containment',
++  };
++  const chapterName = chapterLabels[activeCat] || 'this mission';
++
++  const modal = document.getElementById('cz-restart-confirm-modal');
++  const msgEl  = document.getElementById('cz-restart-confirm-msg');
++  if (!modal) {
++    // Fallback: browser confirm (should never happen if HTML is loaded)
++    if (window.confirm('Your saved progress for ' + chapterName + ' will be permanently deleted. Continue?')) {
++      window.deleteProgress ? window.deleteProgress().then(onConfirm) : onConfirm();
++    }
++    return;
++  }
++
++  if (msgEl) {
++    msgEl.textContent = 'Your saved progress for ' + chapterName +
++      ' will be permanently deleted from your account. This cannot be undone.';
++  }
++
++  modal.classList.add('cz-rcd-visible');
++
++  // Wire buttons (clone to remove old listeners)
++  const confirmBtn = document.getElementById('cz-restart-confirm-yes');
++  const cancelBtn  = document.getElementById('cz-restart-confirm-no');
++
++  function closeModal() {
++    modal.classList.remove('cz-rcd-visible');
++  }
++
++  function handleConfirm() {
++    closeModal();
++    // Delete cloud save then restart
++    if (typeof window.deleteProgress === 'function') {
++      window.deleteProgress().then(function () {
++        onConfirm();
++      }).catch(function () {
++        onConfirm(); // restart even if delete failed
++      });
++    } else {
++      onConfirm();
++    }
++    cleanup();
+   }
++
++  function handleCancel() {
++    closeModal();
++    cleanup();
++  }
++
++  function cleanup() {
++    if (confirmBtn) confirmBtn.removeEventListener('click', handleConfirm);
++    if (cancelBtn)  cancelBtn.removeEventListener('click', handleCancel);
++  }
++
++  if (confirmBtn) confirmBtn.addEventListener('click', handleConfirm);
++  if (cancelBtn)  cancelBtn.addEventListener('click', handleCancel);
+ }
+ 
+ function shutdownGame() {
++  // 💾 Save progress to Firestore before anything else
++  if (typeof window.saveProgress === 'function') {
++    window.saveProgress().catch(() => {}); // fire-and-forget; async save runs during the 15s screen
++  }
++
+   const sd = document.getElementById('overlay-shutdown-screen');
+   const noteEl  = document.getElementById('shutdown-loading-note-text');
+   const noteWrap = document.getElementById('shutdown-loading-note-wrap');
+@@ -374,6 +477,14 @@ function shutdownGame() {
+   if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
+   if (typeof refreshStorySelectLocks === 'function') refreshStorySelectLocks();
+ 
++  // Save updated completion state and unlocked chapters to Firestore
++  if (typeof window.saveProgress === 'function') {
++    window.saveProgress().catch(() => {});
++  }
++  if (typeof updateStartButton === 'function') {
++    updateStartButton();
++  }
++
+   // Dismiss and reset Ryan guide immediately — it will restart fresh for Chapter 1
+   if (typeof RyanGuide !== 'undefined') {
+     RyanGuide.reset();
