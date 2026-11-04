@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════════════════════════
+   GRAND MASTER CERTIFICATE OVERLAY
+   ═══════════════════════════════════════════════════════════ */
+#overlay-grand-results {
+  z-index: 1050;
+  background: radial-gradient(circle at center, rgba(10, 30, 60, 0.98) 0%, rgba(5, 10, 20, 0.99) 100%);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.grand-cert-shell {
+  max-width: 800px;
+  margin: auto;
+  background: #0b1525;
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(0, 229, 255, 0.3);
+  padding: 10px;
+}
+
+.grand-cert-border {
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 24px 28px;
+  background: radial-gradient(circle at top, rgba(255, 215, 0, 0.06) 0%, rgba(11, 21, 37, 0.95) 100%);
+}
+
+.grand-cert-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 14px;
+}
+
+.grand-cert-seal {
+  font-size: 48px;
+}
+
+.grand-cert-inst {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #ffd700;
+}
+
+.grand-cert-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 2px 0;
+  letter-spacing: 1px;
+}
+
+.grand-cert-subtitle {
+  font-size: 11px;
+  color: #81d4fa;
+  letter-spacing: 1px;
+}
+
+.grand-cert-statement {
+  font-size: 14px;
+  color: #e0e0e0;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.grand-cert-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.grand-cert-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gcp-icon { font-size: 20px; }
+.gcp-title { font-size: 11px; font-weight: 700; color: #fff; }
+.gcp-char { font-size: 10px; color: var(--accent-cyan); font-weight: 800; }
+
+.grand-score-summary {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 18px;
+}
+
+.gss-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gss-lbl { font-size: 11px; font-weight: 700; color: #90a4ae; }
+.gss-val { font-size: 16px; font-weight: 900; color: #ffd700; }
+
+.grand-team-strip {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.team-avatar-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.team-avatar-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-cyan);
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.cyberzero-avatar-box .team-avatar-img {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
+.team-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.grand-cert-motto {
+  text-align: center;
+  font-style: italic;
+  font-size: 12px;
+  color: #81d4fa;
+  margin-bottom: 18px;
+}
+
+.grand-cert-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+

@@ -1,0 +1,1224 @@
+/* ═══════════════════════════════════════════════════════════════════
+   STEAM PC GAME STORE & LIBRARY - CYBERZERO CHAPTER 2
+   Authentic Steam client UI styling with dark aesthetic tokens
+   ═══════════════════════════════════════════════════════════════════ */
+
+#win-steam {
+  width: 980px;
+  max-width: 94vw;
+  height: 640px;
+  max-height: 88vh;
+  background-color: #171a21;
+  color: #c7d5e0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(102, 192, 244, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* Override: hidden & minimized must win over the #win-steam display:flex */
+#win-steam.hidden,
+#win-steam.minimized {
+  display: none !important;
+}
+
+/* ── Steam Titlebar ─────────────────────────────────────────────── */
+.steam-titlebar {
+  background: linear-gradient(to right, #171a21, #1e2633);
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  user-select: none;
+  cursor: grab;
+  overflow: visible;
+  z-index: 200;
+  position: relative;
+}
+.steam-titlebar:active {
+  cursor: grabbing;
+}
+
+.steam-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.steam-titlebar-icon {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 0 4px rgba(102, 192, 244, 0.4));
+}
+
+.steam-menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.steam-menu-item {
+  font-size: 11.5px;
+  color: #8f98a0;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.steam-menu-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Steam Body Wrapper ─────────────────────────────────────────── */
+.steam-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #1b2838;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Top Navigation Bar ─────────────────────────────────────────── */
+.steam-top-nav {
+  background: #171a21;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  height: 48px;
+  min-height: 48px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.steam-nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.steam-arrow-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #8f98a0;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.steam-arrow-btn:hover {
+  background: rgba(102, 192, 244, 0.2);
+  color: #ffffff;
+  border-color: rgba(102, 192, 244, 0.4);
+}
+
+.steam-main-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 14px;
+}
+
+.steam-tab {
+  background: transparent;
+  border: none;
+  color: #8f98a0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 14px 14px 12px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+}
+.steam-tab:hover {
+  color: #ffffff;
+}
+.steam-tab.active {
+  color: #ffffff;
+}
+.steam-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  background: #1a9fff;
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 0 8px rgba(26, 159, 255, 0.8);
+}
+
+/* ── User Profile & Wallet Bar ──────────────────────────────────── */
+.steam-user-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.steam-notification-bell,
+.steam-cart-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #8f98a0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.15s ease;
+}
+.steam-notification-bell:hover,
+.steam-cart-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.steam-badge {
+  background: #1a9fff;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+}
+
+.steam-wallet-badge {
+  font-size: 12px;
+  color: #8f98a0;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.steam-wallet-badge strong {
+  color: #a4d007;
+  font-weight: 700;
+}
+
+.steam-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.steam-user-profile:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.steam-avatar-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: 1px solid #1a9fff;
+  object-fit: cover;
+}
+
+.steam-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.steam-username {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e1e7ee;
+}
+
+.steam-user-level {
+  font-size: 9.5px;
+  color: #66c0f4;
+  font-weight: 600;
+}
+
+/* ── Store Sub-Navigation & Search ──────────────────────────────── */
+.steam-store-subnav {
+  background: linear-gradient(to right, #1b2838, #2a475e);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  height: 40px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.steam-store-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.steam-sublink {
+  background: transparent;
+  border: none;
+  color: #b8c6d4;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.steam-sublink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+.steam-sublink.active {
+  color: #ffffff;
+  background: rgba(102, 192, 244, 0.22);
+}
+
+.steam-store-search {
+  display: flex;
+  align-items: center;
+  background: #101822;
+  border: 1px solid rgba(102, 192, 244, 0.25);
+  border-radius: 4px;
+  padding: 3px 8px;
+  width: 220px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.steam-store-search:focus-within {
+  border-color: #66c0f4;
+  box-shadow: 0 0 8px rgba(102, 192, 244, 0.35);
+}
+
+.steam-store-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e1e7ee;
+  font-size: 12px;
+  flex: 1;
+}
+.steam-store-search input::placeholder {
+  color: #536f86;
+  font-style: italic;
+}
+
+.steam-search-btn {
+  font-size: 12px;
+  color: #66c0f4;
+  cursor: pointer;
+}
+
+/* ── Main Viewport ──────────────────────────────────────────────── */
+.steam-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: radial-gradient(ellipse at top, #1e2c3d 0%, #121820 100%);
+  position: relative;
+}
+.steam-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+.steam-viewport::-webkit-scrollbar-track {
+  background: #171a21;
+}
+.steam-viewport::-webkit-scrollbar-thumb {
+  background: #2a475e;
+  border-radius: 4px;
+}
+.steam-viewport::-webkit-scrollbar-thumb:hover {
+  background: #3d6c8d;
+}
+
+.steam-page-view {
+  display: none;
+  padding: 20px 24px;
+  min-height: 100%;
+}
+.steam-page-view.active {
+  display: block;
+}
+
+/* ── Hero Spotlight Carousel ────────────────────────────────────── */
+.steam-hero-section {
+  margin-bottom: 24px;
+}
+
+.steam-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.steam-carousel-wrapper {
+  background: #0f1722;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  overflow: hidden;
+  height: 330px;
+  position: relative;
+}
+
+.steam-hero-main {
+  flex: 1.6;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+  background-size: cover;
+  background-position: center;
+}
+.steam-hero-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 16, 26, 0.95) 0%, rgba(10, 16, 26, 0.3) 50%, rgba(0,0,0,0.1) 100%);
+  z-index: 1;
+}
+
+.steam-hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.steam-hero-badge {
+  display: inline-block;
+  background: #1a9fff;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+
+.steam-hero-badge.warn {
+  background: #f59e0b;
+  color: #000000;
+}
+
+.steam-hero-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.steam-hero-desc {
+  font-size: 12.5px;
+  color: #acb8c4;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  max-width: 90%;
+}
+
+.steam-hero-sidebar {
+  flex: 1;
+  background: #0b121c;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.steam-hero-thumbs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.steam-hero-thumb {
+  height: 64px;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.steam-hero-thumb:hover {
+  transform: scale(1.03);
+  border-color: #66c0f4;
+}
+
+.steam-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.steam-tag {
+  background: rgba(255, 255, 255, 0.07);
+  color: #66c0f4;
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.steam-review-summary {
+  font-size: 11px;
+  color: #8f98a0;
+  margin-bottom: 12px;
+}
+.steam-review-score {
+  color: #66c0f4;
+  font-weight: 700;
+}
+
+.steam-hero-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.steam-price-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.steam-discount-pill {
+  background: #4c6b22;
+  color: #beee11;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 2px;
+}
+
+.steam-price-nums {
+  display: flex;
+  flex-direction: column;
+}
+
+.steam-original-price {
+  font-size: 10.5px;
+  color: #718290;
+  text-decoration: line-through;
+}
+
+.steam-final-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #beee11;
+}
+.steam-final-price.free {
+  color: #66c0f4;
+}
+
+.steam-action-btn {
+  background: linear-gradient(to right, #75b022 0%, #588a1b 100%);
+  border: none;
+  color: #d2efa9;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.steam-action-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+.steam-action-btn:active {
+  transform: translateY(0);
+}
+.steam-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.steam-action-btn.secondary:hover {
+  background: rgba(102, 192, 244, 0.25);
+}
+.steam-action-btn.wishlisted {
+  background: rgba(102, 192, 244, 0.2);
+  color: #66c0f4;
+  border: 1px solid rgba(102, 192, 244, 0.4);
+}
+
+/* ── Security Advisory Banner for GTA VI ────────────────────────── */
+.steam-security-advisory {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.08) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-left: 4px solid #ef4444;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.steam-advisory-icon {
+  font-size: 22px;
+  color: #ef4444;
+  line-height: 1;
+}
+
+.steam-advisory-text {
+  flex: 1;
+}
+
+.steam-advisory-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fca5a5;
+  margin-bottom: 3px;
+}
+
+.steam-advisory-body {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+.steam-advisory-body strong {
+  color: #ffffff;
+}
+
+/* ── Category Pills ─────────────────────────────────────────────── */
+.steam-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+}
+.steam-pills-row::-webkit-scrollbar {
+  height: 4px;
+}
+
+.steam-cat-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #c7d5e0;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.steam-cat-pill:hover,
+.steam-cat-pill.active {
+  background: #1a9fff;
+  color: #ffffff;
+  border-color: #1a9fff;
+}
+
+/* ── Special Offers Grid ────────────────────────────────────────── */
+.steam-offers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.steam-offer-card {
+  background: #0f1621;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+.steam-offer-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(102, 192, 244, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.steam-offer-img {
+  height: 110px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.steam-offer-banner {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(10, 16, 26, 0.85);
+  color: #66c0f4;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.steam-offer-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.steam-offer-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.steam-offer-meta {
+  font-size: 10.5px;
+  color: #8f98a0;
+  margin-bottom: 8px;
+}
+
+/* ── Store Tabs: Top Sellers / New / Upcoming ───────────────────── */
+.steam-tabs-container {
+  background: #0e1520;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.steam-subtabs-header {
+  display: flex;
+  background: #141f2d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.steam-subtab-btn {
+  background: transparent;
+  border: none;
+  color: #8f98a0;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.steam-subtab-btn:hover {
+  color: #ffffff;
+}
+.steam-subtab-btn.active {
+  color: #ffffff;
+  background: #0e1520;
+}
+.steam-subtab-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #1a9fff;
+}
+
+.steam-games-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.steam-game-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.steam-game-row:hover {
+  background: rgba(102, 192, 244, 0.08);
+}
+.steam-game-row:last-child {
+  border-bottom: none;
+}
+
+.steam-game-capsule {
+  width: 96px;
+  height: 48px;
+  border-radius: 3px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.steam-game-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.steam-game-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #e1e7ee;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.steam-game-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #647b91;
+}
+
+.steam-os-icon {
+  font-size: 12px;
+  color: #8f98a0;
+}
+
+.steam-game-review {
+  font-size: 11px;
+  color: #66c0f4;
+  margin-left: auto;
+  padding-right: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.steam-game-price-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── LIBRARY VIEW ───────────────────────────────────────────────── */
+.steam-library-layout {
+  display: flex;
+  height: calc(100% - 10px);
+  margin: -20px -24px;
+}
+
+.steam-lib-sidebar {
+  width: 250px;
+  background: #121922;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.steam-lib-search {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.steam-lib-search input {
+  width: 100%;
+  background: #090e14;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #ffffff;
+  outline: none;
+}
+.steam-lib-search input:focus {
+  border-color: #66c0f4;
+}
+
+.steam-lib-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.steam-lib-group-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #5d758a;
+  padding: 8px 16px 4px;
+  letter-spacing: 0.8px;
+}
+
+.steam-lib-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #c7d5e0;
+  font-size: 12.5px;
+  transition: all 0.15s ease;
+}
+.steam-lib-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+.steam-lib-item.active {
+  background: rgba(102, 192, 244, 0.15);
+  color: #66c0f4;
+  border-left: 3px solid #66c0f4;
+}
+
+.steam-lib-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.steam-lib-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top right, #1d2c3e 0%, #0d131a 100%);
+  overflow-y: auto;
+}
+
+.steam-lib-hero {
+  height: 220px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px 30px;
+}
+.steam-lib-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #0d131a 0%, rgba(13, 19, 26, 0.4) 60%, transparent 100%);
+}
+
+.steam-lib-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.steam-lib-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.steam-lib-play-btn {
+  background: linear-gradient(to right, #47bfff 0%, #1a44c2 60%);
+  border: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 12px 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(26, 68, 194, 0.6);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.steam-lib-play-btn:hover {
+  filter: brightness(1.2);
+  transform: translateY(-2px);
+}
+.steam-lib-play-btn.green {
+  background: linear-gradient(to right, #75b022 0%, #588a1b 100%);
+  box-shadow: 0 4px 16px rgba(88, 138, 27, 0.6);
+}
+
+.steam-lib-stats-bar {
+  background: #141d27;
+  padding: 14px 30px;
+  display: flex;
+  gap: 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.steam-stat-block {
+  display: flex;
+  flex-direction: column;
+}
+.steam-stat-label {
+  font-size: 10.5px;
+  color: #718494;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.steam-stat-value {
+  font-size: 13.5px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ── Bottom Client Footer ───────────────────────────────────────── */
+.steam-footer-bar {
+  background: #121922;
+  height: 36px;
+  min-height: 36px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 11px;
+  color: #8f98a0;
+  user-select: none;
+}
+
+.steam-footer-btn {
+  background: transparent;
+  border: none;
+  color: #8f98a0;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.steam-footer-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.steam-footer-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.steam-dl-icon {
+  font-size: 13px;
+  color: #66c0f4;
+}
+
+.steam-friends-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #c7d5e0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.steam-friends-btn:hover {
+  background: rgba(102, 192, 244, 0.2);
+  color: #ffffff;
+  border-color: rgba(102, 192, 244, 0.4);
+}
+
+.steam-friends-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #555555;
+}
+.steam-friends-dot.online {
+  background: #57cbde;
+  box-shadow: 0 0 6px #57cbde;
+}
+
+/* ── Friends & Chat Popout ──────────────────────────────────────── */
+.steam-friends-popout {
+  position: absolute;
+  bottom: 42px;
+  right: 14px;
+  width: 280px;
+  background: #171d25;
+  border: 1px solid rgba(102, 192, 244, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  z-index: 200;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.steam-friends-popout.hidden {
+  display: none;
+}
+
+.steam-friends-header {
+  background: #10151c;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.steam-friends-header-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.steam-friends-close {
+  background: transparent;
+  border: none;
+  color: #8f98a0;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.steam-friends-list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.steam-friend-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.steam-friend-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  border: 1px solid #57cbde;
+  object-fit: cover;
+}
+.steam-friend-info {
+  flex: 1;
+  min-width: 0;
+}
+.steam-friend-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #57cbde;
+}
+.steam-friend-status {
+  font-size: 10.5px;
+  color: #90ba3c;
+}
+.steam-friend-tip {
+  font-size: 10px;
+  color: #8f98a0;
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+
+/* ── Steam Menu Bar Dropdowns ───────────────────────────────── */
+.steam-menu-bar {
+  position: relative;
+}
+
+.steam-menu-item.active {
+  color: #ffffff;
+  background: rgba(102, 192, 244, 0.15);
+}
+
+.steam-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 240px;
+  background: #1e2229;
+  border: 1px solid rgba(102, 192, 244, 0.25);
+  border-top: 2px solid #1a9fff;
+  border-radius: 0 4px 4px 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  padding: 4px 0;
+  animation: steamDdIn 0.12s ease;
+  pointer-events: auto;
+}
+
+.steam-dropdown.open {
+  display: block;
+}
+
+@keyframes steamDdIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.steam-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 16px;
+  font-size: 12.5px;
+  color: #c7d5e0;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.steam-dd-item:hover {
+  background: #1a9fff;
+  color: #ffffff;
+}
+
+.steam-dd-item.steam-dd-dim {
+  color: #5a6a78;
+  cursor: default;
+}
+
+.steam-dd-item.steam-dd-dim:hover {
+  background: transparent;
+  color: #5a6a78;
+}
+
+.steam-dd-icon {
+  font-size: 13px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.steam-dd-label {
+  flex: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 12.5px;
+  letter-spacing: 0.1px;
+}
+
+.steam-dd-sep {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 4px 0;
+}

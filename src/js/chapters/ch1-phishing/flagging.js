@@ -1,0 +1,706 @@
+'use strict';
+
+function handleFlaggableClick(el) {
+  const currentEmailObj = ch1InboxEmails[gameState.currentEmail];
+  if (window._awardClaimed) {
+    showToast('🏆 Chapter 1 investigation is complete and rewards are claimed.', 'info');
+    return;
+  }
+  // If already flagged, always allow unflagging (regardless of flag mode)
+  if (el.classList.contains('flagged')) {
+    removeFlag(el.dataset.flagType);
+    return;
+  }
+  // Not flagged — require flag mode to be active
+  if (!gameState.flagModeActive) {
+    showToast('💡 Activate 🚩 Flag Evidence first, then click suspicious elements.', 'warning');
+    return;
+  }
+  placeFlag(el);
+}
+
+function handleQrCodeClick(event, el) {
+  event.preventDefault();
+  // In flag mode: flag the QR code as suspicious
+  if (gameState.flagModeActive) {
+    if (el.classList.contains('flagged')) {
+      removeFlag(el.dataset.flagType);
+    } else {
+      placeFlag(el);
+    }
+    return;
+  }
+  // Outside flag mode: clicking also opens destination in simulated browser
+  const destination = el.dataset.destination;
+  if (destination) {
+    openSuspiciousSite(destination);
+  }
+}
+
+function handleQrCodeDblClick(event, el) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (gameState.flagModeActive) return;
+  const destination = el.dataset.destination;
+  if (destination) {
+    openSuspiciousSite(destination);
+  }
+}
+
+function handleAttachmentClick(event, el, filename, size) {
+  event.preventDefault();
+  const currentEmailObj = ch1InboxEmails[gameState.currentEmail];
+  if (window._awardClaimed) {
+    showToast('🏆 Chapter 1 investigation is complete and rewards are claimed.', 'info');
+    return;
+  }
+  // In flag mode: flag the attachment as suspicious
+  if (gameState.flagModeActive) {
+    if (el.classList.contains('flagged')) {
+      removeFlag(el.dataset.flagType);
+    } else {
+      placeFlag(el);
+    }
+    return;
+  }
+  // Outside flag mode: clicking downloads the attachment & triggers warning dialogue
+  if (typeof downloadEmailAttachment === 'function') {
+    downloadEmailAttachment(filename, size);
+  }
+}
+
+function handleEmailLinkRightClick(event, el) {
+  event.preventDefault();
+  const destination = el.dataset.destination;
+  if (destination) {
+    showLinkPopup(el, destination);
+  }
+}
+
+function handleEmailLinkClick(event, el) {
+  event.preventDefault();
+  if (gameState.flagModeActive) {
+    placeFlag(el);
+    return;
+  }
+  // Outside flag mode: direct user straight to browser to see the website (no preview popup)
+  const destination = el.dataset.destination;
+  if (destination) {
+    closeLinkPopup();
+    openSuspiciousSite(destination);
+  }
+}
+
+// Double-click on a link: open the phishing site in the simulated browser
+function handleEmailLinkDblClick(event, el) {
+  event.preventDefault();
+  event.stopPropagation();
+  const destination = el.dataset.destination;
+  if (destination) {
+    openSuspiciousSite(destination);
+  }
+}
+
+function showLinkPopup(el, url) {
+  gameState.pendingLinkUrl = url;
+  gameState.pendingLinkFlagId = el.dataset.flagId;
+  gameState.pendingLinkFlagType = el.dataset.flagType;
+
+  const popup = document.getElementById('link-inspect-popup');
+  popup.classList.remove('hidden');
+  document.getElementById('lip-url').textContent = url;
+
+  // Position near the link
+  const rect = el.getBoundingClientRect();
+  popup.style.top = (rect.bottom + 10) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+}
+
+function closeLinkPopup() {
+  document.getElementById('link-inspect-popup').classList.add('hidden');
+  gameState.pendingLinkUrl = null;
+}
+
+function flagFromPopup() {
+  if (window._awardClaimed) {
+    showToast('🏆 Chapter 1 investigation is complete and rewards are claimed.', 'info');
+    closeLinkPopup();
+    return;
+  }
+  const el = document.querySelector(`[data-flag-id="${gameState.pendingLinkFlagId}"]`);
+  if (el) {
+    if (!gameState.flagModeActive) {
+      // Auto-enable flag mode when flagging from popup
+      gameState.flagModeActive = true;
+      const btn = document.getElementById('flag-mode-btn');
+      const body = document.querySelector('.gmail-body');
+      if (btn) btn.classList.add('active');
+      if (body) body.classList.add('flag-mode-active');
+    }
+    placeFlag(el);
+  }
+  closeLinkPopup();
+}
+
+function openInBrowser() {
+  const url = gameState.pendingLinkUrl;
+  closeLinkPopup();
+  openSuspiciousSite(url);
+}
+
+function openSuspiciousSite(url) {
+  closeLinkPopup();
+  // Notify tutorial that the website was opened
+  if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
+    PhishTutorial.notify('websiteOpened');
+  }
+  const win = document.getElementById('win-browser');
+  if (win) {
+    win.classList.remove('hidden', 'minimized');
+  }
+  if (appState.browser) {
+    appState.browser.open = true;
+    appState.browser.minimized = false;
+  }
+
+  openApp('browser');
+  focusWindow('browser');
+
+  // If browser is floating (not maximized), center it prominently so the user immediately sees it pop up
+  if (win && (!appState.browser || !appState.browser.maximized)) {
+    centerWindow('browser');
+  }
+
+  if (!browserTabs || browserTabs.length === 0) {
+    initBrowserTabs();
+  }
+
+  const existingTab = browserTabs ? browserTabs.find(t => t.url === url) : null;
+  if (existingTab) {
+    switchTab(existingTab.id);
+  } else {
+    const activeTab = getActiveTab();
+    if (activeTab && (activeTab.url === 'https://www.google.com' || activeTab.url === '') && activeTab.history.length <= 1) {
+      navigateBrowser(url);
+    } else {
+      createNewBrowserTab(url);
+    }
+  }
+
+  // Visual pop-in animation to give responsive feedback
+  if (win) {
+    win.classList.remove('window-pop-in');
+    void win.offsetWidth;
+    win.classList.add('window-pop-in');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FLAG SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+function toggleFlagMode() {
+  const currentEmailObj = EMAILS[gameState.currentEmail];
+  if (window._awardClaimed) {
+    showToast('🏆 Chapter 1 investigation is complete and rewards are claimed.', 'info');
+    return;
+  }
+
+  gameState.flagModeActive = !gameState.flagModeActive;
+  const btn = document.getElementById('flag-mode-btn');
+  const body = document.querySelector('.gmail-body');
+
+  if (gameState.flagModeActive) {
+    btn.classList.add('active');
+    btn.classList.remove('btn-pulse-highlight', 'tutorial-flag-blink');
+    body.classList.add('flag-mode-active');
+    showToast('🚩 Flag Mode ON: click suspicious elements to flag them.', 'warning');
+    // Notify tutorial that flag mode was turned on
+    if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
+      PhishTutorial.notify('flagModeOn');
+    } else if (typeof RyanGuide !== 'undefined' && gameState.phase === 'mission') {
+      const isFirstEmail = (gameState.currentEmail === 0 && (!gameState.emailResults || gameState.emailResults.length === 0));
+      if (isFirstEmail && !window._ch1CloserLookDialogueShown) {
+        window._ch1CloserLookDialogueShown = true;
+        RyanGuide.once('flag-mode-guide', function() {
+          setTimeout(function() {
+            RyanGuide.speak(RYAN_DIALOGUES.firstEmailRead);
+          }, 200);
+        });
+      }
+    }
+  } else {
+    btn.classList.remove('active');
+    body.classList.remove('flag-mode-active');
+    closeLinkPopup();
+    showToast('Flag Mode OFF', '');
+  }
+
+  // Live react to Flag Mode toggle on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+}
+
+function placeFlag(el) {
+  const currentEmailObj = ch1InboxEmails[gameState.currentEmail];
+  if (window._awardClaimed) {
+    showToast('🏆 Chapter 1 investigation is complete and rewards are claimed.', 'info');
+    return;
+  }
+
+  const flagId   = el.dataset.flagId;
+  const flagType = el.dataset.flagType;
+  const flagLabel = el.dataset.flagLabel;
+  const flagText  = el.dataset.flagText || el.textContent.trim();
+
+  // Toggle — if already flagged, remove it
+  if (el.classList.contains('flagged')) {
+    removeFlag(flagType);
+    return;
+  }
+
+  // Check if this type is already flagged on another element
+  const existing = gameState.currentEmailFlags.find(f => f.type === flagType);
+  if (existing) {
+    showToast('⚠ This type of evidence is already flagged.', 'warning');
+    return;
+  }
+
+  const flag = { id: flagId, type: flagType, label: flagLabel || flagType.replace('_', ' ').toUpperCase(), text: flagText };
+  gameState.currentEmailFlags.push(flag);
+
+  el.classList.add('flagged');
+  renderEvidencePanel();
+  const evPanel = document.getElementById('evidence-panel');
+  if (evPanel) {
+    evPanel.classList.remove('hidden');
+    evPanel.classList.remove('collapsed');
+  }
+  if (typeof toggleEvidencePanel === 'function') toggleEvidencePanel(true);
+  if (typeof AudioManager !== 'undefined') AudioManager.playFlagChirp();
+  showToast(`🚩 Flagged: ${flag.label}`, 'success');
+
+  // Live react to flag placement on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+
+  // ── Notify tutorial of which flag was placed ─────────────────────────────
+  if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
+    if (flagType === 'fake_sender')     PhishTutorial.notify('senderFlagged');
+    if (flagType === 'false_urgency')   PhishTutorial.notify('urgencyFlagged');
+    if (flagType === 'suspicious_link') PhishTutorial.notify('linkFlagged');
+  }
+
+  // ── Update verdict button highlight based on flagged evidence count ───────
+  if (typeof PhishTutorial !== 'undefined') {
+    PhishTutorial.updateVerdictBtnHighlight();
+  }
+
+  // ── Ryan explains the flag — only when tutorial is not actively guiding ─
+  if ((typeof PhishTutorial === 'undefined' || !PhishTutorial.isActive()) && gameState.currentEmail === 0 && gameState.phase === 'mission') {
+    clearTimeout(placeFlag._ryanTimer);
+    placeFlag._ryanTimer = setTimeout(function() {
+      ryanExplainFlag(flagType, flagText, flag.label);
+    }, 600);
+  }
+}
+
+// Dialogue map: Ryan explains each type of suspicious flag
+function ryanExplainFlag(flagType, flagText, flagLabel) {
+  if (typeof RyanGuide === 'undefined') return;
+
+const dialogues = {
+  fake_sender: [
+    {
+      text: "Good catch, Alex! Take a closer look at that sender's address. Sometimes scammers use names that look almost identical to real companies, just to trick us.",
+      state: 'speaking'
+    },
+    {
+      text: "For example, 'paypa1.com' looks a lot like 'paypal.com'. It's a small difference, but it matters. Always double-check who sent the email.",
+      state: 'thinking'
+    }
+  ],
+
+  false_urgency: [
+    {
+      text: "Exactly, Alex! That message is trying to rush you. Words like 'Act immediately' or 'Your account will be closed' are meant to make you panic.",
+      state: 'speaking'
+    },
+    {
+      text: "Don't let a message pressure you into clicking anything. Take your time and verify it first. That's always the safer move.",
+      state: 'thinking'
+    }
+  ],
+
+  suspicious_link: [
+    {
+      text: "Nice spot, Alex! That link doesn't look right. Before opening any link, hover over it and check where it actually takes you.",
+      state: 'speaking'
+    },
+    {
+      text: "See how a fake link can look real at first glance? Always check the actual website address before clicking.",
+      state: 'thinking'
+    }
+  ]
+};
+
+const slides = dialogues[flagType]
+  ? [...dialogues[flagType]]
+  : [
+      {
+        text: `Nice find, Alex! You noticed something unusual about "${flagLabel}". That's exactly what we need to look for when checking suspicious emails.`,
+        state: 'speaking'
+      }
+    ];
+
+slides.push({
+  text: "Alright, Alex! We've checked the warning signs. Go ahead and select 'Phishing' to report the email and wrap up your first case.",
+  state: 'success'
+});
+
+RyanGuide.speak(slides);
+}
+
+
+function removeFlag(flagType) {
+  const currentEmailObj = ch1InboxEmails[gameState.currentEmail];
+  if (currentEmailObj && gameState.emailResults.some(r => r.emailId === currentEmailObj.id)) {
+    return;
+  }
+
+
+  const idx = gameState.currentEmailFlags.findIndex(f => f.type === flagType);
+  if (idx === -1) return;
+  const [removed] = gameState.currentEmailFlags.splice(idx, 1);
+
+  // Remove visual flag from element in email body
+  const el = document.querySelector(`[data-flag-type="${flagType}"]`);
+  if (el) {
+    el.classList.remove('flagged');
+    // Brief unflag flash
+    el.classList.add('unflagging');
+    setTimeout(() => el.classList.remove('unflagging'), 400);
+  }
+
+  renderEvidencePanel();
+  if (gameState.currentEmailFlags.length === 0) {
+    const evPanel = document.getElementById('evidence-panel');
+    if (evPanel) {
+      evPanel.classList.add('hidden');
+      evPanel.classList.add('collapsed');
+      const label = document.getElementById('evidence-toggle-label');
+      const arrow = document.getElementById('evidence-toggle-arrow');
+      if (label) label.textContent = 'Show';
+      if (arrow) arrow.textContent = '▲';
+    }
+  }
+  showToast(`🗑 Unflagged: ${removed.label}`, '');
+
+  // Live react to flag removal on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+
+  // ── Update verdict button highlight (may need to remove glow if flags cleared) ─
+  if (typeof PhishTutorial !== 'undefined') {
+    PhishTutorial.updateVerdictBtnHighlight();
+  }
+}
+
+function getEmailMissedFlagInfo(email, evType) {
+  let label = evType ? evType.replace(/_/g, ' ').toUpperCase() : 'RED FLAG';
+  let text = '';
+  let reason = '';
+  let icon = '⚠️';
+
+  if (!email) return { type: evType, label, text, reason, icon };
+
+  if (evType === 'fake_sender') {
+    label = 'FAKE SENDER';
+    icon = '👤';
+    if (email.sender) {
+      const sName = email.sender.name || 'Unknown Sender';
+      const sAddr = email.sender.address || email.sender.email || '';
+      // Ensure <email@domain> is escaped as &lt;...&gt; so the browser displays the email address @
+      text = sAddr ? `${sName} &lt;${sAddr}&gt;` : sName;
+    } else {
+      text = 'Sender Address';
+    }
+    if (email.capybaraAnalysis && email.capybaraAnalysis.fake_sender && email.capybaraAnalysis.fake_sender.missed) {
+      reason = email.capybaraAnalysis.fake_sender.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
+    } else {
+      reason = 'The sender domain does not match the official organization domain.';
+    }
+  } else if (evType === 'false_urgency') {
+    label = 'FALSE URGENCY';
+    icon = '⏰';
+    const part = (email.body || []).find(b => b.flagType === 'false_urgency');
+    text = part ? part.text : 'Urgent deadline or account suspension threat';
+    if (part && part.label) label = part.label;
+    if (email.capybaraAnalysis && email.capybaraAnalysis.false_urgency && email.capybaraAnalysis.false_urgency.missed) {
+      reason = email.capybaraAnalysis.false_urgency.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
+    } else {
+      reason = 'Manufactured time pressure designed to cause panic before verification.';
+    }
+  } else if (evType === 'suspicious_link') {
+    label = 'SUSPICIOUS LINK';
+    icon = '🔗';
+    const part = (email.body || []).find(b => b.flagType === 'suspicious_link');
+    text = part ? (part.destination || part.text) : 'Suspicious link destination';
+    if (part && part.label) label = part.label;
+    if (email.capybaraAnalysis && email.capybaraAnalysis.suspicious_link && email.capybaraAnalysis.suspicious_link.missed) {
+      reason = email.capybaraAnalysis.suspicious_link.missed.replace(/^🚩\s*MISSED\s*[:—]\s*[^\n]+\n?/, '').trim();
+    } else {
+      reason = 'Link leads to an unverified external portal designed to capture credentials.';
+    }
+  } else {
+    const part = (email.body || []).find(b => b.flagType === evType);
+    if (part) {
+      label = part.label || label;
+      text = part.text || part.destination || '';
+    }
+    reason = 'Suspicious indicator that should be flagged.';
+  }
+
+  reason = reason.replace(/<code>/g, '“').replace(/<\/code>/g, '”');
+  return { type: evType, label, text, reason, icon };
+}
+
+function renderEvidencePanel() {
+  const list = document.getElementById('evidence-list');
+  const badge = document.getElementById('evidence-count-badge');
+  if (!list || !badge) return;
+
+  const currentEmailObj = (ch1InboxEmails && ch1InboxEmails[gameState.currentEmail]) || (EMAILS && EMAILS[gameState.currentEmail]);
+  const res = currentEmailObj && gameState.emailResults && gameState.emailResults.find(r => r.emailId === currentEmailObj.id);
+  const isClosed = Boolean(window._awardClaimed);
+  const flags = (gameState.currentEmailFlags && gameState.currentEmailFlags.length > 0)
+    ? gameState.currentEmailFlags
+    : ((res && res.savedFlags) ? res.savedFlags : []);
+
+  // Reset classes on badge
+  badge.className = 'evidence-count-badge';
+
+  if (!isClosed) {
+    badge.textContent = `${flags.length} FLAG${flags.length !== 1 ? 'S' : ''}`;
+    list.innerHTML = '';
+    if (flags.length === 0) {
+      list.innerHTML = '<div class="evidence-empty">No flags placed yet. Click <strong>Flag Evidence</strong> to mark clues.</div>';
+    } else {
+      flags.forEach(flag => {
+        const item = document.createElement('div');
+        item.className = 'evidence-item';
+        item.innerHTML = `
+          <span class="evidence-item-icon">🚩</span>
+          <span class="evidence-item-text">${flag.text.length > 60 ? flag.text.slice(0,60)+'…' : flag.text}</span>
+          <span class="evidence-item-type">${flag.label}</span>
+          <button class="evidence-remove-btn" onclick="removeFlag('${flag.type}')" title="Remove flag">✕</button>`;
+        list.appendChild(item);
+      });
+    }
+  } else {
+    // ── Case is closed / submitted: show found vs missed flags ──
+    const expected = (currentEmailObj && currentEmailObj.evidence) ? currentEmailObj.evidence : [];
+    const flaggedTypes = flags.map(f => f.type);
+    const foundTypes = expected.filter(t => flaggedTypes.includes(t));
+    const missedTypes = expected.filter(t => !flaggedTypes.includes(t));
+
+    list.innerHTML = '';
+
+    if (currentEmailObj && currentEmailObj.phishing) {
+      // Phishing email
+      if (missedTypes.length === 0) {
+        badge.textContent = `${flags.length}/${expected.length} ALL FLAGS FOUND 🚩✅`;
+        badge.classList.add('badge-all-found');
+      } else {
+        badge.textContent = `${foundTypes.length}/${expected.length} FLAGS (${missedTypes.length} MISSED 🚩)`;
+        badge.classList.add('badge-has-missed');
+      }
+
+      // Render flags found by player
+      flags.forEach(flag => {
+        const isLegitFlag = expected.includes(flag.type);
+        const item = document.createElement('div');
+        item.className = 'evidence-item ' + (isLegitFlag ? 'evidence-item-found' : 'evidence-item-fp');
+        item.innerHTML = `
+          <span class="evidence-item-icon">🚩</span>
+          <div class="evidence-item-body">
+            <div class="evidence-item-header">
+              <span class="evidence-status-pill ${isLegitFlag ? 'pill-found' : 'pill-fp'}">${isLegitFlag ? 'FLAGGED (FOUND)' : 'EXTRA FLAG'}</span>
+              <span class="evidence-item-type">${flag.label}</span>
+            </div>
+            <span class="evidence-item-text">${flag.text}</span>
+            ${!isLegitFlag ? '<div class="evidence-item-hint">This element was normal and safe.</div>' : ''}
+          </div>`;
+        list.appendChild(item);
+      });
+
+      // Render flags missed by player
+      missedTypes.forEach(mType => {
+        const mInfo = getEmailMissedFlagInfo(currentEmailObj, mType);
+        const item = document.createElement('div');
+        item.className = 'evidence-item evidence-item-missed';
+        item.innerHTML = `
+          <span class="evidence-item-icon">🚩</span>
+          <div class="evidence-item-body">
+            <div class="evidence-item-header">
+              <span class="evidence-status-pill pill-missed">🚩 MISSED FLAG</span>
+              <span class="evidence-item-type">${mInfo.label}</span>
+            </div>
+            <span class="evidence-item-text">${mInfo.text}</span>
+            ${mInfo.reason ? `<div class="evidence-item-hint">${mInfo.reason}</div>` : ''}
+          </div>`;
+        list.appendChild(item);
+      });
+
+    } else {
+      // Legitimate email
+      if (flags.length === 0) {
+        badge.textContent = 'CLEAN EMAIL (0 FLAGS) ✅';
+        badge.classList.add('badge-all-found');
+        const item = document.createElement('div');
+        item.className = 'evidence-item evidence-item-clean';
+        item.innerHTML = `
+          <span class="evidence-item-icon">🛡️</span>
+          <div class="evidence-item-body">
+            <div class="evidence-item-header">
+              <span class="evidence-status-pill pill-found">SAFE &amp; VERIFIED</span>
+            </div>
+            <span class="evidence-item-text">Clean message: no phishing red flags present.</span>
+            <div class="evidence-item-hint">Verified sender domain with standard non-urgent communication.</div>
+          </div>`;
+        list.appendChild(item);
+      } else {
+        badge.textContent = `${flags.length} FALSE FLAG${flags.length > 1 ? 'S' : ''} ⚠️`;
+        badge.classList.add('badge-has-missed');
+        flags.forEach(flag => {
+          const item = document.createElement('div');
+          item.className = 'evidence-item evidence-item-fp';
+          item.innerHTML = `
+            <span class="evidence-item-icon">⚠️</span>
+            <div class="evidence-item-body">
+              <div class="evidence-item-header">
+                <span class="evidence-status-pill pill-fp">FALSE ALARM</span>
+                <span class="evidence-item-type">${flag.label}</span>
+              </div>
+              <span class="evidence-item-text">${flag.text}</span>
+              <div class="evidence-item-hint">This email was legitimate. This element was safe.</div>
+            </div>`;
+          list.appendChild(item);
+        });
+      }
+    }
+  }
+
+  if (typeof updateVerdictButtonsHighlight === 'function') {
+    updateVerdictButtonsHighlight();
+  }
+}
+
+function updateVerdictButtonsHighlight() {
+  const reportBtn = document.getElementById('report-btn');
+  const legitBtn  = document.getElementById('legit-btn');
+  if (!reportBtn || !legitBtn) return;
+
+  const currentEmailObj = (ch1InboxEmails && ch1InboxEmails[gameState.currentEmail]) || (EMAILS && EMAILS[gameState.currentEmail]);
+  const isFirstEmail = Boolean(currentEmailObj && currentEmailObj.id === 1) || (gameState.currentEmail === 0 && (!gameState.emailResults || gameState.emailResults.length === 0));
+  const isClosed = Boolean(window._awardClaimed);
+
+  // Other emails: NO glowing effects even if evidence is flagged.
+  // Closed emails also have no glowing effects.
+  if (!isFirstEmail || isClosed) {
+    reportBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    return;
+  }
+
+  // FIRST EMAIL ONLY:
+  // Glow Phishing button ONLY after all 3 required evidence items are flagged.
+  // Non-phishing button NEVER glows on first email.
+  const FIRST_EMAIL_REQUIRED = 3;
+  let allFound = false;
+
+  if (currentEmailObj && currentEmailObj.evidence && currentEmailObj.evidence.length > 0) {
+    const flaggedTypes = (gameState.currentEmailFlags || []).map(f => f.type);
+    allFound = currentEmailObj.evidence.every(ev => flaggedTypes.includes(ev));
+  } else {
+    allFound = ((gameState.currentEmailFlags && gameState.currentEmailFlags.length) >= FIRST_EMAIL_REQUIRED);
+  }
+
+  if (allFound) {
+    reportBtn.classList.add('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+  } else {
+    reportBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+  }
+}
+
+function toggleEvidencePanel(forceOpen) {
+  const panel = document.getElementById('evidence-panel');
+  if (!panel) return;
+
+  const isCurrentlyCollapsed = panel.classList.contains('collapsed') || panel.classList.contains('hidden');
+  const shouldCollapse = (forceOpen !== undefined) ? !forceOpen : !isCurrentlyCollapsed;
+
+  if (shouldCollapse) {
+    panel.classList.add('collapsed');
+  } else {
+    panel.classList.remove('collapsed');
+    panel.classList.remove('hidden');
+  }
+
+  const label = document.getElementById('evidence-toggle-label');
+  const arrow = document.getElementById('evidence-toggle-arrow');
+  if (label) label.textContent = shouldCollapse ? 'Show' : 'Hide';
+  if (arrow) arrow.textContent = shouldCollapse ? '▲' : '▼';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RETURN TO INBOX
+// ═══════════════════════════════════════════════════════════
+
+let ch1AutoAdvanceTimer = null;
+
+function returnToInbox() {
+  if (ch1AutoAdvanceTimer) {
+    clearTimeout(ch1AutoAdvanceTimer);
+    ch1AutoAdvanceTimer = null;
+  }
+
+  document.getElementById('email-detail-view').classList.remove('active');
+  document.getElementById('email-list-view').classList.add('active');
+  gameState.flagModeActive = false;
+  const flagModeBtn = document.getElementById('flag-mode-btn');
+  if (flagModeBtn) {
+    flagModeBtn.classList.remove('active', 'btn-pulse-highlight', 'tutorial-flag-blink', 'phish-tutorial-highlight');
+    flagModeBtn.style.display = '';
+  }
+  const reportBtn = document.getElementById('report-btn');
+  const legitBtn  = document.getElementById('legit-btn');
+  if (reportBtn) {
+    reportBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    reportBtn.style.display = '';
+  }
+  if (legitBtn) {
+    legitBtn.classList.remove('verdict-btn-highlight', 'btn-pulse-highlight');
+    legitBtn.style.display = '';
+  }
+  const verdictGroup = document.querySelector('.verdict-btn-group');
+  if (verdictGroup) verdictGroup.style.display = '';
+  const ch2Action = document.getElementById('ch2-toolbar-action');
+  if (ch2Action) ch2Action.style.display = 'none';
+  const gmailBody = document.querySelector('.gmail-body');
+  if (gmailBody) gmailBody.classList.remove('flag-mode-active');
+  renderEmailList();
+  updateHUD();
+
+  // Live react to returning to inbox on Sticky Notes
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+
+  // If in mission and all emails in current inbox are reviewed, check round completion & resend cycle
+  if (gameState.phase === 'mission' && ch1InboxEmails.length > 0) {
+    const allReviewed = ch1InboxEmails.every(e => gameState.emailResults.some(r => r.emailId === e.id));
+    if (allReviewed) {
+      if (typeof ch1CheckRoundCompletion === 'function') {
+        ch1CheckRoundCompletion();
+      }
+    }
+  }
+}

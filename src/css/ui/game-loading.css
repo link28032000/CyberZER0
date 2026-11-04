@@ -1,0 +1,257 @@
+/* ═══════════════════════════════════════════════════════════
+   CYBERZERO GAME LOADING SCREEN (Before Enter Name)
+═══════════════════════════════════════════════════════════ */
+#overlay-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9995;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease;
+  overflow: hidden;
+}
+#overlay-loading.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: scale(1);
+  filter: blur(0);
+}
+#overlay-loading.exiting {
+  opacity: 0;
+  transform: scale(1.05);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+/* Fullscreen cinematic cyber flash */
+.loading-flash-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(0, 240, 255, 0.55) 0%, rgba(0, 160, 255, 0.25) 45%, transparent 75%);
+  mix-blend-mode: screen;
+}
+.loading-flash-overlay.flashing {
+  animation: loadingCyberFlash 0.55s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+@keyframes loadingCyberFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+.loading-center {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 620px;
+  padding: 0 24px;
+}
+
+.loading-logo-wrap {
+  width: 520px;
+  max-width: 92vw;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  animation: mmShieldFloat 4s ease-in-out infinite;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.loading-logo-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Outer Shell with left/right cyber brackets */
+.loading-bar-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 480px;
+  max-width: 90vw;
+  height: 38px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+#overlay-loading.active .loading-bar-shell {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* 100% Completion Surge State */
+.loading-bar-shell.loading-complete {
+  filter: drop-shadow(0 0 25px rgba(0, 240, 255, 1)) drop-shadow(0 0 50px rgba(0, 216, 255, 0.85)) brightness(1.2);
+  transform: scale(1.02);
+}
+
+.loading-bracket {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.9));
+  z-index: 3;
+}
+.loading-bracket-left {
+  left: -20px;
+}
+.loading-bracket-right {
+  right: -20px;
+}
+
+/* Chamfered Sci-Fi Loading Track */
+.loading-bar-track {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  background: linear-gradient(180deg, #05142f 0%, #030d22 100%);
+  border: 2px solid #00d8ff;
+  border-radius: 4px;
+  clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%);
+  padding: 3px;
+  box-shadow:
+    0 0 20px rgba(0, 216, 255, 0.5),
+    0 0 45px rgba(0, 160, 255, 0.25),
+    inset 0 0 14px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+}
+
+/* Animated Progress Fill */
+.loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #00c0f8 0px,
+      #00c0f8 14px,
+      #3cf0ff 14px,
+      #3cf0ff 28px
+    );
+  background-size: 39.6px 100%;
+  border-radius: 2px;
+  box-shadow:
+    0 0 16px rgba(0, 240, 255, 0.9),
+    inset 0 1px 3px rgba(255, 255, 255, 0.8);
+  animation: loadingStripes 0.75s linear infinite;
+  transition: width 0.08s linear;
+}
+
+.loading-bar-shell.loading-complete .loading-bar-fill {
+  background: linear-gradient(90deg, #00d8ff, #ffffff);
+  box-shadow: 0 0 24px #00ffff, 0 0 45px rgba(0, 255, 255, 0.9), inset 0 0 6px #fff;
+}
+
+@keyframes loadingStripes {
+  0%   { background-position: 0 0; }
+  100% { background-position: 39.6px 0; }
+}
+
+/* Status: Prominent Dynamic Percentage Readout (Dots Removed) */
+.loading-status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.08s, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
+}
+#overlay-loading.active .loading-status-wrap {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.loading-status-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: 'Orbitron', 'Chakra Petch', 'QB One Extra Bold', sans-serif;
+  letter-spacing: 3px;
+  transition: all 0.3s ease;
+}
+
+.loading-status-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: #cce7ff;
+  letter-spacing: 5px;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.8);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.loading-status-text.loading-complete .loading-status-label {
+  color: #00ff88;
+  text-shadow: 0 0 18px rgba(0, 255, 136, 0.9), 0 0 32px rgba(0, 255, 136, 0.6);
+}
+
+.loading-pct-val {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 900;
+  color: #00f0ff;
+  min-width: 96px;
+  padding: 4px 18px;
+  background: rgba(2, 16, 42, 0.75);
+  border: 1.5px solid rgba(0, 240, 255, 0.6);
+  border-radius: 6px;
+  box-shadow:
+    0 0 16px rgba(0, 240, 255, 0.4),
+    inset 0 0 12px rgba(0, 240, 255, 0.25);
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.9);
+  letter-spacing: 2px;
+  transition: color 0.25s ease, text-shadow 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+/* 100% Complete State */
+.loading-status-text.loading-complete .loading-pct-val {
+  color: #00ff66 !important;
+  border-color: #00ff66 !important;
+  box-shadow: 0 0 28px rgba(0, 255, 102, 0.85), inset 0 0 15px rgba(0, 255, 102, 0.4) !important;
+  text-shadow: 0 0 22px #00ff66, 0 0 40px rgba(0, 255, 102, 0.8) !important;
+  transform: scale(1.08);
+}
+
+/* Enter Name Screen (.ls-center-panel) smooth entrance */
+.ls-center-panel {
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#overlay-title-menu:not(.active) .ls-center-panel {
+  opacity: 0;
+  transform: translateY(22px) scale(0.96);
+}
+#overlay-title-menu.active .ls-center-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
