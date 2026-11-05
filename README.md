@@ -89,7 +89,7 @@ CYBERZERØ follows a continuous, narrative-driven gameplay loop where knowledge 
                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                         2. CHAPTER STORY SELECTION                           │
-│   Chapter 1 (The First Day) ➔ Chapter 2 ➔ Chapter 3 ➔ Chapter 4 Progression  │
+│   Chapter 1 (The Deceptive Click) ➔ Chapter 2 (The Hidden Threat) Progression│
 └──────────────────────────────────────┬───────────────────────────────────────┘
                                        │
                                        ▼
@@ -133,29 +133,21 @@ CYBERZERØ follows a continuous, narrative-driven gameplay loop where knowledge 
 
 ---
 
-## 🎮 The Four Chapters
+## 🎮 The Story Chapters
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│ CHAPTER 1: THE FIRST DAY — PHISHING INVESTIGATION                               │
+│ CHAPTER 1: THE DECEPTIVE CLICK — PHISHING INVESTIGATION                         │
 │ Examine dynamic incoming email waves in Zmail. Flag deceptive domains, false    │
 │ urgency, and spoofed links. Review decisions with Ryan's forensic breakdown.    │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│ CHAPTER 2: THE HIDDEN THREAT — MALWARE HUNTING & EXTENSIONS                      │
-│ Unlocks File Explorer & Anti-Virus. Unmask disguised executables (.pdf.exe),    │
-│ analyze SHA-256 hashes, scan suspicious binaries, and quarantine threats.      │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ CHAPTER 3: THE SYSTEM COLLAPSE — SOCIAL ENGINEERING & WI-FI                     │
-│ Secure public Wi-Fi settings, investigate communications in Phone Link, and     │
-│ stop impersonators attempting to harvest student credentials and passwords.     │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ CHAPTER 4: THE LAST LOGIN — RANSOMWARE EMERGENCY RESPONSE                       │
-│ High-stakes containment! Cut network isolation switches, terminate malicious   │
-│ dropper processes in Task Manager, and restore files from clean backups.        │
+│ CHAPTER 2: THE HIDDEN THREAT — MALWARE HUNTING & PROTECTION                     │
+│ Inspect suspicious downloaded files and games. Safely configure ShieldAV,       │
+│ observe simulated malware behaviors, and quarantine malicious threats.          │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1️⃣ Chapter 1: The First Day (Phishing Defense)
+### 1️⃣ Chapter 1: The Deceptive Click (Phishing Defense)
 
 - **Scenario**: Alex's first day in the team workstation begins with an influx of academic and workplace emails.
 - **Investigation Mechanics**:
@@ -168,33 +160,14 @@ CYBERZERØ follows a continuous, narrative-driven gameplay loop where knowledge 
   - Use the **Browser** to safely cross-check domain authenticity.
   - Choose **Phishing** or **Non-phishing** to submit verdicts.
 
-### 2️⃣ Chapter 2: The Hidden Threat (Malware Forensics)
+### 2️⃣ Chapter 2: The Hidden Threat (Malware Forensics & ShieldAV)
 
-- **Scenario**: Downloaded assets and design templates arrive from external forums and classmate shares.
+- **Scenario**: Downloaded gaming assets and templates arrive on Ethan's PC.
 - **Investigation Mechanics**:
   - Open **Folder (File Explorer)** with detailed file properties, sizes, and file type associations.
-  - Unmask **double-extension deception** (e.g., `scholarship_form.pdf.exe`).
-  - Cross-check file cryptographic SHA-256 hashes against known threat signatures.
-  - Launch **Anti-Virus (Security Scanner)** to scan suspect files.
-  - Quarantine verified malware payloads while avoiding false positives on clean project assets.
-
-### 3️⃣ Chapter 3: The System Collapse (Social Engineering & Public Wi-Fi)
-
-- **Scenario**: The team works remotely from a public network while receiving urgent text messages and direct messages.
-- **Investigation Mechanics**:
-  - Open **Settings > Network & Internet > Wi-Fi** to disable dangerous public network exposures (file sharing, device discovery).
-  - Open **Phone Link** to inspect mobile communications.
-  - Access the phone launcher featuring **Messages** and **Calls** apps.
-  - Investigate impersonation attempts (e.g., "Pia — New Account") soliciting student IDs and birthdays.
-  - Enforce the **Zero-Trust Rule**: Never share credentials or OTPs via direct messages.
-
-### 4️⃣ Chapter 4: The Last Login (Ransomware Incident Response)
-
-- **Scenario**: A malicious executable attempts to encrypt shared project drives, threatening total loss of the team's work.
-- **Investigation Mechanics**:
-  - **Immediate Network Severance**: Disconnect network adapters to stop lateral infection spread.
-  - **Process Neutralization**: Use Task Manager to locate high-CPU malicious dropper processes and terminate them.
-  - **Backup Verification & Restore**: Inspect clean vault backups, verify file hashes, and restore unencrypted files.
+  - Safely configure **ShieldAV Defender** real-time protection.
+  - Inspect malware behaviors and file indicators.
+  - Quarantine verified malware payloads while protecting clean project assets.
 
 ---
 
@@ -368,3 +341,4 @@ This project is released into the public domain under the **[The Unlicense](LICE
 _Stay vigilant. Check the sender. Inspect the link. Trust the evidence._
 
 </div>
+# CyberZero-WebBased-Simulation
