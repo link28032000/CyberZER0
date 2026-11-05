@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -428,6 +428,7 @@
           <div class="sidebar-item" id="sidebar-folder-documents" onclick="switchExplorerFolder('documents')">
             <span class="sb-icon">📄</span>
             <span class="sb-label">Documents</span>
+            <span class="sb-badge" id="sidebar-documents-badge" style="display:none;">0</span>
           </div>
           <div class="sidebar-item" id="sidebar-folder-pictures" onclick="switchExplorerFolder('pictures')">
             <span class="sb-icon">🖼️</span>
@@ -510,7 +511,7 @@
     <div class="win-titlebar docviewer-titlebar" id="titlebar-docviewer">
       <div class="win-title">
         <span class="win-icon">📄</span>
-        <span id="docviewer-title-text">Microsoft Word — project_architecture_notes.docx</span>
+        <span id="docviewer-title-text">Microsoft Word</span>
       </div>
       <div class="win-controls">
         <button type="button" class="win-btn win-minimize" onclick="minimizeApp('docviewer')" title="Minimize">─</button>

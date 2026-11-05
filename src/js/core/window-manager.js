@@ -140,6 +140,25 @@ function openApp(appName) {
   if (appName === 'antivirus' && typeof refreshAvForCurrentChapter === 'function') {
     setTimeout(refreshAvForCurrentChapter, 50);
   }
+  if (appName === 'folder') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+    if (!isCh2) {
+      if (typeof initPretestResultDocument === 'function') initPretestResultDocument();
+      if (typeof initPosttestResultDocument === 'function') initPosttestResultDocument();
+    }
+    const docBadge = document.getElementById('sidebar-documents-badge');
+    const allDocs = (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) ? EXPLORER_ADDITIONAL_FILES.documents : [];
+    const visibleDocs = isCh2
+      ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
+      : allDocs;
+    const docCount = visibleDocs.length;
+    if (docBadge) {
+      docBadge.textContent = docCount;
+      docBadge.style.display = docCount > 0 ? '' : 'none';
+    }
+  }
   if (typeof AudioManager !== 'undefined') AudioManager.playWindowSound(true);
 
   // Notify post-award mission checklist

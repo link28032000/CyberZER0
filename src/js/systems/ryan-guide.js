@@ -48,6 +48,9 @@ const RyanGuide = (() => {
   function _show() {
     const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
     if (activeCat !== 'phishing' && activeCat !== 'malware') return; // Allow Chapter 1 and Chapter 2 mentor guide Ryan
+    // Guard: do not show dialogue while the main menu is visible
+    const _mmGuard = document.getElementById('overlay-main-menu');
+    if (_mmGuard && (_mmGuard.classList.contains('active') || (_mmGuard.style.display !== 'none' && _mmGuard.style.display !== ''))) return;
     const o = el().overlay;
     if (!o) return;
     const roleEl = o.querySelector('.ryan-role');
@@ -292,6 +295,27 @@ const RyanGuide = (() => {
     }
     _opts = opts || {};
 
+    // ── Prevent dialogue carryover between chapters ──
+    if (activeCat === 'malware' && Array.isArray(messages)) {
+      const isCh1 = messages.some(function(m) {
+        const txt = (typeof m === 'string') ? m : (m && m.text ? String(m.text) : '');
+        return /Alex\b|Technical Solutions|Zmail|Phishing Investigation/i.test(txt);
+      });
+      if (isCh1) {
+        console.warn('[RyanGuide.speak] Blocked Chapter 1 dialogue while in Chapter 2');
+        return;
+      }
+    } else if (activeCat === 'phishing' && Array.isArray(messages)) {
+      const isCh2 = messages.some(function(m) {
+        const txt = (typeof m === 'string') ? m : (m && m.text ? String(m.text) : '');
+        return /Ethan\b|GTA VI|TrojanCoinBitMiner|CoinBitMiner|Space Fighter/i.test(txt);
+      });
+      if (isCh2) {
+        console.warn('[RyanGuide.speak] Blocked Chapter 2 dialogue while in Chapter 1');
+        return;
+      }
+    }
+
     // ── If the main mission-intro flow owns the dialogue, block all other callers ──
     if (_mainFlowLocked && !(_opts && _opts.mainFlow)) return;
 
@@ -444,7 +468,9 @@ const RyanGuide = (() => {
   function releaseMainFlow() { _mainFlowLocked = false; }
 
   function getState() {
+    const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
     return {
+      chapter: activeCat,
       active: _typing || _transitioning || (_queue && _queue.length > 0),
       queue: (_queue && Array.isArray(_queue)) ? _queue.map(function(m) {
         return {
@@ -462,8 +488,36 @@ const RyanGuide = (() => {
       dismiss(true);
       return;
     }
+    const currentCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
+    // Prevent dialogue state from carrying over between chapters
+    if (saved.chapter && saved.chapter !== currentCat) {
+      console.warn('[RyanGuide.restoreState] Blocked cross-chapter dialogue restore:', saved.chapter, '->', currentCat);
+      dismiss(true);
+      return;
+    }
+    if (currentCat === 'malware') {
+      const isCh1 = saved.queue.some(function(m) {
+        const txt = (m && m.text) ? String(m.text) : '';
+        return /Alex\b|Technical Solutions|Zmail|Phishing Investigation/i.test(txt);
+      });
+      if (isCh1) {
+        console.warn('[RyanGuide.restoreState] Blocked Chapter 1 dialogue in Chapter 2');
+        dismiss(true);
+        return;
+      }
+    } else if (currentCat === 'phishing') {
+      const isCh2 = saved.queue.some(function(m) {
+        const txt = (m && m.text) ? String(m.text) : '';
+        return /Ethan\b|GTA VI|TrojanCoinBitMiner|CoinBitMiner|Space Fighter/i.test(txt);
+      });
+      if (isCh2) {
+        console.warn('[RyanGuide.restoreState] Blocked Chapter 2 dialogue in Chapter 1');
+        dismiss(true);
+        return;
+      }
+    }
     _mainFlowLocked = !!saved.mainFlowLocked;
-    speak(saved.queue, { mainFlow: _mainFlowLocked });
+    speak(saved.queue, { mainFlow: _mainFlowLocked, chapter: currentCat });
   }
 
   return { speak, advance, ask, dismiss, once, reset,

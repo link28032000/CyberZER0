@@ -153,6 +153,50 @@ Status: DEVICE HARDWARE IS HEALTHY AND AUTHORIZED FOR USE.
     return;
   }
 
+    // Pre-Test Assessment Report
+  if (file.id === 'doc_pretest_result') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+    if (isCh2) {
+      showToast('📁 File not available in Chapter 2.', 'warning');
+      return;
+    }
+    if (titleText) titleText.textContent = `Microsoft Word — ${file.name}`;
+    const page = document.getElementById('docviewer-page-content');
+    if (page) {
+      page.innerHTML = typeof renderPretestReportHtml === 'function'
+        ? renderPretestReportHtml(file)
+        : (typeof window.renderPretestReportHtml === 'function' ? window.renderPretestReportHtml(file) : '');
+    }
+    openApp('docviewer');
+    focusWindow('docviewer');
+    showToast(`📄 Opened "${file.name}" in Microsoft Word.`, 'success');
+    return;
+  }
+
+  // Post-Test Assessment Report
+  if (file.id === 'doc_posttest_result') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+    if (isCh2) {
+      showToast('📁 File not available in Chapter 2.', 'warning');
+      return;
+    }
+    if (titleText) titleText.textContent = `Microsoft Word — ${file.name}`;
+    const page = document.getElementById('docviewer-page-content');
+    if (page) {
+      page.innerHTML = typeof renderPosttestReportHtml === 'function'
+        ? renderPosttestReportHtml(file)
+        : (typeof window.renderPosttestReportHtml === 'function' ? window.renderPosttestReportHtml(file) : '');
+    }
+    openApp('docviewer');
+    focusWindow('docviewer');
+    showToast(`📄 Opened "${file.name}" in Microsoft Word.`, 'success');
+    return;
+  }
+
   // Confidential Field Case Notes
   if (file.id === 'usb_notes') {
     if (titleText) titleText.textContent = `Microsoft Word — ${file.name}`;

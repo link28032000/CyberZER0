@@ -728,8 +728,7 @@ const MISSION_ACHIEVEMENTS = [
       { id: 'task_report_phishing', label: 'Report 5 Phishing Emails' },
       { id: 'task_verify_legit', label: 'Verify 5 Clean Emails' },
       { id: 'task_fake_sender', label: 'Document 5 Fake Senders' },
-      { id: 'task_phish_indicators', label: 'Flag 5 Threat Indicators' },
-      { id: 'task_submit_all_verdicts', label: 'Submit all email verdicts' },
+      { id: 'task_phish_indicators', label: 'Flag 5 Threat Indicators' }
     ]
   },
   {
@@ -767,7 +766,7 @@ function isChapterChecklistComplete(ach) {
   if (catId === 'phishing') {
     // CHAPTER 1: Strictly requires ALL 5 investigation checklist tasks AND all evidence collected
     let liveAllTasks = false;
-    if (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS) && SN_ACHIEVEMENTS.length >= 5) {
+    if (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS) && SN_ACHIEVEMENTS.length >= 4) {
       liveAllTasks = SN_ACHIEVEMENTS.every(t => typeof t.check === 'function' && t.check());
     } else if (typeof isPhishingTrophyUnlocked === 'function') {
       liveAllTasks = isPhishingTrophyUnlocked();
@@ -779,7 +778,7 @@ function isChapterChecklistComplete(ach) {
       if (phishSaved) {
         const pData = JSON.parse(phishSaved);
         const unl = Array.isArray(pData.unlockedAchievements) ? pData.unlockedAchievements : [];
-        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts'];
+        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators'];
         const allPresent = requiredTaskIds.every(id => unl.includes(id));
         if (pData.trophyUnlocked || unl.includes('task_all_complete') || allPresent) {
           savedAllTasks = true;
@@ -1760,8 +1759,24 @@ function _continueSavedGame(catId) {
         // Silent resume — no toast cluttering the desktop
       }
 
+    } else if (catId === 'malware') {
+      if (isCompleted) {
+        if (typeof openChapterDesktopDirect === 'function') openChapterDesktopDirect('malware');
+        if (typeof renderEmptyStickyNote === 'function') renderEmptyStickyNote();
+        if (typeof closeStickyNote === 'function') closeStickyNote();
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+          try { RyanGuide.dismiss(true); } catch (e) {}
+        }
+      } else {
+        // In-progress Chapter 2: resume or start malware chapter
+        if (typeof resumeSavedGameSession === 'function') {
+          resumeSavedGameSession('malware');
+        } else if (typeof startMalwareChapter === 'function') {
+          startMalwareChapter();
+        }
+      }
     } else {
-      // ── Chapters 2-4 ──
+      // ── Chapters 3-4 ──
       if (typeof openChapterDesktopDirect === 'function') {
         openChapterDesktopDirect(catId);
       }
@@ -1772,7 +1787,7 @@ function _continueSavedGame(catId) {
           try { RyanGuide.dismiss(true); } catch (e) {}
         }
       }
-      // Silent resume for chapters 2–4 — no toast
+      // Silent resume for chapters 3–4 — no toast
     }
   }, 220);
 }

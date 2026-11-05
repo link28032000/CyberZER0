@@ -223,7 +223,8 @@ const RyanPosttest = (() => {
   ];
 
   const LETTERS = ['A', 'B', 'C', 'D'];
-  const STORAGE_PREFIX = 'cyberzero_posttest_';
+  const STORAGE_PREFIX     = 'cyberzero_posttest_';
+  const WIP_KEY = 'cyberzero_posttest_wip';
 
   const RESULT = {
     mastery: {
@@ -314,6 +315,38 @@ const RyanPosttest = (() => {
     return STORAGE_PREFIX + id;
   }
 
+  function _wipKey() { return WIP_KEY; }
+
+  /** Save current in-progress post-test state after every answer. */
+  function _saveTestProgress() {
+    try {
+      const wip = {
+        activeQuestions: _activeQuestions,
+        index: _index,
+        answers: _answers,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(_wipKey(), JSON.stringify(wip));
+    } catch (e) {}
+  }
+
+  /** Clear saved WIP (called on completion or reset). */
+  function _clearTestProgress() {
+    try { localStorage.removeItem(_wipKey()); } catch (e) {}
+  }
+
+  /** Return saved WIP state if valid, else null. */
+  function _loadTestProgress() {
+    try {
+      const raw = localStorage.getItem(_wipKey());
+      if (!raw) return null;
+      const wip = JSON.parse(raw);
+      if (!wip || !Array.isArray(wip.activeQuestions) || wip.activeQuestions.length === 0) return null;
+      if (typeof wip.index !== 'number') return null;
+      return wip;
+    } catch (e) { return null; }
+  }
+
   function getResult() {
     if (typeof gameState !== 'undefined' && gameState.postTestResult) return gameState.postTestResult;
     try {
@@ -330,6 +363,9 @@ const RyanPosttest = (() => {
       gameState.postTestResult = result;
     }
     try { localStorage.setItem(_playerKey(), JSON.stringify(result)); } catch (e) {}
+    if (typeof window.saveAndInjectPosttestDocument === 'function') {
+      window.saveAndInjectPosttestDocument(result);
+    }
   }
 
   function isRunning() {
@@ -395,13 +431,27 @@ const RyanPosttest = (() => {
       return;
     }
 
-    _activeQuestions = _getShuffledQuestions();
-    _index = 0;
-    _answers = [];
+    // ── Check for in-progress (WIP) save ──────────────────────────────
+    const wip = _loadTestProgress();
+    const hasWip = !!(wip && wip.activeQuestions && wip.activeQuestions.length > 0);
+
     _mode = 'question';
     _result = null;
     _onDone = onDone || null;
     _running = true;
+
+    if (hasWip) {
+      // ── RESUME from saved WIP ──────────────────────────────────────
+      _activeQuestions = wip.activeQuestions;
+      _index = Math.max(0, Math.min(wip.index, _activeQuestions.length - 1));
+      _answers = Array.isArray(wip.answers) ? wip.answers.slice() : [];
+      console.log('[RyanPosttest] Resuming from WIP at question', _index + 1, '/', _activeQuestions.length);
+    } else {
+      // ── Fresh start ───────────────────────────────────────────────
+      _activeQuestions = _getShuffledQuestions();
+      _index = 0;
+      _answers = [];
+    }
 
     const panel = $('ryan-posttest-panel');
     if (panel) {
@@ -507,6 +557,7 @@ const RyanPosttest = (() => {
     const next = body.querySelector('.rpost-next');
     if (next) next.disabled = false;
     _sfx('playExamChoice');
+    _saveTestProgress();
   }
 
   function _next() {
@@ -569,7 +620,11 @@ const RyanPosttest = (() => {
       completedAt: new Date().toISOString()
     };
 
+    _clearTestProgress(); // WIP no longer needed — result is being saved
     _save(result);
+    if (typeof window.saveAndInjectPosttestDocument === 'function') {
+      window.saveAndInjectPosttestDocument(result);
+    }
     _showResult(result);
   }
 
@@ -995,6 +1050,9 @@ const RyanPosttest = (() => {
     if (_mode !== 'result' || !_canContinue) return;
     const cb = _onDone;
     const res = _result;
+    if (typeof window.saveAndInjectPosttestDocument === 'function') {
+      window.saveAndInjectPosttestDocument(res);
+    }
     _close(true);
     if (typeof updateStickyNoteAfterPostTest === 'function') {
       try { updateStickyNoteAfterPostTest(res); } catch (e) {}
@@ -1014,6 +1072,7 @@ const RyanPosttest = (() => {
   }
 
   function reset() {
+    _clearTestProgress();
     try { localStorage.removeItem(_playerKey()); } catch (e) {}
     if (typeof gameState !== 'undefined') {
       delete gameState.postTestCompleted;
@@ -1067,7 +1126,9 @@ const RyanPosttest = (() => {
     isRunning,
     tierOf,
     reset,
-    preview
+    preview,
+    hasWipProgress: () => !!_loadTestProgress(),
+    clearWipProgress: _clearTestProgress
   };
 
 })();

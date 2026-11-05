@@ -81,7 +81,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const rawSession = localStorage.getItem('cyberzero_session_state');
     if (rawSession) {
       savedSession = JSON.parse(rawSession);
-      if (savedSession && savedSession.screen === 'desktop' && !savedSession.isShutdown) {
+      // Treat pretest/posttest the same as desktop — desktop is active underneath these screens
+      const _liveScreens = ['desktop', 'pretest', 'posttest'];
+      if (savedSession && _liveScreens.indexOf(savedSession.screen) !== -1 && !savedSession.isShutdown) {
         hasActiveDesktopSession = true;
         activeCat = savedSession.activeChapter || 'phishing';
         window._currentChapterCategory = activeCat;

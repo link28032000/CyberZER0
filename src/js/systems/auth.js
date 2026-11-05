@@ -394,7 +394,9 @@
     try {
       const rawSession = localStorage.getItem('cyberzero_session_state');
       const parsedSession = rawSession ? JSON.parse(rawSession) : null;
-      if (parsedSession && parsedSession.screen === 'desktop' && !parsedSession.isShutdown) {
+      // pretest/posttest run on top of an already-active desktop — treat the same
+      const _liveScreensAuth = ['desktop', 'pretest', 'posttest'];
+      if (parsedSession && _liveScreensAuth.indexOf(parsedSession.screen) !== -1 && !parsedSession.isShutdown) {
         isDesktopActive = true;
       }
     } catch (_) {}
@@ -439,7 +441,9 @@
 
     if (_restoredSession && _restoredSession.screen && !_restoredSession.isShutdown) {
       // Active session — restore to saved screen (desktop, story-select, etc.)
-      if (_restoredSession.screen === 'desktop') {
+      if (_restoredSession.screen === 'desktop' ||
+          _restoredSession.screen === 'pretest'  ||
+          _restoredSession.screen === 'posttest') {
         if (typeof resumeSavedGameSession === 'function') {
           resumeSavedGameSession(_restoredSession.activeChapter || 'phishing', _restoredSession);
         } else if (typeof showMainMenu === 'function') {

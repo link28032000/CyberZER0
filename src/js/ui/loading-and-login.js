@@ -520,10 +520,19 @@ function _doStartFromTitleMenu() {
   // Skip narrator — go straight to desktop after loading
   const titleMenu = document.getElementById('overlay-title-menu');
   if (titleMenu) titleMenu.classList.remove('active');
-  updateDesktopBackgroundForPhase('prologue');
+  const targetCat = window._pendingStoryChapter || window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing';
+  updateDesktopBackgroundForPhase(targetCat);
 
   // Initialize mission environment with all apps closed
-  startMission(false);
+  if (targetCat === 'malware') {
+    if (typeof startMalwareChapter === 'function') {
+      startMalwareChapter();
+    } else if (typeof openChapterDesktopDirect === 'function') {
+      openChapterDesktopDirect('malware');
+    }
+  } else {
+    startMission(false);
+  }
 
   // Reveal desktop directly — no narrator / VN overlay
   const desktop = document.getElementById('desktop');

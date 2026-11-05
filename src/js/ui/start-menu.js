@@ -350,7 +350,7 @@ function _showRestartConfirmDialog(onConfirm) {
     closeModal();
     // Delete cloud save then restart
     if (typeof window.deleteProgress === 'function') {
-      window.deleteProgress().then(function () {
+      window.deleteProgress(activeCat).then(function () {
         onConfirm();
       }).catch(function () {
         onConfirm(); // restart even if delete failed

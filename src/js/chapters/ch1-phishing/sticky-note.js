@@ -344,6 +344,8 @@ function _allChecklistTasksDone() {
 window._postAwardPostTestDialogueFired = false;
 
 window._checkAndTriggerPostTestDialogue = function() {
+  const activeCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+  if (activeCat && activeCat !== 'phishing') return;
   if (!window._awardClaimed) return;
   if (window._postAwardPostTestDialogueFired) return;
   if (!_allChecklistTasksDone()) return;
@@ -352,6 +354,8 @@ window._checkAndTriggerPostTestDialogue = function() {
 
   // Short delay so the player sees the task tick off in the UI
   setTimeout(() => {
+    const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+    if (curCat && curCat !== 'phishing') return;
     if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
       RyanGuide.speak(
         [
@@ -380,12 +384,46 @@ window._checkAndTriggerPostTestDialogue = function() {
   }, 1000);
 };
 
+function _isInvestigationFinished() {
+  return !!(
+    window._awardClaimed ||
+    (typeof ch1InvestigationComplete !== 'undefined' && ch1InvestigationComplete) ||
+    (typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked()) ||
+    (typeof gameState !== 'undefined' && (gameState.phase === 'results' || (Array.isArray(gameState.emailResults) && typeof EMAILS !== 'undefined' && gameState.emailResults.length >= EMAILS.length)))
+  );
+}
+window._isInvestigationFinished = _isInvestigationFinished;
+
 function _refreshPostAwardChecklist() {
-  const section = document.getElementById('sn-post-award-checklist');
+  const titleEl = document.getElementById('sticky-note-title');
+  if (titleEl) titleEl.textContent = 'Sticky Notes';
+
+  // Ensure window._awardClaimed is set
+  window._awardClaimed = true;
+  if (!window._postAwardTasks) {
+    window._postAwardTasks = {
+      browserOpened:    false,
+      browserNavigated: false,
+      phishingSearched: false,
+      phishingVisited:  false,
+      explorerOpened:   false,
+      videoFolderOpen:  false,
+      videoPlayed:      false,
+      gcOpened:         false,
+      helloSent:        false,
+      postTestDone:     false
+    };
+  }
+
+  const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
+  let section = document.getElementById('sn-post-award-checklist');
+  if (!section && scrollEl) {
+    scrollEl.innerHTML = '<div id="sn-post-award-checklist"></div>';
+    section = document.getElementById('sn-post-award-checklist');
+  }
   if (section) {
     section.innerHTML = _buildPostAwardChecklistHTML();
   }
-  const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
   if (scrollEl) {
     scrollEl.style.overflowY = 'hidden';
   }
@@ -394,6 +432,7 @@ function _refreshPostAwardChecklist() {
     _checkAndTriggerPostTestDialogue();
   }
 }
+window._refreshPostAwardChecklist = _refreshPostAwardChecklist;
 
 function _buildPostAwardChecklistHTML() {
   const t = window._postAwardTasks;
@@ -579,18 +618,9 @@ function showStickyNote() {
     return;
   }
 
-  // ── Chapter 1: If award has been claimed, display the 3-task post-award checklist ──
-  if (_isChapter1Active() && window._awardClaimed) {
-    const total = (typeof EMAILS !== 'undefined' && EMAILS.length) ? EMAILS.length : 10;
-    const correct = (gameState && typeof gameState.correctDecisions === 'number') ? gameState.correctDecisions : 6;
-    const pct = total > 0 ? (correct / total) : 0.6;
-    let rank, rankClass, rankLabel;
-    if (pct >= 1.0)       { rank = 'S'; rankClass = 'rank-s'; rankLabel = 'CYBER DETECTIVE'; }
-    else if (pct >= 0.85) { rank = 'A'; rankClass = '';       rankLabel = 'EXCELLENT DETECTIVE'; }
-    else if (pct >= 0.70) { rank = 'B'; rankClass = 'rank-b'; rankLabel = 'GOOD DETECTIVE'; }
-    else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
-    else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
-    renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
+  // ── Chapter 1: If investigation complete or award claimed, display the 3-task post-award checklist ──
+  if (_isChapter1Active() && _isInvestigationFinished()) {
+    _refreshPostAwardChecklist();
     return;
   }
 
@@ -758,7 +788,7 @@ function _isAllEmailVerdictsSubmitted() {
   return _countAllEmailVerdicts() >= total;
 }
 
-const PHISHING_TASK_GOALS = { t1: 5, t2: 5, t3: 5, t4: 5, t5: 12 };
+const PHISHING_TASK_GOALS = { t1: 5, t2: 5, t3: 5, t4: 5 };
 
 const SN_ACHIEVEMENTS = [
   {
@@ -800,16 +830,6 @@ const SN_ACHIEVEMENTS = [
     currentCount: () => Math.min(_countIndicatorsFound(), PHISHING_TASK_GOALS.t4),
     goal: 5,
     progress: () => `${Math.min(_countIndicatorsFound(), PHISHING_TASK_GOALS.t4)}/${PHISHING_TASK_GOALS.t4} indicators recorded`
-  },
-  {
-    id: 'task_submit_all_verdicts',
-    icon: '⚖️',
-    label: 'Submit all email verdicts',
-    desc: 'Investigate and submit verdicts for all 12 emails in the investigation.',
-    check: () => _isAllEmailVerdictsSubmitted(),
-    currentCount: () => _countAllEmailVerdicts(),
-    goal: 12,
-    progress: () => `${_countAllEmailVerdicts()}/12 email verdicts submitted`
   }
 ];
 
@@ -824,10 +844,10 @@ const PHISHING_AWARD = {
   title: 'Phishing Investigation Award',
   image: 'assets/Achievement/Phishing.png',
   badge: 'CHAPTER 1 · INVESTIGATION AWARD',
-  rank: '5/5 Missions Completed',
-  sub: 'All 5 Investigation Checklist Tasks Completed',
+  rank: '4/4 Missions Completed',
+  sub: 'All 4 Investigation Checklist Tasks Completed',
   desc: 'Outstanding detective work! You successfully analyzed all suspicious emails, exposed deceptive phishing lures, documented spoofed senders, and safeguarded authentic communications.',
-  requiredTasks: 5
+  requiredTasks: 4
 };
 
 function getCompletedTasksCount() {
@@ -842,7 +862,7 @@ function getPhishingEarnedTier(count) {
 function getPhishingEarnedAward() {
   if (_phishingEarnedAward) return _phishingEarnedAward;
   const count = getCompletedTasksCount();
-  const totalReq = Array.isArray(SN_ACHIEVEMENTS) ? SN_ACHIEVEMENTS.length : 6;
+  const totalReq = Array.isArray(SN_ACHIEVEMENTS) ? SN_ACHIEVEMENTS.length : 4;
   if (count < totalReq && !isPhishingTrophyUnlocked()) return null;
   return {
     id: PHISHING_AWARD.id,
@@ -860,12 +880,14 @@ function getPhishingEarnedAward() {
 function savePhishingProgress() {
   try {
     const isTrophyUnlocked = isPhishingTrophyUnlocked();
+    const isDone = !!window._awardClaimed || _isInvestigationFinished();
     const data = {
       unlockedAchievements: Array.from(_achievementUnlocked),
       trophyUnlocked: isTrophyUnlocked,
       earnedAward: _phishingEarnedAward,
-      awardClaimed: !!window._awardClaimed,
-      postAwardTasks: window._postAwardTasks || {},
+      awardClaimed: isDone,
+      postAwardTasks: window._postAwardTasks ? Object.assign({}, window._postAwardTasks) : {},
+      ch1VideoTracker: window._ch1VideoTracker ? Object.assign({}, window._ch1VideoTracker) : {},
       unlockedDate: _trophyUnlockedDate || (_phishingEarnedAward ? _phishingEarnedAward.unlockedDate : (isTrophyUnlocked ? new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : null)),
       currentEmail: (typeof gameState !== 'undefined' && typeof gameState.currentEmail === 'number') ? gameState.currentEmail : 0,
       emailResults: (typeof gameState !== 'undefined' && Array.isArray(gameState.emailResults)) ? [...gameState.emailResults] : [],
@@ -897,12 +919,12 @@ function loadPhishingProgress() {
       }
       if (data.awardClaimed) {
         window._awardClaimed = true;
-      } else {
-        window._awardClaimed = false;
-        try { localStorage.removeItem('cyberzero_newbie_gc_state'); } catch(e) {}
       }
       if (data.postAwardTasks) {
         window._postAwardTasks = Object.assign(window._postAwardTasks || {}, data.postAwardTasks);
+      }
+      if (data.ch1VideoTracker) {
+        window._ch1VideoTracker = Object.assign(window._ch1VideoTracker || {}, data.ch1VideoTracker);
       }
       if (data.trophyUnlocked) {
         _achievementUnlocked.add('task_all_complete');
@@ -965,14 +987,18 @@ function loadPhishingProgress() {
 
 function isPhishingTrophyUnlocked() {
   const count = getCompletedTasksCount();
-  const total = Array.isArray(SN_ACHIEVEMENTS) ? SN_ACHIEVEMENTS.length : 6;
-  const allDone = (Array.isArray(SN_ACHIEVEMENTS) && SN_ACHIEVEMENTS.length >= 5 && SN_ACHIEVEMENTS.every(ach => typeof ach.check === 'function' && ach.check()));
+  const total = Array.isArray(SN_ACHIEVEMENTS) ? SN_ACHIEVEMENTS.length : 4;
+  const allDone = (Array.isArray(SN_ACHIEVEMENTS) && SN_ACHIEVEMENTS.length >= 4 && SN_ACHIEVEMENTS.every(ach => typeof ach.check === 'function' && ach.check()));
   return count >= total ||
     allDone ||
     _achievementUnlocked.has('task_all_complete');
 }
 
 function updateStickyChecklist() {
+  if (_isInvestigationFinished()) {
+    _refreshPostAwardChecklist();
+    return;
+  }
   if (gameState.phase !== 'mission' && gameState.phase !== 'results' && gameState.phase !== 'phishing') return;
   const section = document.getElementById('sn-checklist-section');
   if (!section) return;
@@ -1115,7 +1141,7 @@ function showPhishingAchievementModal(customAward, customCount) {
   modal.id = 'phish-trophy-modal';
   modal.className = 'phish-trophy-modal';
   modal.innerHTML = `
-    <div class="ptm-backdrop" onclick="this.parentElement.remove()"></div>
+    <div class="ptm-backdrop" onclick="this.parentElement.remove(); if (typeof showStickyNote === 'function') showStickyNote();"></div>
     <div class="ptm-confetti-fullscreen" id="ptm-confetti"></div>
     <div class="ptm-card ptm-card-clean">
       <div class="ptm-glow-ring"></div>
@@ -1124,7 +1150,7 @@ function showPhishingAchievementModal(customAward, customCount) {
         <img src="assets/Achievement/Phishing.png" class="ptm-big-award-img ${isComplete || isClaimed ? 'is-claimed' : 'is-silhouette'}" alt="Phishing Investigation Award" />
       </div>
       <h2 class="ptm-big-title">Phishing Investigation Award</h2>
-      <div class="ptm-big-rank">${count} / ${Array.isArray(SN_ACHIEVEMENTS) ? SN_ACHIEVEMENTS.length : 6} CHECKLIST MISSIONS &amp; EVIDENCE COMPLETED</div>
+      <div class="ptm-big-rank">${count} / ${Array.isArray(SN_ACHIEVEMENTS) ? SN_ACHIEVEMENTS.length : 4} CHECKLIST MISSIONS &amp; EVIDENCE COMPLETED</div>
       <div class="ptm-desc" style="font-size:12px;color:#94a3b8;margin:8px 0 16px;text-align:center;max-width:380px;">
         All Phishing missions and required evidence successfully completed! Claim your collectible trophy.
       </div>
@@ -1271,28 +1297,32 @@ function closePhishingTrophy() {
     }
   } catch(e) {}
 
-  // Reset all post-award task tracking so only actions AFTER claim count
-  window._postAwardTasks = {
-    browserOpened:    false,
-    browserNavigated: false,
-    phishingSearched: false,
-    phishingVisited:  false,
-    explorerOpened:   false,
-    videoFolderOpen:  false,
-    videoPlayed:      false,
-    gcOpened:         false,
-    helloSent:        false,
-    postTestDone:     false
-  };
-  window._ch1VideoTracker = {
-    duration: 0,
-    currentTime: 0,
-    actualSecondsWatched: 0,
-    lastPlayheadTime: 0,
-    hasSkippedForward: false,
-    completed: false,
-    _lastRefresh: 0
-  };
+  // Initialize post-award task tracking if not already set (preserve existing progress)
+  if (!window._postAwardTasks) {
+    window._postAwardTasks = {
+      browserOpened:    false,
+      browserNavigated: false,
+      phishingSearched: false,
+      phishingVisited:  false,
+      explorerOpened:   false,
+      videoFolderOpen:  false,
+      videoPlayed:      false,
+      gcOpened:         false,
+      helloSent:        false,
+      postTestDone:     false
+    };
+  }
+  if (!window._ch1VideoTracker) {
+    window._ch1VideoTracker = {
+      duration: 0,
+      currentTime: 0,
+      actualSecondsWatched: 0,
+      lastPlayheadTime: 0,
+      hasSkippedForward: false,
+      completed: false,
+      _lastRefresh: 0
+    };
+  }
 
   // Reset newbie GC state with clean empty messages
   try {
@@ -1344,7 +1374,9 @@ function closePhishingTrophy() {
   }
 
   // Refresh sticky note immediately to show the 3 new post-award mission checklist tasks
-  if (typeof renderStickyNoteResults === 'function') {
+  if (typeof _refreshPostAwardChecklist === 'function') {
+    _refreshPostAwardChecklist();
+  } else if (typeof renderStickyNoteResults === 'function') {
     renderStickyNoteResults();
   }
   showStickyNote();
@@ -1494,6 +1526,9 @@ function triggerPostTestReviewLaterGuide() {
 
 // ─── Post-Achievement Dialogue: Onboarding to "new intern team 2027" on Phone Link ────
 function triggerPostAchievementPhoneLinkInvite() {
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+  if (curCat && curCat !== 'phishing') return;
+
   // Play phone notification chime
   if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
     AudioManager.playNotification();
@@ -1541,6 +1576,8 @@ function triggerPostAchievementPhoneLinkInvite() {
 
 // ─── Post-Test Dialogue: Ryan guides Alex to Start Menu -> Power -> Shutdown (Save) ────
 window.triggerPostTestSaveDialogue = window.triggerPostPhoneLinkSaveDialogue = function() {
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+  if (curCat && curCat !== 'phishing') return;
   if (window._hasTriggeredPostTestSave) return;
   window._hasTriggeredPostTestSave = true;
 
@@ -1732,9 +1769,9 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
   const correctCount = (typeof correct === 'number') ? correct : (gameState && typeof gameState.correctDecisions === 'number' ? gameState.correctDecisions : 6);
   const totalEmails = (typeof total === 'number') ? total : ((typeof EMAILS !== 'undefined') ? EMAILS.length : 10);
 
-  // ── After award is claimed: hide medal/stats, show mission checklist ────────
-  if (window._awardClaimed) {
-    scrollEl.innerHTML = `<div id="sn-post-award-checklist">${_buildPostAwardChecklistHTML()}</div>`;
+  // ── After award is claimed / investigation finished: show mission checklist ────────
+  if (_isInvestigationFinished()) {
+    _refreshPostAwardChecklist();
     // Hook video tracking events once
     setTimeout(function() {
       var vid = document.getElementById('videoplayer-video');
@@ -2000,24 +2037,15 @@ function updateStickyNoteForPhase(phase) {
 
   const currentCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing';
 
-  // In Chapter 1 (phishing), show locked card until first email is completed
+  // In Chapter 1 (phishing), show checklist or post-award checklist
   if (currentCat === 'phishing' || phase === 'phishing') {
-    // If all emails completed, show the results
-    if (gameState.emailResults && gameState.emailResults.length >= EMAILS.length) {
-      const total = EMAILS.length;
-      const correct = gameState.correctDecisions;
-      const pct = correct / total;
-      let rank, rankClass, rankLabel;
-      if (pct >= 1.0)       { rank = 'S'; rankClass = 'rank-s'; rankLabel = 'CYBER DETECTIVE'; }
-      else if (pct >= 0.85) { rank = 'A'; rankClass = '';       rankLabel = 'EXCELLENT DETECTIVE'; }
-      else if (pct >= 0.70) { rank = 'B'; rankClass = 'rank-b'; rankLabel = 'GOOD DETECTIVE'; }
-      else if (pct >= 0.50) { rank = 'C'; rankClass = 'rank-c'; rankLabel = 'KEEP PRACTICING'; }
-      else                  { rank = 'D'; rankClass = 'rank-d'; rankLabel = 'NEEDS MORE TRAINING'; }
-      renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total);
+    if (titleEl) titleEl.textContent = "Sticky Notes";
+
+    if (_isInvestigationFinished()) {
+      _refreshPostAwardChecklist();
       return;
     }
 
-    if (titleEl) titleEl.textContent = "Sticky Notes";
     if (!document.getElementById('sn-checklist-section')) {
       scrollEl.innerHTML = `<div id="sn-checklist-section"></div>`;
     }

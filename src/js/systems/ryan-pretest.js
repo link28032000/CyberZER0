@@ -76,7 +76,8 @@ const RyanPretest = (() => {
   ];
 
   const LETTERS = ['A', 'B', 'C', 'D'];
-  const STORAGE_PREFIX = 'cyberzero_pretest_';
+  const STORAGE_PREFIX     = 'cyberzero_pretest_';
+  const WIP_KEY = 'cyberzero_pretest_wip';
 
   // ── Ryan's calm coaching line under the title (by question index) ──
   const COACH = {
@@ -204,6 +205,39 @@ const RyanPretest = (() => {
     return STORAGE_PREFIX + id;
   }
 
+  function _wipKey() { return WIP_KEY; }
+
+  /** Save current in-progress test state after every answer. */
+  function _saveTestProgress() {
+    if (_preview) return;
+    try {
+      const wip = {
+        activeQuestions: _activeQuestions,
+        index: _index,
+        answers: _answers,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(_wipKey(), JSON.stringify(wip));
+    } catch (e) {}
+  }
+
+  /** Clear saved WIP (called on completion or reset). */
+  function _clearTestProgress() {
+    try { localStorage.removeItem(_wipKey()); } catch (e) {}
+  }
+
+  /** Return saved WIP state if it exists and is valid, else null. */
+  function _loadTestProgress() {
+    try {
+      const raw = localStorage.getItem(_wipKey());
+      if (!raw) return null;
+      const wip = JSON.parse(raw);
+      if (!wip || !Array.isArray(wip.activeQuestions) || wip.activeQuestions.length === 0) return null;
+      if (typeof wip.index !== 'number') return null;
+      return wip;
+    } catch (e) { return null; }
+  }
+
   function _decorate(r) {
     if (r && !r.tier) {
       r.tier = tierOf(r);
@@ -231,6 +265,7 @@ const RyanPretest = (() => {
   }
 
   function reset() {
+    _clearTestProgress();
     try { localStorage.removeItem(_playerKey()); } catch (e) { /* ignore */ }
     if (typeof gameState !== 'undefined') {
       delete gameState.preTestCompleted;
@@ -254,6 +289,10 @@ const RyanPretest = (() => {
     const panel = $('ryan-pretest-panel');
     if (panel) panel.classList.remove('rpt-result-mode', 'rpt-tier-perfect', 'rpt-tier-great', 'rpt-tier-ok', 'rpt-tier-low');
     document.removeEventListener('keydown', _onKey, true);
+    // Restore screen tracking so mission resumes correctly after pretest
+    if (window._currentActiveScreen === 'pretest') {
+      window._currentActiveScreen = 'desktop';
+    }
   }
 
   // ══════════════════════════════════════════════════════════
@@ -480,6 +519,7 @@ const RyanPretest = (() => {
     const next = body.querySelector('.rpt-next');
     if (next) next.disabled = false;
     _sfx('playExamChoice');
+    _saveTestProgress();
   }
 
   function _next() {
@@ -547,7 +587,11 @@ const RyanPretest = (() => {
       completedAt: new Date().toISOString()
     };
     _decorate(result);
-    _save(result);       // saved first, so a refresh on the result screen loses nothing
+    _clearTestProgress(); // WIP no longer needed — result is being saved
+    _save(result);        // saved first, so a refresh on the result screen loses nothing
+    if (typeof window.saveAndInjectPretestDocument === 'function') {
+      window.saveAndInjectPretestDocument(result);
+    }
     _showResult(result);
   }
 
@@ -707,6 +751,9 @@ const RyanPretest = (() => {
   function _complete() {
     if (_mode !== 'result' || !_canContinue) return;
     const result = _result;
+    if (typeof window.saveAndInjectPretestDocument === 'function') {
+      window.saveAndInjectPretestDocument(result);
+    }
     const cb = _onDone;
     const wasPreview = _preview;
     _onDone = null;
@@ -728,6 +775,8 @@ const RyanPretest = (() => {
     void bd.offsetHeight;
     bd.classList.add('rpt-active');
     document.addEventListener('keydown', _onKey, true);
+    // Track active screen so session state saves 'pretest' on page refresh
+    window._currentActiveScreen = 'pretest';
   }
 
   function _resetView() {
@@ -745,17 +794,6 @@ const RyanPretest = (() => {
   function launch(onDone) {
     if (_running) return;
 
-    // Always clear any previously saved result so the test always runs fresh.
-    try {
-      localStorage.removeItem(_playerKey());
-    } catch (e) { /* storage blocked */ }
-    if (typeof gameState !== 'undefined') {
-      delete gameState.preTestCompleted;
-      delete gameState.preTestScore;
-      delete gameState.preTestTotal;
-      delete gameState.preTestResult;
-    }
-
     const bd = $('ryan-pretest-backdrop');
     if (!bd || !$('rpt-body')) {
       // markup missing: never block the simulation
@@ -764,16 +802,40 @@ const RyanPretest = (() => {
       return;
     }
 
+    // ── Check for in-progress (WIP) save ──────────────────────────────
+    const wip = _loadTestProgress();
+    const hasWip = !!(wip && wip.activeQuestions && wip.activeQuestions.length > 0);
+
+    // Always clear any previously saved RESULT so the test always runs fresh.
+    // (The WIP is separate and preserved for resume.)
+    try { localStorage.removeItem(_playerKey()); } catch (e) {}
+    if (typeof gameState !== 'undefined') {
+      delete gameState.preTestCompleted;
+      delete gameState.preTestScore;
+      delete gameState.preTestTotal;
+      delete gameState.preTestResult;
+    }
+
     _clearTimers();
-    _activeQuestions = _getShuffledQuestions();
-    _index = 0;
-    _answers = [];
     _mode = 'question';
     _result = null;
     _preview = false;
     _canContinue = false;
     _onDone = onDone || null;
     _running = true;
+
+    if (hasWip) {
+      // ── RESUME from saved WIP ──────────────────────────────────────
+      _activeQuestions = wip.activeQuestions;
+      _index = Math.max(0, Math.min(wip.index, _activeQuestions.length - 1));
+      _answers = Array.isArray(wip.answers) ? wip.answers.slice() : [];
+      console.log('[RyanPretest] Resuming from WIP at question', _index + 1, '/', _activeQuestions.length);
+    } else {
+      // ── Fresh start ───────────────────────────────────────────────
+      _activeQuestions = _getShuffledQuestions();
+      _index = 0;
+      _answers = [];
+    }
 
     _resetView();
     _render();
@@ -808,5 +870,7 @@ const RyanPretest = (() => {
     _showResult(result);
   }
 
-  return { launch, getResult, reset, tierOf, preview, isRunning: () => _running, QUESTION_COUNT: QUESTIONS.length };
+  return { launch, getResult, reset, tierOf, preview, isRunning: () => _running, QUESTION_COUNT: QUESTIONS.length,
+    hasWipProgress: () => !!_loadTestProgress(),
+    clearWipProgress: _clearTestProgress };
 })();

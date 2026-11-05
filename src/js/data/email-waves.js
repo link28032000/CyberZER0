@@ -205,9 +205,9 @@ function ch1CheckRoundCompletion() {
     }
   });
 
-  // Check checklist completion (requires all checklist items including "Submit all email verdicts")
+  // Check checklist completion (requires all 4 checklist items)
   const checklistCount = (typeof getCompletedTasksCount === 'function') ? getCompletedTasksCount() : 0;
-  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 6;
+  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 4;
   const isChecklistDone = (typeof isPhishingTrophyUnlocked === 'function')
     ? isPhishingTrophyUnlocked()
     : (checklistCount >= totalTasks);
@@ -237,7 +237,7 @@ function ch1CheckRoundCompletion() {
     return false;
   }
 
-  // 4. ALL emails are correctly identified AND checklist is 5/5!
+  // 4. ALL emails are correctly identified AND checklist is 4/4!
   ch1InvestigationComplete = true;
   ch1FinishInvestigationPhase();
   return true;
@@ -249,13 +249,71 @@ function ch1CheckRoundCompletion() {
 function ch1FinishInvestigationPhase() {
   ch1InvestigationComplete = true;
 
+  // Mark award claimed / post-investigation mission active
+  window._awardClaimed = true;
+  if (!window._postAwardTasks) {
+    window._postAwardTasks = {
+      browserOpened:    false,
+      browserNavigated: false,
+      phishingSearched: false,
+      phishingVisited:  false,
+      explorerOpened:   false,
+      videoFolderOpen:  false,
+      videoPlayed:      false,
+      gcOpened:         false,
+      helloSent:        false,
+      postTestDone:     false
+    };
+  }
+
+  // Sync claimed status to Main Menu achievements map
+  try {
+    const ACH_KEY = 'cyberzero_claimed_achievements';
+    let claimedMap = {};
+    try { claimedMap = JSON.parse(localStorage.getItem(ACH_KEY) || '{}'); } catch(e) {}
+    if (!claimedMap['ach_phishing']) {
+      claimedMap['ach_phishing'] = {
+        claimed: true,
+        chapter: 1,
+        title: 'Phishing Investigation Award',
+        claimedAt: Date.now(),
+        claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      };
+      localStorage.setItem(ACH_KEY, JSON.stringify(claimedMap));
+    }
+    if (typeof renderMainMenuAchievements === 'function') renderMainMenuAchievements();
+    if (typeof updateAchievementNotificationBadge === 'function') updateAchievementNotificationBadge();
+  } catch(e) {}
+
+  if (typeof updateDesktopTrophyDisplay === 'function') {
+    updateDesktopTrophyDisplay();
+  }
+
   if (typeof renderEmailList === 'function') renderEmailList();
   if (typeof updateFolderCounts === 'function') updateFolderCounts();
   if (typeof updateHUD === 'function') updateHUD();
-  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+
+  // Immediately display the new checklist for the next mission in Sticky Notes
+  if (typeof _refreshPostAwardChecklist === 'function') {
+    _refreshPostAwardChecklist();
+  }
+  if (typeof showStickyNote === 'function') {
+    showStickyNote();
+  }
 
   if (typeof savePhishingProgress === 'function') {
     savePhishingProgress();
+  }
+  if (typeof window.saveSessionLocally === 'function') {
+    window.saveSessionLocally();
+  }
+  if (typeof window.saveProgress === 'function') {
+    window.saveProgress().catch(() => {});
+  }
+  if (typeof updateStartButton === 'function') {
+    updateStartButton();
+  } else if (typeof window.updateStartButton === 'function') {
+    window.updateStartButton();
   }
 
   // Audio fanfare
@@ -264,14 +322,9 @@ function ch1FinishInvestigationPhase() {
     else if (AudioManager.playChime) AudioManager.playChime();
   }
 
-  // Highlight Sticky Notes so player claims their award
-  if (typeof highlightStickyNotesHint === 'function') {
-    highlightStickyNotesHint();
-  }
-
   // Toast
   if (typeof showToast === 'function') {
-    showToast('🏆 All required evidence collected & checklist completed! Phishing Award ready to claim.', 'success');
+    showToast('🏆 Phishing investigation complete! Next mission checklist active in Sticky Notes.', 'success');
   }
 
   // Display the earned trophy reward modal with Claim Reward button!

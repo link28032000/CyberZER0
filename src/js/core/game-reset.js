@@ -185,6 +185,14 @@ function restartCurrentChapterMission() {
   if (powerMenu) powerMenu.classList.add('hidden');
 
   // Dismiss and reset guide, pretest, and Chapter 1 interface immediately
+  if (window._ryanMissionIntroTimer) {
+    clearTimeout(window._ryanMissionIntroTimer);
+    window._ryanMissionIntroTimer = null;
+  }
+  if (window._ryanCh2IntroTimer) {
+    clearTimeout(window._ryanCh2IntroTimer);
+    window._ryanCh2IntroTimer = null;
+  }
   if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) {
     RyanGuide.reset();
   } else if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
@@ -206,7 +214,17 @@ function restartCurrentChapterMission() {
                     (typeof gameState !== 'undefined' ? gameState.phase : null) ||
                     'phishing';
 
-  const isCh2 = (activeCat === 'malware' || activeCat === 'ch2' || activeCat === 2);
+  const isCh2 = (activeCat === 'malware' || activeCat === 'ch2' || activeCat === 2 ||
+                 !!window._ch2MissionStarted || !!window._ch2IntroActive || !!window._ch2Mission);
+
+  if (isCh2) {
+    if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.reset) {
+      Ch2Pretest.reset();
+    }
+    if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.close) {
+      Ch2Pretest.close();
+    }
+  }
 
   let chapterName = 'Chapter 1: The Deceptive Click';
   let restartNote = 'Restarting Chapter 1… Resetting inbox, threat logs, and mission tasks…';
@@ -275,10 +293,32 @@ function restartCurrentChapterMission() {
     if (isCh2) {
       // ── Restart Chapter 2 (Ethan) from beginning ──
       window._currentChapterCategory = 'malware';
+      if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'malware';
+      if (typeof gameState !== 'undefined') gameState.phase = 'malware';
 
-      // ── Clear all saved Ch2 progress so the checklist starts completely fresh ──
-      try { localStorage.removeItem('cyberzero_session_state'); } catch (e) {}
+      // Clear any pending Ch1 timers defensively
+      if (window._ryanMissionIntroTimer) {
+        clearTimeout(window._ryanMissionIntroTimer);
+        window._ryanMissionIntroTimer = null;
+      }
+      if (window._ryanCh2IntroTimer) {
+        clearTimeout(window._ryanCh2IntroTimer);
+        window._ryanCh2IntroTimer = null;
+      }
+
+      // ── Clear all saved Ch2 progress so the checklist and pretest start completely fresh ──
       try { localStorage.removeItem('cyberzero_ch2_mission'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_ch2_pretest'); } catch (e) {}
+      try {
+        const raw = localStorage.getItem('cyberzero_session_state');
+        if (raw) {
+          const sess = JSON.parse(raw);
+          sess.activeChapter = 'malware';
+          sess.ch2 = null;
+          sess.dialogue = null;
+          localStorage.setItem('cyberzero_session_state', JSON.stringify(sess));
+        }
+      } catch (e) {}
 
       // Reset all in-memory Chapter 2 flags before starting fresh
       window._ch2Mission = null;
@@ -286,8 +326,14 @@ function restartCurrentChapterMission() {
       window._ch2IntroActive = false;
       window._ch2ChecklistUnlocked = false;
 
+      if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) {
+        RyanGuide.reset();
+      }
       if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.reset) {
         Ch2Pretest.reset();
+      }
+      if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.close) {
+        Ch2Pretest.close();
       }
       if (typeof TrojanInvestigation !== 'undefined' && TrojanInvestigation.reset) {
         TrojanInvestigation.reset();

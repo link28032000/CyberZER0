@@ -33,7 +33,11 @@
     'cyberzero_newbie_gc_state',
     'cyberzero_ch2_pretest',
     'cyberzero_ch2_mission',
-    'cyberzero_session_state'
+    'cyberzero_session_state',
+    'cyberzero_pretest_wip',
+    'cyberzero_posttest_wip',
+    'cyberzero_pretest_result_file',
+    'cyberzero_posttest_result_file'
   ];
 
   /* ── Detect currently active screen / view ────────────────────────────── */
@@ -41,6 +45,19 @@
     const sd = document.getElementById('overlay-shutdown-screen');
     if (sd && (sd.classList.contains('sd-active') || sd.style.display === 'flex')) {
       return 'shutdown';
+    }
+    // ── Detect active pre/post test overlays ──
+    const rptBd = document.getElementById('ryan-pretest-backdrop');
+    if (rptBd && rptBd.classList.contains('rpt-active') && rptBd.style.display !== 'none') {
+      return 'pretest';
+    }
+    const ch2pt = document.getElementById('overlay-ch2-pretest');
+    if (ch2pt && (ch2pt.classList.contains('ch2pt-active') || (ch2pt.style.display && ch2pt.style.display !== 'none'))) {
+      return 'pretest';
+    }
+    const rpostBd = document.getElementById('ryan-posttest-backdrop');
+    if (rpostBd && rpostBd.classList.contains('rpost-active') && rpostBd.style.display !== 'none') {
+      return 'posttest';
     }
     const ss = document.getElementById('overlay-story-select');
     if (ss && ss.classList.contains('active') && ss.style.display !== 'none') {
@@ -103,7 +120,8 @@
       trophyUnlockedDate: (typeof _trophyUnlockedDate !== 'undefined') ? _trophyUnlockedDate : null,
       postAwardPostTestDialogueFired: !!window._postAwardPostTestDialogueFired,
       awaitingShutdownForChapter2: !!window._awaitingShutdownForChapter2,
-      ch1CompletedSandbox: !!window._ch1CompletedSandbox
+      ch1CompletedSandbox: !!window._ch1CompletedSandbox,
+      preTestCompleted: !!(typeof RyanPretest !== 'undefined' && RyanPretest.getResult && RyanPretest.getResult())
     };
 
     // Chapter 2 Malware state
@@ -154,33 +172,40 @@
   }
 
   /* ── Step 1: flush live state → localStorage, then read blobs ──────────── */
+  let _isFlushing = false;
   function _flushToLocalStorage() {
-    // Flush phishing progress (sticky-note.js)
+    if (_isFlushing) return;
+    _isFlushing = true;
     try {
-      if (typeof savePhishingProgress === 'function') {
-        savePhishingProgress();
-      }
-    } catch (e) {}
+      // Flush phishing progress (sticky-note.js)
+      try {
+        if (typeof savePhishingProgress === 'function') {
+          savePhishingProgress();
+        }
+      } catch (e) {}
 
-    // Flush category progress (category-hub.js)
-    try {
-      if (typeof saveCategoriesProgress === 'function') {
-        saveCategoriesProgress();
-      }
-    } catch (e) {}
+      // Flush category progress (category-hub.js)
+      try {
+        if (typeof saveCategoriesProgress === 'function') {
+          saveCategoriesProgress();
+        }
+      } catch (e) {}
 
-    // Flush chapter 2 malware mission
-    try {
-      if (window._ch2Mission) {
-        localStorage.setItem('cyberzero_ch2_mission', JSON.stringify(window._ch2Mission));
-      }
-    } catch (e) {}
+      // Flush chapter 2 malware mission
+      try {
+        if (window._ch2Mission) {
+          localStorage.setItem('cyberzero_ch2_mission', JSON.stringify(window._ch2Mission));
+        }
+      } catch (e) {}
 
-    // Flush master session state
-    try {
-      const snapshot = _getSessionState();
-      localStorage.setItem('cyberzero_session_state', JSON.stringify(snapshot));
-    } catch (e) {}
+      // Flush master session state
+      try {
+        const snapshot = _getSessionState();
+        localStorage.setItem('cyberzero_session_state', JSON.stringify(snapshot));
+      } catch (e) {}
+    } finally {
+      _isFlushing = false;
+    }
   }
 
   function _buildPayload() {
@@ -290,6 +315,12 @@
       try {
         if (typeof loadPhishingProgress === 'function') loadPhishingProgress();
       } catch (e) {}
+      try {
+        if (typeof initPretestResultDocument === 'function') initPretestResultDocument();
+      } catch (e) {}
+      try {
+        if (typeof initPosttestResultDocument === 'function') initPosttestResultDocument();
+      } catch (e) {}
 
       // Restore CATEGORIES live state
       try {
@@ -395,17 +426,81 @@
         if (typeof _stripCh1TutorialHighlights === 'function') _stripCh1TutorialHighlights();
       } else {
         // In-progress Chapter 1 mission
-        if (typeof resumeChapter1Mission === 'function') {
-          resumeChapter1Mission(session.ch1 || null);
-        } else if (typeof startMission === 'function') {
-          startMission(false);
+        // ── If player refreshed mid-test, the test overlay sits on top of the
+        //    desktop. Lock the Ryan guide so it cannot fire "Click Flag..." etc.,
+        //    restore the desktop silently, then re-open the WIP test on top. ──
+        const _savedScreen = session.screen || 'desktop';
+        const _hasPretestWip  = typeof RyanPretest  !== 'undefined' &&
+                                 RyanPretest.hasWipProgress  && RyanPretest.hasWipProgress();
+        const _hasPosttestWip = typeof RyanPosttest !== 'undefined' &&
+                                 RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress();
+
+        if (_savedScreen === 'posttest' && _hasPosttestWip) {
+          // Lock the guide so it stays silent while the post-test is running
+          if (typeof RyanGuide !== 'undefined' && RyanGuide.lockMainFlow) {
+            RyanGuide.lockMainFlow();
+          }
+          if (typeof resumeChapter1Mission === 'function') {
+            resumeChapter1Mission(session.ch1 || null);
+          } else if (typeof startMission === 'function') {
+            startMission(false);
+          }
+          // Relaunch the in-progress post-test after the desktop has fully restored
+          setTimeout(function() {
+            if (typeof RyanPosttest !== 'undefined' &&
+                RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress()) {
+              RyanPosttest.launch(null);
+            }
+            setTimeout(function() {
+              if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) {
+                RyanGuide.releaseMainFlow();
+              }
+            }, 600);
+          }, 500);
+        } else if (_savedScreen === 'pretest') {
+          // Pre-test refresh: always show Ryan intro dialogue (fresh pre-test from Q1).
+          // Do NOT call resumeChapter1Mission — it skips the intro and fires "Click Flag".
+          if (typeof startMission === 'function') {
+            startMission(false, true);
+          }
+        } else {
+          // Guard: pre-test must be completed before resuming email investigation.
+          // If not completed, or if no email progress exists, restart from the intro.
+          const _ch1 = session.ch1 || {};
+          const _hasEmailProgress = (
+            (Array.isArray(_ch1.inboxEmailIds) && _ch1.inboxEmailIds.length > 0) ||
+            (Array.isArray(_ch1.emailResults)  && _ch1.emailResults.length  > 0) ||
+            !!_ch1.awardClaimed ||
+            !!_ch1.currentEmail
+          );
+          const _preTestDone = !!_ch1.preTestCompleted;
+
+          if (!_hasEmailProgress || !_preTestDone) {
+            // Intro or pre-test phase: restart Ryan intro → pre-test → mission
+            if (typeof startMission === 'function') startMission(false, true);
+          } else if (typeof resumeChapter1Mission === 'function') {
+            // Normal resume — email investigation progress restored
+            resumeChapter1Mission(_ch1);
+          } else if (typeof startMission === 'function') {
+            startMission(false);
+          }
         }
       }
     } else if (targetCat === 'malware') {
-      if (typeof resumeChapter2Mission === 'function') {
-        resumeChapter2Mission(session.ch2 || null);
-      } else if (typeof startMalwareMission === 'function') {
-        startMalwareMission();
+      const hasCh2Mission = session.ch2 && (session.ch2.missionStarted || session.ch2.mission);
+      if (hasCh2Mission) {
+        if (typeof resumeChapter2Mission === 'function') {
+          resumeChapter2Mission(session.ch2);
+        } else if (typeof startMalwareMission === 'function') {
+          startMalwareMission();
+        }
+      } else {
+        // No mission active yet: start or restart Ethan's Chapter 2 intro & pretest flow
+        if (typeof startMalwareChapter === 'function') {
+          startMalwareChapter();
+        } else if (typeof openChapterDesktopDirect === 'function') {
+          openChapterDesktopDirect('malware');
+        }
       }
     }
 
@@ -440,8 +535,9 @@
       }
     }
 
-    // ── DIALOGUE RESTORATION ──
-    if (session.dialogue && session.dialogue.active && typeof RyanGuide !== 'undefined' && RyanGuide.restoreState) {
+    // ── DIALOGUE RESTORATION (Scoped to Active Chapter) ──
+    const dCat = (session.dialogue && session.dialogue.chapter) ? session.dialogue.chapter : session.activeChapter;
+    if (session.dialogue && session.dialogue.active && dCat === targetCat && typeof RyanGuide !== 'undefined' && RyanGuide.restoreState) {
       RyanGuide.restoreState(session.dialogue);
     } else if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
       RyanGuide.dismiss(true);
@@ -462,6 +558,40 @@
     if (screen === 'desktop') {
       const cat = session.activeChapter || 'phishing';
       resumeSavedGameSession(cat, session);
+      return;
+    }
+
+    if (screen === 'pretest') {
+      const testCat = session.activeChapter || window._currentChapterCategory || 'phishing';
+      if (testCat === 'malware') {
+        if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.reset) {
+          Ch2Pretest.reset();
+        }
+        resumeSavedGameSession('malware', session);
+        return;
+      }
+      // On refresh during pre-test: clear WIP so Ryan intro dialogue shows fresh.
+      // The intro leads to "Ready for your first activity?" + Let's Begin → fresh pre-test.
+      if (typeof RyanPretest !== 'undefined' && RyanPretest.clearWipProgress) {
+        RyanPretest.clearWipProgress();
+      } else {
+        try { localStorage.removeItem('cyberzero_pretest_wip'); } catch (_) {}
+      }
+      // Treat as desktop session — startMission will show the Ryan intro
+      resumeSavedGameSession(testCat, session);
+      return;
+    }
+
+    if (screen === 'posttest') {
+      // On refresh during post-test: resume from exactly where the player left off.
+      const testCat = session.activeChapter || 'phishing';
+      resumeSavedGameSession(testCat, session);
+      setTimeout(function() {
+        if (typeof RyanPosttest !== 'undefined' &&
+            RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress()) {
+          RyanPosttest.launch(null);
+        }
+      }, 500);
       return;
     }
 
@@ -621,12 +751,48 @@
   };
 
   /**
-   * deleteProgress()
-   * Deletes Firestore save doc + clears all related localStorage.
+   * deleteProgress(categoryToReset)
+   * Deletes Firestore save doc + clears related localStorage.
+   * If restarting Chapter 2, only resets Chapter 2 progress and preserves Chapter 1.
    */
-  window.deleteProgress = async function () {
+  window.deleteProgress = async function (categoryToReset) {
     const db   = _db();
     const user = _user();
+
+    const activeCat = categoryToReset || window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+
+    if (activeCat === 'malware') {
+      // ONLY reset Chapter 2 progress; preserve Chapter 1 progress, dialogue, and unlocked categories
+      try { localStorage.removeItem('cyberzero_ch2_mission'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_ch2_pretest'); } catch (e) {}
+      try {
+        const raw = localStorage.getItem('cyberzero_session_state');
+        if (raw) {
+          const sess = JSON.parse(raw);
+          sess.ch2 = null;
+          sess.dialogue = null;
+          sess.activeChapter = 'malware';
+          localStorage.setItem('cyberzero_session_state', JSON.stringify(sess));
+        }
+      } catch (e) {}
+      console.log('[deleteProgress] Chapter 2 localStorage cleared (Chapter 1 preserved).');
+
+      if (db && user) {
+        try {
+          await db.collection('saves').doc(user.uid).set({
+            sessionState: { activeChapter: 'malware', ch2: null, dialogue: null },
+            ls: {
+              cyberzero_ch2_mission: null,
+              cyberzero_ch2_pretest: null
+            }
+          }, { merge: true });
+          console.log('[deleteProgress] ✅ Chapter 2 progress reset in cloud save (Chapter 1 preserved).');
+        } catch (e) {
+          console.warn('[deleteProgress] Cloud reset warning:', e.message);
+        }
+      }
+      return;
+    }
 
     LS_KEYS.forEach(key => {
       try { localStorage.removeItem(key); } catch (e) {}
@@ -677,6 +843,7 @@
 
   // Fast local storage session flusher for instant persistence on user actions
   window.saveSessionLocally = function () {
+    if (_isFlushing) return;
     try {
       _flushToLocalStorage();
     } catch (e) {}

@@ -803,13 +803,31 @@ function finishMission() {
   const completedTasksCount = (typeof getCompletedTasksCount === 'function')
     ? getCompletedTasksCount()
     : (typeof SN_ACHIEVEMENTS !== 'undefined' ? SN_ACHIEVEMENTS.filter(ach => ach.check()).length : 0);
-  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 6;
+  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 4;
   const allTasksDone = (completedTasksCount >= totalTasks) && (typeof isPhishingTrophyUnlocked === 'function' ? isPhishingTrophyUnlocked() : true);
 
   if (allTasksDone) {
     _achievementUnlocked.add('task_all_complete');
     _achievementUnlocked.add('phish_trophy_unlocked');
     _achievementUnlocked.add('ach_phishing');
+    window._awardClaimed = true;
+    if (!window._postAwardTasks) {
+      window._postAwardTasks = {
+        browserOpened:    false,
+        browserNavigated: false,
+        phishingSearched: false,
+        phishingVisited:  false,
+        explorerOpened:   false,
+        videoFolderOpen:  false,
+        videoPlayed:      false,
+        gcOpened:         false,
+        helloSent:        false,
+        postTestDone:     false
+      };
+    }
+    if (typeof _refreshPostAwardChecklist === 'function') {
+      _refreshPostAwardChecklist();
+    }
   }
 
   const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -927,8 +945,12 @@ function playAgain(showVN = false) {
     desktop.style.visibility = 'visible';
     desktop.style.opacity = '1';
   }
-  // Reset state
+  // Reset state - explicitly restarting mission
   window._phishBrowserCloseToastShown = false;
+  window._awardClaimed = false;
+  window._postAwardTasks = null;
+  window._ch1VideoTracker = null;
+  ch1InvestigationComplete = false;
   updateStickyNoteForPhase('phishing');
   gameState.phase = 'welcome';
   gameState.currentEmail = 0;

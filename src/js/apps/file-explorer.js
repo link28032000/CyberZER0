@@ -21,10 +21,17 @@ function getScholarshipGrantFileDef() {
   };
 }
 
+function _getExplorerAdditionalFiles() {
+  if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined') return EXPLORER_ADDITIONAL_FILES;
+  if (typeof window !== 'undefined' && window.EXPLORER_ADDITIONAL_FILES) return window.EXPLORER_ADDITIONAL_FILES;
+  return {};
+}
+
 function getExplorerCurrentFiles() {
+  const _additionalFiles = _getExplorerAdditionalFiles();
   // 'downloads' shows only its static folder entries (e.g. Games subfolder)
   if (currentExplorerFolder === 'downloads') {
-    const _dlFiles = EXPLORER_ADDITIONAL_FILES['downloads'] || [];
+    const _dlFiles = _additionalFiles['downloads'] || [];
     // Hide Games folder and simulation files in Chapter 1 — Ch2 only
     if (window._currentChapterCategory !== 'malware') {
       return _dlFiles.filter(function(f) { return f.id !== 'dl_games_folder' && !f.isSimulation; });
@@ -33,16 +40,49 @@ function getExplorerCurrentFiles() {
   }
   // thispc_contents shows the actual C: folder list
   if (currentExplorerFolder === 'thispc_contents') {
-    return EXPLORER_ADDITIONAL_FILES['thispc'] || [];
+    return _additionalFiles['thispc'] || [];
   }
   // usb_contents shows the USB drive folder list (empty)
   if (currentExplorerFolder === 'usb_contents') {
-    return EXPLORER_ADDITIONAL_FILES['usb'] || [];
+    return _additionalFiles['usb'] || [];
   }
-  return EXPLORER_ADDITIONAL_FILES[currentExplorerFolder] || [];
+  if (currentExplorerFolder === 'documents') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+    if (!isCh2) {
+      if (typeof initPretestResultDocument === 'function') {
+        initPretestResultDocument();
+      } else if (typeof window !== 'undefined' && typeof window.initPretestResultDocument === 'function') {
+        window.initPretestResultDocument();
+      }
+      if (typeof initPosttestResultDocument === 'function') {
+        initPosttestResultDocument();
+      } else if (typeof window !== 'undefined' && typeof window.initPosttestResultDocument === 'function') {
+        window.initPosttestResultDocument();
+      }
+    }
+    const docFiles = _additionalFiles['documents'] || [];
+    if (isCh2) {
+      // Hide Chapter 1 pre-test and post-test results in Chapter 2
+      return docFiles.filter(function(f) {
+        return f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1;
+      });
+    }
+    return docFiles;
+  }
+  return _additionalFiles[currentExplorerFolder] || [];
 }
 
 function getExplorerFileById(fileId) {
+  // Hide Chapter 1 pre-test and post-test results in Chapter 2
+  const isCh2 = (window._currentChapterCategory === 'malware' ||
+                 (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                 (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+  if (isCh2 && (fileId === 'doc_pretest_result' || fileId === 'doc_posttest_result')) {
+    return null;
+  }
+
   if (fileId === 'f_scholarship_grant') {
     if (window.ch1DownloadsList && window.ch1DownloadsList.length > 0) {
       const f = window.ch1DownloadsList.find(x => x.id === 'f_scholarship_grant');
@@ -56,7 +96,8 @@ function getExplorerFileById(fileId) {
   if (found) return found;
 
   // Check additional folder collections
-  for (const list of Object.values(EXPLORER_ADDITIONAL_FILES)) {
+  const _additionalFiles = _getExplorerAdditionalFiles();
+  for (const list of Object.values(_additionalFiles)) {
     found = list.find(f => f.id === fileId);
     if (found) return found;
   }
@@ -314,6 +355,22 @@ function switchExplorerFolder(folderKey) {
     dlBadge.style.display = FOLDER_FILES.length > 0 ? '' : 'none';
   }
 
+  // Update documents badge count (hide Chapter 1 documents in Chapter 2)
+  const docBadge = document.getElementById('sidebar-documents-badge');
+  const isCh2 = (window._currentChapterCategory === 'malware' ||
+                 (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                 (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+  const _additionalFiles = _getExplorerAdditionalFiles();
+  const allDocs = Array.isArray(_additionalFiles.documents) ? _additionalFiles.documents : [];
+  const visibleDocs = isCh2
+    ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
+    : allDocs;
+  const docCount = visibleDocs.length;
+  if (docBadge) {
+    docBadge.textContent = docCount;
+    docBadge.style.display = docCount > 0 ? '' : 'none';
+  }
+
 
 
   // Render Drive & Network Location Banners
@@ -524,13 +581,21 @@ function selectFolderFile(fileId) {
   const ext = file.realExt.toLowerCase();
 
   if (ext === 'docx') {
+    const isPretestDoc = file.id === 'doc_pretest_result';
+    const isPosttestDoc = file.id === 'doc_posttest_result';
+    const docTitle = isPosttestDoc
+      ? 'Cybersecurity Post-Test Assessment Report'
+      : (isPretestDoc ? 'Cybersecurity Pre-Test Assessment Report' : file.name);
+    const docSnippet = isPosttestDoc
+      ? 'Official final mastery score & evaluation report. Verified clean.'
+      : (isPretestDoc ? 'Official baseline score & evaluation report. Verified clean.' : (file.analysis || 'Verified clean document.'));
     quickPreviewHtml = `
       <div class="fdp-quick-preview">
         <div class="fdp-preview-doc-card">
           <div class="fdp-preview-doc-title">📄 Microsoft Word Document</div>
           <div class="fdp-preview-doc-snippet">
-            <strong>CyberZerØ Student Defense Architecture</strong><br>
-            Technical specifications & endpoint guidelines v2.4. Zero macro triggers found.
+            <strong>${docTitle}</strong><br>
+            ${docSnippet}
           </div>
         </div>
         <button class="fdp-preview-open-btn" onclick="openFileFromFolder('${file.id}')">

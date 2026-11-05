@@ -151,26 +151,56 @@ window.resetCh1ZmailInterface = resetCh1ZmailInterface;
 // ═══════════════════════════════════════════════════════════
 
 function startMission(openGmail = false, forceFresh = false) {
+  // Guard: If another chapter is currently active, abort immediately to prevent cross-chapter leakage
+  const activeCatCheck = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+  if (activeCatCheck && activeCatCheck !== 'phishing') {
+    console.warn('[startMission] Aborted: active chapter is not phishing:', activeCatCheck);
+    return;
+  }
+
   // If not explicitly forcing a fresh start, and active/saved progress exists, resume cleanly!
   if (!forceFresh) {
-    let hasSaved = false;
-    let ch1Data = null;
-    try {
-      const raw = localStorage.getItem('cyberzero_session_state');
-      if (raw) {
-        const sess = JSON.parse(raw);
-        if (sess && sess.ch1 && (sess.ch1.emailResults.length > 0 || sess.ch1.currentEmail > 0 || sess.ch1.awardClaimed || sess.ch1.inboxEmailIds.length > 0)) {
-          hasSaved = true;
-          ch1Data = sess.ch1;
-        }
-      }
-    } catch(e) {}
-
-    if (hasSaved && ch1Data) {
-      resumeChapter1Mission(ch1Data);
-      if (openGmail && typeof openApp === 'function') openApp('gmail');
-      return;
+    // ── 1. Check for in-progress (WIP) pre-test or post-test ──────────────
+    // The player may have refreshed while answering the test, before any emails
+    // were touched. The desktop will be set up below, then the test relaunches.
+    // Pre-test: always clear WIP and show fresh Ryan intro dialogue on restore.
+    // Post-test: resume from exactly where the player left off.
+    if (typeof RyanPretest !== 'undefined' && RyanPretest.clearWipProgress) {
+      RyanPretest.clearWipProgress();
+    } else {
+      try { localStorage.removeItem('cyberzero_pretest_wip'); } catch (_) {}
     }
+
+    const _posttestWip = typeof RyanPosttest !== 'undefined' && RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress();
+    if (_posttestWip) {
+      window._pendingTestResume = 'posttest';
+    } else {
+      window._pendingTestResume = null;
+    }
+
+    // ── 2. Check for in-progress email investigation ───────────────────────
+    if (!window._pendingTestResume) {
+      let hasSaved = false;
+      let ch1Data = null;
+      try {
+        const raw = localStorage.getItem('cyberzero_session_state');
+        if (raw) {
+          const sess = JSON.parse(raw);
+          if (sess && sess.ch1 && (sess.ch1.emailResults.length > 0 || sess.ch1.currentEmail > 0 || sess.ch1.awardClaimed || sess.ch1.inboxEmailIds.length > 0)) {
+            hasSaved = true;
+            ch1Data = sess.ch1;
+          }
+        }
+      } catch(e) {}
+
+      if (hasSaved && ch1Data) {
+        resumeChapter1Mission(ch1Data);
+        if (openGmail && typeof openApp === 'function') openApp('gmail');
+        return;
+      }
+    }
+  } else {
+    window._pendingTestResume = null;
   }
 
   gameState.phase = 'mission';
@@ -269,12 +299,25 @@ function startMission(openGmail = false, forceFresh = false) {
   if (typeof resetPhoneLinkChat === 'function') resetPhoneLinkChat();
 
   // ── Clear any saved pretest & mentor guide result so it always runs fresh ──
+  // Always reset pre-test for a fresh start (WIP already cleared in startMission).
+  // Skip RyanGuide reset only when resuming a mid-posttest session.
   if (typeof RyanPretest !== 'undefined' && RyanPretest.reset) RyanPretest.reset();
-  if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) RyanGuide.reset();
+  if (!window._pendingTestResume) {
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.reset) RyanGuide.reset();
+  } else {
+    // Resuming post-test: dismiss guide visually without touching WIP state
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) RyanGuide.dismiss(true);
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.lockMainFlow) RyanGuide.lockMainFlow();
+  }
 
   // ── Inbox starts EMPTY — emails are injected after Ryan's full dialogue ends ──
 
   hideAllOverlays(true);
+  // hideAllOverlays skips main menu intentionally — hide it explicitly here
+  const _mmEl = document.getElementById('overlay-main-menu');
+  if (_mmEl) { _mmEl.classList.remove('active'); _mmEl.style.display = 'none'; }
+  const _ssEl = document.getElementById('overlay-story-select');
+  if (_ssEl) { _ssEl.classList.remove('active'); _ssEl.style.display = 'none'; }
   const desktop = document.getElementById('desktop');
   if (desktop) {
     desktop.style.visibility = 'visible';
@@ -322,7 +365,25 @@ function startMission(openGmail = false, forceFresh = false) {
   }
   if (typeof RyanGuide !== 'undefined') {
     window._ryanMissionIntroTimer = setTimeout(function() {
-      if (gameState.phase !== 'mission') return;
+      const activeCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+      if (activeCat !== 'phishing' || gameState.phase !== 'mission') return;
+
+      // ── If a WIP post-test is pending from a mid-test page refresh, relaunch it ──
+      // Note: pre-test always shows fresh Ryan intro (WIP was cleared above).
+      if (window._pendingTestResume === 'posttest') {
+        window._pendingTestResume = null;
+        setTimeout(function() {
+          if (typeof RyanPosttest !== 'undefined' &&
+              RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress()) {
+            RyanPosttest.launch(null);
+            if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+          } else {
+            if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+          }
+        }, 300);
+        return;
+      }
+
       // Ryan's intro is calm and friendly, and is written to lead straight
       // into the 20-question pre-test. After the test he reacts to the score
       // (see RYAN_PRETEST_REACTIONS) and then bridges into the lesson.
@@ -441,6 +502,10 @@ function openChapterDesktopDirect(chapterId) {
       resetCh1ZmailInterface();
     }
   } else if (chapterId === 'malware') {
+    if (window._ryanMissionIntroTimer) {
+      clearTimeout(window._ryanMissionIntroTimer);
+      window._ryanMissionIntroTimer = null;
+    }
     window._ch2ChecklistUnlocked = false;
     if (typeof closeStickyNote === 'function') closeStickyNote();
     const sNote = document.getElementById('sticky-note');
@@ -668,12 +733,19 @@ function resumeChapter1Mission(savedData) {
   }
 
   // Update sticky notes checklist
-  if (typeof updateStickyNoteForPhase === 'function') updateStickyNoteForPhase('phishing');
-  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
-
-  // If award is claimed, make sure post-award checklist renders
-  if (window._awardClaimed && typeof _refreshPostAwardChecklist === 'function') {
-    _refreshPostAwardChecklist();
+  const isInvestigationDone = window._awardClaimed ||
+                              (typeof ch1InvestigationComplete !== 'undefined' && ch1InvestigationComplete) ||
+                              (typeof _isInvestigationFinished === 'function' && _isInvestigationFinished());
+  if (isInvestigationDone) {
+    if (typeof _refreshPostAwardChecklist === 'function') {
+      _refreshPostAwardChecklist();
+    }
+    if (typeof showStickyNote === 'function') {
+      showStickyNote();
+    }
+  } else {
+    if (typeof updateStickyNoteForPhase === 'function') updateStickyNoteForPhase('phishing');
+    if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
   }
 
   // Open active email if inbox is selected
