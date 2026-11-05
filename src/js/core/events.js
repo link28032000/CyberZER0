@@ -113,12 +113,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (typeof resumeSavedGameSession === 'function') {
       resumeSavedGameSession(activeCat, savedSession);
     }
-  } else {
-    // Show main menu only if not gated by auth
-    const authEl = document.getElementById('cz-auth');
-    if (!authEl || !authEl.classList.contains('active')) {
-      showMainMenu();
-    }
   }
 
   renderEmailList();
