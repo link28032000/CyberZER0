@@ -44,12 +44,16 @@
   position: fixed;
   inset: 0;
   z-index: 1400;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: #62b8fc;
   overflow: hidden;
   font-family: var(--font-cyberzero);
+}
+
+#overlay-main-menu.active {
+  display: flex !important;
 }
 
 /* ── Smooth Exit Transition when Signing Out ── */
@@ -694,6 +698,7 @@ body.is-fullscreen .mm-fullscreen-btn,
 .mm-modal-backdrop.hidden {
   display: none;
 }
+
 @keyframes mmModalFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -1023,78 +1028,97 @@ body.is-fullscreen .mm-fullscreen-btn,
   transform: translateY(-1px);
 }
 
-/* ACHIEVEMENTS MODAL */
+/* ACHIEVEMENTS MODAL — WINDOWED & FULLSCREEN OPTIMIZED */
 .mm-achievement-card {
-  width: min(890px, 94vw);
-  max-width: 94vw;
-  max-height: 92vh;
-  padding: 16px 20px 18px;
+  /* Match the sci-fi chamfered card styling, glowing border & corners from .mm-about-card */
+  width: min(920px, 94vw) !important;
+  max-width: 94vw !important;
+  background: linear-gradient(160deg, #071428 0%, #0a1e3d 60%, #0d2850 100%) !important;
+  border: 2px solid #00c8f0 !important;
+  border-radius: 4px !important;
+  clip-path: polygon(22px 0%, calc(100% - 22px) 0%, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0% calc(100% - 22px), 0% 22px) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 200, 240, 0.2),
+    0 0 30px rgba(0, 180, 240, 0.25),
+    0 0 60px rgba(0, 100, 200, 0.2),
+    inset 0 0 40px rgba(0, 30, 80, 0.5) !important;
+  /* Sizing and layout */
+  max-height: min(92vh, 630px);
+  padding: 16px 24px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  text-align: center;
 }
 
 .mm-ach-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .mm-ach-trophy-ring {
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 215, 0, 0.25) 0%, rgba(255, 215, 0, 0.05) 70%, transparent 100%);
   border: 2px solid #ffd700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), inset 0 0 14px rgba(255, 215, 0, 0.2);
-  margin-bottom: 6px;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(255, 215, 0, 0.2);
+  margin-bottom: 3px;
   animation: achTrophyGlow 3s ease-in-out infinite alternate;
 }
 
+.mm-ach-trophy-ring svg {
+  width: 24px;
+  height: 24px;
+}
+
 @keyframes achTrophyGlow {
-  0%   { box-shadow: 0 0 16px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.15); }
-  100% { box-shadow: 0 0 26px rgba(255, 215, 0, 0.65), inset 0 0 18px rgba(255, 215, 0, 0.35); }
+  0%   { box-shadow: 0 0 14px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.15); }
+  100% { box-shadow: 0 0 24px rgba(255, 215, 0, 0.65), inset 0 0 16px rgba(255, 215, 0, 0.35); }
 }
 
 .mm-ach-title {
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: 2px;
+  letter-spacing: 1.8px;
+  line-height: 1.2;
   text-shadow: 0 0 14px rgba(0, 229, 255, 0.7);
   margin: 0;
 }
 
 .mm-ach-sub {
   font-family: 'Segoe UI', -apple-system, sans-serif;
-  font-size: 12.5px;
-  color: #a0c8f0;
-  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin: 2px 0 0;
   text-align: center;
 }
 
-/* ── Stats Row in Header (No MISSION PTS, Sleek Progress Bar) ── */
+/* ── Stats Row in Header (Sleek, Balanced Progress Bar) ── */
 .mm-ach-stats {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 10px;
-  padding: 10px 18px;
-  background: rgba(6, 18, 38, 0.85);
+  margin-top: 6px;
+  padding: 6px 14px;
+  background: rgba(6, 18, 38, 0.9);
   border: 1px solid rgba(0, 180, 244, 0.35);
   border-radius: 8px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 16px rgba(0, 0, 0, 0.4);
-  gap: 14px;
+  gap: 12px;
 }
 
 .mm-ach-stat-row {
@@ -1111,7 +1135,7 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 .mm-ach-stat-label {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
   color: #7ba2cc;
   letter-spacing: 0.8px;
@@ -1119,7 +1143,7 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 .mm-ach-stat-val {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #ffffff;
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
@@ -1142,13 +1166,13 @@ body.is-fullscreen .mm-fullscreen-btn,
   align-items: center;
   gap: 10px;
   flex: 1;
-  max-width: 260px;
+  max-width: 250px;
   padding: 0 4px;
 }
 
 .mm-ach-progress-track {
   flex: 1;
-  height: 8px;
+  height: 7px;
   background: rgba(10, 20, 38, 0.9);
   border: 1px solid rgba(0, 180, 244, 0.35);
   border-radius: 999px;
@@ -1167,7 +1191,7 @@ body.is-fullscreen .mm-fullscreen-btn,
 
 .mm-ach-progress-pct {
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #00f0ff;
   letter-spacing: 0.5px;
@@ -1180,10 +1204,10 @@ body.is-fullscreen .mm-fullscreen-btn,
   background: linear-gradient(135deg, #ffd700 0%, #ff9100 100%);
   color: #050d18;
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 1px;
-  padding: 7px 15px;
+  padding: 5px 13px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -1198,23 +1222,25 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 /* ═══════════════════════════════════════
-   TROPHY SHELF LAYOUT
+   TROPHY SHELF LAYOUT (TWO BALANCED CHAPTER AWARDS)
 ═══════════════════════════════════════ */
 .mm-ach-list {
   width: 100%;
   display: block;
   overflow: visible;
-  padding: 2px 0 0 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .ach-shelf-layout {
   display: grid;
-  grid-template-columns: 1fr 275px;
-  gap: 16px;
-  height: clamp(420px, 63vh, 495px);
+  grid-template-columns: 1fr 280px;
+  gap: 14px;
+  height: clamp(330px, 47vh, 390px);
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible !important;
   transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -1223,27 +1249,28 @@ body.is-fullscreen .mm-fullscreen-btn,
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: visible !important;
 }
 
 .ach-shelf-cabinet {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  justify-content: space-between;
   background: linear-gradient(180deg,
-    rgba(3, 9, 22, 0.98) 0%,
-    rgba(5, 14, 30, 0.97) 50%,
-    rgba(3, 9, 20, 0.98) 100%
+    rgba(4, 11, 26, 0.98) 0%,
+    rgba(6, 16, 36, 0.97) 50%,
+    rgba(3, 9, 22, 0.98) 100%
   );
   border: 1px solid rgba(0, 180, 244, 0.35);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible !important;
   position: relative;
   box-shadow:
     inset 0 0 60px rgba(0, 0, 0, 0.8),
     inset 0 0 30px rgba(0, 30, 70, 0.4),
     0 4px 24px rgba(0, 0, 0, 0.6);
-  padding: 12px 8px 6px;
+  padding: 0 14px 10px;
 }
 
 .ach-shelf-cabinet::before {
@@ -1251,9 +1278,56 @@ body.is-fullscreen .mm-fullscreen-btn,
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(ellipse at 25% 0%, rgba(0, 100, 200, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 75% 100%, rgba(0, 60, 140, 0.06) 0%, transparent 60%);
+    radial-gradient(ellipse at 30% 0%, rgba(0, 100, 200, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 100%, rgba(0, 60, 140, 0.06) 0%, transparent 60%);
   pointer-events: none;
+}
+
+/* Illuminated top canopy rail */
+.ach-shelf-cabinet::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.6) 30%, rgba(255, 255, 255, 0.8) 50%, rgba(0, 229, 255, 0.6) 70%, transparent);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+  pointer-events: none;
+}
+
+/* ── Vault Showcase Canopy Header ── */
+.ach-cabinet-canopy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px 5px;
+  border-bottom: 1px solid rgba(0, 180, 244, 0.22);
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.06) 0%, transparent 100%);
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 2px;
+}
+
+.ach-canopy-badge {
+  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  color: #7ba2cc;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ach-canopy-badge::before,
+.ach-canopy-badge::after {
+  content: '⬡';
+  color: #00e5ff;
+  font-size: 8px;
+  opacity: 0.85;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
 }
 
 /* ── Shelf Row ── */
@@ -1261,14 +1335,16 @@ body.is-fullscreen .mm-fullscreen-btn,
   display: flex;
   flex-direction: column;
   flex: 1;
-  margin-bottom: 4px;
+  justify-content: flex-end;
+  margin-bottom: 0;
   position: relative;
+  overflow: visible !important;
 }
 
 /* Shelf PNG Image: Dark silhouette when unclaimed, vibrant glowing PNG when claimed */
 .ach-shelf-img {
-  width: clamp(124px, 16.5vh, 142px);
-  height: clamp(124px, 16.5vh, 142px);
+  width: clamp(135px, 18.5vh, 168px);
+  height: clamp(135px, 18.5vh, 168px);
   object-fit: contain;
   aspect-ratio: 1 / 1;
   display: block;
@@ -1310,11 +1386,6 @@ body.is-fullscreen .mm-fullscreen-btn,
 
 /* ═══════════════════════════════════════════════════════════════
    SELECTED TROPHY: HIGHLIGHT ONLY OUTER EDGES WITH CLEAR GLOWING ACCENT
-   - No background box, card, or container
-   - Highlights only the trophy's outer edge contours
-   - Does not color the entire trophy or add a background
-   - Unclaimed trophies remain dark silhouettes with glowing edge
-   - Claimed trophies reveal original colors with glowing edge
    ═══════════════════════════════════════════════════════════════ */
 .ach-shelf-slot.is-selected .ach-shelf-img.is-silhouette {
   filter: brightness(0) opacity(0.55)
@@ -1340,50 +1411,9 @@ body.is-fullscreen .mm-fullscreen-btn,
   100% { transform: translateY(-4px); }
 }
 
-/* Shelf Slot Status Pills */
-.ach-slot-pill {
-  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.ach-slot-pill.claimed {
-  background: rgba(34, 197, 94, 0.18);
-  border: 1px solid rgba(74, 222, 128, 0.5);
-  color: #4ade80;
-  text-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
-}
-
-.ach-slot-pill.ready {
-  background: rgba(0, 229, 255, 0.18);
-  border: 1px solid rgba(0, 229, 255, 0.6);
-  color: #00e5ff;
-  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
-  animation: achPillPulse 2s infinite alternate;
-}
-
-.ach-slot-pill.locked {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(71, 85, 105, 0.4);
-  color: #64748b;
-}
-
-@keyframes achPillPulse {
-  0% { box-shadow: 0 0 4px rgba(0, 229, 255, 0.3); }
-  100% { box-shadow: 0 0 10px rgba(0, 229, 255, 0.7); }
-}
-
-
 /* ═══════════════════════════════════════════════════════════════
    TROPHY LIGHTING & COLLECTIBLE SILHOUETTE UI
    ═══════════════════════════════════════════════════════════════ */
-
-/* Overhead spotlight downlight removed as requested */
 .ach-slot-spotlight {
   display: none !important;
 }
@@ -1394,8 +1424,8 @@ body.is-fullscreen .mm-fullscreen-btn,
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: clamp(120px, 16vh, 138px);
-  height: clamp(120px, 16vh, 138px);
+  width: clamp(130px, 18vh, 160px);
+  height: clamp(130px, 18vh, 160px);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(0, 229, 255, 0.26) 0%, rgba(0, 160, 255, 0.1) 45%, transparent 70%);
   pointer-events: none;
@@ -1431,7 +1461,7 @@ body.is-fullscreen .mm-fullscreen-btn,
   bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
-  width: clamp(100px, 14vw, 125px);
+  width: clamp(120px, 16vw, 150px);
   height: 10px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(0, 229, 255, 0.5) 0%, rgba(255, 215, 0, 0.2) 40%, transparent 75%);
@@ -1442,13 +1472,13 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 .ach-shelf-slot:hover .ach-slot-shelf-light {
-  width: 82px;
+  width: clamp(110px, 15vw, 135px);
   background: radial-gradient(ellipse, rgba(0, 229, 255, 0.65) 0%, rgba(255, 215, 0, 0.3) 45%, transparent 75%);
   filter: blur(2.5px);
 }
 
 .ach-shelf-slot.is-selected .ach-slot-shelf-light {
-  width: 88px;
+  width: clamp(115px, 15.5vw, 140px);
   background: radial-gradient(ellipse, rgba(0, 240, 255, 0.8) 0%, rgba(255, 215, 0, 0.35) 45%, transparent 75%);
   filter: blur(3px);
 }
@@ -1482,11 +1512,12 @@ body.is-fullscreen .mm-fullscreen-btn,
 
 .ach-shelf-slots {
   display: flex;
-  gap: 24px;
-  justify-content: space-around;
+  gap: clamp(20px, 4vw, 48px);
+  justify-content: center;
   align-items: flex-end;
   flex: 1;
-  padding: 8px 16px 2px;
+  padding: 0 8px 0;
+  overflow: visible !important;
 }
 
 /* Shelf plank — rich dark shelf with glowing edge light */
@@ -1505,6 +1536,7 @@ body.is-fullscreen .mm-fullscreen-btn,
     0 5px 20px rgba(0, 140, 220, 0.4),
     0 2px 8px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(0, 220, 255, 0.15);
+  margin-top: 4px;
 }
 
 .ach-shelf-plank::before {
@@ -1535,11 +1567,11 @@ body.is-fullscreen .mm-fullscreen-btn,
   filter: blur(0.8px);
 }
 
-/* ── Individual Collectible Award Slot (No background box/card/container) ── */
+/* ── Individual Collectible Award Slot (Two Balanced Trophies) ── */
 .ach-shelf-slot {
   position: relative;
-  width: clamp(160px, 22vw, 210px);
-  max-width: 210px;
+  width: clamp(170px, 22vw, 215px);
+  max-width: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1550,6 +1582,7 @@ body.is-fullscreen .mm-fullscreen-btn,
   box-shadow: none !important;
   outline: none !important;
   padding: 0;
+  overflow: visible !important;
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -1580,6 +1613,7 @@ body.is-fullscreen .mm-fullscreen-btn,
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
+  overflow: visible !important;
   transition: all 0.25s ease;
 }
 
@@ -1603,11 +1637,104 @@ body.is-fullscreen .mm-fullscreen-btn,
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: clamp(134px, 17.5vh, 152px);
+  height: clamp(148px, 20.5vh, 180px);
   width: 100%;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* ── Trophy Pedestal Plaque (Under each trophy on the shelf) ── */
+.ach-slot-plaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  max-width: 175px;
+  margin-top: 5px;
+  padding: 4px 8px 5px;
+  background: rgba(8, 20, 40, 0.82);
+  border: 1px solid rgba(0, 180, 244, 0.35);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: all 0.25s ease;
+  z-index: 3;
+}
+
+.ach-shelf-slot:hover .ach-slot-plaque {
+  border-color: rgba(0, 229, 255, 0.65);
+  background: rgba(10, 28, 56, 0.88);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.28);
+}
+
+.ach-shelf-slot.is-selected .ach-slot-plaque {
+  border-color: #00f0ff !important;
+  background: rgba(12, 34, 68, 0.94) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4) !important;
+}
+
+.ach-plaque-ch {
+  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #00e5ff;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  line-height: 1.1;
+}
+
+.ach-plaque-title {
+  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+.ach-shelf-slot.is-selected .ach-plaque-title {
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.ach-plaque-status {
+  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 1.5px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+.ach-plaque-status.claimed {
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(74, 222, 128, 0.5);
+  color: #4ade80;
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+}
+
+.ach-plaque-status.ready {
+  background: rgba(0, 229, 255, 0.18);
+  border: 1px solid rgba(0, 229, 255, 0.6);
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+  animation: achPillPulse 2s infinite alternate;
+}
+
+.ach-plaque-status.locked {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+  color: #64748b;
 }
 
 .ach-slot-icon {
@@ -1627,7 +1754,6 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 .ach-slot-silhouette {
-  /* Silhouette: desaturated, dark, slightly blurred — recognizable trophy shape, no emoji */
   filter: brightness(0.18) saturate(0) contrast(0.8);
   opacity: 0.5;
   transition: opacity 0.2s ease;
@@ -1637,70 +1763,11 @@ body.is-fullscreen .mm-fullscreen-btn,
   opacity: 0.65;
 }
 
-/* Remove the lock overlay — no emoji */
 .ach-slot-lock-overlay {
   display: none;
 }
 
-/* Labels */
 .ach-slot-label, .ach-slot-pill { display: none !important; }
-.ach-slot-label {
-  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 9px;
-  font-weight: 700;
-  color: #7ba2cc;
-  text-align: center;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 116px;
-}
-
-.ach-shelf-slot.is-unlocked .ach-slot-label {
-  color: #b0d4f0;
-}
-
-.ach-shelf-slot.is-selected .ach-slot-label {
-  color: #00f0ff !important;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
-}
-
-.ach-slot-tier-badge {
-  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  text-transform: uppercase;
-}
-
-.ach-slot-tier-badge.tier-gold {
-  color: #ffd700;
-  background: rgba(255, 215, 0, 0.15);
-  border: 1px solid rgba(255, 215, 0, 0.45);
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
-}
-
-.ach-slot-tier-badge.tier-silver {
-  color: #e2e8f0;
-  background: rgba(203, 213, 225, 0.15);
-  border: 1px solid rgba(203, 213, 225, 0.4);
-}
-
-.ach-slot-tier-badge.tier-bronze {
-  color: #f59e0b;
-  background: rgba(205, 127, 50, 0.15);
-  border: 1px solid rgba(205, 127, 50, 0.4);
-}
-
-.ach-slot-tier-badge.locked-badge {
-  color: #475569;
-  background: rgba(30, 50, 80, 0.3);
-  border: 1px solid rgba(71, 85, 105, 0.3);
-}
 
 /* ── Detail Panel (Right) ── */
 .ach-shelf-right {
@@ -1717,11 +1784,12 @@ body.is-fullscreen .mm-fullscreen-btn,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 5px;
   background: linear-gradient(180deg, rgba(6, 16, 34, 0.97) 0%, rgba(4, 10, 22, 0.99) 100%);
   border: 1px solid rgba(0, 180, 244, 0.35);
   border-radius: 10px;
-  padding: 16px 14px 14px;
+  padding: 14px 12px 12px;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
@@ -1767,9 +1835,9 @@ body.is-fullscreen .mm-fullscreen-btn,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 140px;
-  height: 140px;
-  margin: 2px 0 6px;
+  width: clamp(100px, 13.5vh, 120px);
+  height: clamp(100px, 13.5vh, 120px);
+  margin: 4px 0 2px;
   flex-shrink: 0;
   background: transparent !important;
   border: none !important;
@@ -1781,8 +1849,8 @@ body.is-fullscreen .mm-fullscreen-btn,
 }
 
 .ach-detail-img {
-  width: 125px;
-  height: 125px;
+  width: clamp(88px, 12vh, 105px);
+  height: clamp(88px, 12vh, 105px);
   object-fit: contain;
   aspect-ratio: 1 / 1;
   position: relative;
@@ -1841,64 +1909,34 @@ body.is-fullscreen .mm-fullscreen-btn,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   text-align: center;
   flex: 1;
   width: 100%;
+  min-height: 0;
+  justify-content: flex-start;
 }
 
 .ach-detail-name {
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 15px;
+  font-size: clamp(14px, 1.85vh, 15.5px);
   font-weight: 700;
   color: #ffd700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   margin: 0;
-  line-height: 1.3;
-  text-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+  line-height: 1.25;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  max-width: 100%;
+  word-break: normal;
 }
 
 .ach-detail-chapter-tag {
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
   font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.9px;
   color: #38bdf8;
-  margin-top: -2px;
-}
-
-/* Status tag in detail panel */
-.ach-detail-tier-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-  line-height: 1;
-}
-.ach-detail-tier-tag.claimed {
-  background: rgba(0, 229, 255, 0.12);
-  color: #00e5ff;
-  border: 1px solid rgba(0, 229, 255, 0.4);
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
-}
-.ach-detail-tier-tag.claimable {
-  background: rgba(255, 215, 0, 0.14);
-  color: #ffd700;
-  border: 1px solid rgba(255, 215, 0, 0.45);
-  box-shadow: 0 0 14px rgba(255, 215, 0, 0.3);
-  animation: achTagGlow 2s ease-in-out infinite alternate;
-}
-@keyframes achTagGlow {
-  0%   { box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); }
-  100% { box-shadow: 0 0 18px rgba(255, 215, 0, 0.55); }
+  margin-top: -1px;
 }
 
 /* Scrollable container for trophy description to prevent overflow */
@@ -1908,12 +1946,12 @@ body.is-fullscreen .mm-fullscreen-btn,
   align-items: center;
   justify-content: center;
   flex: 1;
+  max-height: clamp(60px, 8.5vh, 85px);
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 229, 255, 0.3) transparent;
+  overflow-y: hidden;
+  scrollbar-width: none;
   padding: 0 4px;
-  margin: 4px 0 10px;
+  margin: 2px 0 6px;
 }
 .ach-detail-desc-box::-webkit-scrollbar {
   width: 4px;
@@ -1925,19 +1963,19 @@ body.is-fullscreen .mm-fullscreen-btn,
 
 .ach-detail-desc {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #cbd5e1;
-  line-height: 1.55;
+  line-height: 1.45;
   margin: 0;
   width: 100%;
-  max-width: 245px;
+  max-width: 250px;
   text-align: center;
 }
 
 /* Action / Claim Button */
 .ach-claim-btn {
   width: 100%;
-  padding: 10px 14px;
+  padding: 9px 14px;
   border-radius: 6px;
   font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
   font-size: 11px;
@@ -1984,72 +2022,96 @@ body.is-fullscreen .mm-fullscreen-btn,
   100% { box-shadow: 0 0 22px rgba(0, 220, 255, 0.85), inset 0 0 8px rgba(255, 255, 255, 0.3); }
 }
 
-.mm-ach-claim-all-btn {
-  font-family: 'QB One Bold', 'QB One', var(--font-cyberzero);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 4px 12px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #00d4ff 0%, #0077cc 100%);
-  color: #031122;
-  border: 1px solid #00f0ff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 12px rgba(0, 220, 255, 0.5);
-  animation: achClaimPulse 2s infinite alternate;
-}
-
-.mm-ach-claim-all-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 18px rgba(0, 220, 255, 0.85);
+@keyframes achPillPulse {
+  0% { box-shadow: 0 0 4px rgba(0, 229, 255, 0.3); }
+  100% { box-shadow: 0 0 10px rgba(0, 229, 255, 0.7); }
 }
 
 /* ── Screen Height Adaptation (Laptops & Compact Screens) ── */
 @media (max-height: 740px) {
   .mm-achievement-card {
-    padding: 12px 16px 14px !important;
+    padding: 12px 16px 12px !important;
     max-height: 94vh !important;
   }
   .mm-ach-header {
-    margin-bottom: 6px !important;
+    margin-bottom: 5px !important;
   }
   .mm-ach-trophy-ring {
-    width: 36px !important;
-    height: 36px !important;
-    margin-bottom: 3px !important;
+    width: 34px !important;
+    height: 34px !important;
+    margin-bottom: 2px !important;
   }
   .mm-ach-trophy-ring svg {
-    width: 22px !important;
-    height: 22px !important;
+    width: 20px !important;
+    height: 20px !important;
   }
   .mm-ach-title {
-    font-size: 18px !important;
+    font-size: 17px !important;
+  }
+  .mm-ach-sub {
+    font-size: 10.5px !important;
+  }
+  .mm-ach-stats {
+    padding: 5px 12px !important;
+    margin-top: 4px !important;
   }
   .ach-shelf-layout {
-    height: clamp(380px, 58vh, 440px) !important;
+    height: clamp(320px, 49vh, 370px) !important;
+    gap: 12px !important;
+  }
+  .ach-shelf-cabinet {
+    padding: 0 10px 8px !important;
+  }
+  .ach-cabinet-canopy {
+    padding: 4px 8px 3px !important;
+  }
+  .ach-canopy-badge {
+    font-size: 8px !important;
+  }
+  .ach-shelf-slots {
+    gap: 20px !important;
+  }
+  .ach-shelf-slot {
+    width: clamp(150px, 20vw, 185px) !important;
   }
   .ach-shelf-img {
-    width: 114px !important;
-    height: 114px !important;
+    width: 140px !important;
+    height: 140px !important;
   }
   .ach-slot-pedestal {
-    height: 126px !important;
+    height: 150px !important;
   }
   .ach-trophy-backlight {
-    width: 108px !important;
-    height: 108px !important;
+    width: 130px !important;
+    height: 130px !important;
   }
   .ach-slot-shelf-light {
-    width: 96px !important;
+    width: 110px !important;
+  }
+  .ach-slot-plaque {
+    max-width: 155px !important;
+    padding: 3px 6px 4px !important;
+  }
+  .ach-detail-panel {
+    padding: 10px 10px 8px !important;
   }
   .ach-detail-emblem {
-    width: 120px !important;
-    height: 120px !important;
+    width: 100px !important;
+    height: 100px !important;
   }
   .ach-detail-img {
-    width: 105px !important;
-    height: 105px !important;
+    width: 90px !important;
+    height: 90px !important;
+  }
+  .ach-detail-name {
+    font-size: 13.5px !important;
+  }
+  .ach-detail-desc {
+    font-size: 10.5px !important;
+  }
+  .ach-claim-btn {
+    padding: 8px 12px !important;
+    font-size: 10px !important;
   }
 }
 
@@ -2057,53 +2119,59 @@ body.is-fullscreen .mm-fullscreen-btn,
 @media (max-width: 768px) {
   .mm-achievement-card {
     width: 95vw !important;
-    padding: 14px 12px 14px !important;
+    padding: 14px 14px 14px !important;
     max-height: 92vh !important;
+    clip-path: polygon(18px 0%, calc(100% - 18px) 0%, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0% calc(100% - 18px), 0% 18px) !important;
   }
   .ach-shelf-layout {
     grid-template-columns: 1fr !important;
     height: auto !important;
-    max-height: 70vh !important;
+    max-height: 76vh !important;
     overflow-y: auto !important;
     gap: 14px !important;
   }
   .ach-shelf-cabinet {
-    padding: 10px 8px !important;
-    min-height: 320px;
+    padding: 0 8px 8px !important;
+    min-height: 250px !important;
+    justify-content: space-between !important;
   }
   .ach-shelf-slots {
-    gap: 16px !important;
-    padding: 4px 0 !important;
+    gap: clamp(12px, 3.5vw, 24px) !important;
+    padding: 8px 4px 2px !important;
     justify-content: center !important;
   }
   .ach-shelf-slot {
-    width: 140px !important;
+    width: clamp(135px, 42vw, 175px) !important;
+    max-width: 185px !important;
   }
   .ach-shelf-img {
-    width: 115px !important;
-    height: 115px !important;
+    width: clamp(120px, 36vw, 155px) !important;
+    height: clamp(120px, 36vw, 155px) !important;
   }
   .ach-slot-pedestal {
-    height: 128px !important;
+    height: clamp(130px, 38vw, 165px) !important;
   }
   .ach-trophy-backlight {
-    width: 110px !important;
-    height: 110px !important;
+    width: clamp(115px, 34vw, 145px) !important;
+    height: clamp(115px, 34vw, 145px) !important;
   }
   .ach-slot-shelf-light {
-    width: 95px !important;
+    width: clamp(100px, 28vw, 130px) !important;
+  }
+  .ach-shelf-plank {
+    height: 18px !important;
   }
   .ach-detail-panel {
     padding: 16px 14px !important;
-    min-height: 240px !important;
+    min-height: 220px !important;
   }
   .ach-detail-emblem {
-    width: 95px !important;
-    height: 95px !important;
+    width: 110px !important;
+    height: 110px !important;
   }
   .ach-detail-img {
-    width: 80px !important;
-    height: 80px !important;
+    width: 95px !important;
+    height: 95px !important;
   }
 
   .mm-fullscreen-btn {
@@ -2135,7 +2203,6 @@ body.is-fullscreen .mm-fullscreen-btn,
   }
 }
 
-
 /* ── Fullscreen Mode Prominent Trophy & Font Scaling ── */
 body.is-fullscreen .mm-achievement-card,
 :fullscreen .mm-achievement-card,
@@ -2143,7 +2210,8 @@ body.is-fullscreen .mm-achievement-card,
   width: min(1080px, 94vw) !important;
   max-width: 95vw !important;
   max-height: 92vh !important;
-  padding: 22px 28px 24px !important;
+  padding: 22px 30px 24px !important;
+  clip-path: polygon(24px 0%, calc(100% - 24px) 0%, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0% calc(100% - 24px), 0% 24px) !important;
 }
 
 body.is-fullscreen .mm-ach-title,
@@ -2187,30 +2255,84 @@ body.is-fullscreen .ach-shelf-layout,
   overflow: visible !important;
 }
 
+body.is-fullscreen .ach-cabinet-canopy,
+:fullscreen .ach-cabinet-canopy,
+:-webkit-full-screen .ach-cabinet-canopy {
+  padding: 10px 16px 8px !important;
+}
+
+body.is-fullscreen .ach-canopy-badge,
+:fullscreen .ach-canopy-badge,
+:-webkit-full-screen .ach-canopy-badge {
+  font-size: 11px !important;
+  letter-spacing: 2.2px !important;
+}
+
+body.is-fullscreen .ach-shelf-slots,
+:fullscreen .ach-shelf-slots,
+:-webkit-full-screen .ach-shelf-slots {
+  gap: clamp(32px, 5vw, 64px) !important;
+}
+
+body.is-fullscreen .ach-shelf-slot,
+:fullscreen .ach-shelf-slot,
+:-webkit-full-screen .ach-shelf-slot {
+  width: clamp(190px, 24vw, 240px) !important;
+  max-width: 250px !important;
+}
+
 body.is-fullscreen .ach-slot-pedestal,
 :fullscreen .ach-slot-pedestal,
 :-webkit-full-screen .ach-slot-pedestal {
-  height: clamp(146px, 21vh, 168px) !important;
+  height: clamp(180px, 25vh, 225px) !important;
 }
 
 body.is-fullscreen .ach-shelf-img,
 :fullscreen .ach-shelf-img,
 :-webkit-full-screen .ach-shelf-img {
-  width: clamp(136px, 19.5vh, 158px) !important;
-  height: clamp(136px, 19.5vh, 158px) !important;
+  width: clamp(165px, 23vh, 205px) !important;
+  height: clamp(165px, 23vh, 205px) !important;
 }
 
 body.is-fullscreen .ach-trophy-backlight,
 :fullscreen .ach-trophy-backlight,
 :-webkit-full-screen .ach-trophy-backlight {
-  width: clamp(130px, 18.5vh, 150px) !important;
-  height: clamp(130px, 18.5vh, 150px) !important;
+  width: clamp(160px, 22vh, 195px) !important;
+  height: clamp(160px, 22vh, 195px) !important;
 }
 
 body.is-fullscreen .ach-slot-shelf-light,
 :fullscreen .ach-slot-shelf-light,
 :-webkit-full-screen .ach-slot-shelf-light {
-  width: clamp(110px, 16vw, 140px) !important;
+  width: clamp(140px, 18vw, 175px) !important;
+}
+
+body.is-fullscreen .ach-slot-plaque,
+:fullscreen .ach-slot-plaque,
+:-webkit-full-screen .ach-slot-plaque {
+  max-width: 200px !important;
+  padding: 6px 10px 7px !important;
+}
+
+body.is-fullscreen .ach-plaque-ch,
+:fullscreen .ach-plaque-ch,
+:-webkit-full-screen .ach-plaque-ch {
+  font-size: 10px !important;
+  letter-spacing: 1.3px !important;
+}
+
+body.is-fullscreen .ach-plaque-title,
+:fullscreen .ach-plaque-title,
+:-webkit-full-screen .ach-plaque-title {
+  font-size: 12px !important;
+  letter-spacing: 0.6px !important;
+}
+
+body.is-fullscreen .ach-plaque-status,
+:fullscreen .ach-plaque-status,
+:-webkit-full-screen .ach-plaque-status {
+  font-size: 9px !important;
+  padding: 2px 9px !important;
 }
 
 /* ── Fullscreen Right Detail Panel & Large Typography ── */
@@ -2242,15 +2364,15 @@ body.is-fullscreen .ach-detail-panel,
 body.is-fullscreen .ach-detail-emblem,
 :fullscreen .ach-detail-emblem,
 :-webkit-full-screen .ach-detail-emblem {
-  width: clamp(130px, 16vh, 150px) !important;
-  height: clamp(130px, 16vh, 150px) !important;
+  width: clamp(135px, 17vh, 155px) !important;
+  height: clamp(135px, 17vh, 155px) !important;
 }
 
 body.is-fullscreen .ach-detail-img,
 :fullscreen .ach-detail-img,
 :-webkit-full-screen .ach-detail-img {
-  width: clamp(116px, 14vh, 134px) !important;
-  height: clamp(116px, 14vh, 134px) !important;
+  width: clamp(120px, 15vh, 138px) !important;
+  height: clamp(120px, 15vh, 138px) !important;
 }
 
 body.is-fullscreen .ach-detail-backlight,
@@ -2266,14 +2388,6 @@ body.is-fullscreen .ach-detail-info,
   width: 100% !important;
   box-sizing: border-box !important;
   padding: 0 4px !important;
-}
-
-body.is-fullscreen .ach-detail-tier-tag,
-:fullscreen .ach-detail-tier-tag,
-:-webkit-full-screen .ach-detail-tier-tag {
-  font-size: clamp(11px, 1.35vh, 12.5px) !important;
-  padding: 5px 14px !important;
-  letter-spacing: 1px !important;
 }
 
 body.is-fullscreen .ach-detail-name,
@@ -2306,21 +2420,30 @@ body.is-fullscreen .ach-detail-desc-box,
 :-webkit-full-screen .ach-detail-desc-box {
   width: 100% !important;
   max-width: 100% !important;
-  padding: 0 6px !important;
-  margin: 6px 0 12px !important;
+  max-height: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 12px !important;
+  margin: 10px 0 16px !important;
+  flex: 1 !important;
 }
 
 body.is-fullscreen .ach-detail-desc,
 :fullscreen .ach-detail-desc,
 :-webkit-full-screen .ach-detail-desc {
-  font-size: clamp(13.5px, 1.6vh, 15px) !important;
-  line-height: 1.62 !important;
+  font-size: clamp(14px, 1.8vh, 16.5px) !important;
+  line-height: 1.65 !important;
   color: #e2e8f0 !important;
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: 330px !important;
   text-align: center !important;
   word-break: normal !important;
   white-space: normal !important;
+  margin: 0 !important;
 }
 
 body.is-fullscreen .ach-claim-btn,

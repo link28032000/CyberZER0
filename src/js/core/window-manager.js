@@ -11,10 +11,8 @@ function isAppLocked(appName) {
 
 function updateAppLockStates() {
   const appsToCheck = [
-    { name: 'folder', req: 'Chapter 1 (Phishing)' },
-    { name: 'antivirus', req: 'Chapter 1 (Phishing)' },
-    { name: 'comms', req: 'Chapter 2 (Malware)' },
-    { name: 'ransomware', req: 'Chapter 3 (Social Engineering)' }
+    { name: 'folder', req: 'Chapter 1 (The Deceptive Click)' },
+    { name: 'antivirus', req: 'Chapter 1 (The Deceptive Click)' }
   ];
 
   appsToCheck.forEach(({ name: appName, req }) => {
@@ -232,6 +230,9 @@ function openApp(appName) {
   // Always center window on screen when opened
   centerWindow(appName);
   state.hasBeenPositioned = true;
+  if (typeof window.saveSessionLocally === 'function') {
+    window.saveSessionLocally();
+  }
 }
 
 // Centers a window on the desktop, always ensuring it fits within available space.
@@ -413,6 +414,9 @@ function closeApp(appName) {
   delete win.dataset.preDialogueTop;
   updateTaskbar();
   if (typeof AudioManager !== 'undefined') AudioManager.playWindowSound(false);
+  if (typeof window.saveSessionLocally === 'function') {
+    window.saveSessionLocally();
+  }
 }
 
 function minimizeApp(appName) {

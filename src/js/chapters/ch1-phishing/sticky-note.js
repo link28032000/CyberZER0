@@ -44,8 +44,38 @@ function _ch1FmtTime(sec) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * Validates whether the given element is the genuine awareness video briefing,
+ * strictly separating video events from the Music Player (audio playback).
+ */
+function _isAwarenessVideo(vid) {
+  if (!vid) return false;
+  // 1. Direct awareness overlay video element
+  if (vid.id === 'awareness-real-video') return true;
+
+  // 2. Media Player video element
+  if (vid.id === 'videoplayer-video') {
+    // If Media Player is in audio / music mode, reject immediately
+    if (window._vpCurrentMediaType === 'audio' || vid._vpMediaType === 'audio') {
+      return false;
+    }
+    // Check current source file for audio formats
+    const src = (vid.currentSrc || vid.src || '').toLowerCase();
+    if (src.includes('.mp3') || src.includes('.wav') || src.includes('.ogg') || src.includes('.m4a') || src.includes('sounds/')) {
+      return false;
+    }
+    // If explicitly flagged or awareness clip media source
+    if (vid._isAwarenessVideo === true) return true;
+    if (src.includes('video3.mp4') || src.includes('cyber_awareness') || vid._vpMediaType === 'video') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 window._ch1OnVideoMetadataLoaded = function(vid) {
-  if (!_isChapter1Active() || !vid) return;
+  if (!_isChapter1Active() || !vid || !_isAwarenessVideo(vid)) return;
   const dur = vid.duration || 0;
   if (dur > 0) {
     window._ch1VideoTracker.duration = dur;
@@ -54,7 +84,7 @@ window._ch1OnVideoMetadataLoaded = function(vid) {
 };
 
 window._ch1OnVideoTimeUpdate = function(vid) {
-  if (!_isChapter1Active() || !vid) return;
+  if (!_isChapter1Active() || !vid || !_isAwarenessVideo(vid)) return;
   const cur = vid.currentTime || 0;
   const dur = vid.duration || 0;
   const tracker = window._ch1VideoTracker;
@@ -88,16 +118,20 @@ window._ch1OnVideoTimeUpdate = function(vid) {
   }
 };
 
-window._ch1OnVideoSkip = function(secs) {
+window._ch1OnVideoSkip = function(secs, vid) {
   if (!_isChapter1Active()) return;
+  if (vid && !_isAwarenessVideo(vid)) return;
+  if (window._vpCurrentMediaType === 'audio') return;
   if (secs > 0) {
     window._ch1VideoTracker.hasSkippedForward = true;
     _refreshPostAwardChecklist();
   }
 };
 
-window._ch1OnVideoSeek = function(newTime, oldTime) {
+window._ch1OnVideoSeek = function(newTime, oldTime, vid) {
   if (!_isChapter1Active()) return;
+  if (vid && !_isAwarenessVideo(vid)) return;
+  if (window._vpCurrentMediaType === 'audio') return;
   if (newTime > oldTime + 1.25) {
     window._ch1VideoTracker.hasSkippedForward = true;
     _refreshPostAwardChecklist();
@@ -105,7 +139,7 @@ window._ch1OnVideoSeek = function(newTime, oldTime) {
 };
 
 window._ch1OnVideoEnded = function(vid) {
-  if (!_isChapter1Active()) return;
+  if (!_isChapter1Active() || !vid || !_isAwarenessVideo(vid)) return;
   const tracker = window._ch1VideoTracker;
   const dur = (vid && vid.duration) ? vid.duration : (tracker.duration || 0);
   const cur = vid ? vid.currentTime : tracker.currentTime;
@@ -355,6 +389,7 @@ function _refreshPostAwardChecklist() {
   if (scrollEl) {
     scrollEl.style.overflowY = 'hidden';
   }
+  if (typeof savePhishingProgress === 'function') { savePhishingProgress(); }
   if (_allChecklistTasksDone()) {
     _checkAndTriggerPostTestDialogue();
   }
@@ -372,7 +407,7 @@ function _buildPostAwardChecklistHTML() {
   const tracker = window._ch1VideoTracker || {};
   if (!tracker.duration) {
     const vEl = document.getElementById('videoplayer-video');
-    if (vEl && vEl.duration && !isNaN(vEl.duration)) {
+    if (vEl && vEl.duration && !isNaN(vEl.duration) && _isAwarenessVideo(vEl)) {
       tracker.duration = vEl.duration;
     }
   }
@@ -791,7 +826,7 @@ const PHISHING_AWARD = {
   badge: 'CHAPTER 1 · INVESTIGATION AWARD',
   rank: '5/5 Missions Completed',
   sub: 'All 5 Investigation Checklist Tasks Completed',
-  desc: 'Outstanding detective work! You successfully completed all Phishing missions and collected all required evidence by detecting phishing emails, verifying clean communications, documenting fake senders, uncovering critical indicators, and securing digital proof.',
+  desc: 'Outstanding detective work! You successfully analyzed all suspicious emails, exposed deceptive phishing lures, documented spoofed senders, and safeguarded authentic communications.',
   requiredTasks: 5
 };
 
@@ -831,9 +866,21 @@ function savePhishingProgress() {
       earnedAward: _phishingEarnedAward,
       awardClaimed: !!window._awardClaimed,
       postAwardTasks: window._postAwardTasks || {},
-      unlockedDate: _trophyUnlockedDate || (_phishingEarnedAward ? _phishingEarnedAward.unlockedDate : (isTrophyUnlocked ? new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : null))
+      unlockedDate: _trophyUnlockedDate || (_phishingEarnedAward ? _phishingEarnedAward.unlockedDate : (isTrophyUnlocked ? new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : null)),
+      currentEmail: (typeof gameState !== 'undefined' && typeof gameState.currentEmail === 'number') ? gameState.currentEmail : 0,
+      emailResults: (typeof gameState !== 'undefined' && Array.isArray(gameState.emailResults)) ? [...gameState.emailResults] : [],
+      inboxEmailIds: (typeof ch1InboxEmails !== 'undefined' && Array.isArray(ch1InboxEmails)) ? ch1InboxEmails.map(e => e.id) : [],
+      resolvedEmailIds: (typeof ch1ResolvedEmailIds !== 'undefined' && ch1ResolvedEmailIds && ch1ResolvedEmailIds.size) ? Array.from(ch1ResolvedEmailIds) : [],
+      score: (typeof gameState !== 'undefined') ? gameState.score : 0,
+      correctDecisions: (typeof gameState !== 'undefined') ? gameState.correctDecisions : 0,
+      phishingDetected: (typeof gameState !== 'undefined') ? gameState.phishingDetected : 0,
+      legitimateDetected: (typeof gameState !== 'undefined') ? gameState.legitimateDetected : 0,
+      evidenceFoundTotal: (typeof gameState !== 'undefined') ? gameState.evidenceFoundTotal : 0
     };
     localStorage.setItem('cyberzero_phishing_progress', JSON.stringify(data));
+    if (typeof window.saveSessionLocally === 'function') {
+      window.saveSessionLocally();
+    }
   } catch(e) {}
 }
 
@@ -862,6 +909,37 @@ function loadPhishingProgress() {
         _trophyUnlockedDate = data.unlockedDate || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
       } else if (data.unlockedDate) {
         _trophyUnlockedDate = data.unlockedDate;
+      }
+
+      // Restore mission progress fields
+      if (Array.isArray(data.emailResults) && typeof gameState !== 'undefined' && data.emailResults.length > 0) {
+        gameState.emailResults = [...data.emailResults];
+      }
+      if (typeof data.currentEmail === 'number' && typeof gameState !== 'undefined') {
+        gameState.currentEmail = data.currentEmail;
+      }
+      if (typeof data.score === 'number' && typeof gameState !== 'undefined') {
+        gameState.score = data.score;
+      }
+      if (typeof data.correctDecisions === 'number' && typeof gameState !== 'undefined') {
+        gameState.correctDecisions = data.correctDecisions;
+      }
+      if (typeof data.phishingDetected === 'number' && typeof gameState !== 'undefined') {
+        gameState.phishingDetected = data.phishingDetected;
+      }
+      if (typeof data.legitimateDetected === 'number' && typeof gameState !== 'undefined') {
+        gameState.legitimateDetected = data.legitimateDetected;
+      }
+      if (typeof data.evidenceFoundTotal === 'number' && typeof gameState !== 'undefined') {
+        gameState.evidenceFoundTotal = data.evidenceFoundTotal;
+      }
+      if (Array.isArray(data.resolvedEmailIds) && typeof ch1ResolvedEmailIds !== 'undefined') {
+        ch1ResolvedEmailIds = new Set(data.resolvedEmailIds);
+      }
+      if (Array.isArray(data.inboxEmailIds) && data.inboxEmailIds.length > 0 && typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0) {
+        ch1InboxEmails = data.inboxEmailIds.map(function(id) {
+          return typeof ch1GetEmailDef === 'function' ? ch1GetEmailDef(id) : null;
+        }).filter(Boolean);
       }
     }
   } catch(e) {}
@@ -1663,17 +1741,17 @@ function renderStickyNoteResults(rank, rankLabel, rankClass, pct, correct, total
       if (vid && !vid._postAwardHooked) {
         vid._postAwardHooked = true;
         vid.addEventListener('timeupdate', function() {
-          if (typeof window._ch1OnVideoTimeUpdate === 'function') {
+          if (_isAwarenessVideo(vid) && typeof window._ch1OnVideoTimeUpdate === 'function') {
             window._ch1OnVideoTimeUpdate(vid);
           }
         });
         vid.addEventListener('ended', function() {
-          if (typeof window._ch1OnVideoEnded === 'function') {
+          if (_isAwarenessVideo(vid) && typeof window._ch1OnVideoEnded === 'function') {
             window._ch1OnVideoEnded(vid);
           }
         });
         vid.addEventListener('loadedmetadata', function() {
-          if (typeof window._ch1OnVideoMetadataLoaded === 'function') {
+          if (_isAwarenessVideo(vid) && typeof window._ch1OnVideoMetadataLoaded === 'function') {
             window._ch1OnVideoMetadataLoaded(vid);
           }
         });

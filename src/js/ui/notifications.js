@@ -41,65 +41,14 @@ function initChapterMissionNotifications(chapterId, playChime = false) {
       source: 'Mission Directive',
       icon: '🔍',
       iconType: 'shield',
-      title: 'Chapter 1: The First Day',
+      title: 'Chapter 1: The Deceptive Click',
       body: 'Investigate incoming emails, inspect sender domains, and flag deceptive phishing attacks.',
       time: '1m ago',
       app: 'gmail'
     });
   } else if (cat === 'malware') {
     // No active mission notifications for Chapter 2
-  } else if (cat === 'social_engineering') {
-    simNotifications.push({
-      id: 'notif-ch3-zmail-advisory',
-      source: 'Zmail',
-      icon: '📧',
-      iconType: 'mail',
-      title: 'New Email: Campus Wi-Fi Security Advisory',
-      body: 'Warning: Rogue public Wi-Fi hotspot detected on campus. MITM risk active.',
-      time: 'Just now',
-      app: 'gmail'
-    });
-    simNotifications.push({
-      id: 'notif-ch3-wifi',
-      source: 'Network Monitor',
-      icon: '📶',
-      iconType: 'vpn',
-      title: 'Chapter 3: The System Collapse',
-      body: 'Unsecured Wi-Fi access points detected in vicinity. Check Wi-Fi Settings.',
-      time: '1m ago',
-      app: 'wifi-settings'
-    });
-    simNotifications.push({
-      id: 'notif-ch3-comms',
-      source: 'Comms / Pia',
-      icon: '💬',
-      iconType: 'info',
-      title: 'Support Request from Pia',
-      body: 'Suspected credential theft after connecting to open campus network.',
-      time: '3m ago',
-      app: 'comms'
-    });
-  } else if (cat === 'ransomware') {
-    simNotifications.push({
-      id: 'notif-ch4-zmail-emergency',
-      source: 'Zmail',
-      icon: '📧',
-      iconType: 'mail',
-      title: 'New Email: EMERGENCY - System Outage',
-      body: 'Critical: Coordinated ransomware campaign targeting school storage servers.',
-      time: 'Just now',
-      app: 'gmail'
-    });
-    simNotifications.push({
-      id: 'notif-ch4-console',
-      source: 'Incident Response',
-      icon: '🚨',
-      iconType: 'warning',
-      title: 'Chapter 4: The Last Login',
-      body: 'Launch Ransomware Console, isolate infected storage nodes, and restore offline backups.',
-      time: '1m ago',
-      app: 'ransomware'
-    });
+
   } else {
     simNotifications.push({
       id: 'notif-init-zmail',

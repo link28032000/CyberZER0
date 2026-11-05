@@ -150,7 +150,29 @@ window.resetCh1ZmailInterface = resetCh1ZmailInterface;
 // MISSION
 // ═══════════════════════════════════════════════════════════
 
-function startMission(openGmail = false) {
+function startMission(openGmail = false, forceFresh = false) {
+  // If not explicitly forcing a fresh start, and active/saved progress exists, resume cleanly!
+  if (!forceFresh) {
+    let hasSaved = false;
+    let ch1Data = null;
+    try {
+      const raw = localStorage.getItem('cyberzero_session_state');
+      if (raw) {
+        const sess = JSON.parse(raw);
+        if (sess && sess.ch1 && (sess.ch1.emailResults.length > 0 || sess.ch1.currentEmail > 0 || sess.ch1.awardClaimed || sess.ch1.inboxEmailIds.length > 0)) {
+          hasSaved = true;
+          ch1Data = sess.ch1;
+        }
+      }
+    } catch(e) {}
+
+    if (hasSaved && ch1Data) {
+      resumeChapter1Mission(ch1Data);
+      if (openGmail && typeof openApp === 'function') openApp('gmail');
+      return;
+    }
+  }
+
   gameState.phase = 'mission';
   window._currentChapterCategory = 'phishing';
   gameState.currentEmail = 0;
@@ -508,24 +530,155 @@ function openChapterDesktopDirect(chapterId) {
 
   // Show/hide chapter-specific desktop icons
   const isCh2 = (chapterId === 'malware' || chapterId === 'ch2' || chapterId === 2);
-  const isCh3 = (chapterId === 'social-engineering' || chapterId === 'social_engineering' || chapterId === 'social' || chapterId === 'ch3' || chapterId === 3);
-  const isCh4 = (chapterId === 'ransomware' || chapterId === 'ch4' || chapterId === 4);
-  const isCh2Plus = isCh2 || isCh3 || isCh4;
 
-  // Column 3 container: visible in Chapter 2, Chapter 3, Chapter 4
+  // Column 3 container: visible in Chapter 2
   document.querySelectorAll('.ch2-only').forEach(el => {
-    el.style.setProperty('display', isCh2Plus ? 'flex' : 'none', 'important');
+    el.style.setProperty('display', isCh2 ? 'flex' : 'none', 'important');
   });
-  // Gaming icons (Steam, GTA 6, Games): hidden in Chapter 3 and 4 (visible in Chapter 2)
+  // Gaming icons (Steam, GTA 6, Games): visible in Chapter 2
   document.querySelectorAll('.ch2-not-ch3').forEach(el => {
-    el.style.setProperty('display', (isCh2Plus && !isCh3 && !isCh4) ? 'flex' : 'none', 'important');
+    el.style.setProperty('display', isCh2 ? 'flex' : 'none', 'important');
   });
-  // Chapter 3 apps (Instagram, Pictures): visible in Chapter 3 only
+  // Chapter 3 apps: hidden
   document.querySelectorAll('.ch3-only').forEach(el => {
-    el.style.setProperty('display', isCh3 ? 'flex' : 'none', 'important');
+    el.style.setProperty('display', 'none', 'important');
   });
-  // Chapter 4 apps (Ransomware Console): visible in Chapter 4 only
+  // Chapter 4 apps: hidden
   document.querySelectorAll('.ch4-only').forEach(el => {
-    el.style.setProperty('display', isCh4 ? 'flex' : 'none', 'important');
+    el.style.setProperty('display', 'none', 'important');
   });
 }
+
+/**
+ * Resumes Chapter 1 (Phishing) from a saved state snapshot without wiping
+ * inbox, email verdicts, evidence, or checklist progress.
+ */
+function resumeChapter1Mission(savedData) {
+  if (window._ryanMissionIntroTimer) {
+    clearTimeout(window._ryanMissionIntroTimer);
+    window._ryanMissionIntroTimer = null;
+  }
+  if (typeof RyanPretest !== 'undefined' && RyanPretest.close) {
+    RyanPretest.close();
+  }
+
+  gameState.phase = 'mission';
+  window._currentChapterCategory = 'phishing';
+  if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'phishing';
+
+  // Restore scores & counts
+  if (savedData) {
+    if (typeof savedData.score === 'number') gameState.score = savedData.score;
+    if (typeof savedData.correctDecisions === 'number') gameState.correctDecisions = savedData.correctDecisions;
+    if (typeof savedData.phishingDetected === 'number') gameState.phishingDetected = savedData.phishingDetected;
+    if (typeof savedData.legitimateDetected === 'number') gameState.legitimateDetected = savedData.legitimateDetected;
+    if (typeof savedData.evidenceFoundTotal === 'number') gameState.evidenceFoundTotal = savedData.evidenceFoundTotal;
+    if (Array.isArray(savedData.emailResults)) gameState.emailResults = [...savedData.emailResults];
+    if (Array.isArray(savedData.trashedSentIds)) gameState.trashedSentIds = [...savedData.trashedSentIds];
+    if (Array.isArray(savedData.readSentIds)) gameState.readSentIds = [...savedData.readSentIds];
+    if (savedData.currentFolder) gameState.currentFolder = savedData.currentFolder;
+
+    if (Array.isArray(savedData.resolvedEmailIds) && typeof ch1ResolvedEmailIds !== 'undefined') {
+      ch1ResolvedEmailIds = new Set(savedData.resolvedEmailIds);
+    }
+    if (typeof savedData.stage === 'number' && typeof ch1Stage !== 'undefined') ch1Stage = savedData.stage;
+    if (typeof savedData.currentRound === 'number' && typeof ch1CurrentRound !== 'undefined') ch1CurrentRound = savedData.currentRound;
+    if (typeof savedData.mistakeCount === 'number' && typeof ch1MistakeCount !== 'undefined') ch1MistakeCount = savedData.mistakeCount;
+    if (savedData.investigationTutorialDone && typeof ch1InvestigationTutorialDone !== 'undefined') ch1InvestigationTutorialDone = true;
+    if (savedData.secondEmailNotesHintDone && typeof ch1SecondEmailNotesHintDone !== 'undefined') ch1SecondEmailNotesHintDone = true;
+
+    // Restore dynamic inbox emails
+    if (Array.isArray(savedData.inboxEmailIds) && savedData.inboxEmailIds.length > 0) {
+      ch1InboxEmails = savedData.inboxEmailIds.map(function(id) {
+        return typeof ch1GetEmailDef === 'function' ? ch1GetEmailDef(id) : null;
+      }).filter(Boolean);
+    } else if (typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0) {
+      if (typeof ch1InjectWave === 'function') ch1InjectWave(1);
+    }
+
+    if (typeof savedData.currentEmail === 'number') {
+      gameState.currentEmail = savedData.currentEmail;
+    }
+
+    if (Array.isArray(savedData.unlockedAchievements) && typeof _achievementUnlocked !== 'undefined') {
+      savedData.unlockedAchievements.forEach(function(id) { _achievementUnlocked.add(id); });
+    }
+    if (savedData.earnedAward && typeof _phishingEarnedAward !== 'undefined') {
+      _phishingEarnedAward = savedData.earnedAward;
+    }
+    if (savedData.trophyUnlockedDate && typeof _trophyUnlockedDate !== 'undefined') {
+      _trophyUnlockedDate = savedData.trophyUnlockedDate;
+    }
+    if (savedData.awardClaimed) {
+      window._awardClaimed = true;
+    }
+    if (savedData.postAwardTasks) {
+      window._postAwardTasks = Object.assign(window._postAwardTasks || {}, savedData.postAwardTasks);
+    }
+    if (savedData.ch1VideoTracker) {
+      window._ch1VideoTracker = Object.assign(window._ch1VideoTracker || {}, savedData.ch1VideoTracker);
+    }
+    if (savedData.postAwardPostTestDialogueFired) {
+      window._postAwardPostTestDialogueFired = true;
+    }
+    if (savedData.awaitingShutdownForChapter2) {
+      window._awaitingShutdownForChapter2 = true;
+    }
+    if (savedData.ch1CompletedSandbox) {
+      window._ch1CompletedSandbox = true;
+    }
+  } else {
+    if (typeof loadPhishingProgress === 'function') loadPhishingProgress();
+    if (typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails.length === 0) {
+      if (typeof ch1InjectWave === 'function') ch1InjectWave(1);
+    }
+  }
+
+  // Ensure desktop is visible cleanly
+  if (typeof hideAllOverlays === 'function') hideAllOverlays(true);
+  const desktop = document.getElementById('desktop');
+  if (desktop) {
+    desktop.style.visibility = 'visible';
+    desktop.style.opacity = '1';
+  }
+
+  // Hide non-Ch1 desktop icons
+  document.querySelectorAll('.ch2-only, .ch3-only, .ch4-only, .ch2-not-ch3').forEach(function(el) {
+    el.style.setProperty('display', 'none', 'important');
+  });
+
+  const hudEl = document.getElementById('hud');
+  if (hudEl) hudEl.classList.remove('hidden');
+
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof updateFolderCounts === 'function') updateFolderCounts();
+  if (typeof updateAppLockStates === 'function') updateAppLockStates();
+  if (typeof initChapterMissionNotifications === 'function') initChapterMissionNotifications('phishing', false);
+  if (typeof updateDesktopTrophyDisplay === 'function') updateDesktopTrophyDisplay();
+
+  if (typeof renderEmailList === 'function') renderEmailList();
+  if (typeof renderEvidencePanel === 'function') renderEvidencePanel();
+
+  if (gameState.emailResults && gameState.emailResults.length > 0) {
+    const evPanel = document.getElementById('evidence-panel');
+    if (evPanel) {
+      evPanel.classList.remove('hidden');
+      evPanel.classList.remove('collapsed');
+    }
+  }
+
+  // Update sticky notes checklist
+  if (typeof updateStickyNoteForPhase === 'function') updateStickyNoteForPhase('phishing');
+  if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+
+  // If award is claimed, make sure post-award checklist renders
+  if (window._awardClaimed && typeof _refreshPostAwardChecklist === 'function') {
+    _refreshPostAwardChecklist();
+  }
+
+  // Open active email if inbox is selected
+  if (gameState.currentFolder === 'inbox' && typeof gameState.currentEmail === 'number' && typeof ch1InboxEmails !== 'undefined' && ch1InboxEmails[gameState.currentEmail]) {
+    if (typeof openEmail === 'function') openEmail(gameState.currentEmail);
+  }
+}
+window.resumeChapter1Mission = resumeChapter1Mission;

@@ -207,21 +207,13 @@ function restartCurrentChapterMission() {
                     'phishing';
 
   const isCh2 = (activeCat === 'malware' || activeCat === 'ch2' || activeCat === 2);
-  const isCh3 = (activeCat === 'social_engineering' || activeCat === 'social' || activeCat === 'social-engineering' || activeCat === 'ch3' || activeCat === 3);
-  const isCh4 = (activeCat === 'ransomware' || activeCat === 'ch4' || activeCat === 4);
 
-  let chapterName = 'Chapter 1: Phishing Investigation';
+  let chapterName = 'Chapter 1: The Deceptive Click';
   let restartNote = 'Restarting Chapter 1… Resetting inbox, threat logs, and mission tasks…';
 
   if (isCh2) {
-    chapterName = 'Chapter 2: Malware Incident';
+    chapterName = 'Chapter 2: The Hidden Threat';
     restartNote = 'Restarting Chapter 2… Resetting workstation environment and system state…';
-  } else if (isCh3) {
-    chapterName = 'Chapter 3: Social Engineering';
-    restartNote = 'Restarting Chapter 3… Resetting network settings and communications feed…';
-  } else if (isCh4) {
-    chapterName = 'Chapter 4: Ransomware Containment';
-    restartNote = 'Restarting Chapter 4… Resetting drive nodes, terminal logs, and system defense…';
   }
 
   if (titleEl) titleEl.textContent = 'Restarting';
@@ -283,8 +275,22 @@ function restartCurrentChapterMission() {
     if (isCh2) {
       // ── Restart Chapter 2 (Ethan) from beginning ──
       window._currentChapterCategory = 'malware';
+
+      // ── Clear all saved Ch2 progress so the checklist starts completely fresh ──
+      try { localStorage.removeItem('cyberzero_session_state'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_ch2_mission'); } catch (e) {}
+
+      // Reset all in-memory Chapter 2 flags before starting fresh
+      window._ch2Mission = null;
+      window._ch2MissionStarted = false;
+      window._ch2IntroActive = false;
+      window._ch2ChecklistUnlocked = false;
+
       if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.reset) {
         Ch2Pretest.reset();
+      }
+      if (typeof TrojanInvestigation !== 'undefined' && TrojanInvestigation.reset) {
+        TrojanInvestigation.reset();
       }
       if (typeof startMalwareChapter === 'function') {
         startMalwareChapter();
@@ -370,80 +376,56 @@ function restartCurrentChapterMission() {
       const hudEl = document.getElementById('hud');
       if (hudEl) hudEl.classList.add('hidden');
 
-    } else if (isCh3) {
-      // ── Restart Chapter 3 (Pia) from beginning ──
-      window._currentChapterCategory = 'social_engineering';
-      if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'social_engineering';
-      if (typeof updateLoginScreenForChapter === 'function') {
-        updateLoginScreenForChapter('social_engineering');
-      }
-      if (typeof g4State !== 'undefined') {
-        Object.assign(g4State, {
-          stage: 1, wifiChoice: null, securedLaptop: false,
-          fileSharingOff: false, deviceDiscoveryOff: false,
-          miaAction: null, fileDecision: null,
-          infectionInvestigated: false, wifiDisconnected: false,
-          processKilled: false, scannerRan: false, score: 0
-        });
-      }
-      if (typeof G4_SECURITY_SETTINGS !== 'undefined') {
-        G4_SECURITY_SETTINGS.forEach(s => { s.state = true; });
-      }
-      if (typeof g4InfectionSymptoms !== 'undefined') g4InfectionSymptoms = 0;
-      if (typeof g4InfectionTimer !== 'undefined' && g4InfectionTimer) {
-        clearInterval(g4InfectionTimer);
-        g4InfectionTimer = null;
-      }
-      if (typeof networkSettings !== 'undefined') {
-        networkSettings.currentSsid = 'HomeNetwork_5G';
-        networkSettings.wifi = true;
-        networkSettings.airplane = false;
-      }
-      if (typeof updateNetworkUI === 'function') updateNetworkUI();
 
-      // Reset Security Settings UI elements
-      const secFeedback = document.getElementById('sec-feedback');
-      if (secFeedback) { secFeedback.classList.add('hidden'); secFeedback.innerHTML = ''; }
-      const secStageNav = document.getElementById('sec-stage-nav');
-      if (secStageNav) secStageNav.style.display = 'none';
-
-      // Reset wifi props panel
-      const wifiPropsPanel = document.getElementById('wifi-props-panel');
-      if (wifiPropsPanel) wifiPropsPanel.classList.add('hidden');
-
-      if (typeof startGroup4Mission === 'function') {
-        startGroup4Mission(false);
-      }
-
-      // Hide HUD since Chapter 3 has no email mission active
-      const hudEl = document.getElementById('hud');
-      if (hudEl) hudEl.classList.add('hidden');
-
-    } else if (isCh4) {
-      // ── Restart Chapter 4 (Ryan) from beginning ──
-      window._currentChapterCategory = 'ransomware';
-      if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'ransomware';
-      if (typeof updateLoginScreenForChapter === 'function') {
-        updateLoginScreenForChapter('ransomware');
-      }
-      if (typeof startRansomwareMission === 'function') {
-        startRansomwareMission(false);
-      }
-
-      // Hide HUD since Chapter 4 has no email mission active
-      const hudEl = document.getElementById('hud');
-      if (hudEl) hudEl.classList.add('hidden');
 
     } else {
       // ── Restart Chapter 1 (Alex) from beginning ──
       window._phishBrowserCloseToastShown = false;
       window._currentChapterCategory = 'phishing';
+
+      // ── Clear all saved progress so startMission() starts FRESH ──
+      // Without clearing these, startMission()'s resume-guard finds stale
+      // localStorage data and calls resumeChapter1Mission() instead of
+      // doing a true reset, leaving the checklist empty or in a stale state.
+      try { localStorage.removeItem('cyberzero_session_state'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_phishing_progress'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_claimed_achievements'); } catch (e) {}
+
+      // Reset all in-memory Chapter 1 progress flags so nothing leaks into the fresh start
+      window._awardClaimed = false;
+      window._phishAutoModalShown = false;
+      window._ch1CompletedSandbox = false;
+      window._awaitingShutdownForChapter2 = false;
+      window._postAwardPostTestDialogueFired = false;
+      window._postAwardTasks = {
+        browserOpened: false, browserNavigated: false, phishingSearched: false,
+        phishingVisited: false, explorerOpened: false, videoFolderOpen: false,
+        videoPlayed: false, gcOpened: false, postTestDone: false
+      };
+      window._ch1VideoTracker = {
+        duration: 0, currentTime: 0, actualSecondsWatched: 0,
+        lastPlayheadTime: 0, hasSkippedForward: false, completed: false, _lastRefresh: 0
+      };
+      if (typeof _achievementUnlocked !== 'undefined' && _achievementUnlocked.clear) {
+        _achievementUnlocked.clear();
+      }
+      if (typeof _phishingEarnedAward !== 'undefined') _phishingEarnedAward = null;
+      if (typeof _trophyUnlockedDate !== 'undefined') _trophyUnlockedDate = null;
+
       if (typeof openChapterDesktopDirect === 'function') {
         openChapterDesktopDirect('phishing');
       }
+
+      // Pass forceFresh=true so startMission() bypasses its resume-guard entirely
       if (typeof startMission === 'function') {
-        startMission();
+        startMission(false, true);
       }
+
+      // After a fresh start, force the sticky note to render the full fresh checklist
+      setTimeout(function() {
+        if (typeof updateStickyNoteForPhase === 'function') updateStickyNoteForPhase('phishing');
+        if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+      }, 100);
     }
 
     // Startup chimes

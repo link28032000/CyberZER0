@@ -105,10 +105,6 @@ function showStorySelectionScreen(selectChapterId = 'malware') {
   let targetId = selectChapterId || 'malware';
   if (targetId === 'malware' || targetId === 2) {
     targetId = 'malware';
-  } else if (targetId === 'social_engineering' || targetId === 'social' || targetId === 3) {
-    targetId = 'social_engineering';
-  } else if (targetId === 'ransomware' || targetId === 4) {
-    targetId = 'ransomware';
   } else {
     targetId = 'phishing';
   }
@@ -161,9 +157,7 @@ function mainMenuStart() {
   if (typeof startMMBgMusic === 'function') startMMBgMusic();
 
   // ── CONTINUE FAST-PATH ───────────────────────────────────────────────────
-  // If the player has saved progress, go to Story Selection screen so they
-  // can choose which chapter to resume. This preserves saved progress,
-  // achievements, and completed chapter status as shown in Story Selection.
+  // If the player has saved progress, resume directly into where they left off!
   if (window._continueChapterId) {
     const contCatId = window._continueChapterId;
     // Hide main menu
@@ -172,12 +166,13 @@ function mainMenuStart() {
       mmEl.classList.remove('active');
       mmEl.style.display = 'none';
     }
-    // Go to Story Selection, pre-selecting the saved chapter card
-    if (typeof showStorySelectionScreen === 'function') {
-      showStorySelectionScreen(contCatId);
-    } else {
-      // Fallback: load desktop directly
+    // Resume directly into saved desktop & mission state
+    if (typeof resumeSavedGameSession === 'function') {
+      resumeSavedGameSession(contCatId);
+    } else if (typeof _continueSavedGame === 'function') {
       _continueSavedGame(contCatId);
+    } else if (typeof showStorySelectionScreen === 'function') {
+      showStorySelectionScreen(contCatId);
     }
     return;
   }
@@ -463,9 +458,12 @@ function storySelectPlay(categoryId) {
     AudioManager.playMouseClick();
   }
 
-  // ── Completed-chapter fast-path: skip ALL intro / comic / login ──────
-  // If this chapter is already finished, go straight to its saved desktop.
-  if (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted(categoryId)) {
+  // ── Resume Fast-Path: completed OR in-progress saved chapter ───────
+  // If this chapter has active saved progress or is finished, resume where they left off!
+  const hasSavedProg = (typeof hasChapterProgress === 'function' && hasChapterProgress(categoryId)) ||
+                       (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted(categoryId));
+
+  if (hasSavedProg) {
     const ss = document.getElementById('overlay-story-select');
     if (ss) {
       ss.style.transition = 'opacity 0.4s ease';
@@ -476,11 +474,19 @@ function storySelectPlay(categoryId) {
         ss.classList.remove('active');
         ss.style.display = 'none';
         if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
-        _continueSavedGame(categoryId);
+        if (typeof resumeSavedGameSession === 'function') {
+          resumeSavedGameSession(categoryId);
+        } else {
+          _continueSavedGame(categoryId);
+        }
       }, 420);
     } else {
       if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
-      _continueSavedGame(categoryId);
+      if (typeof resumeSavedGameSession === 'function') {
+        resumeSavedGameSession(categoryId);
+      } else {
+        _continueSavedGame(categoryId);
+      }
     }
     return;
   }
@@ -503,7 +509,7 @@ function storySelectPlay(categoryId) {
     ss.style.display = 'none';
 
     // Retrieve chapter info dynamically
-    const cat = (typeof CATEGORIES !== 'undefined' && CATEGORIES.find(c => c.id === categoryId)) || { num: 1, title: 'THE FIRST DAY' };
+    const cat = (typeof CATEGORIES !== 'undefined' && CATEGORIES.find(c => c.id === categoryId)) || { num: 1, title: 'THE DECEPTIVE CLICK' };
     const ccNum = document.getElementById('cc-chapter-num');
     const ccTitle = document.getElementById('cc-chapter-title');
     if (ccNum) ccNum.textContent = `CHAPTER ${cat.num}`;
@@ -533,12 +539,6 @@ function storySelectPlay(categoryId) {
           } else if (categoryId === 'malware') {
             // Show Chapter 2 comic strip first BEFORE Ethan enters password!
             showComicStripCh2();
-          } else if (categoryId === 'social_engineering' || categoryId === 'social' || categoryId === 'social-engineering') {
-            // Show Chapter 3 comic strip first BEFORE Pia enters password!
-            showComicStripCh3();
-          } else if (categoryId === 'ransomware' || categoryId === 'ch4' || categoryId === 4) {
-            // Show Chapter 4 comic strip first BEFORE Ryan enters password!
-            showComicStripCh4();
           } else {
             const tm = document.getElementById('overlay-title-menu');
             if (tm) {
@@ -560,10 +560,6 @@ function storySelectPlay(categoryId) {
         showComicStrip();
       } else if (categoryId === 'malware') {
         showComicStripCh2();
-      } else if (categoryId === 'social_engineering' || categoryId === 'social' || categoryId === 'social-engineering') {
-        showComicStripCh3();
-      } else if (categoryId === 'ransomware' || categoryId === 'ch4' || categoryId === 4) {
-        showComicStripCh4();
       } else {
         const tm = document.getElementById('overlay-title-menu');
         if (tm) {
@@ -586,9 +582,7 @@ function storySelectLocked(chapterNum) {
     AudioManager.playWrong();
   }
   const messages = {
-    2: '🔒 Complete Chapter 1 first to unlock Chapter 2!',
-    3: '🔒 Complete Chapters 1–2 first to unlock Chapter 3!',
-    4: '🔒 Complete all previous chapters to unlock Chapter 4!'
+    2: '🔒 Complete Chapter 1 first to unlock Chapter 2!'
   };
   showToast(messages[chapterNum] || '🔒 This chapter is locked.', 'warning');
 }
@@ -712,11 +706,9 @@ function closeMainMenuAbout() {
 const ACH_CLAIMED_STORAGE_KEY = 'cyberzero_claimed_achievements';
 
 /**
- * Exactly 4 Unique Awards, one for each Chapter:
+ * Exactly 2 Unique Awards, one for each Chapter:
  * - Chapter 1: Phishing Investigation Award (assets/Achievement/Phishing.png)
  * - Chapter 2: Malware Protection Award (assets/Achievement/Malware.png)
- * - Chapter 3: Safe Online Defense Award (assets/Achievement/Safe Online.png)
- * - Chapter 4: Ransomware Containment Award (assets/Achievement/Ransomware.png)
  */
 const MISSION_ACHIEVEMENTS = [
   {
@@ -728,8 +720,8 @@ const MISSION_ACHIEVEMENTS = [
     title: 'Phishing Investigation Award',
     shortName: 'Phishing Award',
     image: 'assets/Achievement/Phishing.png',
-    objective: 'Awarded for completing all 5 Phishing missions and collecting all required evidence: detecting deceptive phishing emails, verifying legitimate communications, documenting spoofed senders, uncovering threat indicators, and securing digital proof.',
-    description: 'Awarded for completing all 5 Phishing missions and collecting all required evidence: detecting deceptive phishing emails, verifying legitimate communications, documenting spoofed senders, uncovering threat indicators, and securing digital proof.',
+    objective: 'Awarded for analyzing suspicious emails, exposing deceptive phishing lures, documenting spoofed senders, and safeguarding authentic communications.',
+    description: 'Awarded for analyzing suspicious emails, exposing deceptive phishing lures, documenting spoofed senders, and safeguarding authentic communications.',
     checklist: [
       { id: 'task_report_phishing', label: 'Report 5 Phishing Emails' },
       { id: 'task_verify_legit', label: 'Verify 5 Clean Emails' },
@@ -754,42 +746,6 @@ const MISSION_ACHIEVEMENTS = [
       { id: 'ch2_av', label: 'Configure ShieldAV Defender' },
       { id: 'ch2_quarantine', label: 'Neutralize & Quarantine 4 Malware Threats' },
       { id: 'ch2_cleared', label: 'Complete Chapter 2 Incident Response' }
-    ]
-  },
-  {
-    id: 'ach_safe_online',
-    chapter: 3,
-    catId: 'social_engineering',
-    chapterTag: 'CHAPTER 3 · SAFE ONLINE BROWSING',
-    threatCategory: 'SAFE ONLINE',
-    title: 'Safe Online Defense Award',
-    shortName: 'Safe Online Award',
-    image: 'assets/Achievement/Safe Online.png',
-    objective: 'Awarded for securing public Wi-Fi connections, disabling unsafe device discovery & file sharing, and neutralizing social engineering attacks.',
-    description: 'Awarded for securing public Wi-Fi connections, disabling unsafe device discovery & file sharing, and neutralizing social engineering attacks.',
-    checklist: [
-      { id: 'ch3_wifi', label: 'Connect to Secure Wi-Fi Network' },
-      { id: 'ch3_sharing', label: 'Disable File Sharing & Network Discovery' },
-      { id: 'ch3_dropper', label: 'Block Social Engineering Payload' },
-      { id: 'ch3_cleared', label: 'Complete Chapter 3 Investigation' }
-    ]
-  },
-  {
-    id: 'ach_ransomware',
-    chapter: 4,
-    catId: 'ransomware',
-    chapterTag: 'CHAPTER 4 · RANSOMWARE RESPONSE',
-    threatCategory: 'RANSOMWARE',
-    title: 'Ransomware Containment Award',
-    shortName: 'Ransomware Award',
-    image: 'assets/Achievement/Ransomware.png',
-    objective: 'Awarded for terminating crypto-locking payloads, refusing ransom extortion, and restoring all 4 server storage nodes from verified clean backups.',
-    description: 'Awarded for terminating crypto-locking payloads, refusing ransom extortion, and restoring all 4 server storage nodes from verified clean backups.',
-    checklist: [
-      { id: 'ch4_kill', label: 'Terminate Malicious Encryption Process' },
-      { id: 'ch4_refuse', label: 'Refuse Ransomware Extortion Demands' },
-      { id: 'ch4_nodes', label: 'Restore 4 / 4 Encrypted Storage Nodes' },
-      { id: 'ch4_cleared', label: 'Complete Chapter 4 Incident Response' }
     ]
   }
 ];
@@ -840,16 +796,6 @@ function isChapterChecklistComplete(ach) {
     return !!(cat && cat.completed);
   }
 
-  if (catId === 'social_engineering') {
-    // CHAPTER 3: Requires completing Chapter 3
-    return !!(cat && cat.completed);
-  }
-
-  if (catId === 'ransomware') {
-    // CHAPTER 4: Requires completing Chapter 4 (all storage nodes restored)
-    return !!(cat && cat.completed);
-  }
-
   return false;
 }
 
@@ -888,26 +834,7 @@ function isChecklistItemDone(ach, item, itemIndex) {
     } catch(e) {}
   }
 
-  if (ach.catId === 'social_engineering') {
-    try {
-      if (item.id === 'ch3_wifi' && typeof currentWifi !== 'undefined') return currentWifi === 'CyberZero_Secure';
-      if (item.id === 'ch3_sharing' && typeof fileSharingEnabled !== 'undefined') return !fileSharingEnabled;
-    } catch(e) {}
-  }
 
-  if (ach.catId === 'ransomware') {
-    try {
-      if (typeof RANSOMWARE_NODES !== 'undefined') {
-        if (item.id === 'ch4_kill') {
-          const drop = RANSOMWARE_NODES.find(n => n.id === 'node_dropper');
-          return drop && drop.status !== 'infected';
-        }
-        if (item.id === 'ch4_nodes') {
-          return RANSOMWARE_NODES.every(n => n.status === 'clean' || n.status === 'restored');
-        }
-      }
-    } catch(e) {}
-  }
 
   return false;
 }
@@ -1228,10 +1155,7 @@ function renderMainMenuAchievements() {
     _selectedAchId = selectedAch.id;
   }
 
-  // 2 Shelves: 2 awards each (Chapter 1 & 2 on Row 1, Chapter 3 & 4 on Row 2)
-  const row1 = MISSION_ACHIEVEMENTS.slice(0, 2);
-  const row2 = MISSION_ACHIEVEMENTS.slice(2, 4);
-
+  // Trophy Shelf: 2 Chapter Awards side by side (Chapter 1: Phishing, Chapter 2: Malware)
   function buildSlot(ach) {
     const isClaimed = isAchievementClaimed(ach.id);
     const isUnlocked = isChapterChecklistComplete(ach);
@@ -1252,24 +1176,22 @@ function renderMainMenuAchievements() {
             </div>
             <div class="ach-slot-shelf-light"></div>
           </div>
+          <div class="ach-slot-plaque">
+            <div class="ach-plaque-ch">CHAPTER ${ach.chapter}</div>
+            <div class="ach-plaque-title">${ach.shortName || ach.title}</div>
+            <div class="ach-plaque-status ${isClaimed ? 'claimed' : (isUnlocked ? 'ready' : 'locked')}">
+              ${isClaimed ? 'CLAIMED ✓' : (isUnlocked ? '★ READY' : '')}
+            </div>
+          </div>
         </div>
       </div>
     `;
   }
 
-  const shelfRow1 = `
+  const shelfRow = `
     <div class="ach-shelf-row">
       <div class="ach-shelf-slots">
-        ${row1.map(buildSlot).join('')}
-      </div>
-      <div class="ach-shelf-plank"></div>
-    </div>
-  `;
-
-  const shelfRow2 = `
-    <div class="ach-shelf-row">
-      <div class="ach-shelf-slots">
-        ${row2.map(buildSlot).join('')}
+        ${MISSION_ACHIEVEMENTS.map(buildSlot).join('')}
       </div>
       <div class="ach-shelf-plank"></div>
     </div>
@@ -1287,7 +1209,7 @@ function renderMainMenuAchievements() {
   } else if (selUnlocked) {
     actionBtnHtml = `<button class="ach-claim-btn is-ready" onclick="claimAchievement('${selectedAch.id}')">★ CLAIM AWARD</button>`;
   } else {
-    actionBtnHtml = `<button class="ach-claim-btn is-locked" disabled>🔒 LOCKED</button>`;
+    actionBtnHtml = `<button class="ach-claim-btn is-locked" disabled>COMPLETE CHAPTER ${selectedAch.chapter} TO UNLOCK</button>`;
   }
 
   const detailHtml = `
@@ -1315,8 +1237,10 @@ function renderMainMenuAchievements() {
       <!-- Left: Trophy Cabinet Shelves -->
       <div class="ach-shelf-left">
         <div class="ach-shelf-cabinet">
-          ${shelfRow1}
-          ${shelfRow2}
+          <div class="ach-cabinet-canopy">
+            <span class="ach-canopy-badge">CYBER COMMENDATION VAULT</span>
+          </div>
+          ${shelfRow}
         </div>
       </div>
       <!-- Right: Detailed Award Dossier -->
@@ -1434,10 +1358,8 @@ function closeMainMenuExit() {
  * Keys match CATEGORIES id values.
  */
 const _CHAPTER_LABELS = {
-  phishing:           'Ch.1 · The First Day',
-  malware:            'Ch.2 · The Hidden Threat',
-  social_engineering: 'Ch.3 · The System Collapse',
-  ransomware:         'Ch.4 · The Last Login'
+  phishing: 'Ch.1 · The Deceptive Click',
+  malware:  'Ch.2 · The Hidden Threat'
 };
 
 /**
@@ -1466,7 +1388,7 @@ function updateStartButton() {
   // ─── Helper: extract furthest active/unlocked chapter from array ───────
   function _extractCatId(data) {
     if (!Array.isArray(data)) return null;
-    const order = ['phishing', 'malware', 'social_engineering', 'ransomware'];
+    const order = ['phishing', 'malware'];
     // Prefer unfinished unlocked chapter to resume
     for (const id of order) {
       const entry = data.find(c => c.id === id);
@@ -1669,6 +1591,10 @@ function _isCategoryCompleted(catId) {
  * For completed Chapter 1: shows empty sticky-note checklist (post-award state).
  */
 function _continueSavedGame(catId) {
+  if (typeof resumeSavedGameSession === 'function') {
+    resumeSavedGameSession(catId);
+    return;
+  }
   const mm = document.getElementById('overlay-main-menu');
   const mmNav = mm && mm.querySelector('.mm-nav');
 

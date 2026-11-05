@@ -822,7 +822,7 @@ function finishMission() {
     badge: 'CHAPTER 1 · INVESTIGATION AWARD',
     rank: '${totalTasks}/${totalTasks} Missions Completed',
     sub: 'All ${totalTasks} Investigation Checklist Tasks & Evidence Completed',
-    desc: 'Outstanding detective work! You successfully completed all Phishing missions and collected all required evidence by detecting phishing emails, verifying clean communications, documenting fake senders, uncovering critical indicators, and securing digital proof.',
+    desc: 'Outstanding detective work! You successfully analyzed all suspicious emails, exposed deceptive phishing lures, documented spoofed senders, and safeguarded authentic communications.',
     tasksCompleted: totalTasks,
     unlockedDate: dateStr
   } : null;

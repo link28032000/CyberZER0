@@ -485,6 +485,9 @@ function openEmail(idx) {
   const email = ch1InboxEmails[idx];
   if (!email) return;
   gameState.currentEmail = idx;
+  if (typeof window.saveSessionLocally === 'function') {
+    window.saveSessionLocally();
+  }
   const existingResult = gameState.emailResults.find(r => r.emailId === email.id);
 
   // ── Investigation tutorial — start inline tutorial directly on first email ──

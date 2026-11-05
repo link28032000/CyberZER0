@@ -443,8 +443,32 @@ const RyanGuide = (() => {
   function lockMainFlow()    { _mainFlowLocked = true; }
   function releaseMainFlow() { _mainFlowLocked = false; }
 
+  function getState() {
+    return {
+      active: _typing || _transitioning || (_queue && _queue.length > 0),
+      queue: (_queue && Array.isArray(_queue)) ? _queue.map(function(m) {
+        return {
+          text: (m.text !== undefined && m.text !== null) ? String(m.text) : '',
+          state: m.state || 'speaking',
+          label: m.label || null
+        };
+      }) : [],
+      mainFlowLocked: !!_mainFlowLocked
+    };
+  }
+
+  function restoreState(saved) {
+    if (!saved || !saved.active || !Array.isArray(saved.queue) || saved.queue.length === 0) {
+      dismiss(true);
+      return;
+    }
+    _mainFlowLocked = !!saved.mainFlowLocked;
+    speak(saved.queue, { mainFlow: _mainFlowLocked });
+  }
+
   return { speak, advance, ask, dismiss, once, reset,
            lockMainFlow, releaseMainFlow,
+           getState, restoreState,
            isActive: () => _typing || _transitioning || _queue.length > 0 };
 })();
 

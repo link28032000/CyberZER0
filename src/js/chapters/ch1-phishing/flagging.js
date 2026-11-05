@@ -281,6 +281,7 @@ function placeFlag(el) {
 
   // Live react to flag placement on Sticky Notes
   if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+  if (typeof window.saveSessionLocally === 'function') window.saveSessionLocally();
 
   // ── Notify tutorial of which flag was placed ─────────────────────────────
   if (typeof PhishTutorial !== 'undefined' && PhishTutorial.isActive()) {
@@ -396,6 +397,7 @@ function removeFlag(flagType) {
 
   // Live react to flag removal on Sticky Notes
   if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+  if (typeof window.saveSessionLocally === 'function') window.saveSessionLocally();
 
   // ── Update verdict button highlight (may need to remove glow if flags cleared) ─
   if (typeof PhishTutorial !== 'undefined') {

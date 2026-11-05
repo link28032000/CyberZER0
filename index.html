@@ -2787,8 +2787,8 @@
   <source src="assets/sounds/Chapter1/Chapter1.wav" type="audio/wav">
 </audio>
 
-<!-- ── CYBERZERO MAIN MENU (Shows First) ── -->
-<div id="overlay-main-menu" class="overlay">
+<!-- ── CYBERZERO MAIN MENU ── -->
+<div id="overlay-main-menu" class="overlay" style="display: none;">
   <!-- Background image -->
   <div class="mm-bg"></div>
 
@@ -3252,7 +3252,7 @@
           </div>
           <div class="ss-card-footer">
             <div class="ss-chapter-label">CHAPTER 1</div>
-            <div class="ss-chapter-title">THE FIRST DAY</div>
+            <div class="ss-chapter-title">THE DECEPTIVE CLICK</div>
             <div class="ss-card-dots">
               <span class="ss-dot ss-dot-active"></span>
             </div>
@@ -3283,56 +3283,7 @@
         </div>
       </div>
 
-      <!-- Chapter 3 — Locked -->
-      <div class="ss-card ss-card-unlocked" id="ss-card-3" onclick="selectStoryCard(this,'social_engineering',3)">
-        <div class="ss-card-frame">
-          <div class="ss-corner ss-corner-tl"></div>
-          <div class="ss-corner ss-corner-tr"></div>
-          <div class="ss-corner ss-corner-bl"></div>
-          <div class="ss-corner ss-corner-br"></div>
-          <div class="ss-scan-line"></div>
-          <div class="ss-card-thumb">
-            <img src="assets/Story Selection/Chapter3.png" alt="Chapter 3 scene" class="ss-thumb-img">
-            <div class="ss-card-glow"></div>
-          </div>
-          <div class="ss-card-footer">
-            <div class="ss-chapter-label">CHAPTER 3</div>
-            <div class="ss-chapter-title">THE SYSTEM COLLAPSE</div>
-            <div class="ss-card-dots">
-              <span class="ss-dot ss-dot-active"></span>
-              <span class="ss-dot ss-dot-active"></span>
-              <span class="ss-dot ss-dot-active"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chapter 4 — Locked -->
-      <div class="ss-card ss-card-unlocked" id="ss-card-4" onclick="selectStoryCard(this,'ransomware',4)">
-        <div class="ss-card-frame">
-          <div class="ss-corner ss-corner-tl"></div>
-          <div class="ss-corner ss-corner-tr"></div>
-          <div class="ss-corner ss-corner-bl"></div>
-          <div class="ss-corner ss-corner-br"></div>
-          <div class="ss-scan-line"></div>
-          <div class="ss-card-thumb">
-            <img src="assets/Story Selection/Chapter4.png" alt="Chapter 4 scene" class="ss-thumb-img">
-            <div class="ss-card-glow"></div>
-          </div>
-          <div class="ss-card-footer">
-            <div class="ss-chapter-label">CHAPTER 4</div>
-            <div class="ss-chapter-title">THE LAST LOGIN</div>
-            <div class="ss-card-dots">
-              <span class="ss-dot ss-dot-active"></span>
-              <span class="ss-dot ss-dot-active"></span>
-              <span class="ss-dot ss-dot-active"></span>
-              <span class="ss-dot ss-dot-active"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /.ss-cards-row -->
+      </div><!-- /.ss-cards-row -->
 
   </div><!-- /.ss-content -->
 </div><!-- /#overlay-story-select -->
@@ -3392,7 +3343,7 @@
 <div id="overlay-chapter-card" class="overlay" style="display:none;" aria-live="polite">
   <div class="cc-container">
     <div class="cc-chapter-num" id="cc-chapter-num">CHAPTER 1</div>
-    <div class="cc-chapter-title" id="cc-chapter-title">THE FIRST DAY</div>
+    <div class="cc-chapter-title" id="cc-chapter-title">THE DECEPTIVE CLICK</div>
   </div>
 </div>
 
@@ -4568,8 +4519,7 @@
       </div>
     </div>
     <div class="results-action-row-20">
-      <button type="button" class="btn-primary" onclick="proceedToNextCategory('social_engineering')">🎭 PROCEED TO CHAPTER 3 (SOCIAL ENG) →</button>
-      <button type="button" class="btn-ghost" onclick="openCategoryHub()">📖 Story Selection</button>
+      <button type="button" class="btn-primary" onclick="openCategoryHub()">📖 Story Selection</button>
       <button type="button" class="btn-ghost" onclick="startMalwareMission()">🔄 Replay Malware</button>
     </div>
   </div>

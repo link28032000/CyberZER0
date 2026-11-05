@@ -1,9 +1,16 @@
 'use strict';
 
-// ─── 3. MEDIA / VIDEO PLAYER ────────────────────────────────
+// Track active media type and file separately
+window._vpCurrentMediaType = null; // 'video' | 'audio'
+window._vpCurrentFile = null;
+
+// ─── 3. MEDIA / VIDEO PLAYER (AWARENESS & MP4 VIDEOS) ─────────
 function openVideoPlayer(file) {
+  window._vpCurrentMediaType = 'video';
+  window._vpCurrentFile = file || null;
+
   const titleText = document.getElementById('videoplayer-title-text');
-  if (titleText) titleText.textContent = `Media Player — ${file.name}`;
+  if (titleText) titleText.textContent = `Media Player — ${file ? file.name : 'Video'}`;
 
   const audioStage = document.getElementById('vp-audio-stage');
   if (audioStage) {
@@ -13,8 +20,16 @@ function openVideoPlayer(file) {
 
   const vid = document.getElementById('videoplayer-video');
   if (vid) {
+    vid._vpMediaType = 'video';
+    vid._vpCurrentFile = file || null;
+    vid._isAwarenessVideo = !!(file && (
+      file.id === 'vid_awareness' ||
+      (file.name && file.name.toLowerCase().includes('awareness')) ||
+      (file.mediaSrc && file.mediaSrc.includes('video3.mp4'))
+    )) || true; // All video files in Chapter 1 map to the awareness briefing
+
     vid.style.display = 'block';
-    vid.src = file.mediaSrc || 'assets/video/video3.mp4';
+    vid.src = (file && file.mediaSrc) ? file.mediaSrc : 'assets/video/video3.mp4';
     vid.currentTime = 0;
     syncMediaPlayerVolume();
 
@@ -22,7 +37,7 @@ function openVideoPlayer(file) {
     if (!vid._vpWired) {
       vid._vpWired = true;
       vid.addEventListener('loadedmetadata', () => {
-        if (typeof window._ch1OnVideoMetadataLoaded === 'function') {
+        if (vid._vpMediaType === 'video' && typeof window._ch1OnVideoMetadataLoaded === 'function') {
           window._ch1OnVideoMetadataLoaded(vid);
         }
       });
@@ -32,13 +47,17 @@ function openVideoPlayer(file) {
         const btn = document.getElementById('vp-play-btn');
         if (btn) btn.textContent = '⏸';
         document.getElementById('vp-center-overlay')?.classList.add('hidden');
-        document.getElementById('vp-audio-stage')?.classList.add('vp-audio-playing');
+        if (vid._vpMediaType === 'audio') {
+          document.getElementById('vp-audio-stage')?.classList.add('vp-audio-playing');
+        }
       });
       vid.addEventListener('pause', () => {
         const btn = document.getElementById('vp-play-btn');
         if (btn) btn.textContent = '▶';
         document.getElementById('vp-center-overlay')?.classList.remove('hidden');
-        document.getElementById('vp-audio-stage')?.classList.remove('vp-audio-playing');
+        if (vid._vpMediaType === 'audio') {
+          document.getElementById('vp-audio-stage')?.classList.remove('vp-audio-playing');
+        }
       });
     }
 
@@ -52,13 +71,16 @@ function openVideoPlayer(file) {
   if (!isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
     window._notifyPostAwardVideoPlay();
   }
-  showToast(`🎬 Playing "${file.name}" in Media Player.`, 'success');
+  showToast(`🎬 Playing "${file ? file.name : 'Video'}" in Media Player.`, 'success');
 }
 
 // ─── 4. MEDIA / AUDIO PLAYER (MP3 & MUSIC FILES) ────────────
 function openAudioPlayer(file) {
+  window._vpCurrentMediaType = 'audio';
+  window._vpCurrentFile = file || null;
+
   const titleText = document.getElementById('videoplayer-title-text');
-  if (titleText) titleText.textContent = `Media Player — ${file.name}`;
+  if (titleText) titleText.textContent = `Music Player — ${file ? file.name : 'Audio'}`;
 
   const vid = document.getElementById('videoplayer-video');
   const audioStage = document.getElementById('vp-audio-stage');
@@ -68,41 +90,58 @@ function openAudioPlayer(file) {
   if (audioStage) {
     audioStage.classList.remove('hidden');
   }
-  if (trackTitle) trackTitle.textContent = file.name;
-  if (artistName) artistName.textContent = file.artist || 'CyberZero Audio Deck • 320 kbps MP3';
+  if (trackTitle && file) trackTitle.textContent = file.name;
+  if (artistName) artistName.textContent = (file && file.artist) ? file.artist : 'CyberZero Audio Deck • 320 kbps MP3';
 
   if (vid) {
+    // Explicitly flag as audio so video checklist trackers IGNORE music playback
+    vid._vpMediaType = 'audio';
+    vid._vpCurrentFile = file || null;
+    vid._isAwarenessVideo = false;
+
     vid.style.display = 'none';
-    vid.src = file.mediaSrc || 'assets/sounds/Hi - Wii.mp3';
+    vid.src = (file && file.mediaSrc) ? file.mediaSrc : 'assets/sounds/Hi - Wii.mp3';
     vid.currentTime = 0;
     syncMediaPlayerVolume();
 
     if (!vid._vpWired) {
       vid._vpWired = true;
+      vid.addEventListener('loadedmetadata', () => {
+        if (vid._vpMediaType === 'video' && typeof window._ch1OnVideoMetadataLoaded === 'function') {
+          window._ch1OnVideoMetadataLoaded(vid);
+        }
+      });
       vid.addEventListener('timeupdate', _vpOnTimeUpdate);
       vid.addEventListener('ended', _vpOnEnded);
       vid.addEventListener('play', () => {
         const btn = document.getElementById('vp-play-btn');
         if (btn) btn.textContent = '⏸';
         document.getElementById('vp-center-overlay')?.classList.add('hidden');
-        document.getElementById('vp-audio-stage')?.classList.add('vp-audio-playing');
+        if (vid._vpMediaType === 'audio') {
+          document.getElementById('vp-audio-stage')?.classList.add('vp-audio-playing');
+        }
       });
       vid.addEventListener('pause', () => {
         const btn = document.getElementById('vp-play-btn');
         if (btn) btn.textContent = '▶';
         document.getElementById('vp-center-overlay')?.classList.remove('hidden');
-        document.getElementById('vp-audio-stage')?.classList.remove('vp-audio-playing');
+        if (vid._vpMediaType === 'audio') {
+          document.getElementById('vp-audio-stage')?.classList.remove('vp-audio-playing');
+        }
       });
     }
 
-    vid.play().catch(() => {
-      // Autoplay with user gesture
-    });
+    vid.play().catch(() => {});
   }
 
   openApp('videoplayer');
   focusWindow('videoplayer');
-  showToast(`🎵 Playing "${file.name}" in Media Player.`, 'success');
+  showToast(`🎵 Playing "${file ? file.name : 'Music'}" in Music Player.`, 'success');
+
+  // Dedicated separate trigger for music playback (keeps video checklist untouched)
+  if (typeof window._onMusicPlayerPlay === 'function') {
+    window._onMusicPlayerPlay(file);
+  }
 }
 
 function vpTogglePlay() {
@@ -118,8 +157,13 @@ function vpTogglePlay() {
 function vpSkip(secs) {
   const vid = document.getElementById('videoplayer-video');
   if (!vid) return;
-  if (typeof window._ch1OnVideoSkip === 'function') {
-    window._ch1OnVideoSkip(secs, vid);
+  // Separate video skip from music seek
+  if (vid._vpMediaType !== 'audio' && window._vpCurrentMediaType !== 'audio') {
+    if (typeof window._ch1OnVideoSkip === 'function') {
+      window._ch1OnVideoSkip(secs, vid);
+    }
+  } else if (typeof window._onMusicPlayerSkip === 'function') {
+    window._onMusicPlayerSkip(secs, vid);
   }
   vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + secs));
 }
@@ -132,8 +176,14 @@ function vpSeek(e) {
   const rect = container.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   const newTime = pct * vid.duration;
-  if (typeof window._ch1OnVideoSeek === 'function') {
-    window._ch1OnVideoSeek(newTime, vid.currentTime, vid);
+
+  // Separate video seek from music seek
+  if (vid._vpMediaType !== 'audio' && window._vpCurrentMediaType !== 'audio') {
+    if (typeof window._ch1OnVideoSeek === 'function') {
+      window._ch1OnVideoSeek(newTime, vid.currentTime, vid);
+    }
+  } else if (typeof window._onMusicPlayerSeek === 'function') {
+    window._onMusicPlayerSeek(newTime, vid.currentTime, vid);
   }
   vid.currentTime = newTime;
 }
@@ -156,8 +206,16 @@ function _vpOnTimeUpdate() {
   if (fillEl) fillEl.style.width = `${pct}%`;
   if (thumbEl) thumbEl.style.left = `${pct}%`;
 
-  if (typeof window._ch1OnVideoTimeUpdate === 'function') {
-    window._ch1OnVideoTimeUpdate(vid);
+  // SEPARATE VIDEO VS AUDIO TRIGGERS
+  if (vid._vpMediaType === 'audio' || window._vpCurrentMediaType === 'audio') {
+    if (typeof window._onMusicPlayerTimeUpdate === 'function') {
+      window._onMusicPlayerTimeUpdate(vid, window._vpCurrentFile);
+    }
+  } else {
+    // Only video media triggers video awareness progress
+    if (typeof window._ch1OnVideoTimeUpdate === 'function') {
+      window._ch1OnVideoTimeUpdate(vid);
+    }
   }
 }
 
@@ -165,9 +223,20 @@ function _vpOnEnded() {
   const btn = document.getElementById('vp-play-btn');
   if (btn) btn.textContent = '▶';
   document.getElementById('vp-center-overlay')?.classList.remove('hidden');
-  if (typeof window._ch1OnVideoEnded === 'function') {
-    const vid = document.getElementById('videoplayer-video');
-    window._ch1OnVideoEnded(vid);
+
+  const vid = document.getElementById('videoplayer-video');
+  if (!vid) return;
+
+  // SEPARATE VIDEO VS AUDIO TRIGGERS
+  if (vid._vpMediaType === 'audio' || window._vpCurrentMediaType === 'audio') {
+    if (typeof window._onMusicPlayerEnded === 'function') {
+      window._onMusicPlayerEnded(vid, window._vpCurrentFile);
+    }
+  } else {
+    // Only video media triggers video awareness completion
+    if (typeof window._ch1OnVideoEnded === 'function') {
+      window._ch1OnVideoEnded(vid);
+    }
   }
 }
 

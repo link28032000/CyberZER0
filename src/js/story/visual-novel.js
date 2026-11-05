@@ -37,12 +37,7 @@ function _vnResolve(categoryId) {
   } else if (categoryId === 'phishing') {
     if (typeof showComicStrip === 'function') showComicStrip();
     else if (typeof startMission === 'function') startMission();
-  } else if (categoryId === 'social_engineering') {
-    if (typeof showComicStripCh3 === 'function') showComicStripCh3();
-    else if (typeof openChapterDesktopDirect === 'function') openChapterDesktopDirect('social_engineering');
-  } else if (categoryId === 'ransomware') {
-    if (typeof showComicStripCh4 === 'function') showComicStripCh4();
-    else if (typeof openChapterDesktopDirect === 'function') openChapterDesktopDirect('ransomware');
+
   } else if (categoryId === 'grand_finale') {
     if (typeof showGrandCertificate === 'function') showGrandCertificate();
   } else {

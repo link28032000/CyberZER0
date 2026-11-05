@@ -407,11 +407,7 @@ function lsSignIn() {
           } else {
             openChapterDesktopDirect('malware');
           }
-        } else if (catId === 'social_engineering' || catId === 'ransomware') {
-          if (typeof window.clearWorkstationLogoffGuide === 'function') {
-            window.clearWorkstationLogoffGuide();
-          }
-          openChapterDesktopDirect(catId);
+
         } else {
           openCategoryHub();
         }
@@ -432,8 +428,7 @@ function lsSignIn() {
         } else {
           openChapterDesktopDirect('malware');
         }
-      } else if (catId === 'social_engineering' || catId === 'ransomware') {
-        openChapterDesktopDirect(catId);
+
       } else {
         openCategoryHub();
       }

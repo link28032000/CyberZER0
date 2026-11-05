@@ -385,24 +385,78 @@
     startResendCooldown(60);
   }
 
-  function enterAuthenticated() {
-    closeOverlay();
+  async function enterAuthenticated() {
     updateChip(auth.currentUser);
 
-    // Load cloud save then show Main Menu.
-    // _czLoadProgressAndShowMenu is defined in save-progress.js which is now
-    // loaded BEFORE auth.js in index.html, so it is always defined here.
-    // The typeof guard is kept as a safety net only.
-    if (typeof window._czLoadProgressAndShowMenu === 'function') {
-      window._czLoadProgressAndShowMenu();
-    } else if (typeof window.loadAndApplyProgress === 'function') {
-      window.loadAndApplyProgress().catch(() => {}).finally(() => {
+    // If desktop was already restored immediately on page refresh,
+    // sync Firestore save doc in the background without disturbing the player's desktop!
+    let isDesktopActive = false;
+    try {
+      const rawSession = localStorage.getItem('cyberzero_session_state');
+      const parsedSession = rawSession ? JSON.parse(rawSession) : null;
+      if (parsedSession && parsedSession.screen === 'desktop' && !parsedSession.isShutdown) {
+        isDesktopActive = true;
+      }
+    } catch (_) {}
+
+    if (isDesktopActive) {
+      closeOverlay();
+      if (typeof window.loadAndApplyProgress === 'function') {
+        try { await window.loadAndApplyProgress(); } catch (_) {}
+      }
+      return;
+    }
+
+    // Otherwise, hold the loading overlay while loading saved data from Firebase.
+    // IMPORTANT: closeOverlay() must be called BEFORE showMainMenu() because
+    // showMainMenu() checks for the active auth overlay and bails out if it finds it.
+    openOverlay();
+    setSub('Loading saved progress…');
+    showPanel('loading');
+
+    // Step 1: Load data from Firestore
+    try {
+      if (typeof window.loadAndApplyProgress === 'function') {
+        await window.loadAndApplyProgress();
+      }
+      try {
+        if (typeof updateStartButton === 'function') updateStartButton();
+        else if (typeof window.updateStartButton === 'function') window.updateStartButton();
+      } catch (_) {}
+    } catch (e) {
+      console.warn('[auth] enterAuthenticated: load failed', e);
+    }
+
+    // Step 2: Close overlay FIRST so showMainMenu() can run without the auth-active guard
+    closeOverlay();
+
+    // Step 3: Decide which screen to show
+    let _restoredSession = null;
+    try {
+      const _raw = localStorage.getItem('cyberzero_session_state');
+      if (_raw) _restoredSession = JSON.parse(_raw);
+    } catch (_) {}
+
+    if (_restoredSession && _restoredSession.screen && !_restoredSession.isShutdown) {
+      // Active session — restore to saved screen (desktop, story-select, etc.)
+      if (_restoredSession.screen === 'desktop') {
+        if (typeof resumeSavedGameSession === 'function') {
+          resumeSavedGameSession(_restoredSession.activeChapter || 'phishing', _restoredSession);
+        } else if (typeof showMainMenu === 'function') {
+          showMainMenu();
+        }
+      } else if (_restoredSession.screen === 'story-select') {
+        if (typeof showStorySelectionScreen === 'function') {
+          showStorySelectionScreen(_restoredSession.activeChapter || 'phishing');
+        } else if (typeof showMainMenu === 'function') {
+          showMainMenu();
+        }
+      } else {
         if (typeof showMainMenu === 'function') showMainMenu();
         else { const mm = document.getElementById('overlay-main-menu'); if (mm) mm.classList.add('active'); }
-      });
+      }
     } else {
-      // Last-resort fallback: show main menu without loading save
-      console.warn('[auth] save-progress.js not loaded — showing menu without cloud restore.');
+      // No active session — normal main menu
       if (typeof showMainMenu === 'function') showMainMenu();
       else { const mm = document.getElementById('overlay-main-menu'); if (mm) mm.classList.add('active'); }
     }

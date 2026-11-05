@@ -316,10 +316,8 @@ function _showRestartConfirmDialog(onConfirm) {
   const activeCat = window._currentChapterCategory ||
     (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing';
   const chapterLabels = {
-    phishing:          'Chapter 1: Phishing Investigation',
-    malware:           'Chapter 2: Malware Incident',
-    social_engineering:'Chapter 3: Social Engineering',
-    ransomware:        'Chapter 4: Ransomware Containment',
+    phishing: 'Chapter 1: The Deceptive Click',
+    malware:  'Chapter 2: The Hidden Threat',
   };
   const chapterName = chapterLabels[activeCat] || 'this mission';
 
@@ -415,12 +413,10 @@ function shutdownGame() {
   // Detect current active chapter before clearing category state
   const activeCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
   const isCh2 = (activeCat === 'malware' || activeCat === 'ch2' || activeCat === 2);
-  const isCh3 = (activeCat === 'social_engineering' || activeCat === 'social' || activeCat === 'social-engineering' || activeCat === 'ch3' || activeCat === 3);
-  const isCh4 = (activeCat === 'ransomware' || activeCat === 'ch4' || activeCat === 4);
 
-  let targetChapter = 'malware';
-  let initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
-  let midNote = 'Workstation secured! Transitioning to Chapter 2: The Hidden Threat…';
+  let targetChapter = activeCat;
+  let initialNote = 'Saving mission progress… Workstation powering down…';
+  let midNote = 'Workstation secured! You can resume from this point anytime.';
 
   if (isCh2) {
     const ch2Score = (typeof gameState !== 'undefined' && gameState.score) || 100;
@@ -429,54 +425,33 @@ function shutdownGame() {
       if (typeof completeCategory === 'function') {
         completeCategory('malware', ch2Score, 'S');
       }
-      if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 2) {
-        CATEGORIES[0].completed = true;
-        CATEGORIES[1].completed = true;
-        CATEGORIES[2].unlocked = true;
-      }
-      targetChapter = 'social_engineering';
-      initialNote = 'Saving Chapter 2 task completion… Returning to Story Selection for Chapter 3!';
-      midNote = 'Workstation secured! Chapter 3 unlocked in Story Selection.';
-    } else {
       if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 1) {
         CATEGORIES[0].completed = true;
-        CATEGORIES[1].unlocked = true;
+        CATEGORIES[1].completed = true;
       }
       targetChapter = 'malware';
-      initialNote = "Saving Ethan's PC progress… Returning to Story Selection!";
-      midNote = "Ethan's PC secured! Returning to Story Selection…";
-    }
-  } else if (isCh3) {
-    const ch3Complete = (typeof CATEGORIES !== 'undefined' && CATEGORIES[2] && CATEGORIES[2].completed);
-    if (ch3Complete) {
-      if (typeof CATEGORIES !== 'undefined' && CATEGORIES.length > 3) {
-        CATEGORIES[2].completed = true;
-        CATEGORIES[3].unlocked = true;
-      }
-      targetChapter = 'ransomware';
-      initialNote = 'Saving Chapter 3 task completion… Returning to Story Selection for Chapter 4!';
-      midNote = 'Workstation secured! Chapter 4 unlocked in Story Selection.';
+      initialNote = 'Saving Chapter 2 task completion… All missions completed!';
+      midNote = 'Workstation secured! All story missions completed.';
     } else {
-      targetChapter = 'social_engineering';
-      initialNote = "Saving Pia's PC progress… Returning to Story Selection!";
-      midNote = "Pia's PC secured! Returning to Story Selection…";
+      targetChapter = 'malware';
+      initialNote = "Saving Ethan's PC progress… Workstation powering down…";
+      midNote = "Ethan's PC secured! You can resume where you left off.";
     }
-  } else if (isCh4) {
-    targetChapter = 'ransomware';
-    initialNote = 'Saving final mission progress… Returning to Story Selection!';
-    midNote = 'Workstation secured! Returning to Story Selection…';
   } else {
     // Chapter 1 (phishing)
-    // Detect whether Ch1 is already completed (player returning after finish)
+    // Detect whether Ch1 is already completed or just completed all tasks
     const ch1AlreadyDone = (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted('phishing')) ||
       (typeof CATEGORIES !== 'undefined' && CATEGORIES[0] && CATEGORIES[0].completed);
+    const ch1JustCompleted = (typeof wasAwaitingCh2 !== 'undefined' && wasAwaitingCh2) ||
+      (window._postAwardTasks && window._postAwardTasks.postTestDone) ||
+      (typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked() && window._awardClaimed);
 
     if (ch1AlreadyDone) {
       // Ch1 already completed — save & return to Story Selection, no re-award
       targetChapter = 'malware';
       initialNote = 'Saving progress… Returning to Story Selection!';
       midNote = 'Workstation secured! Returning to Story Selection…';
-    } else {
+    } else if (ch1JustCompleted) {
       // Ch1 completing for the first time — award completion
       if (typeof completeCategory === 'function') {
         completeCategory('phishing', (typeof gameState !== 'undefined' && gameState.score) || 100, 'S');
@@ -488,8 +463,16 @@ function shutdownGame() {
       targetChapter = 'malware';
       initialNote = 'Saving task completion… Returning to Story Selection for Chapter 2!';
       midNote = 'Workstation secured! Transitioning to Chapter 2: The Hidden Threat…';
+    } else {
+      // Ch1 in progress — save EXACT mission progress, DO NOT force complete!
+      targetChapter = 'phishing';
+      initialNote = 'Saving investigation progress… Workstation powering down…';
+      midNote = 'Workstation secured! You can resume from this point anytime.';
     }
   }
+
+  // Mark shutdown state so re-login or reload knows shutdown was executed
+  window._isShutdownState = true;
 
   // Save categories progress and update locks
   if (typeof saveCategoriesProgress === 'function') saveCategoriesProgress();
@@ -618,12 +601,12 @@ function shutdownGame() {
       sd.style.visibility = 'hidden';
     }, 800);
 
-    // Transition to Story Selection screen!
+    // Transition after shutdown: return to Main Menu with Continue ready
     window._awaitingShutdownForChapter2 = false;
-    if (typeof showStorySelectionScreen === 'function') {
-      showStorySelectionScreen(targetChapter);
-    } else {
+    if (typeof showMainMenu === 'function') {
       showMainMenu();
+    } else if (typeof showStorySelectionScreen === 'function') {
+      showStorySelectionScreen(targetChapter);
     }
     // Refresh Start/Continue button after save has had 15s to commit to Firestore
     if (typeof updateStartButton === 'function') updateStartButton();

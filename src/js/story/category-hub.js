@@ -8,16 +8,16 @@ const CATEGORIES = [
   {
     id: 'phishing',
     num: 1,
-    chapterRange: '1-3',
-    chapterTag: 'CHAPTER 1-3',
-    title: 'THE FIRST DAY',
-    subtitle: 'Chapters 1-3',
+    chapterRange: '1',
+    chapterTag: 'CHAPTER 1',
+    title: 'THE DECEPTIVE CLICK',
+    subtitle: 'Chapter 1',
     accent: '#00e5ff',
-    desc: 'A student clicked a suspicious scholarship email. Investigate the phishing trap, remove malware from the attachment, and recover the compromised account.',
+    desc: 'A student clicked a suspicious scholarship email. Investigate the phishing trap, analyze email evidence, and secure the compromised account.',
     specs: {
       threatType: 'Email Phishing & Credential Theft',
       app: '📧 Email & 🌐 Browser',
-      objective: '3 Incidents Resolved'
+      objective: 'Phishing Defense & Evidence Analysis'
     },
     character: { name: 'Alex', img: 'assets/Character/Alex.png' },
     unlocked: true,
@@ -28,58 +28,18 @@ const CATEGORIES = [
   {
     id: 'malware',
     num: 2,
-    chapterRange: '4-6',
-    chapterTag: 'CHAPTER 4-6',
+    chapterRange: '2',
+    chapterTag: 'CHAPTER 2',
     title: 'THE HIDDEN THREAT',
-    subtitle: 'Chapters 4-6',
+    subtitle: 'Chapter 2',
     accent: '#00e676',
-    desc: 'More incidents arrive. Investigate a fake delivery SMS, expose a fraudulent online store, and recover a hijacked school account.',
+    desc: 'Investigate suspicious downloads and unverified games. Safely configure ShieldAV Defender, inspect malware behaviors, and quarantine all malicious threats.',
     specs: {
-      threatType: 'SMS Scam & Account Hijacking',
-      app: '📱 Messages & 🌐 Browser',
-      objective: '3 Threats Neutralized'
+      threatType: 'Trojan & Malware Investigation',
+      app: '📁 Files & 🛡️ ShieldAV',
+      objective: '4 Malware Threats Quarantined'
     },
     character: { name: 'Ethan', img: 'assets/Character/Ethan.png' },
-    unlocked: true,
-    completed: false,
-    score: 0,
-    rank: null
-  },
-  {
-    id: 'social_engineering',
-    num: 3,
-    chapterRange: '7-9',
-    chapterTag: 'CHAPTER 7-9',
-    title: 'THE SYSTEM COLLAPSE',
-    subtitle: 'Chapters 7-9',
-    accent: '#ea80fc',
-    desc: 'A local business reports ransomware. Investigate locked files, uncover spyware, and respond to suspicious network activity targeting the school.',
-    specs: {
-      threatType: 'Ransomware & Network Intrusion',
-      app: '📂 Files & 🛡️ Anti-Virus',
-      objective: '3 Systems Secured'
-    },
-    character: { name: 'Pia', img: 'assets/Character/Pia.png' },
-    unlocked: true,
-    completed: false,
-    score: 0,
-    rank: null
-  },
-  {
-    id: 'ransomware',
-    num: 4,
-    chapterRange: '10-12',
-    chapterTag: 'CHAPTER 10-12',
-    title: 'THE LAST LOGIN',
-    subtitle: 'Chapters 10-12',
-    accent: '#ff5252',
-    desc: 'The final investigation. Trace the leaked data, secure compromised accounts, and submit the complete incident report to close the case.',
-    specs: {
-      threatType: 'Data Breach & Incident Response',
-      app: '🔒 Security Console',
-      objective: 'Final Report Submitted'
-    },
-    character: { name: 'Ryan', img: 'assets/Character/Ryan.png' },
     unlocked: true,
     completed: false,
     score: 0,

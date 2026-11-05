@@ -73,31 +73,62 @@ document.addEventListener('pointerdown', (e) => {
 
 // Start game with Title Menu on load
 window.addEventListener('DOMContentLoaded', () => {
-  // ── Reset chapter tracking so login screen always defaults to Alex on page load/refresh ──
-  window._currentChapterCategory  = null;
-  window._pendingStoryChapter     = null;
-  window._currentChapterCharacter = null;
+  // Check for saved session state before wiping chapter pointers or rendering UI
+  let hasActiveDesktopSession = false;
+  let activeCat = 'phishing';
+  let savedSession = null;
+  try {
+    const rawSession = localStorage.getItem('cyberzero_session_state');
+    if (rawSession) {
+      savedSession = JSON.parse(rawSession);
+      if (savedSession && savedSession.screen === 'desktop' && !savedSession.isShutdown) {
+        hasActiveDesktopSession = true;
+        activeCat = savedSession.activeChapter || 'phishing';
+        window._currentChapterCategory = activeCat;
+      }
+    }
+  } catch(e) {}
+
+  if (!hasActiveDesktopSession) {
+    window._currentChapterCategory  = null;
+    window._pendingStoryChapter     = null;
+    window._currentChapterCharacter = null;
+  }
 
   loadCategoriesProgress();
   loadPhishingProgress();
   initTitleParticles();
   initPreAssessment();
   initSimulationNotifications();
-  // Show main menu only if not gated by Google Sign-In auth
-  const authEl = document.getElementById('cz-auth');
-  if (!authEl || !authEl.classList.contains('active')) {
-    showMainMenu();
+
+  // If restoring an active desktop session on page refresh, restore desktop IMMEDIATELY!
+  if (hasActiveDesktopSession) {
+    // Hide main menu unconditionally so it cannot flash
+    const mm = document.getElementById('overlay-main-menu');
+    if (mm) {
+      mm.classList.remove('active');
+      mm.style.display = 'none';
+    }
+    // Restore desktop directly with 0ms delay
+    if (typeof resumeSavedGameSession === 'function') {
+      resumeSavedGameSession(activeCat, savedSession);
+    }
+  } else {
+    // Show main menu only if not gated by auth
+    const authEl = document.getElementById('cz-auth');
+    if (!authEl || !authEl.classList.contains('active')) {
+      showMainMenu();
+    }
   }
+
   renderEmailList();
   initStickyNote();
   updateAppLockStates();
   updateVolumeUI();
   updateNetworkUI();
-  // Start lock screen clock
   lsStartClock();
 
-  // ── Ensure login screen always starts with Alex (Chapter 1) ──
-  if (typeof updateLoginScreenForChapter === 'function') {
+  if (!hasActiveDesktopSession && typeof updateLoginScreenForChapter === 'function') {
     updateLoginScreenForChapter('phishing');
   }
 });
