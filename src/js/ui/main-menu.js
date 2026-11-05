@@ -199,7 +199,10 @@ function mainMenuStart() {
     return;
   }
 
-  // 1. Slide & blur out the main menu buttons
+  // 1. Hide main menu IMMEDIATELY so it cannot show through the loading screen fade-in
+  if (mm) { mm.classList.remove('active'); mm.style.display = 'none'; }
+
+  // Slide & blur out the main menu buttons
   if (mmNav) mmNav.classList.add('mm-nav-exiting');
 
   // Reset state
@@ -223,9 +226,8 @@ function mainMenuStart() {
     void loadScreen.offsetWidth;
     loadScreen.classList.add('active');
 
-    // Hide main menu behind once loading screen is visible
+    // Clean up nav exiting state once loading screen is fully visible
     setTimeout(() => {
-      if (mm) { mm.style.display = 'none'; }
       if (mmNav) mmNav.classList.remove('mm-nav-exiting');
     }, 450);
 
