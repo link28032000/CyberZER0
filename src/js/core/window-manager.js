@@ -68,34 +68,22 @@ function updateAppLockStates() {
 }
 
 function openRecycleBin() {
-  const ch2IntroActive = typeof isCh2IntroActive === 'function' ? isCh2IntroActive() : !!window._ch2IntroActive;
-  const ch2PretestRunning = typeof Ch2Pretest !== 'undefined' && Ch2Pretest.isRunning && Ch2Pretest.isRunning();
-  if (ch2PretestRunning) {
-    if (typeof showToast === 'function') {
-      showToast('Please complete the pre-test with Ryan before opening other apps.', 'warning');
-    }
-    if (typeof AudioManager !== 'undefined' && AudioManager.playWrong) AudioManager.playWrong();
-    return;
-  }
-  if (ch2IntroActive) {
-    if (typeof showToast === 'function') {
-      showToast('Please finish the introduction dialogue with Ryan before opening apps.', 'warning');
-    }
-    if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
-    return;
-  }
-  if (typeof showToast === 'function') {
-    showToast('🗑️ Recycle Bin is currently empty.', 'info');
-  }
+  openApp('recycle');
 }
 window.openRecycleBin = openRecycleBin;
 
 function openApp(appName) {
-  if (appName === 'recycle' || appName === 'recycle-bin') {
-    openRecycleBin();
+  if (appName === 'recycle-bin') appName = 'recycle';
+  if (appName === 'control_panel') appName = 'control-panel';
+  if (appName === 'pictures') {
+    if (typeof openPicturesFolder === 'function') {
+      openPicturesFolder();
+    } else {
+      openApp('folder');
+      if (typeof switchExplorerFolder === 'function') switchExplorerFolder('pictures');
+    }
     return;
   }
-  if (appName === 'control_panel') appName = 'control-panel';
   // ── Block all apps while the pretest or posttest is running ──
   // ── Block Chapter 2 apps while intro dialogue or Ch2 pretest is running ──
   const ch2IntroActive = typeof isCh2IntroActive === 'function' ? isCh2IntroActive() : !!window._ch2IntroActive;
@@ -171,6 +159,9 @@ function openApp(appName) {
     const isCh2 = (window._currentChapterCategory === 'malware' ||
                    (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
                    (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+    if (isCh2 && typeof window.ch2OnExplorerOpened === 'function') {
+      window.ch2OnExplorerOpened();
+    }
     if (!isCh2) {
       if (typeof initPretestResultDocument === 'function') initPretestResultDocument();
       if (typeof initPosttestResultDocument === 'function') initPosttestResultDocument();
@@ -179,12 +170,15 @@ function openApp(appName) {
     const allDocs = (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) ? EXPLORER_ADDITIONAL_FILES.documents : [];
     const visibleDocs = isCh2
       ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
-      : allDocs;
+      : allDocs.filter(f => f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.chapter !== 2);
     const docCount = visibleDocs.length;
     if (docBadge) {
       docBadge.textContent = docCount;
       docBadge.style.display = docCount > 0 ? '' : 'none';
     }
+  }
+  if (appName === 'recycle' && typeof renderRecycleBin === 'function') {
+    renderRecycleBin();
   }
   if (typeof AudioManager !== 'undefined') AudioManager.playWindowSound(true);
 
@@ -588,7 +582,9 @@ function minimizeApp_restore(appName) {
 
 function updateTaskbar() {
   updateAppLockStates();
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'control-panel', 'steam', 'space-fighter'].forEach(appName => {
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware',
+  'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'control-panel', 'steam',
+  'space-fighter', 'wannacry', 'recycle'].forEach(appName => {
     const btn = document.getElementById(`taskbar-${appName}`);
     if (!btn) return;
     const state = appState[appName];
@@ -604,7 +600,7 @@ function updateTaskbar() {
         btn.classList.add('active');
       }
     } else {
-      if (appName === 'docviewer' || appName === 'imageviewer' || appName === 'videoplayer' || appName === 'control-panel' || appName === 'steam' || appName === 'ransomware' || appName === 'space-fighter') {
+      if (appName === 'docviewer' || appName === 'imageviewer' || appName === 'videoplayer' || appName === 'control-panel' || appName === 'steam' || appName === 'ransomware' || appName === 'space-fighter' || appName === 'wannacry' || appName === 'recycle') {
         btn.classList.add('hidden');
       }
     }

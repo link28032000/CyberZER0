@@ -45,27 +45,46 @@ var TM_MALWARE_PROC = {
   suspicious: true
 };
 
-var TM_CH2_COINMINER_PROC = {
-  name: 'CoinBitMiner.exe',
-  icon: '<span style="font-size:16px;">⛏️</span>',
+var TM_CH2_BM_PROC = {
+  name: 'BM',
+  icon: '<img src="assets/icons/apps/settings.svg" class="tm-icon-img" alt="BM">',
   cpu:  function(){
-    if (window._ch2Mission && (window._ch2Mission.trojanKilled || window._ch2Mission.trojanUninstalled)) return 0.0;
-    if (window._ch2Mission && window._ch2Mission.trojanRunning) return _tmRand(76.2, 85.8);
-    return 0.0;
+    var m = window._ch2Mission;
+    if (m && (m.bmKilled || m.bmUninstalled || m.trojanKilled || m.trojanUninstalled)) return 0.0;
+    // Unusually high CPU only after observing malware effects (Mission 1 completed or m1EffectsObserved)
+    if (m && (m.m1EffectsObserved || m.currentMission >= 2)) {
+      return _tmRand(78.4, 85.8);
+    }
+    return _tmRand(0.2, 0.6);
   },
   mem:  function(){
-    if (window._ch2Mission && (window._ch2Mission.trojanKilled || window._ch2Mission.trojanUninstalled)) return 0;
-    if (window._ch2Mission && window._ch2Mission.trojanRunning) return _tmRand(420, 540);
-    return 0;
+    var m = window._ch2Mission;
+    if (m && (m.bmKilled || m.bmUninstalled || m.trojanKilled || m.trojanUninstalled)) return 0;
+    if (m && (m.m1EffectsObserved || m.currentMission >= 2)) {
+      return _tmRand(460, 520);
+    }
+    return _tmRand(25, 45);
   },
   disk: '0.2 MB/s',
   net:  '1.4 Mbps',
   pid:  3844,
   user: 'Ethan',
-  status: '⚠️ Suspicious',
-  suspicious: true,
+  status: 'Running',
+  suspicious: false,
   ch2Trojan: true
 };
+
+var TM_CH2_COINMINER_PROC = TM_CH2_BM_PROC; // Alias for backward compatibility
+
+function _tmIsCh2TrojanAbnormal() {
+  if (window._currentChapterCategory !== 'malware' && (typeof gameState === 'undefined' || gameState.phase !== 'malware')) {
+    return false;
+  }
+  var m = window._ch2Mission;
+  if (!m) return false;
+  if (m.bmKilled || m.bmUninstalled || m.trojanKilled || m.trojanUninstalled) return false;
+  return !!(m.m1EffectsObserved || m.currentMission >= 2);
+}
 
 var _tmIntervalId    = null;
 var _tmPerfActive    = 'cpu';
@@ -126,6 +145,10 @@ function tmSwitchTab(tab) {
       tabEl.classList.remove('active');
     }
   });
+
+  if (typeof window.ch2OnTaskManagerTabSwitched === 'function') {
+    window.ch2OnTaskManagerTabSwitched(tab);
+  }
 
   if (tab === 'performance') {
     setTimeout(function() {
@@ -230,6 +253,7 @@ function tmSelectRow(pid) {
   _tmSelectedPid = String(pid);
   if (pid === '3844' || pid === 3844) {
     if (typeof window.ch2OnProcessSelected === 'function') {
+      window.ch2OnProcessSelected('BM', pid);
       window.ch2OnProcessSelected('CoinBitMiner.exe', pid);
     }
   }
@@ -256,8 +280,9 @@ function _tmUpdateCommandBar() {
 function tmEndSelectedTask() {
   if (!_tmSelectedPid) return;
   var pid = _tmSelectedPid;
-  if (pid === '3844' || (TM_CH2_COINMINER_PROC && String(TM_CH2_COINMINER_PROC.pid) === pid)) {
+  if (pid === '3844' || (TM_CH2_BM_PROC && String(TM_CH2_BM_PROC.pid) === pid) || (TM_CH2_COINMINER_PROC && String(TM_CH2_COINMINER_PROC.pid) === pid)) {
     if (typeof window.ch2OnProcessKilled === 'function') {
+      window.ch2OnProcessKilled('BM', pid);
       window.ch2OnProcessKilled('CoinBitMiner.exe', pid);
     }
     _tmSimulateProcessKill(pid);
@@ -337,10 +362,13 @@ function _tmRenderProcesses() {
     });
   }
 
-  // Chapter 2 CoinBitMiner process
+  // Chapter 2 BM (Bitcoin Miner) process
   var isCh2Active = (window._currentChapterCategory === 'malware' || (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
-  if (isCh2Active && window._ch2Mission && window._ch2Mission.trojanRunning && !window._ch2Mission.trojanUninstalled) {
-    apps.unshift(TM_CH2_COINMINER_PROC);
+  if (isCh2Active && window._ch2Mission && !window._ch2Mission.bmUninstalled && !window._ch2Mission.trojanUninstalled) {
+    var isBmKilled = !!(window._ch2Mission.bmKilled || window._ch2Mission.trojanKilled);
+    if (!isBmKilled || _tmSelectedPid === '3844') {
+      apps.unshift(TM_CH2_BM_PROC);
+    }
   }
 
   // Filter
@@ -380,7 +408,7 @@ function _tmRenderProcesses() {
 
 function _tmAppRow(p, isTerminatedMalware) {
   var isSusp = !!p.suspicious;
-  var isCh2Killed = !!(p.ch2Trojan && window._ch2Mission && (window._ch2Mission.trojanKilled || window._ch2Mission.trojanUninstalled));
+  var isCh2Killed = !!(p.ch2Trojan && window._ch2Mission && (window._ch2Mission.bmKilled || window._ch2Mission.trojanKilled || window._ch2Mission.bmUninstalled || window._ch2Mission.trojanUninstalled));
   var isKilled = (isSusp && isTerminatedMalware) || isCh2Killed;
   var cpuVal = isKilled ? 0.0 : p.cpu();
   var memVal = isKilled ? 0 : p.mem();
@@ -392,13 +420,14 @@ function _tmAppRow(p, isTerminatedMalware) {
   var memBar = Math.min((parseFloat(mem) / 600) * 100, 100).toFixed(0);
 
   var isSelected = (_tmSelectedPid === String(p.pid));
+  var isHighCpu = parseFloat(cpu) > 30;
 
   var statusTag = isKilled
     ? '<span class="tm-terminated-tag">✓ Terminated</span>'
     : (isSusp ? '<span class="tm-status-warn-tag">⚠️ Suspicious</span>' : '<span class="tm-status-running-tag">Running</span>');
 
   var actionBtn = '';
-  if (isSusp) {
+  if (isSusp || p.ch2Trojan) {
     if (isKilled) {
       actionBtn = '<span class="tm-terminated-tag">✓ Stopped</span>';
     } else {
@@ -408,6 +437,7 @@ function _tmAppRow(p, isTerminatedMalware) {
 
   var rowClasses = 'tm-process-row' +
     (isSusp ? ' suspicious-process' : '') +
+    (isHighCpu && !isKilled ? ' high-cpu-process' : '') +
     (isKilled ? ' terminated-process' : '') +
     (isSelected ? ' selected-row' : '');
 
@@ -416,7 +446,7 @@ function _tmAppRow(p, isTerminatedMalware) {
     (isSusp && !isKilled ? '<span class="tm-warn-badge">⚠️</span>' : '') +
     '<span>' + p.name + '</span></span>' +
     '<span class="tm-col-status">' + statusTag + '</span>' +
-    '<span class="tm-col-cpu"><span class="tm-bar-wrap"><span class="tm-bar' + (isSusp && !isKilled ? ' tm-bar-red' : '') +
+    '<span class="tm-col-cpu"><span class="tm-bar-wrap"><span class="tm-bar' + ((isSusp || isHighCpu) && !isKilled ? ' tm-bar-red' : '') +
     '" style="width:' + cpuBar + '%"></span></span>' + cpu + '%</span>' +
     '<span class="tm-col-mem"><span class="tm-bar-wrap"><span class="tm-bar tm-bar-blue" style="width:' + memBar +
     '%"></span></span>' + mem + ' MB</span>' +
@@ -466,6 +496,14 @@ function _tmRenderDetails() {
     });
   }
   if (_tmG4Mode) all.push(TM_MALWARE_PROC);
+
+  var isCh2Active = (window._currentChapterCategory === 'malware' || (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+  if (isCh2Active && window._ch2Mission && !window._ch2Mission.bmUninstalled && !window._ch2Mission.trojanUninstalled) {
+    var isBmKilled = !!(window._ch2Mission.bmKilled || window._ch2Mission.trojanKilled);
+    if (!isBmKilled || _tmSelectedPid === '3844') {
+      all.unshift(TM_CH2_BM_PROC);
+    }
+  }
 
   if (_tmSearchFilter) {
     all = all.filter(function(p) {
@@ -542,12 +580,12 @@ function _tmStartUptime() {
 }
 
 function _tmUpdateStatusBar() {
-  var isCh2TrojanActive = (window._currentChapterCategory === 'malware' && window._ch2Mission && window._ch2Mission.trojanRunning && !window._ch2Mission.trojanKilled);
+  var isCh2TrojanActive = _tmIsCh2TrojanAbnormal();
   var isMalwareActive = (isCh2TrojanActive) || (_tmG4Mode && !(typeof g4State !== 'undefined' && g4State.processKilled));
 
-  var cpuVal = (isMalwareActive ? _tmRand(28, 58) : _tmRand(4, 18)).toFixed(0);
-  var memVal = (isMalwareActive ? _tmRand(58, 80) : _tmRand(40, 62)).toFixed(0);
-  var diskVal = (isMalwareActive ? _tmRand(4, 16) : _tmRand(0, 3)).toFixed(0);
+  var cpuVal = (isMalwareActive ? _tmRand(82, 94) : _tmRand(8, 12)).toFixed(0);
+  var memVal = (isMalwareActive ? _tmRand(68, 84) : _tmRand(40, 58)).toFixed(0);
+  var diskVal = (isMalwareActive ? _tmRand(8, 22) : _tmRand(0, 3)).toFixed(0);
   var netVal  = (isMalwareActive ? _tmRand(1.2, 3.8) : _tmRand(0.0, 0.4)).toFixed(1);
 
   var cpuEl = document.getElementById('tm-cpu-status');
@@ -566,12 +604,13 @@ function _tmTickPerfHistory() {
     arr.push(val);
     if (arr.length > 60) arr.shift();
   }
-  var isMalwareActive = _tmG4Mode && !(typeof g4State !== 'undefined' && g4State.processKilled);
+  var isCh2TrojanActive = _tmIsCh2TrojanAbnormal();
+  var isMalwareActive = isCh2TrojanActive || (_tmG4Mode && !(typeof g4State !== 'undefined' && g4State.processKilled));
 
-  push(_tmPerfHistory.cpu,  isMalwareActive ? _tmRand(28, 62) : _tmRand(5, 20));
-  push(_tmPerfHistory.mem,  isMalwareActive ? _tmRand(58, 82) : _tmRand(42, 60));
-  push(_tmPerfHistory.disk, isMalwareActive ? _tmRand(5, 22)  : _tmRand(0, 8));
-  push(_tmPerfHistory.net,  isMalwareActive ? _tmRand(6, 42)  : _tmRand(0, 4));
+  push(_tmPerfHistory.cpu,  isMalwareActive ? _tmRand(84, 95) : _tmRand(8, 14));
+  push(_tmPerfHistory.mem,  isMalwareActive ? _tmRand(68, 84) : _tmRand(42, 58));
+  push(_tmPerfHistory.disk, isMalwareActive ? _tmRand(8, 22)  : _tmRand(0, 6));
+  push(_tmPerfHistory.net,  isMalwareActive ? _tmRand(12, 38) : _tmRand(0, 3));
 }
 
 /* ─── Performance Tab: Resource Selection & Stats ─────────── */

@@ -77,7 +77,7 @@ const CP_MASTER_PROGRAMS = [
     name: 'BM',
     shortName: 'BM',
     desktopIconId: null,
-    icon: 'assets/icons/apps/settings.svg',
+    icon: 'assets/icons/Chapter 2 new apps/BM.svg',
     publisher: 'Decentralized CoinPool Mining Network',
     date: '10/28/2026',
     size: '48.6 MB',
@@ -228,10 +228,48 @@ function getUninstalledAppIds() {
   }
 }
 
-// Helper to get currently installed programs (filtered by uninstalled state)
+// Helper to get currently installed programs (filtered by uninstalled state + chapter context)
 function getEffectiveInstalledPrograms() {
-  const uninstalled = getUninstalledAppIds();
-  return CP_MASTER_PROGRAMS.filter(p => !uninstalled.includes(p.id));
+  let uninstalled = getUninstalledAppIds();
+
+  // Strict Chapter 1 isolation: only block BM if we are definitely inside Chapter 1 phishing
+  const isCh1 = (
+    window._currentChapterCategory === 'phishing' &&
+    typeof gameState !== 'undefined' &&
+    gameState &&
+    gameState.phase === 'phishing'
+  );
+
+  // Check if BM has been uninstalled in Chapter 2
+  const isBmUninstalled = !!(
+    (window._ch2Mission && window._ch2Mission.bmUninstalled) ||
+    (function() {
+      try {
+        var _m = JSON.parse(localStorage.getItem('cyberzero_ch2_mission') || 'null');
+        return _m && _m.bmUninstalled;
+      } catch (e) { return false; }
+    })()
+  );
+
+  // Ensure BM is not blocked by stale uninstalled_apps localStorage if not actually uninstalled
+  if (!isBmUninstalled && uninstalled.includes('bm')) {
+    uninstalled = uninstalled.filter(id => id !== 'bm');
+    try {
+      localStorage.setItem('cyberzero_uninstalled_apps', JSON.stringify(uninstalled));
+    } catch (e) {}
+  }
+
+  return CP_MASTER_PROGRAMS.filter(p => {
+    // Hide BM strictly in Chapter 1 phishing
+    if (p.id === 'bm' && isCh1) return false;
+
+    // In Chapter 2 (Ethan) and all other views, BM is installed until uninstalled
+    if (p.id === 'bm') {
+      return !isBmUninstalled;
+    }
+
+    return !uninstalled.includes(p.id);
+  });
 }
 
 // Synchronize desktop screen icons with uninstalled state (persists across reloads/chapters)
@@ -369,6 +407,9 @@ const CP_CATEGORIES = [
 function initControlPanel() {
   syncUninstalledAppsState();
   renderControlPanel();
+  if (typeof window.ch2OnControlPanelOpened === 'function') {
+    window.ch2OnControlPanelOpened();
+  }
   if (typeof window.ch2OnControlPanelChecked === 'function') {
     window.ch2OnControlPanelChecked();
   }
@@ -397,6 +438,9 @@ function renderControlPanel() {
       renderCpIcons(container, q);
     }
   } else if (cpCurrentPage === 'programs') {
+    if (typeof window.ch2OnProgramsFeaturesOpened === 'function') {
+      window.ch2OnProgramsFeaturesOpened();
+    }
     renderCpProgramsPage(container, q);
   } else if (cpCurrentPage === 'system') {
     renderCpSystemPage(container);
@@ -599,7 +643,7 @@ function renderCpProgramsPage(container, q) {
                 <button type="button" 
                         class="cp-uninstall-btn ${p.removable ? '' : 'protected'}" 
                         onclick="promptUninstall('${p.id}', event)">
-                  ${p.removable ? 'Uninstall' : '🔒 System'}
+                  ${p.removable ? 'Uninstall' : 'System'}
                 </button>
               </td>
             </tr>
@@ -631,6 +675,11 @@ function promptUninstall(appId, event) {
   if (event) event.stopPropagation();
   const prog = CP_MASTER_PROGRAMS.find(p => p.id === appId);
   if (!prog) return;
+
+  cpSelectedProgramId = appId;
+  if (typeof window.ch2OnProgramSelected === 'function') {
+    window.ch2OnProgramSelected(appId);
+  }
 
   if (!prog.removable) {
     showCpSystemAlert(prog);
@@ -712,6 +761,10 @@ function openCpUninstallWizard(prog) {
 function startCpUninstall(appId) {
   const prog = CP_MASTER_PROGRAMS.find(p => p.id === appId);
   if (!prog) return;
+
+  if (appId === 'bm' && typeof window.ch2OnProgramUninstallStarted === 'function') {
+    window.ch2OnProgramUninstallStarted('bm');
+  }
 
   const body = document.getElementById('cp-uninstaller-body');
   const closeBtn = document.getElementById('cp-uninst-close-btn');

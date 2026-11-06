@@ -10,6 +10,27 @@ function openFileFromFolder(fileId) {
   const file = getExplorerFileById(fileId);
   if (!file) return;
 
+  // ══════════════════════════════════════════════════════════════
+  // WannaCry simulation: intercept ALL file/app/folder interactions
+  // Show encrypted notice for every item while simulation is active.
+  // Exceptions: ShieldAV (antivirus) and the WannaCry window itself
+  // so the player can still remediate the infection.
+  // ══════════════════════════════════════════════════════════════
+  if (window._wannaCryActive) {
+    const safeApps = ['antivirus', 'wannacry'];
+    const isSafeApp = file.appId && safeApps.includes(file.appId);
+    const isWannaCryWindow = (file.id === 'wannacry' || file.appId === 'wannacry');
+    if (!isSafeApp && !isWannaCryWindow) {
+      const fnNotice = (typeof showWannaCryEncryptedNotice === 'function')
+        ? showWannaCryEncryptedNotice
+        : window.showWannaCryEncryptedNotice;
+      if (typeof fnNotice === 'function') {
+        fnNotice(file);
+      }
+      return;
+    }
+  }
+
   // App shortcuts in Desktop folder
   if (file.appId) {
     if (file.appId === 'notes') {
@@ -36,6 +57,25 @@ function openFileFromFolder(fileId) {
   if (file.subFolderKey) {
     if (typeof switchExplorerFolder === 'function') {
       switchExplorerFolder(file.subFolderKey);
+    }
+    return;
+  }
+
+  // ── Opening dropped WannaCry ransom note ──
+  if (file.id && file.id.startsWith('wncry_readme')) {
+    if (typeof openDocViewer === 'function') {
+      openDocViewer(file);
+    }
+    return;
+  }
+
+  // ── Chapter 2: Opening GTA VI triggers WannaCry Decryptor 3.0 simulation ──
+  if (file.id === 'game_gta6' || file.name === 'GTA VI' || (file.name && file.name.includes('GTA VI'))) {
+    const fn = (typeof launchWannaCrySimulation === 'function')
+      ? launchWannaCrySimulation
+      : (typeof window !== 'undefined' ? window.launchWannaCrySimulation : null);
+    if (typeof fn === 'function') {
+      fn();
     }
     return;
   }
@@ -169,7 +209,7 @@ Status: DEVICE HARDWARE IS HEALTHY AND AUTHORIZED FOR USE.
   if (file.id === 'doc_pretest_result') {
     const isCh2 = (window._currentChapterCategory === 'malware' ||
                    (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
-                   (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+                   (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
     if (isCh2) {
       showToast('📁 File not available in Chapter 2.', 'warning');
       return;
@@ -180,6 +220,50 @@ Status: DEVICE HARDWARE IS HEALTHY AND AUTHORIZED FOR USE.
       page.innerHTML = typeof renderPretestReportHtml === 'function'
         ? renderPretestReportHtml(file)
         : (typeof window.renderPretestReportHtml === 'function' ? window.renderPretestReportHtml(file) : '');
+    }
+    openApp('docviewer');
+    focusWindow('docviewer');
+    showToast(`📄 Opened "${file.name}" in Microsoft Word.`, 'success');
+    return;
+  }
+
+  // Chapter 2 Pre-Test Assessment Report
+  if (file.id === 'doc_ch2_pretest_result' || file.name === 'ch2_pretest_result_report.docx') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+    if (!isCh2) {
+      showToast('📁 File not available in Chapter 1.', 'warning');
+      return;
+    }
+    if (titleText) titleText.textContent = `Microsoft Word — ${file.name}`;
+    const page = document.getElementById('docviewer-page-content');
+    if (page) {
+      page.innerHTML = typeof renderCh2PretestReportHtml === 'function'
+        ? renderCh2PretestReportHtml(file)
+        : (typeof window.renderCh2PretestReportHtml === 'function' ? window.renderCh2PretestReportHtml(file) : '');
+    }
+    openApp('docviewer');
+    focusWindow('docviewer');
+    showToast(`📄 Opened "${file.name}" in Microsoft Word.`, 'success');
+    return;
+  }
+
+  // Chapter 2 Knowledge Assessment Report
+  if (file.id === 'doc_ch2_assessment_result' || file.name === 'ch2_assessment_result_report.docx') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+    if (!isCh2) {
+      showToast('📁 File not available in Chapter 1.', 'warning');
+      return;
+    }
+    if (titleText) titleText.textContent = `Microsoft Word — ${file.name}`;
+    const page = document.getElementById('docviewer-page-content');
+    if (page) {
+      page.innerHTML = typeof renderCh2AssessmentResultReportHtml === 'function'
+        ? renderCh2AssessmentResultReportHtml(file)
+        : (typeof window.renderCh2AssessmentResultReportHtml === 'function' ? window.renderCh2AssessmentResultReportHtml(file) : '');
     }
     openApp('docviewer');
     focusWindow('docviewer');

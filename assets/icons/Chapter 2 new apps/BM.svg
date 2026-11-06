@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Dark background -->
+  <rect width="64" height="64" rx="12" fill="#1e1e2f"/>
+  <rect x="1" y="1" width="62" height="62" rx="11" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Bitcoin circle glow -->
+  <circle cx="32" cy="28" r="16" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="2"/>
+  <circle cx="32" cy="28" r="13" fill="#d97706" fill-opacity="0.3"/>
+
+  <!-- Bitcoin B symbol using paths for 100% cross-browser fidelity -->
+  <path d="M28 19v18m4-18v18M26 21h7a4 4 0 0 1 0 8h-7m0 0h8a4.5 4.5 0 0 1 0 9h-8" 
+        stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Mining chart activity bars at bottom -->
+  <rect x="12" y="49" width="5" height="7" rx="1.5" fill="#f59e0b"/>
+  <rect x="20" y="45" width="5" height="11" rx="1.5" fill="#ef4444"/>
+  <rect x="28" y="42" width="5" height="14" rx="1.5" fill="#f59e0b"/>
+  <rect x="36" y="46" width="5" height="10" rx="1.5" fill="#ef4444"/>
+  <rect x="44" y="43" width="5" height="13" rx="1.5" fill="#f59e0b"/>
+
+  <!-- Stealth / Trojan alert indicator -->
+  <circle cx="52" cy="12" r="6" fill="#ef4444" stroke="#1e1e2f" stroke-width="1.5"/>
+  <path d="M52 9v3.5M52 14.5v.5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

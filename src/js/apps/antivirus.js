@@ -99,6 +99,16 @@ function updateAntiVirusProtectionUI() {
       if (tileAvBadge) tileAvBadge.textContent = 'OFF';
     }
   }
+
+  // Synchronize Active WannaCry Alert banner
+  const wcAlert = document.getElementById('av-wannacry-alert');
+  if (wcAlert) {
+    if (window._wannaCryActive) {
+      wcAlert.classList.remove('hidden');
+    } else {
+      wcAlert.classList.add('hidden');
+    }
+  }
 }
 
 // ── Called every time the Antivirus app window is opened ──────────────────────

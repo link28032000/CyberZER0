@@ -12,27 +12,78 @@ let explorerHistoryIdx = 0;
 let explorerSortCol = 'name';
 let explorerSortAsc = true;
 
+if (typeof window !== 'undefined') {
+  window.currentExplorerFolder = currentExplorerFolder;
+  window.explorerViewMode = explorerViewMode;
+}
+
 // Additional folder virtual files for non-Downloads folders
 const EXPLORER_ADDITIONAL_FILES = {
   documents: [],
+  // Chapter 2 only — Ethan's Pictures folder. Chapter 1 never sees these.
   pictures: [
     {
-      id: 'pic_retreat',
-      name: 'annual_team_retreat.jpg',
-      fakeExt: 'jpg',
-      realExt: 'jpg',
-      type: 'JPEG Image',
-      size: '1.2 MB',
-      date: '9/4/2026 02:22 PM',
-      icon: '🖼️',
+      id: 'pic_cat',
+      name: 'cat.png',
+      fakeExt: 'png',
+      realExt: 'png',
+      type: 'PNG Image',
+      size: '505 KB',
+      date: '10/12/2026 03:45 PM',
+      icon: '<img class="explorer-photo-thumb" src="assets/Pictures/cat.png" alt="cat.png" onerror="this.onerror=null;this.src=\'assets/Pictures/image.svg\'">',
+      chapter: 2,
       isMalware: false,
       threatName: 'Clean File',
       threatCategory: 'SAFE',
-      hash: '098f6bcd4621d373cade4e832627b4f6cf4c45a76e9c60e34c98f98c4f74d081',
-      analysis: '✅ Standard digital photograph. Valid JFIF/EXIF header metadata, zero steganographic payloads.',
+      hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+      analysis: '✅ Standard PNG photograph. Valid IHDR/IDAT chunk structure, no steganographic payloads detected.',
       quarantined: false,
       scanned: true,
-      mediaSrc: 'assets/background/Coffe shop.png'
+      mediaSrc: 'assets/Pictures/cat.png',
+      dimensions: '1024 × 1024 px',
+      camera: 'iPhone 15 Pro (24mm, f/1.78)'
+    },
+    {
+      id: 'pic_dog',
+      name: 'my_dog.png',
+      fakeExt: 'png',
+      realExt: 'png',
+      type: 'PNG Image',
+      size: '531 KB',
+      date: '10/18/2026 11:20 AM',
+      icon: '<img class="explorer-photo-thumb" src="assets/Pictures/my_dog.png" alt="my_dog.png" onerror="this.onerror=null;this.src=\'assets/Pictures/image.svg\'">',
+      chapter: 2,
+      isMalware: false,
+      threatName: 'Clean File',
+      threatCategory: 'SAFE',
+      hash: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3',
+      analysis: '✅ Standard PNG photograph. Valid IHDR/IDAT chunk structure, no steganographic payloads detected.',
+      quarantined: false,
+      scanned: true,
+      mediaSrc: 'assets/Pictures/my_dog.png',
+      dimensions: '1024 × 1024 px',
+      camera: 'iPhone 15 Pro (48mm, f/2.2)'
+    },
+    {
+      id: 'pic_selfie',
+      name: 'selfie.png',
+      fakeExt: 'png',
+      realExt: 'png',
+      type: 'PNG Image',
+      size: '311 KB',
+      date: '10/25/2026 06:55 PM',
+      icon: '<img class="explorer-photo-thumb" src="assets/Pictures/selfie.png" alt="selfie.png" onerror="this.onerror=null;this.src=\'assets/Pictures/image.svg\'">',
+      chapter: 2,
+      isMalware: false,
+      threatName: 'Clean File',
+      threatCategory: 'SAFE',
+      hash: 'c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4',
+      analysis: '✅ Standard PNG photograph. Valid IHDR/IDAT chunk structure, no steganographic payloads detected.',
+      quarantined: false,
+      scanned: true,
+      mediaSrc: 'assets/Pictures/selfie.png',
+      dimensions: '1024 × 1024 px',
+      camera: 'TrueDepth Front Camera (23mm, f/1.9)'
     }
   ],
   videos: [
@@ -485,7 +536,7 @@ function formatPretestDate(isoStr) {
   }
 }
 
-function getPlayerDisplayName() {
+function getPlayerDisplayName(chapter) {
   try {
     if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
       const u = firebase.auth().currentUser;
@@ -498,6 +549,11 @@ function getPlayerDisplayName() {
   if (startUserName && startUserName.textContent && startUserName.textContent.trim()) {
     return startUserName.textContent.trim();
   }
+  const isCh2 = (chapter === 2 ||
+                 (typeof window !== 'undefined' && window._currentChapterCategory === 'malware') ||
+                 (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                 (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+  if (isCh2) return 'Ethan';
   return 'Alex';
 }
 
@@ -837,6 +893,570 @@ window.renderPretestReportHtml = renderPretestReportHtml;
 // Auto-initialize on script execution
 if (typeof initPretestResultDocument === 'function') {
   initPretestResultDocument();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// CHAPTER 2: PRE-TEST RESULT DOCUMENT PERSISTENCE & FILE INJECTION
+// ═══════════════════════════════════════════════════════════
+
+const CH2_PRETEST_DOC_STORAGE_KEY = 'cyberzero_ch2_pretest_result_file';
+
+function formatCh2PretestDate(isoStr) {
+  try {
+    const d = isoStr ? new Date(isoStr) : new Date();
+    if (isNaN(d.getTime())) throw new Error('Invalid date');
+    const datePart = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return `${datePart} ${timePart}`;
+  } catch (e) {
+    return '10/28/2026 09:15 AM';
+  }
+}
+
+function generateCh2PretestResultDocument(result) {
+  if (!result) return null;
+
+  const playerName = getPlayerDisplayName(2);
+  const completedAt = result.completedAt || new Date().toISOString();
+  const formattedDate = formatCh2PretestDate(completedAt);
+
+  const score = typeof result.score === 'number' ? result.score : 0;
+  const total = typeof result.total === 'number' ? result.total : 20;
+  const correct = score;
+  const incorrect = Math.max(0, total - score);
+  const percent = typeof result.percent === 'number' ? result.percent : Math.round((score / (total || 1)) * 100);
+  const tier = result.tier || (score === 20 ? 'perfect' : score >= 16 ? 'great' : score >= 10 ? 'ok' : 'low');
+  const rank = result.rank || (tier === 'perfect' ? 'Malware Expert' : tier === 'great' ? 'Sharp Defender' : tier === 'ok' ? 'Rising Analyst' : 'Fresh Recruit');
+
+  return {
+    id: 'doc_ch2_pretest_result',
+    name: 'ch2_pretest_result_report.docx',
+    chapter: 2,
+    fakeExt: 'docx',
+    realExt: 'docx',
+    type: 'Microsoft Word Document',
+    size: '36 KB',
+    date: formattedDate,
+    icon: '📄',
+    isMalware: false,
+    threatName: 'Clean File',
+    threatCategory: 'SAFE',
+    hash: 'CH2-PRETEST-REPORT-CYBERZERO-' + Math.abs((completedAt + score).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16),
+    analysis: '✅ Official CyberZerØ Chapter 2 Malware Pre-Test Assessment Report. Verified authentic.',
+    quarantined: false,
+    scanned: true,
+    reportData: {
+      chapter: 2,
+      playerName: playerName,
+      completedAt: completedAt,
+      formattedDate: formattedDate,
+      score: score,
+      total: total,
+      correct: correct,
+      incorrect: incorrect,
+      percent: percent,
+      tier: tier,
+      rank: rank,
+      answers: Array.isArray(result.answers) ? result.answers : []
+    }
+  };
+}
+
+function _findCh2PretestResultData() {
+  // 1. Direct saved document in localStorage
+  try {
+    const rawDoc = localStorage.getItem(CH2_PRETEST_DOC_STORAGE_KEY);
+    if (rawDoc) {
+      const parsed = JSON.parse(rawDoc);
+      if (parsed && parsed.reportData && typeof parsed.reportData.score === 'number') {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  // 2. In-memory gameState.ch2PretestResult
+  try {
+    if (typeof gameState !== 'undefined' && gameState.ch2PretestResult && typeof gameState.ch2PretestResult.score === 'number') {
+      return generateCh2PretestResultDocument(gameState.ch2PretestResult);
+    }
+  } catch (e) {}
+
+  // 3. Ch2Pretest.getResult()
+  try {
+    if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.getResult) {
+      const res = Ch2Pretest.getResult();
+      if (res && typeof res.score === 'number') {
+        return generateCh2PretestResultDocument(res);
+      }
+    }
+  } catch (e) {}
+
+  // 4. Scan localStorage for cyberzero_ch2_pretest
+  try {
+    const val = localStorage.getItem('cyberzero_ch2_pretest');
+    if (val) {
+      const parsed = JSON.parse(val);
+      if (parsed && typeof parsed.score === 'number') {
+        return generateCh2PretestResultDocument(parsed);
+      }
+    }
+  } catch (e) {}
+
+  // 5. Scan session state in localStorage
+  try {
+    const rawSess = localStorage.getItem('cyberzero_session_state') || localStorage.getItem('cyberzero_session_save');
+    if (rawSess) {
+      const sess = JSON.parse(rawSess);
+      const gs = (sess && sess.gameState) ? sess.gameState : sess;
+      if (gs && gs.ch2PretestResult && typeof gs.ch2PretestResult.score === 'number') {
+        return generateCh2PretestResultDocument(gs.ch2PretestResult);
+      }
+      if (sess && sess.ch2 && sess.ch2.pretestResult && typeof sess.ch2.pretestResult.score === 'number') {
+        return generateCh2PretestResultDocument(sess.ch2.pretestResult);
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+function saveAndInjectCh2PretestDocument(result) {
+  if (!result) return;
+  const docFile = generateCh2PretestResultDocument(result);
+  if (!docFile) return;
+
+  // 1. Save persistently to localStorage
+  try {
+    localStorage.setItem(CH2_PRETEST_DOC_STORAGE_KEY, JSON.stringify(docFile));
+  } catch (e) {}
+
+  // 2. Ensure EXPLORER_ADDITIONAL_FILES.documents has this file (prevent duplicates!)
+  if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined') {
+    if (!Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+      EXPLORER_ADDITIONAL_FILES.documents = [];
+    }
+    const docs = EXPLORER_ADDITIONAL_FILES.documents;
+    const existingIdx = docs.findIndex(f => f.id === 'doc_ch2_pretest_result');
+    if (existingIdx !== -1) {
+      docs[existingIdx] = docFile;
+    } else {
+      docs.push(docFile);
+    }
+
+    // Refresh active file explorer view if currently open on Documents
+    if (typeof currentExplorerFolder !== 'undefined' && currentExplorerFolder === 'documents' && typeof renderFolderFiles === 'function') {
+      renderFolderFiles();
+    }
+  }
+
+  // Update sidebar Documents badge if visible
+  const docBadge = document.getElementById('sidebar-documents-badge');
+  const isCh2 = ((typeof window !== 'undefined' && window._currentChapterCategory === 'malware') ||
+                 (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                 (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+  const allDocs = (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) ? EXPLORER_ADDITIONAL_FILES.documents : [];
+  const visibleDocs = isCh2
+    ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
+    : allDocs.filter(f => f.id !== 'doc_ch2_pretest_result' && f.chapter !== 2);
+  const docCount = visibleDocs.length;
+  if (docBadge) {
+    docBadge.textContent = docCount;
+    docBadge.style.display = docCount > 0 ? '' : 'none';
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('📄 Pre-Test Report saved to File Explorer → Documents', 'success');
+  }
+
+  if (typeof window !== 'undefined' && typeof window.saveSessionLocally === 'function') {
+    window.saveSessionLocally();
+  }
+}
+
+function initCh2PretestResultDocument() {
+  try {
+    const docFile = _findCh2PretestResultData();
+    if (docFile) {
+      try {
+        localStorage.setItem(CH2_PRETEST_DOC_STORAGE_KEY, JSON.stringify(docFile));
+      } catch (e) {}
+
+      if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined') {
+        if (!Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+          EXPLORER_ADDITIONAL_FILES.documents = [];
+        }
+        const docs = EXPLORER_ADDITIONAL_FILES.documents;
+        const existingIdx = docs.findIndex(f => f.id === 'doc_ch2_pretest_result');
+        if (existingIdx !== -1) {
+          docs[existingIdx] = docFile;
+        } else {
+          docs.push(docFile);
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function renderCh2PretestReportHtml(file) {
+  const data = (file && file.reportData) ? file.reportData : (() => {
+    try {
+      const raw = localStorage.getItem(CH2_PRETEST_DOC_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return (parsed && parsed.reportData) ? parsed.reportData : null;
+    } catch (e) { return null; }
+  })() || {};
+
+  const _esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+
+  const playerName = data.playerName || getPlayerDisplayName(2);
+  const completedDate = data.formattedDate || formatCh2PretestDate(data.completedAt);
+  const score = typeof data.score === 'number' ? data.score : 0;
+  const total = typeof data.total === 'number' ? data.total : 20;
+  const correct = typeof data.correct === 'number' ? data.correct : score;
+  const incorrect = typeof data.incorrect === 'number' ? data.incorrect : Math.max(0, total - correct);
+  const percent = typeof data.percent === 'number' ? data.percent : Math.round((correct / (total || 1)) * 100);
+  const tier = data.tier || (score === 20 ? 'perfect' : score >= 16 ? 'great' : score >= 10 ? 'ok' : 'low');
+  const rank = data.rank || (tier === 'perfect' ? 'Malware Expert' : tier === 'great' ? 'Sharp Defender' : tier === 'ok' ? 'Rising Analyst' : 'Fresh Recruit');
+
+  const mentorRemarks = (tier === 'perfect')
+    ? "Twenty out of twenty! You already know malware threats inside and out. Outstanding baseline result."
+    : (tier === 'great')
+    ? "Strong result, Ethan. You know your malware types well. We'll sharpen the finer points as we go."
+    : (tier === 'ok')
+    ? "Solid foundation, Ethan. Some of these threats might still feel unfamiliar, and that's exactly what this chapter is for."
+    : "Thanks for being honest, Ethan. This score is just your starting point. We'll cover everything step by step together.";
+
+  return `
+    <div class="word-doc-header-banner">
+      <div>
+        <div class="word-doc-title">CYBERSECURITY MALWARE PRE-TEST ASSESSMENT REPORT</div>
+        <div class="word-doc-subtitle">Chapter 2 Baseline Knowledge Evaluation • Technical Solutions IT Security</div>
+      </div>
+      <div style="font-size:36px">🛡️</div>
+    </div>
+
+    <div class="word-doc-meta-strip" style="display:flex; flex-wrap:wrap; gap:14px; background:#f8fafc; padding:8px 14px; border-radius:4px; border:1px solid #e2e8f0; font-size:11.5px; color:#475569; margin-bottom:20px;">
+      <span><strong>Player Name:</strong> <span style="color:#0f172a; font-weight:700;">${_esc(playerName)}</span></span>
+      <span><strong>Completion Date:</strong> <span style="color:#0f172a;">${_esc(completedDate)}</span></span>
+      <span><strong>Document Type:</strong> Official Baseline Assessment</span>
+      <span><strong>Evaluation Rank:</strong> <span style="color:#1d4ed8; font-weight:700;">${_esc(rank)}</span></span>
+    </div>
+
+    <h3 style="color:#185abd; font-size:14px; margin:0 0 10px 0; letter-spacing:-0.2px;">
+      1. Performance Summary
+    </h3>
+
+    <!-- 4 Summary Metric Cards -->
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:18px;">
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Score</div>
+        <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;">${score} / ${total}</div>
+        <div style="font-size:10px; color:#94a3b8; margin-top:1px;">Points Earned</div>
+      </div>
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Correct Answers</div>
+        <div style="font-size:22px; font-weight:800; color:#15803d; margin-top:2px;">${correct}</div>
+        <div style="font-size:10px; color:#16a34a; margin-top:1px;">Verified Correct</div>
+      </div>
+      <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#991b1b; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Incorrect Answers</div>
+        <div style="font-size:22px; font-weight:800; color:#b91c1c; margin-top:2px;">${incorrect}</div>
+        <div style="font-size:10px; color:#dc2626; margin-top:1px;">To Learn</div>
+      </div>
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#1e40af; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Percentage Score</div>
+        <div style="font-size:22px; font-weight:800; color:#1d4ed8; margin-top:2px;">${percent}%</div>
+        <div style="font-size:10px; color:#2563eb; margin-top:1px;">Accuracy Rate</div>
+      </div>
+    </div>
+
+    <div class="word-callout-box" style="margin:16px 0;">
+      <strong style="display:flex; align-items:center; gap:6px;">
+        <span>🧑‍💼</span> IT Support Mentor (Ryan) Feedback:
+      </strong>
+      <p style="margin:6px 0 0 0; font-style:italic; font-size:12.5px;">
+        "${_esc(mentorRemarks)}"
+      </p>
+    </div>
+
+    <h3 style="color:#185abd; font-size:14px; margin:20px 0 8px 0; letter-spacing:-0.2px;">
+      2. Evaluated Cybersecurity Competencies
+    </h3>
+    <p style="font-size:12px; color:#334155; margin:0 0 10px 0; line-height:1.5;">
+      This baseline diagnostic evaluated your malware threat awareness and system defense instincts across 20 foundational real-world scenarios before beginning hands-on endpoint malware investigation and ransomware defense.
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:11.5px; border:1px solid #e2e8f0;">
+      <thead>
+        <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1; text-align:left;">
+          <th style="padding:8px 10px; color:#334155;">Domain</th>
+          <th style="padding:8px 10px; color:#334155;">Key Topic Assessed</th>
+          <th style="padding:8px 10px; text-align:center; color:#334155;">Evaluation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Malware Definitions &amp; Infection Vectors</td>
+          <td style="padding:8px 10px; color:#475569;">Malware categories, Trojan horses, Worm replication, Adware popups, and Spyware keystroke theft</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">COMPLETED</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0; background:#fcfcfc;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Ransomware &amp; High-Risk Delivery Channels</td>
+          <td style="padding:8px 10px; color:#475569;">Cryptographic file locking, ransom countdowns, pirated game cracks, and torrent risks</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">COMPLETED</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Endpoint Protection &amp; Antivirus Defense</td>
+          <td style="padding:8px 10px; color:#475569;">Real-time scanning, quarantine procedures, firewall integrity, and Task Manager CPU inspection</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">COMPLETED</td>
+        </tr>
+        <tr style="background:#fcfcfc;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Safe Software Acquisition &amp; Incident Response</td>
+          <td style="padding:8px 10px; color:#475569;">Official app stores, security updates, network isolation, and immediate IT escalation protocols</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">COMPLETED</td>
+        </tr>
+      </tbody>
+    </table>`;
+}
+
+// Chapter 2 Global exposure
+window.generateCh2PretestResultDocument = generateCh2PretestResultDocument;
+window.saveAndInjectCh2PretestDocument = saveAndInjectCh2PretestDocument;
+window.initCh2PretestResultDocument = initCh2PretestResultDocument;
+window.renderCh2PretestReportHtml = renderCh2PretestReportHtml;
+
+// Auto-initialize Chapter 2 pretest document
+if (typeof initCh2PretestResultDocument === 'function') {
+  initCh2PretestResultDocument();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHAPTER 2 ASSESSMENT RESULT DOCUMENT PERSISTENCE & INJECTION
+// ═══════════════════════════════════════════════════════════
+
+const CH2_ASSESSMENT_DOC_STORAGE_KEY = 'cyberzero_ch2_assessment_result_file';
+
+function formatCh2AssessmentDate(isoStr) {
+  try {
+    const d = isoStr ? new Date(isoStr) : new Date();
+    const datePart = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return `${datePart} ${timePart}`;
+  } catch (e) {
+    return '11/06/2026 10:45 AM';
+  }
+}
+
+function generateCh2AssessmentResultDocument(result) {
+  result = result || {};
+  const score = (typeof result.score === 'number') ? result.score : 4;
+  const total = (typeof result.total === 'number') ? result.total : 4;
+  const pct = (typeof result.percentage === 'number') ? result.percentage : Math.round((score / total) * 100);
+  const completedAt = result.completedAt || new Date().toISOString();
+  const formattedDate = formatCh2AssessmentDate(completedAt);
+
+  return {
+    id: 'doc_ch2_assessment_result',
+    name: 'ch2_assessment_result_report.docx',
+    realExt: 'docx',
+    size: '34.2 KB',
+    date: formattedDate,
+    type: 'Microsoft Word Document (.docx)',
+    chapter: 2,
+    userName: 'Ethan',
+    score: score,
+    total: total,
+    percentage: pct,
+    review: result.review || [],
+    completedAt: completedAt,
+    hash: 'CH2-ASSESS-ETHAN-' + Math.abs((completedAt + score).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16),
+    analysis: '✅ Official CyberZerØ Chapter 2 Bitcoin Miner Malware Incident & Knowledge Assessment Report. Verified authentic.'
+  };
+}
+
+function _findCh2AssessmentResultData() {
+  try {
+    const rawDoc = localStorage.getItem(CH2_ASSESSMENT_DOC_STORAGE_KEY);
+    if (rawDoc) return JSON.parse(rawDoc);
+
+    if (window._ch2Mission && (window._ch2Mission.assessmentCompleted || window._ch2Mission.currentMission >= 6)) {
+      return generateCh2AssessmentResultDocument({
+        score: window._ch2Mission.assessmentScore != null ? window._ch2Mission.assessmentScore : 4,
+        total: 4
+      });
+    }
+  } catch (e) {}
+  return null;
+}
+
+function saveAndInjectCh2AssessmentResultDocument(result) {
+  const docFile = generateCh2AssessmentResultDocument(result);
+  try {
+    localStorage.setItem(CH2_ASSESSMENT_DOC_STORAGE_KEY, JSON.stringify(docFile));
+  } catch (e) {}
+
+  if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+    const docs = EXPLORER_ADDITIONAL_FILES.documents;
+    const existingIdx = docs.findIndex(f => f.id === 'doc_ch2_assessment_result');
+    if (existingIdx !== -1) {
+      docs[existingIdx] = docFile;
+    } else {
+      docs.push(docFile);
+    }
+  }
+
+  const isCh2 = (window._currentChapterCategory === 'malware' ||
+                 (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                 (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+  const docBadge = document.getElementById('sidebar-documents-badge');
+  if (docBadge && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+    const allDocs = EXPLORER_ADDITIONAL_FILES.documents;
+    const visibleDocs = isCh2
+      ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
+      : allDocs.filter(f => f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.chapter !== 2);
+    docBadge.textContent = visibleDocs.length;
+    docBadge.style.display = visibleDocs.length > 0 ? '' : 'none';
+  }
+
+  if (typeof renderFolderFiles === 'function' && typeof currentExplorerFolder !== 'undefined' && currentExplorerFolder === 'documents') {
+    renderFolderFiles('');
+  }
+
+  return docFile;
+}
+
+function initCh2AssessmentResultDocument() {
+  try {
+    const docFile = _findCh2AssessmentResultData();
+    if (docFile && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+      const docs = EXPLORER_ADDITIONAL_FILES.documents;
+      const existingIdx = docs.findIndex(f => f.id === 'doc_ch2_assessment_result');
+      if (existingIdx !== -1) {
+        docs[existingIdx] = docFile;
+      } else {
+        docs.push(docFile);
+      }
+    }
+  } catch (e) {}
+}
+
+function renderCh2AssessmentResultReportHtml(file) {
+  let data = file || {};
+  try {
+    const raw = localStorage.getItem(CH2_ASSESSMENT_DOC_STORAGE_KEY);
+    if (raw) data = Object.assign({}, JSON.parse(raw), file || {});
+  } catch (e) {}
+
+  const score = typeof data.score === 'number' ? data.score : 4;
+  const total = typeof data.total === 'number' ? data.total : 4;
+  const pct = typeof data.percentage === 'number' ? data.percentage : Math.round((score / total) * 100);
+  const userName = data.userName || 'Ethan';
+  const completedDate = data.date || formatCh2AssessmentDate(data.completedAt);
+  const hash = data.hash || 'CH2-REPORT-VERIFIED-AUTH';
+
+  return `
+    <div style="font-family:'Segoe UI',system-ui,sans-serif; color:#0f172a; line-height:1.6; max-width:760px; margin:0 auto; padding:20px;">
+      <!-- Document Header -->
+      <div style="border-bottom: 2px solid #0284c7; padding-bottom: 14px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <div style="font-size:11px; font-weight:800; color:#0284c7; letter-spacing:0.1em; text-transform:uppercase;">CYBERZERØ INCIDENT RESPONSE &amp; SECURITY LABS</div>
+          <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;">BITCOIN MINER MALWARE INCIDENT REPORT</div>
+          <div style="font-size:12px; color:#64748b;">Official Chapter 2 Investigation &amp; Knowledge Assessment Record</div>
+        </div>
+        <div style="text-align:right;">
+          <span style="display:inline-block; padding:4px 10px; background:#e0f2fe; color:#0369a1; font-weight:700; font-size:12px; border-radius:4px; border:1px solid #bae6fd;">STATUS: REMEDIATED</span>
+        </div>
+      </div>
+
+      <!-- Metadata Box -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px 18px; margin-bottom:22px; display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; font-size:13px;">
+        <div><strong>Investigator / User:</strong> ${userName} (Workstation PC)</div>
+        <div><strong>Mentor / Reviewer:</strong> Ryan (IT Support Mentor)</div>
+        <div><strong>Date &amp; Time Completed:</strong> ${completedDate}</div>
+        <div><strong>Verification Code:</strong> <code>${hash}</code></div>
+        <div><strong>Assessment Score:</strong> <span style="font-weight:700; color:#0369a1;">${score} / ${total} (${pct}%)</span></div>
+        <div><strong>Remediation Verdict:</strong> <span style="font-weight:700; color:#15803d;">Malware Fully Purged</span></div>
+      </div>
+
+      <!-- Section 1: Executive Summary -->
+      <h3 style="font-size:15px; font-weight:700; color:#0f172a; border-left:4px solid #0284c7; padding-left:10px; margin:18px 0 10px;">1. Incident Background &amp; Detection</h3>
+      <p style="font-size:13px; color:#334155; margin-bottom:12px;">
+        The system initially showed normal visual desktop operations without immediate alarms or popups. However, a hidden cryptomining trojan (<strong>BM</strong> / <code>CoinBitMiner</code>) was executing in the background, consuming excessive CPU resources (over 80%).
+      </p>
+      <ul style="font-size:13px; color:#334155; padding-left:20px; margin-bottom:16px;">
+        <li><strong>Observation 1 (Pictures Folder):</strong> Viewing high-resolution images experienced abnormal loading latency due to CPU resource exhaustion.</li>
+        <li><strong>Observation 2 (Space Fighter):</strong> Running games produced severe frame rate lag, delayed user inputs, and unplayable responsiveness caused by background miner threads.</li>
+      </ul>
+
+      <!-- Section 2: Remediation Process -->
+      <h3 style="font-size:15px; font-weight:700; color:#0f172a; border-left:4px solid #0284c7; padding-left:10px; margin:18px 0 10px;">2. Malware Identification &amp; Removal</h3>
+      <p style="font-size:13px; color:#334155; margin-bottom:12px;">
+        Ethan successfully investigated the system using Windows diagnostic and administration utilities:
+      </p>
+      <ol style="font-size:13px; color:#334155; padding-left:20px; margin-bottom:16px;">
+        <li><strong>Task Manager Investigation:</strong> Inspected active processes and live Performance graph, isolating the high-CPU process <strong>BM</strong> (PID 3844, 78%-85% CPU).</li>
+        <li><strong>Process Termination (End Task):</strong> Terminated the running BM process, restoring system CPU utilization to the healthy baseline of 8%-12%.</li>
+        <li><strong>Performance Verification:</strong> Re-tested picture loading (instant opening) and Space Fighter (smooth 60 FPS).</li>
+        <li><strong>Permanent Removal:</strong> Navigated to <em>Control Panel &rarr; Programs and Features</em>, located <strong>BM</strong>, and completed full uninstallation to wipe root binaries, DLLs, and autostart registry persistence keys.</li>
+      </ol>
+
+      <!-- Section 3: Knowledge Assessment Review -->
+      <h3 style="font-size:15px; font-weight:700; color:#0f172a; border-left:4px solid #0284c7; padding-left:10px; margin:18px 0 10px;">3. Post-Incident Knowledge Assessment</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:20px;">
+        <thead>
+          <tr style="background:#f1f5f9; border-bottom:1.5px solid #cbd5e1; text-align:left;">
+            <th style="padding:8px 10px;">#</th>
+            <th style="padding:8px 10px;">Question</th>
+            <th style="padding:8px 10px;">Correct Answer</th>
+            <th style="padding:8px 10px; text-align:center;">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #e2e8f0;">
+            <td style="padding:8px 10px; font-weight:700;">1</td>
+            <td style="padding:8px 10px;">How is the malware affecting the computer?</td>
+            <td style="padding:8px 10px; color:#15803d; font-weight:600;">A. Slowing down the computer significantly</td>
+            <td style="padding:8px 10px; text-align:center; color:#15803d; font-weight:700;">PASSED</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0; background:#fcfcfc;">
+            <td style="padding:8px 10px; font-weight:700;">2</td>
+            <td style="padding:8px 10px;">What can we use to see the resources being used by this malware?</td>
+            <td style="padding:8px 10px; color:#15803d; font-weight:600;">A. Task Manager</td>
+            <td style="padding:8px 10px; text-align:center; color:#15803d; font-weight:700;">PASSED</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0;">
+            <td style="padding:8px 10px; font-weight:700;">3</td>
+            <td style="padding:8px 10px;">What type of malware is this?</td>
+            <td style="padding:8px 10px; color:#15803d; font-weight:600;">A. Bitcoin Miner</td>
+            <td style="padding:8px 10px; text-align:center; color:#15803d; font-weight:700;">PASSED</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0; background:#fcfcfc;">
+            <td style="padding:8px 10px; font-weight:700;">4</td>
+            <td style="padding:8px 10px;">Is the system still usable by the owner?</td>
+            <td style="padding:8px 10px; color:#15803d; font-weight:600;">B. Partially</td>
+            <td style="padding:8px 10px; text-align:center; color:#15803d; font-weight:700;">PASSED</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Sign-off Block -->
+      <div style="border-top:1.5px solid #e2e8f0; padding-top:14px; margin-top:20px; display:flex; justify-content:space-between; font-size:12px; color:#64748b;">
+        <div>Authorized by: <strong>Ryan, IT Support Mentor</strong></div>
+        <div>CyberZerØ Incident Investigation Platform &middot; Verified Tamper-Evident</div>
+      </div>
+    </div>
+  `;
+}
+
+window.generateCh2AssessmentResultDocument = generateCh2AssessmentResultDocument;
+window.saveAndInjectCh2AssessmentResultDocument = saveAndInjectCh2AssessmentResultDocument;
+window.initCh2AssessmentResultDocument = initCh2AssessmentResultDocument;
+window.renderCh2AssessmentResultReportHtml = renderCh2AssessmentResultReportHtml;
+
+// Auto-initialize Chapter 2 assessment document
+if (typeof initCh2AssessmentResultDocument === 'function') {
+  initCh2AssessmentResultDocument();
 }
 
 

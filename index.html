@@ -59,6 +59,8 @@
   <link rel="stylesheet" href="src/css/systems/ryan-pretest.css">
   <link rel="stylesheet" href="src/css/systems/ryan-posttest.css">
   <link rel="stylesheet" href="src/css/chapters/ch1-phishing-ui.css">
+  <link rel="stylesheet" href="src/css/chapters/wannacry-sim.css">
+  <link rel="stylesheet" href="src/css/apps/recycle-bin.css">
   <link rel="stylesheet" href="src/css/ui/auth.css">
 </head>
 <body>
@@ -435,7 +437,7 @@
             <span class="sb-badge" id="sidebar-documents-badge" style="display:none;">0</span>
           </div>
           <div class="sidebar-item" id="sidebar-folder-pictures" onclick="switchExplorerFolder('pictures')">
-            <span class="sb-icon">🖼️</span>
+            <span class="sb-icon"><img src="assets/Pictures/image.svg" alt="Pictures" /></span>
             <span class="sb-label">Pictures</span>
           </div>
           <div class="sidebar-item" id="sidebar-folder-videos" onclick="switchExplorerFolder('videos')">
@@ -506,6 +508,134 @@
           <button type="button" class="status-view-btn active" id="stat-btn-details" onclick="setExplorerViewMode('details')" title="Details view">📄</button>
           <button type="button" class="status-view-btn" id="stat-btn-grid" onclick="setExplorerViewMode('grid')" title="Large icons view">⊞</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RECYCLE BIN WINDOW (REAL WINDOWS INTERFACE) ── -->
+  <div id="win-recycle" class="app-window hidden" data-app="recycle">
+    <!-- Window Titlebar with Tab Bar -->
+    <div class="win-titlebar" id="titlebar-recycle">
+      <div class="explorer-tab-bar">
+        <div class="explorer-tab active">
+          <span class="tab-icon"><img src="assets/icons/apps/recycle.svg" alt="" style="width:14px;height:14px;vertical-align:middle;"></span>
+          <span class="tab-title">Recycle Bin</span>
+          <button type="button" class="tab-close-btn" onclick="closeApp('recycle')" title="Close">✕</button>
+        </div>
+      </div>
+      <div class="win-controls">
+        <button type="button" class="win-btn win-minimize" onclick="minimizeApp('recycle')" title="Minimize">─</button>
+        <button type="button" class="win-btn win-maximize" onclick="toggleMaximize('recycle')" title="Maximize">□</button>
+        <button type="button" class="win-btn win-close" onclick="closeApp('recycle')" title="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="win-body folder-body recycle-body">
+      <!-- Modern Recycle Bin Command Bar (Ribbon) -->
+      <div class="explorer-command-bar recycle-toolbar">
+        <div class="cmd-group">
+          <button type="button" class="cmd-btn cmd-btn-danger" id="rcb-btn-empty" onclick="emptyRecycleBin()" title="Empty Recycle Bin">
+            <span class="cmd-icon">🗑️</span>
+            <span class="cmd-label">Empty Recycle Bin</span>
+          </button>
+          <button type="button" class="cmd-btn" id="rcb-btn-restore-all" onclick="restoreAllRecycleBinItems()" title="Restore all items to their original folders">
+            <span class="cmd-icon">↩️</span>
+            <span class="cmd-label">Restore all items</span>
+          </button>
+        </div>
+        <div class="cmd-divider"></div>
+        <div class="cmd-group">
+          <button type="button" class="cmd-btn disabled" id="rcb-btn-restore-sel" onclick="restoreSelectedRecycleBinItem()" title="Restore the selected item">
+            <span class="cmd-icon">↩️</span>
+            <span class="cmd-label">Restore item</span>
+          </button>
+          <button type="button" class="cmd-btn disabled" id="rcb-btn-delete-perm" onclick="deletePermanentlySelectedRecycleBinItem()" title="Delete Permanently">
+            <span class="cmd-icon">❌</span>
+            <span class="cmd-label">Delete permanently</span>
+          </button>
+          <button type="button" class="cmd-btn disabled" id="rcb-btn-properties" onclick="viewSelectedRecycleBinProperties()" title="View item properties">
+            <span class="cmd-icon">📋</span>
+            <span class="cmd-label">Properties</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Address Bar & Navigation Controls -->
+      <div class="explorer-nav-bar recycle-nav-bar">
+        <div class="nav-arrows">
+          <button type="button" class="nav-arrow-btn" disabled title="Back">←</button>
+          <button type="button" class="nav-arrow-btn" disabled title="Forward">→</button>
+          <button type="button" class="nav-arrow-btn" onclick="openApp('folder'); switchExplorerFolder('desktop');" title="Up to Desktop">↑</button>
+          <button type="button" class="nav-arrow-btn" onclick="renderRecycleBin()" title="Refresh">🔄</button>
+        </div>
+        <!-- Breadcrumb Address Bar -->
+        <div class="explorer-address-bar">
+          <span class="address-icon"><img src="assets/icons/apps/recycle.svg" alt="" style="width:14px;height:14px;vertical-align:middle;"></span>
+          <div class="explorer-breadcrumbs">
+            <span class="bc-item current">Recycle Bin</span>
+          </div>
+        </div>
+        <!-- Search Box -->
+        <div class="explorer-search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="recycle-search-input" placeholder="Search Recycle Bin..." oninput="filterRecycleBin(this.value)">
+          <button type="button" class="search-clear-btn" onclick="clearRecycleSearch()" title="Clear">✕</button>
+        </div>
+      </div>
+
+      <!-- Table Header (Windows Details View) -->
+      <div class="recycle-table-header">
+        <div class="rcb-col rcb-col-name" onclick="sortRecycleBin('name')">Name <span id="rcb-sort-name"></span></div>
+        <div class="rcb-col rcb-col-loc" onclick="sortRecycleBin('originalLocation')">Original Location <span id="rcb-sort-originalLocation"></span></div>
+        <div class="rcb-col rcb-col-date" onclick="sortRecycleBin('dateDeleted')">Date Deleted <span id="rcb-sort-dateDeleted"> ▼</span></div>
+        <div class="rcb-col rcb-col-size" onclick="sortRecycleBin('size')">Size <span id="rcb-sort-size"></span></div>
+        <div class="rcb-col rcb-col-type" onclick="sortRecycleBin('type')">Item Type <span id="rcb-sort-type"></span></div>
+      </div>
+
+      <!-- Deleted File Rows Container -->
+      <div class="recycle-file-list" id="recycle-file-list">
+        <!-- Rendered by renderRecycleBin() -->
+      </div>
+
+      <!-- Status Bar -->
+      <div class="recycle-status-bar">
+        <span id="recycle-status-items">0 items</span>
+        <span class="status-sep">|</span>
+        <span id="recycle-status-selected">0 items selected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RECYCLE BIN FILE PROPERTIES MODAL ── -->
+  <div id="recycle-properties-modal" class="recycle-properties-modal hidden">
+    <div class="rcb-prop-card">
+      <div class="rcb-prop-titlebar">
+        <div class="rcb-prop-title"><img src="assets/icons/apps/recycle.svg" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;" alt=""> <span id="rcb-prop-head-title">File Properties</span></div>
+        <button class="rcb-prop-close" onclick="closeRecycleProperties()">✕</button>
+      </div>
+      <div class="rcb-prop-tabs">
+        <div class="rcb-prop-tab active">General</div>
+      </div>
+      <div class="rcb-prop-body">
+        <div class="rcb-prop-header">
+          <div class="rcb-prop-icon" id="rcb-prop-icon">📄</div>
+          <div class="rcb-prop-name-box">
+            <input type="text" id="rcb-prop-name" readonly>
+          </div>
+        </div>
+        <div class="rcb-prop-divider"></div>
+        <div class="rcb-prop-row"><span class="rcb-label">Type of file:</span> <span class="rcb-val" id="rcb-prop-type"></span></div>
+        <div class="rcb-prop-row"><span class="rcb-label">Original location:</span> <span class="rcb-val" id="rcb-prop-loc"></span></div>
+        <div class="rcb-prop-row"><span class="rcb-label">Date deleted:</span> <span class="rcb-val" id="rcb-prop-deleted"></span></div>
+        <div class="rcb-prop-row"><span class="rcb-label">Size:</span> <span class="rcb-val" id="rcb-prop-size"></span></div>
+        <div class="rcb-prop-row"><span class="rcb-label">Size on disk:</span> <span class="rcb-val" id="rcb-prop-disk-size"></span></div>
+        <div class="rcb-prop-divider"></div>
+        <div class="rcb-prop-row"><span class="rcb-label">Attributes:</span> <span class="rcb-val"><label><input type="checkbox" checked disabled> Read-only</label></span></div>
+      </div>
+      <div class="rcb-prop-footer">
+        <button class="rcb-btn rcb-btn-restore" id="rcb-prop-restore-btn" onclick="restoreFromProperties()">Restore</button>
+        <button class="rcb-btn rcb-btn-ok" onclick="closeRecycleProperties()">OK</button>
+        <button class="rcb-btn rcb-btn-cancel" onclick="closeRecycleProperties()">Cancel</button>
       </div>
     </div>
   </div>
@@ -612,8 +742,8 @@
   <div id="win-imageviewer" class="app-window hidden" data-app="imageviewer">
     <div class="win-titlebar imageviewer-titlebar" id="titlebar-imageviewer">
       <div class="win-title">
-        <span class="win-icon">🖼️</span>
-        <span id="imageviewer-title-text">Photos — annual_team_retreat.jpg</span>
+        <span class="win-icon"><img src="assets/Pictures/image.svg" alt="Photos" style="width:16px;height:16px;vertical-align:middle;display:inline-block;" /></span>
+        <span id="imageviewer-title-text">Photos</span>
       </div>
       <div class="win-controls">
         <button type="button" class="win-btn win-minimize" onclick="minimizeApp('imageviewer')" title="Minimize">─</button>
@@ -962,6 +1092,20 @@
         <div class="av-stats-badge" id="av-stats-badge">
           <span class="av-badge-dot"></span> <span id="av-quarantine-status-text">SYSTEM PROTECTED</span>
         </div>
+      </div>
+
+      <!-- Active WannaCry Ransomware Remediation Banner -->
+      <div id="av-wannacry-alert" class="hidden" style="margin:10px 14px 0; background:rgba(239,68,68,0.18); border:2px solid #ef4444; border-radius:8px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:26px;">🚨</span>
+          <div>
+            <div style="font-weight:800; color:#ef4444; font-size:13px; letter-spacing:0.5px;">ACTIVE RANSOMWARE THREAT: WanaCrypt0r 3.0</div>
+            <div style="font-size:11.5px; color:#cbd5e1;">Origin: GTA VI fake installer. Files locked with .WNCRY extension across PC.</div>
+          </div>
+        </div>
+        <button type="button" class="btn-danger" style="font-weight:700; white-space:nowrap; padding:8px 14px; background:#dc2626; color:#ffffff; border:1px solid #f87171; border-radius:6px; cursor:pointer;" onclick="neutralizeWannaCrySimulation()">
+          🛡️ DISINFECT &amp; RESTORE PC
+        </button>
       </div>
 
       <!-- AV Main Content -->
@@ -2202,6 +2346,141 @@
     </div>
   </div>
 
+  <!-- ── WANNACRY DECRYPTOR 3.0 APP WINDOW (Chapter 2 Simulation) ── -->
+  <div id="win-wannacry" class="app-window hidden" data-app="wannacry">
+    <div class="win-titlebar wncry-titlebar" id="titlebar-wannacry">
+      <div class="win-title">
+        <span class="win-icon">🔒</span>
+        <span style="font-weight:700; letter-spacing:0.5px;">Wana Decrypt0r 3.0</span>
+      </div>
+      <div class="win-controls">
+        <button type="button" class="win-btn win-minimize" onclick="minimizeApp('wannacry')" title="Minimize">─</button>
+        <button type="button" class="win-btn win-maximize" onclick="toggleMaximize('wannacry')" title="Maximize">□</button>
+        <button type="button" class="win-btn win-close" onclick="wncryAttemptClose()" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body wncry-body">
+      <!-- Top Bar: Logo & Language selector -->
+      <div class="wncry-top-bar">
+        <div class="wncry-logo-badge">
+          <span class="wncry-lock-large">🔒</span>
+          <div class="wncry-logo-text">
+            <div class="wncry-brand">Wanna Decryptor 3.0</div>
+            <div class="wncry-tagline">Military-Grade RSA-2048 &amp; AES-128 Cryptosystem</div>
+          </div>
+        </div>
+        <div class="wncry-lang-picker">
+          <label for="wncry-lang-select">Language:</label>
+          <select id="wncry-lang-select" onchange="wncryChangeLanguage(this.value)">
+            <option value="en" selected>English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="zh">中文 (Chinese)</option>
+            <option value="ja">日本語 (Japanese)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Content Area: Left timers / Bitcoin column + Right FAQ text -->
+      <div class="wncry-content-split">
+        <!-- Left Column: Timers & Bitcoin Box -->
+        <div class="wncry-left-col">
+          <!-- Timer Card 1: Payment will be raised on -->
+          <div class="wncry-timer-card">
+            <div class="wncry-card-header">Payment will be raised on</div>
+            <div class="wncry-card-date" id="wncry-date-raised">11/9/2026 00:00:00</div>
+            <div class="wncry-card-sub">Time Left</div>
+            <div class="wncry-countdown-box" id="wncry-timer-raised">
+              <span class="cd-part" id="cd-r-days">02</span><span class="cd-sep">d</span>
+              <span class="cd-part" id="cd-r-hrs">23</span><span class="cd-sep">:</span>
+              <span class="cd-part" id="cd-r-mins">59</span><span class="cd-sep">:</span>
+              <span class="cd-part" id="cd-r-secs">59</span>
+            </div>
+          </div>
+
+          <!-- Timer Card 2: Your files will be lost on -->
+          <div class="wncry-timer-card">
+            <div class="wncry-card-header">Your files will be lost on</div>
+            <div class="wncry-card-date" id="wncry-date-lost">11/13/2026 00:00:00</div>
+            <div class="wncry-card-sub">Time Left</div>
+            <div class="wncry-countdown-box timer-danger" id="wncry-timer-lost">
+              <span class="cd-part" id="cd-l-days">06</span><span class="cd-sep">d</span>
+              <span class="cd-part" id="cd-l-hrs">23</span><span class="cd-sep">:</span>
+              <span class="cd-part" id="cd-l-mins">59</span><span class="cd-sep">:</span>
+              <span class="cd-part" id="cd-l-secs">59</span>
+            </div>
+          </div>
+
+          <!-- Bitcoin Payment Box -->
+          <div class="wncry-bitcoin-card">
+            <div class="wncry-btc-header">
+              <span class="btc-symbol">₿</span>
+              <span>Send <strong>$300</strong> worth of bitcoin to:</span>
+            </div>
+            <div class="wncry-btc-input-row">
+              <input type="text" id="wncry-btc-address" value="13AM4VW2dhxYgXeQepoHkHSQuy6NgaEb94" readonly spellcheck="false">
+              <button type="button" class="wncry-btn-copy" onclick="wncryCopyBtcAddress()" title="Copy BTC Address">Copy</button>
+            </div>
+            <div class="wncry-btc-links">
+              <a href="javascript:void(0)" onclick="wncryShowAboutBtc()">How to buy bitcoins?</a>
+              <a href="javascript:void(0)" onclick="wncryShowContact()">Contact Us</a>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="wncry-btn-row">
+            <button type="button" class="wncry-btn wncry-btn-check" onclick="wncryCheckPayment()">Check Payment</button>
+            <button type="button" class="wncry-btn wncry-btn-decrypt" onclick="wncryTestDecrypt()">Decrypt</button>
+          </div>
+        </div>
+
+        <!-- Right Column: Explanatory Ransom Text -->
+        <div class="wncry-right-col">
+          <div class="wncry-text-scroll" id="wncry-text-scroll">
+            <h2 class="wncry-ooops">Ooops, your files have been encrypted!</h2>
+            
+            <div class="wncry-section">
+              <h3>What Happened to My Computer?</h3>
+              <p>Your important files are encrypted. Many of your documents, photos, videos, databases and other files are no longer accessible because they have been encrypted. Maybe you are busy looking for a way to recover your files, but do not waste your time. Nobody can recover your files without our decryption service.</p>
+            </div>
+
+            <div class="wncry-section">
+              <h3>Can I Recover My Files?</h3>
+              <p>Sure. We guarantee that you can recover all your files safely and easily. But you have not so much time.</p>
+              <p>You can decrypt some of your files for free. Try now by clicking <strong>&lt;Decrypt&gt;</strong>.</p>
+              <p>If you want to decrypt all your files, you need to pay. You only have 3 days to submit the payment. After that the price will be doubled. Also, if you don't pay in 7 days, you won't be able to recover your files forever.</p>
+            </div>
+
+            <div class="wncry-section">
+              <h3>How Do I Pay?</h3>
+              <p>Payment is accepted in Bitcoin only. For more information, click <strong>&lt;How to buy bitcoins?&gt;</strong>.</p>
+              <p>Please buy some bitcoin and send the correct amount ($300 USD = ~0.015 BTC) to the address specified in this window.</p>
+              <p>After your payment is confirmed on the Bitcoin blockchain, click <strong>&lt;Check Payment&gt;</strong>. You can then decrypt all your files immediately.</p>
+            </div>
+
+            <div class="wncry-section">
+              <h3>Contact Us</h3>
+              <p>If you need our assistance or have technical issues sending bitcoin, click <strong>&lt;Contact Us&gt;</strong> to access our 24/7 dark web support chat.</p>
+            </div>
+
+            <!-- Simulation disclaimer footer banner -->
+            <div class="wncry-disclaimer-banner">
+              🛡️ <strong>CYBERZERØ SIMULATION NOTICE:</strong> This is a harmless educational demonstration of the 2017 WannaCry global ransomware epidemic. No real files on your actual machine have been encrypted or modified.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="wncry-status-bar">
+        <span class="wncry-status-indicator">●</span>
+        <span id="wncry-status-text">Status: Waiting for Bitcoin transaction confirmation... (0/3 confirmations)</span>
+        <span class="wncry-tor-badge">🧅 TOR GATEWAY ACTIVE</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ── SECURITY SCANNER WINDOW (Group 4 — Stage 5 Infection) ── -->
   <div id="win-scanner" class="app-window hidden" data-app="scanner">
     <div class="win-titlebar" id="titlebar-scanner">
@@ -2310,6 +2589,12 @@
       </button>
       <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-ransomware" onclick="taskbarClick('ransomware')" title="Ransomware Incident Console">
         <span style="font-size:22px;">🔒</span>
+      </button>
+      <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-wannacry" onclick="taskbarClick('wannacry')" title="Wana Decrypt0r 3.0">
+        <span style="font-size:22px;">🔒</span>
+      </button>
+      <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-recycle" onclick="taskbarClick('recycle')" title="Recycle Bin">
+        <span><img src="assets/icons/apps/recycle.svg" alt="Recycle Bin" class="taskbar-icon-img-lg"></span>
       </button>
     </div>
     <div class="taskbar-tray">
@@ -4302,10 +4587,10 @@
               <div class="folder-file-row" id="gdemo-mfile-4">
                 <div class="file-name-cell">
                   <span class="file-icon">🖼️</span>
-                  <span class="file-name-text">annual_retreat.jpg</span>
+                  <span class="file-name-text">cat.png</span>
                 </div>
-                <div>JPEG Image (.jpg)</div>
-                <div>1.2 MB</div>
+                <div>PNG Image (.png)</div>
+                <div>505 KB</div>
                 <div><span class="badge-file-status badge-clean">✓ Safe</span></div>
               </div>
             </div>
@@ -4978,9 +5263,12 @@
 <script src="src/js/chapters/ch2-malware/guided-demo.js"></script>
 <script src="src/js/chapters/ch2-malware/trojan-investigation.js"></script>
 <script src="src/js/chapters/ch2-malware/mission-start.js"></script>
+<script src="src/js/chapters/ch2-malware/assessment.js"></script>
+<script src="src/js/chapters/ch2-malware/wannacry-sim.js"></script>
 <script src="src/js/data/explorer-files.js"></script>
 <script src="src/js/apps/file-explorer.js"></script>
 <script src="src/js/apps/file-opener.js"></script>
+<script src="src/js/apps/recycle-bin.js"></script>
 <script src="src/js/apps/image-viewer.js"></script>
 <script src="src/js/apps/media-player.js"></script>
 <script src="src/js/apps/smartscreen.js"></script>

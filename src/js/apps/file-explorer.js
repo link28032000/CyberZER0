@@ -27,26 +27,63 @@ function _getExplorerAdditionalFiles() {
   return {};
 }
 
+function _applyWannaCrySimulation(files, folderKey) {
+  if (!window._wannaCryActive || !Array.isArray(files)) return files;
+
+  const encFiles = files.map(file => {
+    if (file.realExt === 'dir' || file.subFolderKey) return file;
+    if (file.isEncrypted) return file;
+
+    return Object.assign({}, file, {
+      name: file.name.endsWith('.WNCRY') ? file.name : (file.name + '.WNCRY'),
+      fakeExt: 'wncry',
+      realExt: 'wncry',
+      type: 'WannaCry Encrypted File (.WNCRY)',
+      icon: '<span style="font-size:30px;display:inline-block;filter:drop-shadow(0 0 5px rgba(239,68,68,0.7));">🔒</span>',
+      isEncrypted: true,
+      threatName: 'Ransom.WannaCry.Encrypted',
+      threatCategory: 'ENCRYPTED',
+      analysis: '🔒 ENCRYPTED: Locked by WanaCrypt0r RSA-2048 cryptosystem. Key held by Wana Decrypt0r 3.0.'
+    });
+  });
+
+  const readme = {
+    id: 'wncry_readme_' + (folderKey || 'folder'),
+    name: '@Please_Read_Me@.txt',
+    fakeExt: 'txt',
+    realExt: 'txt',
+    type: 'Text Document (.txt)',
+    size: '4 KB',
+    date: new Date().toLocaleDateString() + ' 12:00 PM',
+    icon: '📄',
+    isMalware: false,
+    threatName: 'Ransom Instructions',
+    threatCategory: 'WARNING',
+    analysis: '⚠️ Official WanaCrypt0r Ransom Note containing instructions and decryption service requirements.',
+    content: window.WANNA_CRY_README_CONTENT || 'Your files are encrypted.'
+  };
+
+  return [readme, ...encFiles];
+}
+
 function getExplorerCurrentFiles() {
   const _additionalFiles = _getExplorerAdditionalFiles();
+  let result = [];
+
   // 'downloads' shows only its static folder entries (e.g. Games subfolder)
   if (currentExplorerFolder === 'downloads') {
     const _dlFiles = _additionalFiles['downloads'] || [];
     // Hide Games folder and simulation files in Chapter 1 — Ch2 only
     if (window._currentChapterCategory !== 'malware') {
-      return _dlFiles.filter(function(f) { return f.id !== 'dl_games_folder' && !f.isSimulation; });
+      result = _dlFiles.filter(function(f) { return f.id !== 'dl_games_folder' && !f.isSimulation; });
+    } else {
+      result = _dlFiles;
     }
-    return _dlFiles;
-  }
-  // thispc_contents shows the actual C: folder list
-  if (currentExplorerFolder === 'thispc_contents') {
-    return _additionalFiles['thispc'] || [];
-  }
-  // usb_contents shows the USB drive folder list (empty)
-  if (currentExplorerFolder === 'usb_contents') {
-    return _additionalFiles['usb'] || [];
-  }
-  if (currentExplorerFolder === 'documents') {
+  } else if (currentExplorerFolder === 'thispc_contents') {
+    result = _additionalFiles['thispc'] || [];
+  } else if (currentExplorerFolder === 'usb_contents') {
+    result = _additionalFiles['usb'] || [];
+  } else if (currentExplorerFolder === 'documents') {
     const isCh2 = (window._currentChapterCategory === 'malware' ||
                    (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
                    (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
@@ -61,36 +98,115 @@ function getExplorerCurrentFiles() {
       } else if (typeof window !== 'undefined' && typeof window.initPosttestResultDocument === 'function') {
         window.initPosttestResultDocument();
       }
+    } else {
+      if (typeof initCh2PretestResultDocument === 'function') {
+        initCh2PretestResultDocument();
+      } else if (typeof window !== 'undefined' && typeof window.initCh2PretestResultDocument === 'function') {
+        window.initCh2PretestResultDocument();
+      }
     }
     const docFiles = _additionalFiles['documents'] || [];
     if (isCh2) {
-      // Hide Chapter 1 pre-test and post-test results in Chapter 2
-      return docFiles.filter(function(f) {
+      // Hide Chapter 1 pre-test and post-test results in Chapter 2, show Chapter 2 documents
+      result = docFiles.filter(function(f) {
         return f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1;
       });
+    } else {
+      // Hide Chapter 2 pre-test result and assessment result in Chapter 1
+      result = docFiles.filter(function(f) {
+        return f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.chapter !== 2;
+      });
     }
-    return docFiles;
-  }
-  if (currentExplorerFolder === 'desktop') {
+  } else if (currentExplorerFolder === 'desktop') {
     const isCh2 = (window._currentChapterCategory === 'malware' ||
                    (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
                    (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
     const deskFiles = _additionalFiles['desktop'] || [];
     if (!isCh2) {
-      return deskFiles.filter(function(f) { return !f.chapter || f.chapter === 1; });
+      result = deskFiles.filter(function(f) { return !f.chapter || f.chapter === 1; });
+    } else {
+      result = deskFiles;
     }
-    return deskFiles;
+  } else if (currentExplorerFolder === 'pictures') {
+    // Pictures folder is Chapter 2 only — Ethan's personal photos
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+    const picFiles = _additionalFiles['pictures'] || [];
+    if (isCh2) {
+      result = picFiles; // show all 3 personal photos
+    } else {
+      // Chapter 1 and others: hide Ch2 personal photos
+      result = picFiles.filter(function(f) { return !f.chapter || f.chapter !== 2; });
+    }
+  } else {
+    result = _additionalFiles[currentExplorerFolder] || [];
   }
-  return _additionalFiles[currentExplorerFolder] || [];
+
+  return _applyWannaCrySimulation(result, currentExplorerFolder);
 }
 
 function getExplorerFileById(fileId) {
-  // Hide Chapter 1 pre-test and post-test results in Chapter 2
+  if (fileId && fileId.startsWith('wncry_readme')) {
+    return {
+      id: fileId,
+      name: '@Please_Read_Me@.txt',
+      fakeExt: 'txt',
+      realExt: 'txt',
+      type: 'Text Document (.txt)',
+      size: '4 KB',
+      date: new Date().toLocaleDateString() + ' 12:00 PM',
+      icon: '📄',
+      isMalware: false,
+      threatName: 'Ransom Instructions',
+      threatCategory: 'WARNING',
+      analysis: '⚠️ Official WanaCrypt0r Ransom Note containing instructions and decryption service requirements.',
+      content: window.WANNA_CRY_README_CONTENT || 'Your files are encrypted.'
+    };
+  }
+
+  // Hide Chapter 1 pre-test and post-test results in Chapter 2, and Chapter 2 results in Chapter 1
   const isCh2 = (window._currentChapterCategory === 'malware' ||
                  (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
-                 (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+                 (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
   if (isCh2 && (fileId === 'doc_pretest_result' || fileId === 'doc_posttest_result')) {
     return null;
+  }
+  if (!isCh2 && (fileId === 'doc_ch2_pretest_result' || fileId === 'ch2_pretest_result_report.docx' ||
+                 fileId === 'doc_ch2_assessment_result' || fileId === 'ch2_assessment_result_report.docx')) {
+    return null;
+  }
+
+  // Chapter 2 Pictures isolation: only available in Chapter 2
+  const ch2PictureIds = ['pic_cat', 'pic_dog', 'pic_selfie', 'cat.png', 'my_dog.png', 'selfie.png'];
+  if (!isCh2 && ch2PictureIds.includes(fileId)) {
+    return null;
+  }
+
+  if (fileId === 'doc_ch2_assessment_result' || fileId === 'ch2_assessment_result_report.docx') {
+    const _additionalFiles = _getExplorerAdditionalFiles();
+    const docs = _additionalFiles.documents || [];
+    let foundDoc = docs.find(f => f.id === 'doc_ch2_assessment_result');
+    if (!foundDoc && typeof _findCh2AssessmentResultData === 'function') {
+      foundDoc = _findCh2AssessmentResultData();
+      if (foundDoc && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+        EXPLORER_ADDITIONAL_FILES.documents.push(foundDoc);
+      }
+    }
+    if (foundDoc) return foundDoc;
+  }
+
+  if (fileId === 'doc_ch2_pretest_result' || fileId === 'ch2_pretest_result_report.docx' || (isCh2 && fileId === 'pretest_result_report.docx')) {
+    const _additionalFiles = _getExplorerAdditionalFiles();
+    const docs = _additionalFiles.documents || [];
+    let foundDoc = docs.find(f => f.id === 'doc_ch2_pretest_result');
+    if (!foundDoc && typeof _findCh2PretestResultData === 'function') {
+      foundDoc = _findCh2PretestResultData();
+      if (foundDoc && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+        EXPLORER_ADDITIONAL_FILES.documents.push(foundDoc);
+      }
+    }
+    if (foundDoc) return foundDoc;
   }
 
   if (fileId === 'f_scholarship_grant') {
@@ -103,15 +219,32 @@ function getExplorerFileById(fileId) {
 
   // First check FOLDER_FILES
   let found = FOLDER_FILES.find(f => f.id === fileId);
-  if (found) return found;
-
-  // Check additional folder collections
-  const _additionalFiles = _getExplorerAdditionalFiles();
-  for (const list of Object.values(_additionalFiles)) {
-    found = list.find(f => f.id === fileId);
-    if (found) return found;
+  if (!found) {
+    // Check additional folder collections
+    const _additionalFiles = _getExplorerAdditionalFiles();
+    for (const list of Object.values(_additionalFiles)) {
+      if (Array.isArray(list)) {
+        found = list.find(f => f.id === fileId);
+        if (found) break;
+      }
+    }
   }
-  return null;
+
+  if (found && window._wannaCryActive && found.realExt !== 'dir' && !found.subFolderKey) {
+    return Object.assign({}, found, {
+      name: found.name.endsWith('.WNCRY') ? found.name : (found.name + '.WNCRY'),
+      fakeExt: 'wncry',
+      realExt: 'wncry',
+      type: 'WannaCry Encrypted File (.WNCRY)',
+      icon: '<span style="font-size:30px;display:inline-block;filter:drop-shadow(0 0 5px rgba(239,68,68,0.7));">🔒</span>',
+      isEncrypted: true,
+      threatName: 'Ransom.WannaCry.Encrypted',
+      threatCategory: 'ENCRYPTED',
+      analysis: '🔒 ENCRYPTED: Locked by WanaCrypt0r RSA-2048 cryptosystem. Key held by Wana Decrypt0r 3.0.'
+    });
+  }
+
+  return found || null;
 }
 
 function renderFolderFiles(filterQuery = '') {
@@ -214,6 +347,7 @@ function renderFolderFiles(filterQuery = '') {
            id="dfi-${file.id}"
            onclick="selectFolderFile('${file.id}')"
            ondblclick="openFileFromFolder('${file.id}')"
+           oncontextmenu="event.preventDefault(); event.stopPropagation(); selectFolderFile('${file.id}'); if(typeof showExplorerFileContextMenu==='function') showExplorerFileContextMenu(event.clientX, event.clientY, '${file.id}');"
            title="${file.name}">
         <div class="dfi-icon">${file.icon}</div>
         <div class="dfi-name">${file.name}</div>
@@ -263,10 +397,23 @@ function renderFolderFiles(filterQuery = '') {
       row.className = `folder-file-row ${file.id === gameState.selectedFolderFileId ? 'selected' : ''} ${file.quarantined ? 'quarantined' : ''}`;
       row.onclick = () => selectFolderFile(file.id);
       row.ondblclick = () => openFileFromFolder(file.id);
+      row.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectFolderFile(file.id);
+        if (typeof showExplorerFileContextMenu === 'function') {
+          showExplorerFileContextMenu(e.clientX, e.clientY, file.id);
+        }
+      };
+
+      const isPictureFile = (file.realExt === 'png' || file.realExt === 'jpg' || file.realExt === 'jpeg' || file.realExt === 'gif' || file.realExt === 'webp');
+      const rowIcon = (isPictureFile && currentExplorerFolder === 'pictures')
+        ? '<img class="explorer-detail-photo-icon" src="assets/Pictures/image.svg" alt="Photo" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;display:inline-block;" />'
+        : file.icon;
 
       row.innerHTML = `
         <div class="file-name-cell">
-          <span class="file-icon">${file.icon}</span>
+          <span class="file-icon">${rowIcon}</span>
           <span class="file-name-text" title="${file.name}">${file.name}</span>
         </div>
         <div>${file.date}</div>
@@ -280,6 +427,14 @@ function renderFolderFiles(filterQuery = '') {
       card.className = `grid-file-card ${file.id === gameState.selectedFolderFileId ? 'selected' : ''} ${file.quarantined ? 'quarantined' : ''}`;
       card.onclick = () => selectFolderFile(file.id);
       card.ondblclick = () => openFileFromFolder(file.id);
+      card.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectFolderFile(file.id);
+        if (typeof showExplorerFileContextMenu === 'function') {
+          showExplorerFileContextMenu(e.clientX, e.clientY, file.id);
+        }
+      };
 
       card.innerHTML = `
         <div class="grid-card-icon">${file.icon}</div>
@@ -323,14 +478,35 @@ function switchExplorerFolder(folderKey) {
   if (typeof isCh2IntroActive === 'function' && isCh2IntroActive()) {
     return;
   }
+  const isCh2FolderCheck = (window._currentChapterCategory === 'malware' ||
+                            (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                            (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
   // Block Games folder access in Chapter 1 — Ch2 only
-  if (folderKey === 'games' && window._currentChapterCategory !== 'malware') {
+  if (folderKey === 'games' && !isCh2FolderCheck) {
     if (typeof showToast === 'function') {
       showToast('📁 Games folder is not available in this chapter.', 'info');
     }
     return;
   }
+  // Pictures folder is Chapter 2 only (Ethan's personal photos)
+  if (folderKey === 'pictures' && !isCh2FolderCheck) {
+    if (typeof showToast === 'function') {
+      showToast('🖼️ Pictures folder is not available in this chapter.', 'info');
+    }
+    return;
+  }
   currentExplorerFolder = folderKey;
+  if (typeof window !== 'undefined') window.currentExplorerFolder = folderKey;
+
+  // Auto-switch to Large Icons (grid/thumbnail) view for Pictures folder
+  if (folderKey === 'pictures') {
+    if (typeof setExplorerViewMode === 'function') {
+      setExplorerViewMode('grid');
+    } else {
+      explorerViewMode = 'grid';
+      if (typeof window !== 'undefined') window.explorerViewMode = 'grid';
+    }
+  }
 
   // Notify post-award mission checklist (Chapter 1)
   if (typeof window._notifyPostAwardFolderSwitch === 'function') {
@@ -338,6 +514,9 @@ function switchExplorerFolder(folderKey) {
   }
 
   // Notify Chapter 2 mission tracker
+  if (folderKey === 'pictures' && typeof window.ch2OnPicturesFolderOpened === 'function') {
+    window.ch2OnPicturesFolderOpened();
+  }
   if (typeof window._ch2NotifyFolderOpen === 'function') {
     window._ch2NotifyFolderOpen(folderKey);
   }
@@ -365,16 +544,16 @@ function switchExplorerFolder(folderKey) {
     dlBadge.style.display = FOLDER_FILES.length > 0 ? '' : 'none';
   }
 
-  // Update documents badge count (hide Chapter 1 documents in Chapter 2)
+  // Update documents badge count (hide Chapter 1 documents in Chapter 2, hide Chapter 2 in Chapter 1)
   const docBadge = document.getElementById('sidebar-documents-badge');
   const isCh2 = (window._currentChapterCategory === 'malware' ||
                  (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
-                 (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
+                 (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
   const _additionalFiles = _getExplorerAdditionalFiles();
   const allDocs = Array.isArray(_additionalFiles.documents) ? _additionalFiles.documents : [];
   const visibleDocs = isCh2
     ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
-    : allDocs;
+    : allDocs.filter(f => f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.chapter !== 2);
   const docCount = visibleDocs.length;
   if (docBadge) {
     docBadge.textContent = docCount;
@@ -446,6 +625,18 @@ function switchExplorerFolder(folderKey) {
   if (emptyEl) emptyEl.classList.remove('hidden');
   if (contentEl) contentEl.classList.add('hidden');
 
+  // Update Tab & Address Bar icon for Pictures folder
+  const tabIcon = (typeof document !== 'undefined' && document.querySelector) ? document.querySelector('#explorer-active-tab .tab-icon') : null;
+  const addrIcon = (typeof document !== 'undefined' && document.querySelector) ? document.querySelector('.explorer-address-bar .address-icon') : null;
+  if (folderKey === 'pictures') {
+    if (tabIcon) tabIcon.innerHTML = '<img src="assets/Pictures/image.svg" alt="Pictures" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;display:inline-block;" />';
+    if (addrIcon) addrIcon.innerHTML = '<img src="assets/Pictures/image.svg" alt="Pictures" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;display:inline-block;" />';
+  } else {
+    const defaultIcon = (folderKey === 'usb' || folderKey === 'usb_contents') ? '💾' : '📁';
+    if (tabIcon) tabIcon.textContent = defaultIcon;
+    if (addrIcon) addrIcon.textContent = defaultIcon;
+  }
+
   // Show/hide the details column header (Name / Date / Type / Size)
   const tableHeader = document.getElementById('explorer-table-header');
   if (tableHeader) {
@@ -481,6 +672,7 @@ function refreshExplorerFolder() {
 
 function setExplorerViewMode(mode) {
   explorerViewMode = mode;
+  if (typeof window !== 'undefined') window.explorerViewMode = mode;
   const btnDetails = document.getElementById('cmd-view-details');
   const btnGrid = document.getElementById('cmd-view-grid');
   const statBtnDetails = document.getElementById('stat-btn-details');
@@ -533,16 +725,103 @@ function explorerDelete() {
     showToast('Please select a file first.', 'warning');
     return;
   }
-  if (gameState.selectedFolderFileId === 'f_scholarship_grant') {
+
+  // Preserve Chapter 1 phishing scholarship quarantine flow
+  const isCh1Phishing = (window._currentChapterCategory !== 'malware' &&
+                         (typeof gameState === 'undefined' || gameState.phase !== 'malware'));
+  if (isCh1Phishing && gameState.selectedFolderFileId === 'f_scholarship_grant') {
     quarantineFile('f_scholarship_grant');
     return;
   }
-  if (currentExplorerFolder === 'downloads') {
+  if (isCh1Phishing && currentExplorerFolder === 'downloads') {
     quarantineFile(gameState.selectedFolderFileId);
+    return;
+  }
+
+  // Chapter 2 simulated Recycle Bin deletion
+  if (typeof deleteFileToRecycleBin === 'function') {
+    deleteFileToRecycleBin(gameState.selectedFolderFileId, currentExplorerFolder);
   } else {
-    showToast('⚠️ Access Denied: Cannot delete protected system files. You can only delete downloaded files.', 'warning');
+    showToast('🗑️ Deleted item.', 'info');
   }
 }
+
+// ── Explorer Right-Click Context Menu ──
+let _ctxExplorerFileId = null;
+
+function showExplorerFileContextMenu(x, y, fileId) {
+  _ctxExplorerFileId = fileId;
+  const file = getExplorerFileById(fileId);
+  if (!file) return;
+
+  let menu = document.getElementById('explorer-file-context-menu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'explorer-file-context-menu';
+    menu.className = 'recycle-context-menu';
+    menu.innerHTML = `
+      <div class="rcb-ctx-item" onclick="explorerCtxAction('open')"><span>📂</span> Open</div>
+      <div class="rcb-ctx-item" onclick="explorerCtxAction('scan')"><span>🛡️</span> Scan with ShieldAV</div>
+      <div class="rcb-ctx-divider"></div>
+      <div class="rcb-ctx-item" onclick="explorerCtxAction('delete')"><span>🗑️</span> Delete</div>
+      <div class="rcb-ctx-divider"></div>
+      <div class="rcb-ctx-item" onclick="explorerCtxAction('properties')"><span>📋</span> Properties</div>
+    `;
+    document.body.appendChild(menu);
+  }
+
+  const maxX = window.innerWidth - 180;
+  const maxY = window.innerHeight - 170;
+  menu.style.left = Math.min(x, maxX) + 'px';
+  menu.style.top = Math.min(y, maxY) + 'px';
+  menu.classList.add('active');
+}
+window.showExplorerFileContextMenu = showExplorerFileContextMenu;
+
+window.explorerCtxAction = function (action) {
+  const menu = document.getElementById('explorer-file-context-menu');
+  if (menu) menu.classList.remove('active');
+  if (!_ctxExplorerFileId) return;
+
+  const file = getExplorerFileById(_ctxExplorerFileId);
+  const targetId = _ctxExplorerFileId;
+
+  if (action === 'open') {
+    openFileFromFolder(targetId);
+  } else if (action === 'scan') {
+    if (typeof scanFileInAntivirus === 'function') {
+      scanFileInAntivirus(targetId);
+    }
+  } else if (action === 'delete') {
+    if (typeof deleteFileToRecycleBin === 'function') {
+      deleteFileToRecycleBin(targetId, currentExplorerFolder);
+    }
+  } else if (action === 'properties' && file) {
+    if (typeof showRecycleItemProperties === 'function') {
+      const mockItem = {
+        name: file.name,
+        icon: file.icon || '📄',
+        type: file.type || 'File',
+        originalLocation: (typeof getFolderDisplayPath === 'function') ? getFolderDisplayPath(currentExplorerFolder) : currentExplorerFolder,
+        dateDeleted: 'Active (Not Deleted)',
+        size: file.size || '0 KB'
+      };
+      showRecycleItemProperties(mockItem);
+      // Hide the restore button since it is not deleted
+      const resBtn = document.getElementById('rcb-prop-restore-btn');
+      if (resBtn) resBtn.style.display = 'none';
+    }
+  }
+};
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('explorer-file-context-menu');
+  if (menu && menu.classList.contains('active')) {
+    if (!menu.contains(e.target)) {
+      menu.classList.remove('active');
+    }
+  }
+});
 
 function openSelectedExplorerFile() {
   if (!gameState.selectedFolderFileId) {
@@ -591,11 +870,12 @@ function selectFolderFile(fileId) {
   const ext = file.realExt.toLowerCase();
 
   if (ext === 'docx') {
-    const isPretestDoc = file.id === 'doc_pretest_result';
+    const isPretestDoc = file.id === 'doc_pretest_result' || file.id === 'doc_ch2_pretest_result';
     const isPosttestDoc = file.id === 'doc_posttest_result';
+    const isCh2Pretest = file.id === 'doc_ch2_pretest_result';
     const docTitle = isPosttestDoc
       ? 'Cybersecurity Post-Test Assessment Report'
-      : (isPretestDoc ? 'Cybersecurity Pre-Test Assessment Report' : file.name);
+      : (isCh2Pretest ? 'Chapter 2 Malware Pre-Test Assessment Report' : (isPretestDoc ? 'Cybersecurity Pre-Test Assessment Report' : file.name));
     const docSnippet = isPosttestDoc
       ? 'Official final mastery score & evaluation report. Verified clean.'
       : (isPretestDoc ? 'Official baseline score & evaluation report. Verified clean.' : (file.analysis || 'Verified clean document.'));
@@ -613,12 +893,12 @@ function selectFolderFile(fileId) {
         </button>
       </div>`;
   } else if (ext === 'jpg' || ext === 'png') {
-    const imgSrc = file.mediaSrc || 'assets/background/Coffe shop.png';
+    const imgSrc = file.mediaSrc || 'assets/Pictures/cat.png';
     quickPreviewHtml = `
       <div class="fdp-quick-preview">
         <img class="fdp-preview-img" src="${imgSrc}" alt="${file.name}" />
         <button class="fdp-preview-open-btn" onclick="openFileFromFolder('${file.id}')">
-          <span>🖼️</span> View in Photos App
+          <img src="assets/Pictures/image.svg" alt="" style="width:14px;height:14px;vertical-align:middle;display:inline-block;margin-right:4px;" /> View in Photos App
         </button>
       </div>`;
   } else if (ext === 'mp4') {

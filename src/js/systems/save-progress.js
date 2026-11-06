@@ -37,7 +37,8 @@
     'cyberzero_pretest_wip',
     'cyberzero_posttest_wip',
     'cyberzero_pretest_result_file',
-    'cyberzero_posttest_result_file'
+    'cyberzero_posttest_result_file',
+    'cyberzero_ch2_pretest_result_file'
   ];
 
   /* ── Detect currently active screen / view ────────────────────────────── */
@@ -535,6 +536,16 @@
       }
     }
 
+    // For Chapter 2, re-render the checklist with the restored _ch2Mission state.
+    // This ensures Sticky Notes content reflects saved progress after page refresh.
+    if (targetCat === 'malware' && !isCompleted) {
+      setTimeout(function() {
+        if (typeof updateStickyNoteForPhase === 'function') {
+          updateStickyNoteForPhase('malware');
+        }
+      }, 150);
+    }
+
     // ── DIALOGUE RESTORATION (Scoped to Active Chapter) ──
     const dCat = (session.dialogue && session.dialogue.chapter) ? session.dialogue.chapter : session.activeChapter;
     if (session.dialogue && session.dialogue.active && dCat === targetCat && typeof RyanGuide !== 'undefined' && RyanGuide.restoreState) {
@@ -765,6 +776,7 @@
       // ONLY reset Chapter 2 progress; preserve Chapter 1 progress, dialogue, and unlocked categories
       try { localStorage.removeItem('cyberzero_ch2_mission'); } catch (e) {}
       try { localStorage.removeItem('cyberzero_ch2_pretest'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_ch2_pretest_result_file'); } catch (e) {}
       try {
         const raw = localStorage.getItem('cyberzero_session_state');
         if (raw) {
@@ -783,7 +795,8 @@
             sessionState: { activeChapter: 'malware', ch2: null, dialogue: null },
             ls: {
               cyberzero_ch2_mission: null,
-              cyberzero_ch2_pretest: null
+              cyberzero_ch2_pretest: null,
+              cyberzero_ch2_pretest_result_file: null
             }
           }, { merge: true });
           console.log('[deleteProgress] ✅ Chapter 2 progress reset in cloud save (Chapter 1 preserved).');

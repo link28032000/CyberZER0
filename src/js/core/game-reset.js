@@ -38,6 +38,10 @@ function restartEntireGame() {
     resetCh1ZmailInterface();
   }
   try { localStorage.removeItem('cyberzero_uninstalled_apps'); } catch (e) {}
+  try { localStorage.removeItem('cyberzero_ch2_pretest_result_file'); } catch (e) {}
+  if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+    EXPLORER_ADDITIONAL_FILES.documents = EXPLORER_ADDITIONAL_FILES.documents.filter(f => f.id !== 'doc_ch2_pretest_result');
+  }
   if (typeof resetPhoneLinkChat === 'function') {
     resetPhoneLinkChat();
   }
@@ -94,6 +98,54 @@ function restartEntireGame() {
   ls.classList.add('ls-active');
   void ls.offsetWidth;
   ls.style.transition = '';
+
+  // ── Neutralize WannaCry ransomware simulation on restart ──
+  // Clears all in-memory encrypted state, stops countdown timers, closes the
+  // WannaCry window, removes any access-denied modals, and removes all desktop
+  // infection effects. No real files are ever touched.
+  (function _resetWannaCrySim() {
+    // Always reset the flag — harmless if simulation was never triggered
+    window._wannaCryActive = false;
+
+    // Dismiss any open access-denied encrypted file modal
+    const deniedModal = document.getElementById('wncry-access-denied-modal');
+    if (deniedModal) deniedModal.remove();
+
+    // Hide desktop banner if it was ever shown
+    const banner = document.getElementById('wannacry-desktop-banner');
+    if (banner) banner.style.display = 'none';
+
+    // Remove red desktop infection class (belt-and-suspenders)
+    const desktopEl = document.getElementById('desktop');
+    if (desktopEl) desktopEl.classList.remove('wannacry-infected');
+
+    // Hide and fully reset the WannaCry window element
+    const wncryWin = document.getElementById('win-wannacry');
+    if (wncryWin) {
+      wncryWin.classList.add('hidden');
+      wncryWin.classList.remove('maximized', 'focused', 'minimized');
+      wncryWin.style.left = '';
+      wncryWin.style.top = '';
+    }
+
+    // Reset WannaCry appState for window manager
+    if (typeof appState !== 'undefined' && appState.wannacry) {
+      appState.wannacry.open = false;
+      appState.wannacry.minimized = false;
+      appState.wannacry.maximized = false;
+      appState.wannacry.hasBeenPositioned = false;
+    }
+
+    // Refresh File Explorer so .WNCRY encrypted icons are removed
+    if (typeof renderFolderFiles === 'function') {
+      try { renderFolderFiles(''); } catch (e) {}
+    }
+
+    // Reset simulated Recycle Bin to fresh initial state
+    if (typeof window.resetRecycleBinToInitial === 'function') {
+      try { window.resetRecycleBinToInitial(); } catch (e) {}
+    }
+  })();
 
   // Play subtle restart tone
   _playLoadingBeep(320, 0.12, 0);
@@ -254,8 +306,8 @@ function restartCurrentChapterMission() {
     welcomeOv.style.display = 'none';
   }
 
-  // Close open app windows
-  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'security-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner', 'control-panel', 'steam'].forEach(a => {
+  // Close open app windows (including WannaCry & Recycle Bin if open)
+  ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware', 'wifi-settings', 'security-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'scanner', 'control-panel', 'steam', 'wannacry', 'recycle'].forEach(a => {
     if (typeof appState !== 'undefined' && appState[a]) {
       appState[a].open = false;
       appState[a].minimized = false;
@@ -271,6 +323,54 @@ function restartCurrentChapterMission() {
     }
   });
   if (typeof updateTaskbar === 'function') updateTaskbar();
+
+  // ── Neutralize WannaCry ransomware simulation on restart ──
+  // Clears all in-memory encrypted state, stops countdown timers, closes the
+  // WannaCry window, removes any access-denied modals, and removes all desktop
+  // infection effects. No real files are ever touched.
+  (function _resetWannaCrySim() {
+    // Always reset the flag — harmless if simulation was never triggered
+    window._wannaCryActive = false;
+
+    // Dismiss any open access-denied encrypted file modal
+    const deniedModal = document.getElementById('wncry-access-denied-modal');
+    if (deniedModal) deniedModal.remove();
+
+    // Hide desktop banner if it was ever shown
+    const banner = document.getElementById('wannacry-desktop-banner');
+    if (banner) banner.style.display = 'none';
+
+    // Remove red desktop infection class (belt-and-suspenders)
+    const desktopEl = document.getElementById('desktop');
+    if (desktopEl) desktopEl.classList.remove('wannacry-infected');
+
+    // Hide and fully reset the WannaCry window element
+    const wncryWin = document.getElementById('win-wannacry');
+    if (wncryWin) {
+      wncryWin.classList.add('hidden');
+      wncryWin.classList.remove('maximized', 'focused', 'minimized');
+      wncryWin.style.left = '';
+      wncryWin.style.top = '';
+    }
+
+    // Reset WannaCry appState for window manager
+    if (typeof appState !== 'undefined' && appState.wannacry) {
+      appState.wannacry.open = false;
+      appState.wannacry.minimized = false;
+      appState.wannacry.maximized = false;
+      appState.wannacry.hasBeenPositioned = false;
+    }
+
+    // Refresh File Explorer so .WNCRY encrypted icons are removed
+    if (typeof renderFolderFiles === 'function') {
+      try { renderFolderFiles(''); } catch (e) {}
+    }
+
+    // Reset simulated Recycle Bin to fresh initial state
+    if (typeof window.resetRecycleBinToInitial === 'function') {
+      try { window.resetRecycleBinToInitial(); } catch (e) {}
+    }
+  })();
 
   // Play subtle restart tone
   if (typeof _playLoadingBeep === 'function') {
@@ -309,6 +409,17 @@ function restartCurrentChapterMission() {
       // ── Clear all saved Ch2 progress so the checklist and pretest start completely fresh ──
       try { localStorage.removeItem('cyberzero_ch2_mission'); } catch (e) {}
       try { localStorage.removeItem('cyberzero_ch2_pretest'); } catch (e) {}
+      try { localStorage.removeItem('cyberzero_ch2_pretest_result_file'); } catch (e) {}
+      try {
+        let un = JSON.parse(localStorage.getItem('cyberzero_uninstalled_apps') || '[]');
+        if (Array.isArray(un) && un.includes('bm')) {
+          un = un.filter(id => id !== 'bm');
+          localStorage.setItem('cyberzero_uninstalled_apps', JSON.stringify(un));
+        }
+      } catch (e) {}
+      if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+        EXPLORER_ADDITIONAL_FILES.documents = EXPLORER_ADDITIONAL_FILES.documents.filter(f => f.id !== 'doc_ch2_pretest_result');
+      }
       try {
         const raw = localStorage.getItem('cyberzero_session_state');
         if (raw) {

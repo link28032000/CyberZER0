@@ -70,5 +70,7 @@ const appState = {
   'control-panel': { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   control_panel: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   steam: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
-  'space-fighter': { open: false, minimized: false, maximized: false, hasBeenPositioned: false }
+  'space-fighter': { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
+  wannacry: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
+  recycle: { open: false, minimized: false, maximized: false, hasBeenPositioned: false }
 };
