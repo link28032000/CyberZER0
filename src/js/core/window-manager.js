@@ -67,7 +67,34 @@ function updateAppLockStates() {
   });
 }
 
+function openRecycleBin() {
+  const ch2IntroActive = typeof isCh2IntroActive === 'function' ? isCh2IntroActive() : !!window._ch2IntroActive;
+  const ch2PretestRunning = typeof Ch2Pretest !== 'undefined' && Ch2Pretest.isRunning && Ch2Pretest.isRunning();
+  if (ch2PretestRunning) {
+    if (typeof showToast === 'function') {
+      showToast('Please complete the pre-test with Ryan before opening other apps.', 'warning');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playWrong) AudioManager.playWrong();
+    return;
+  }
+  if (ch2IntroActive) {
+    if (typeof showToast === 'function') {
+      showToast('Please finish the introduction dialogue with Ryan before opening apps.', 'warning');
+    }
+    if (typeof AudioManager !== 'undefined') AudioManager.playWrong();
+    return;
+  }
+  if (typeof showToast === 'function') {
+    showToast('🗑️ Recycle Bin is currently empty.', 'info');
+  }
+}
+window.openRecycleBin = openRecycleBin;
+
 function openApp(appName) {
+  if (appName === 'recycle' || appName === 'recycle-bin') {
+    openRecycleBin();
+    return;
+  }
   if (appName === 'control_panel') appName = 'control-panel';
   // ── Block all apps while the pretest or posttest is running ──
   // ── Block Chapter 2 apps while intro dialogue or Ch2 pretest is running ──

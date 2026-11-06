@@ -24,7 +24,19 @@ function openFileFromFolder(fileId) {
     return;
   }
   if (file.id === 'desk_app_recycle') {
-    showToast('🗑️ Recycle Bin is currently empty.', 'info');
+    if (typeof openRecycleBin === 'function') {
+      openRecycleBin();
+    } else {
+      showToast('🗑️ Recycle Bin is currently empty.', 'info');
+    }
+    return;
+  }
+
+  // Folder shortcut with subFolderKey (e.g. Games folder in Desktop view)
+  if (file.subFolderKey) {
+    if (typeof switchExplorerFolder === 'function') {
+      switchExplorerFolder(file.subFolderKey);
+    }
     return;
   }
 

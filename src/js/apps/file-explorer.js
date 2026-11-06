@@ -71,6 +71,16 @@ function getExplorerCurrentFiles() {
     }
     return docFiles;
   }
+  if (currentExplorerFolder === 'desktop') {
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
+    const deskFiles = _additionalFiles['desktop'] || [];
+    if (!isCh2) {
+      return deskFiles.filter(function(f) { return !f.chapter || f.chapter === 1; });
+    }
+    return deskFiles;
+  }
   return _additionalFiles[currentExplorerFolder] || [];
 }
 
