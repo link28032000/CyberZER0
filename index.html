@@ -640,6 +640,98 @@
     </div>
   </div>
 
+  <!-- ── RECYCLE BIN CONFIRM DELETE MODAL (WINDOWS DIALOG) ── -->
+  <div id="recycle-confirm-modal" class="recycle-confirm-modal hidden" onclick="if(event.target===this) closeRecycleConfirmModal();">
+    <div class="rcb-confirm-card" role="dialog" aria-modal="true" aria-labelledby="rcb-confirm-title-text">
+      <div class="rcb-confirm-titlebar">
+        <div class="rcb-confirm-title">
+          <img src="assets/icons/apps/recycle.svg" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;" alt="">
+          <span id="rcb-confirm-title-text">Delete File</span>
+        </div>
+        <button type="button" class="rcb-confirm-close" onclick="closeRecycleConfirmModal()" title="Cancel">✕</button>
+      </div>
+      <div class="rcb-confirm-body">
+        <div class="rcb-confirm-prompt-row">
+          <div class="rcb-confirm-warn-icon" id="rcb-confirm-warn-icon">🗑️</div>
+          <div class="rcb-confirm-prompt-text" id="rcb-confirm-prompt">
+            Are you sure you want to permanently delete this file?
+          </div>
+        </div>
+
+        <!-- File Details Box (Authentic Windows Delete Preview) -->
+        <div class="rcb-confirm-file-preview" id="rcb-confirm-file-preview">
+          <div class="rcb-confirm-file-icon" id="rcb-confirm-file-icon">📄</div>
+          <div class="rcb-confirm-file-info">
+            <div class="rcb-confirm-file-name" id="rcb-confirm-file-name">BM</div>
+            <div class="rcb-confirm-file-meta" id="rcb-confirm-file-type">Type: Application</div>
+            <div class="rcb-confirm-file-meta" id="rcb-confirm-file-size">Size: 48.6 MB</div>
+            <div class="rcb-confirm-file-meta" id="rcb-confirm-file-date">Date deleted: 11/8/2026 9:20 PM</div>
+          </div>
+        </div>
+
+        <div class="rcb-confirm-warning-note" id="rcb-confirm-warning-note">
+          ⚠️ This item will be permanently removed from this computer.
+        </div>
+      </div>
+      <div class="rcb-confirm-footer">
+        <button type="button" class="rcb-btn rcb-btn-yes" id="rcb-confirm-yes-btn">Yes</button>
+        <button type="button" class="rcb-btn rcb-btn-no" id="rcb-confirm-no-btn" onclick="closeRecycleConfirmModal()">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GTA VI / WANNACRY SECURITY ADVISORY MODAL ── -->
+  <div id="gta-security-modal" class="gta-security-modal hidden" onclick="if(event.target===this) closeGtaSecurityAdvisoryModal();">
+    <div class="gta-modal-card" role="dialog" aria-modal="true" aria-labelledby="gta-modal-title-text">
+      <div class="gta-modal-titlebar">
+        <div class="gta-modal-title">
+          <span style="font-size:16px; margin-right:8px;">⚠️</span>
+          <span id="gta-modal-title-text" style="font-weight:700; letter-spacing:0.5px;">SECURITY ADVISORY – WANNACRY RANSOMWARE</span>
+        </div>
+        <button type="button" class="gta-modal-close" onclick="closeGtaSecurityAdvisoryModal()" title="Exit">✕</button>
+      </div>
+
+      <div class="gta-modal-body">
+        <!-- Hero Warning Card with Official Prompt Description -->
+        <div class="gta-alert-hero">
+          <div class="gta-alert-icon">⚠️</div>
+          <div class="gta-alert-hero-text">
+            <div class="gta-alert-hero-title">Ransomware Threat Advisory</div>
+            <div class="gta-alert-hero-desc">
+              "WannaCry is ransomware that encrypts files and demands payment to restore access. Avoid suspicious links and unknown downloads. Always back up important files."
+            </div>
+          </div>
+        </div>
+
+        <!-- Student-Friendly Explanation -->
+        <div class="gta-info-card card-about">
+          <div class="gta-card-header">
+            <span class="gta-card-icon">🛡️</span>
+            <span class="gta-card-title">Educational Simulation Briefing</span>
+          </div>
+          <div class="gta-card-content">
+            You are about to launch a safe educational simulation of <strong>WannaCry Ransomware</strong>.
+            <br><br>
+            • <strong>What is Ransomware?</strong> Malware that scrambles (encrypts) files and demands payment to restore access.
+            <br><br>
+            • <strong>Harmless Simulation:</strong> No actual files on your real computer will be encrypted or modified.
+            <br><br>
+            • <strong>Interactive Learning:</strong> After starting, check your simulated files in File Explorer. When finished, click <strong>"Exit Simulation"</strong> to restore all files immediately.
+          </div>
+        </div>
+      </div>
+
+      <div class="gta-modal-footer">
+        <button type="button" class="gta-btn gta-btn-continue" id="gta-btn-continue" onclick="startGtaWannaCrySimulation()">
+          ▶ Continue
+        </button>
+        <button type="button" class="gta-btn gta-btn-exit" id="gta-btn-exit" onclick="closeGtaSecurityAdvisoryModal()">
+          ✕ Exit
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── MICROSOFT WORD / DOCUMENT VIEWER WINDOW ── -->
   <div id="win-docviewer" class="app-window hidden" data-app="docviewer">
     <div class="win-titlebar docviewer-titlebar" id="titlebar-docviewer">
@@ -836,7 +928,7 @@
             <span class="eq-bar b12"></span>
           </div>
         </div>
-        <div class="vp-center-play-overlay hidden" id="vp-center-overlay">
+        <div class="vp-center-play-overlay hidden" id="vp-center-overlay" onclick="event.stopPropagation(); vpTogglePlay();" title="Click to Play">
           <span>▶</span>
         </div>
       </div>
@@ -2196,7 +2288,6 @@
             <button class="sf-btn-launch" id="sf-btn-launch" disabled onclick="sfLaunchGame()">
               <span>LAUNCH MISSION</span> <span>⏳</span>
             </button>
-            <button class="sf-btn-skip" onclick="sfLaunchGame()">Skip Intro</button>
           </div>
         </div>
       </div>
@@ -2217,10 +2308,21 @@
           </div>
         </div>
 
-        <!-- Center: Sector + Weapon Buff -->
+        <!-- Center: Sector + Weapon Buff + Boss HUD -->
         <div class="sf-hud-center">
           <div class="sf-wave-banner" id="sf-hud-wave">SECTOR 1</div>
           <span class="sf-weapon-buff" id="sf-hud-buff" style="display:none;"></span>
+          <div class="sf-boss-hud hidden" id="sf-boss-hud">
+            <div class="sf-boss-hud-header">
+              <span class="sf-boss-hud-tag">BOSS:</span>
+              <span class="sf-boss-hud-name" id="sf-boss-hud-name">WORM-X</span>
+              <span class="sf-boss-hud-type" id="sf-boss-hud-type">(COMPUTER WORM)</span>
+              <span class="sf-boss-hud-pct" id="sf-boss-hud-pct">100%</span>
+            </div>
+            <div class="sf-boss-hud-bar-track">
+              <div class="sf-boss-hud-bar-fill" id="sf-boss-hud-fill"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Right: Score + Bombs + Controls -->
@@ -2302,6 +2404,48 @@
           </div>
         </div>
 
+        <!-- ══ BOSS WARNING & INTRO MODAL ══ -->
+        <div class="sf-modal-overlay hidden" id="sf-boss-intro-modal">
+          <div class="sf-modal-card sf-modal-boss-intro">
+            <div class="sf-boss-warning-banner">
+              <span class="sf-hazard-pulse">⚠️</span>
+              <span class="sf-warning-text">WARNING! BOSS APPROACHING</span>
+              <span class="sf-hazard-pulse">⚠️</span>
+            </div>
+            <div class="sf-boss-avatar-box" id="sf-boss-intro-avatar">
+              <div class="sf-boss-avatar-glow"></div>
+              <div class="sf-boss-icon" id="sf-boss-intro-icon">🐛</div>
+            </div>
+            <h2 class="sf-boss-intro-title" id="sf-boss-intro-name">WORM-X</h2>
+            <div class="sf-boss-intro-badge" id="sf-boss-intro-type">MALWARE TYPE: COMPUTER WORM</div>
+            <p class="sf-boss-intro-desc" id="sf-boss-intro-desc">"An enemy that replicates itself and spreads across the battlefield!"</p>
+            <div class="sf-boss-intro-sub" id="sf-boss-intro-sub">BOSS BATTLE – LEVEL 5</div>
+            <div class="sf-modal-actions">
+              <button class="sf-btn-primary sf-btn-boss-start" id="sf-btn-start-battle" onclick="sfStartBossBattle()">⚔️ START BATTLE</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ BOSS VICTORY ANNOUNCEMENT MODAL ══ -->
+        <div class="sf-modal-overlay hidden" id="sf-boss-victory-modal">
+          <div class="sf-modal-card sf-modal-boss-victory">
+            <div class="sf-victory-header">
+              <span class="sf-victory-icon">🏆</span>
+              <div class="sf-victory-title">BOSS DEFEATED!</div>
+            </div>
+            <div class="sf-victory-sub" id="sf-boss-victory-name">WORM-X DESTROYED</div>
+            <div class="sf-victory-edu-card">
+              <div class="sf-victory-edu-label">🛡️ MALWARE BEHAVIOR &amp; PREVENTION</div>
+              <p class="sf-victory-edu-text" id="sf-boss-victory-desc">
+                Computer worms can replicate themselves and spread across networks. Keep your system updated and use security software to reduce the risk.
+              </p>
+            </div>
+            <div class="sf-modal-actions">
+              <button class="sf-btn-primary sf-btn-boss-continue" id="sf-btn-continue-level" onclick="sfContinueAfterBoss()">CONTINUE ➔</button>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /.sf-game-area -->
     </div><!-- /.sf-window-body -->
   </div><!-- /#win-space-fighter -->
@@ -2341,6 +2485,147 @@
             <span class="rw-term-pulse">● LIVE</span>
           </div>
           <div class="rw-term-logs" id="rw-term-logs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GRAND THEFT AUTO VI APPLICATION WINDOW (GTA VI & WannaCry Simulation) ── -->
+  <div id="win-gta6" class="app-window hidden" data-app="gta6">
+    <div class="win-titlebar gta-titlebar" id="titlebar-gta6">
+      <div class="win-title">
+        <img src="assets/icons/Chapter 2 new apps/GTA6.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:8px;" alt="">
+        <span id="gta6-window-title">Grand Theft Auto VI</span>
+      </div>
+      <div class="win-controls">
+        <button type="button" class="win-btn win-minimize" onclick="minimizeApp('gta6')" title="Minimize">─</button>
+        <button type="button" class="win-btn win-maximize" onclick="toggleMaximize('gta6')" title="Maximize">□</button>
+        <button type="button" class="win-btn win-close" onclick="closeGtaViWindow()" title="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="win-body gta-window-body">
+      <!-- ── VIEW 1: NORMAL GTA VI LAUNCHER STATE ── -->
+      <div id="gta-normal-view" class="gta-normal-view">
+        <div class="gta-launcher-hero">
+          <div class="gta-hero-bg-overlay"></div>
+          <div class="gta-hero-content">
+            <div class="gta-hero-badge">ROCKSTAR GAMES LAUNCHER</div>
+            <h1 class="gta-hero-title">Grand Theft Auto VI</h1>
+            <p class="gta-hero-subtitle">Next-Generation Open World Action • PC Edition</p>
+            <div class="gta-hero-actions">
+              <button type="button" class="gta-play-btn" onclick="openGtaViSecurityAdvisory()">▶ Launch Game</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="gta-launcher-details">
+          <div class="gta-detail-card">
+            <div class="gta-detail-label">Status</div>
+            <div class="gta-detail-val ready">● Ready to Play</div>
+          </div>
+          <div class="gta-detail-card">
+            <div class="gta-detail-label">Version</div>
+            <div class="gta-detail-val">v1.0.4.22 (PC)</div>
+          </div>
+          <div class="gta-detail-card">
+            <div class="gta-detail-label">Install Location</div>
+            <div class="gta-detail-val">C:\Program Files\Rockstar Games\Grand Theft Auto VI</div>
+          </div>
+          <div class="gta-detail-card">
+            <div class="gta-detail-label">Storage Size</div>
+            <div class="gta-detail-val">64.2 GB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW 2: WANNACRY RANSOMWARE SIMULATION STATE (INSIDE GTA VI WINDOW) ── -->
+      <div id="gta-ransomware-view" class="gta-ransomware-view hidden">
+        <!-- Top Simulation Control Bar with Exit Simulation Button -->
+        <div class="gta-sim-topbar">
+          <div class="gta-sim-badge">
+            <span class="gta-sim-alert-dot">⚠️</span>
+            <strong>SIMULATED WANNACRY RANSOMWARE ATTACK</strong> — Harmless Educational Demonstration
+          </div>
+          <button type="button" class="gta-exit-sim-btn" id="gta-exit-sim-btn" onclick="exitWannaCrySimulation()" title="Stop the simulation and restore system">
+            🛑 Exit Simulation
+          </button>
+        </div>
+
+        <!-- Simulated Ransomware Interface -->
+        <div class="gta-wncry-container">
+          <!-- Left Column: Dual Timers & Bitcoin Box -->
+          <div class="gta-wncry-left">
+            <!-- Timer Card 1 -->
+            <div class="wncry-timer-card">
+              <div class="wncry-card-header">Payment will be raised on</div>
+              <div class="wncry-card-date" id="gta-wncry-date-raised">11/11/2026 00:00:00</div>
+              <div class="wncry-card-sub">Time Left</div>
+              <div class="wncry-countdown-box" id="gta-wncry-timer-raised">
+                <span class="cd-part" id="gta-cd-r-days">02</span><span class="cd-sep">d</span>
+                <span class="cd-part" id="gta-cd-r-hrs">23</span><span class="cd-sep">:</span>
+                <span class="cd-part" id="gta-cd-r-mins">59</span><span class="cd-sep">:</span>
+                <span class="cd-part" id="gta-cd-r-secs">59</span>
+              </div>
+            </div>
+
+            <!-- Timer Card 2 -->
+            <div class="wncry-timer-card">
+              <div class="wncry-card-header">Your files will be lost on</div>
+              <div class="wncry-card-date" id="gta-wncry-date-lost">11/15/2026 00:00:00</div>
+              <div class="wncry-card-sub">Time Left</div>
+              <div class="wncry-countdown-box timer-danger" id="gta-wncry-timer-lost">
+                <span class="cd-part" id="gta-cd-l-days">06</span><span class="cd-sep">d</span>
+                <span class="cd-part" id="gta-cd-l-hrs">23</span><span class="cd-sep">:</span>
+                <span class="cd-part" id="gta-cd-l-mins">59</span><span class="cd-sep">:</span>
+                <span class="cd-part" id="gta-cd-l-secs">59</span>
+              </div>
+            </div>
+
+            <!-- Bitcoin Payment Demand Card -->
+            <div class="wncry-bitcoin-card">
+              <div class="wncry-btc-header">
+                <span class="btc-symbol">₿</span>
+                <span>Send <strong>$300</strong> worth of bitcoin to:</span>
+              </div>
+              <div class="wncry-btc-input-row">
+                <input type="text" id="gta-wncry-btc-address" value="13AM4VW2dhxYgXeQepoHkHSQuy6NgaEb94" readonly spellcheck="false">
+                <button type="button" class="wncry-btn-copy" onclick="wncryCopyBtcAddress()" title="Copy BTC Address">Copy</button>
+              </div>
+            </div>
+
+            <!-- Payment Simulation Buttons -->
+            <div class="wncry-btn-row">
+              <button type="button" class="wncry-btn wncry-btn-check" onclick="wncryCheckPayment()">Check Payment</button>
+              <button type="button" class="wncry-btn wncry-btn-decrypt" onclick="wncryTestDecrypt()">Decrypt Sample</button>
+            </div>
+          </div>
+
+          <!-- Right Column: Ransom Notice & Explanation -->
+          <div class="gta-wncry-right">
+            <div class="gta-wncry-scroll">
+              <h2 class="wncry-ooops">Ooops, your files have been encrypted!</h2>
+
+              <div class="wncry-section">
+                <h3>What Happened to My Computer &amp; GTA VI?</h3>
+                <p>Your GTA VI application files, save data, and game databases have been encrypted with military-grade <strong>RSA-2048 &amp; AES-128 encryption</strong>. The fake installer payload downloaded from the unverified site executed a simulated WannaCry attack inside this window.</p>
+              </div>
+
+              <div class="wncry-section">
+                <h3>Can I Recover My Files?</h3>
+                <p>Sure! You can test our sample decryption service by clicking <strong>&lt;Decrypt Sample&gt;</strong>. But to restore all locked files, attackers demand a ransom payment within 3 days before the price is doubled.</p>
+              </div>
+
+              <div class="wncry-section">
+                <h3>How Do I Pay?</h3>
+                <p>Payment is accepted in Bitcoin only ($300 USD worth). Attackers demand that payment be transferred to their anonymous dark-web wallet address.</p>
+              </div>
+
+              <div class="wncry-disclaimer-banner">
+                🛡️ <strong>HARMLESS EDUCATIONAL SIMULATION:</strong> This ransomware demonstration is completely contained inside the GTA VI application window. No real files on your actual machine have been encrypted or modified. Click <strong>"Exit Simulation"</strong> above at any time to safely restore your system.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2587,6 +2872,9 @@
       <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-steam" onclick="taskbarClick('steam')" title="Steam">
         <span><img src="assets/icons/Chapter 2 new apps/steam.svg" alt="Steam" class="taskbar-icon-img-lg"></span>
       </button>
+      <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-gta6" onclick="taskbarClick('gta6')" title="Grand Theft Auto VI">
+        <span><img src="assets/icons/Chapter 2 new apps/GTA6.svg" alt="GTA VI" class="taskbar-icon-img-lg"></span>
+      </button>
       <button type="button" class="taskbar-app-btn icon-only hidden" id="taskbar-ransomware" onclick="taskbarClick('ransomware')" title="Ransomware Incident Console">
         <span style="font-size:22px;">🔒</span>
       </button>
@@ -2787,7 +3075,7 @@
       <div id="start-power-dropdown" class="power-dropdown hidden">
         <button type="button" onclick="startMenuPower('restart')">🔄 Restart (Mission)</button>
         <button type="button" onclick="startMenuPower('lock')">🔒 Lock (Paused)</button>
-        <button type="button" id="start-shutdown-btn" onclick="startMenuPower('shutdown')">⏻ Shutdown (Save)</button>
+        <button type="button" id="start-shutdown-btn" onclick="startMenuPower('shutdown')">⏻ Save and Exit</button>
       </div>
     </div>
   </div>
@@ -3101,15 +3389,18 @@
 
   <!-- 👤 Signed-In User Profile (Top Corner, Main Menu Only) -->
   <div class="mm-user-bar" id="mm-user-bar">
-    <div class="mm-user-avatar" id="mm-user-avatar" aria-hidden="true" onclick="document.getElementById('mm-user-bar').classList.toggle('active')">
-      <div class="mm-avatar-ring"></div>
-      <div class="mm-avatar-inner">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="8" r="4" fill="currentColor"/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-        </svg>
+    <div class="mm-user-profile-group" id="mm-user-profile-group">
+      <div class="mm-user-avatar" id="mm-user-avatar" aria-hidden="true" onclick="document.getElementById('mm-user-bar').classList.toggle('active')" title="User Profile">
+        <div class="mm-avatar-ring"></div>
+        <div class="mm-avatar-inner">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" fill="currentColor"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="mm-avatar-status"></div>
       </div>
-      <div class="mm-avatar-status"></div>
+      <div class="mm-guest-tag" id="mm-guest-tag" style="display:none;" onclick="czUpdateGuestName()" title="Click to rename guest">GUEST</div>
     </div>
     <button type="button" class="mm-signout-btn" id="mm-signout-btn" onclick="czSignOut()" title="Sign out">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -4810,6 +5101,7 @@
     </div>
     <div class="results-action-row-20">
       <button type="button" class="btn-primary" onclick="openCategoryHub()">📖 Story Selection</button>
+      <button type="button" class="btn-ghost" onclick="showMalwareTrophyModal()">🏆 View Malware Trophy</button>
       <button type="button" class="btn-ghost" onclick="startMalwareMission()">🔄 Replay Malware</button>
     </div>
   </div>
@@ -4875,6 +5167,7 @@
     </div>
     <div class="results-action-row-20">
       <button type="button" class="btn-primary" onclick="showGrandCertificate()">🏆 VIEW GRAND MASTER CERTIFICATE →</button>
+      <button type="button" class="btn-ghost" onclick="showMalwareTrophyModal()">🏆 View Malware Trophy</button>
       <button type="button" class="btn-ghost" onclick="openCategoryHub()">📖 Story Selection</button>
       <button type="button" class="btn-ghost" onclick="restartCurrentChapterMission()">🔄 Replay Incident Response</button>
     </div>
@@ -5314,7 +5607,7 @@
 <script src="src/js/systems/auth.js"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
-     RESTART MISSION — SAVE DATA WARNING CONFIRMATION DIALOG
+     RESTART COMPUTER — RESTART CONFIRMATION DIALOG
      Shown by _showRestartConfirmDialog() in start-menu.js
      ══════════════════════════════════════════════════════════════ -->
 <div id="cz-restart-confirm-modal" class="cz-rcd-overlay" role="dialog" aria-modal="true" aria-labelledby="cz-rcd-title">
@@ -5327,14 +5620,13 @@
         <line x1="12" y1="17" x2="12.01" y2="17" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
     </div>
-    <h2 class="cz-rcd-title" id="cz-rcd-title">⚠️ Restart Mission?</h2>
+    <h2 class="cz-rcd-title" id="cz-rcd-title">Restart (Mission)?</h2>
     <p class="cz-rcd-msg" id="cz-restart-confirm-msg">
-      Your saved progress for this mission will be permanently deleted from your account.
-      This cannot be undone.
+      Restarting will reset the current chapter to its intro dialogue. The other chapter's progress will not be affected.
     </p>
     <div class="cz-rcd-actions">
       <button type="button" id="cz-restart-confirm-no"  class="cz-rcd-btn cz-rcd-btn-cancel">Cancel</button>
-      <button type="button" id="cz-restart-confirm-yes" class="cz-rcd-btn cz-rcd-btn-confirm">🔄 Yes, Restart &amp; Delete Save</button>
+      <button type="button" id="cz-restart-confirm-yes" class="cz-rcd-btn cz-rcd-btn-confirm">🔄 Restart (Mission)</button>
     </div>
   </div>
 </div>
@@ -5444,4 +5736,3 @@
 
 </body>
 </html>
-

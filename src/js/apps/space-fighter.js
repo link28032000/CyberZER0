@@ -254,6 +254,149 @@
           osc.stop(t + 0.26);
         });
       } catch (e) {}
+    },
+
+    bossAlarm() {
+      const g = this.getGain();
+      if (g <= 0.001) return;
+      const ac = this.getContext();
+      if (!ac) return;
+      try {
+        const now = ac.currentTime;
+        [0, 0.22, 0.44].forEach(tOffset => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(680, now + tOffset);
+          osc.frequency.linearRampToValueAtTime(320, now + tOffset + 0.18);
+          gain.gain.setValueAtTime(0.35 * g, now + tOffset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + tOffset + 0.2);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(now + tOffset);
+          osc.stop(now + tOffset + 0.21);
+        });
+      } catch (e) {}
+    },
+
+    bossDefeated() {
+      const g = this.getGain();
+      if (g <= 0.001) return;
+      const ac = this.getContext();
+      if (!ac) return;
+      try {
+        const now = ac.currentTime;
+        const notes = [261.6, 329.6, 392.0, 523.25, 659.25, 783.99];
+        notes.forEach((freq, idx) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          const t = now + idx * 0.07;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.3 * g, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(t);
+          osc.stop(t + 0.36);
+        });
+        this.explosion(true);
+      } catch (e) {}
+    },
+
+    lockdownWarning() {
+      const g = this.getGain();
+      if (g <= 0.001) return;
+      const ac = this.getContext();
+      if (!ac) return;
+      try {
+        const now = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.35);
+        gain.gain.setValueAtTime(0.4 * g, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(now);
+        osc.stop(now + 0.36);
+      } catch (e) {}
+    },
+
+    lockdownClear() {
+      const g = this.getGain();
+      if (g <= 0.001) return;
+      const ac = this.getContext();
+      if (!ac) return;
+      try {
+        const now = ac.currentTime;
+        const notes = [587.33, 880, 1174.66];
+        notes.forEach((freq, i) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          const t = now + i * 0.06;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.25 * g, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(t);
+          osc.stop(t + 0.19);
+        });
+      } catch (e) {}
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MALWARE BOSS BATTLE CONFIGURATION (CONFIGURABLE LEVEL PROGRESSION)
+  // ═══════════════════════════════════════════════════════════════════
+  const BOSS_CONFIG = {
+    5: {
+      id: 'worm',
+      name: 'WORM-X',
+      type: 'Computer Worm',
+      icon: '🐛',
+      desc: 'An enemy that replicates itself and spreads across the battlefield!',
+      introSubtitle: 'BOSS BATTLE – LEVEL 5',
+      hp: 85,
+      color: '#00ff88',
+      victoryMsg: 'Computer worms can replicate themselves and spread across networks. Keep your system updated and use security software to reduce the risk.'
+    },
+    10: {
+      id: 'trojan',
+      name: 'TROJAN-X',
+      type: 'Trojan Horse',
+      icon: '🐴',
+      desc: 'Initially disguises itself as a harmless enemy before revealing its true hostile form!',
+      introSubtitle: 'BOSS BATTLE – LEVEL 10',
+      hp: 150,
+      color: '#ffcc00',
+      victoryMsg: 'Trojan horses pretend to be harmless files or software to deceive users into running them. Always verify downloads and avoid unofficial download sites.'
+    },
+    15: {
+      id: 'virus',
+      name: 'VIRUS-X',
+      type: 'Computer Virus',
+      icon: '🦠',
+      desc: 'Infects other enemies, strengthening them and spreading its effects through contact!',
+      introSubtitle: 'BOSS BATTLE – LEVEL 15',
+      hp: 220,
+      color: '#ff0055',
+      victoryMsg: 'Computer viruses attach to clean files and spread from program to program when executed. Regular antivirus scans and real-time defense keep systems protected.'
+    },
+    20: {
+      id: 'ransom',
+      name: 'RANSOM-X',
+      type: 'Ransomware',
+      icon: '🔒',
+      desc: 'Temporarily restricts your spaceship movement and demands survival under intense attacks!',
+      introSubtitle: 'BOSS BATTLE – LEVEL 20',
+      hp: 300,
+      color: '#ff2222',
+      victoryMsg: 'Ransomware encrypts valuable files and demands payment to restore access. Maintain regular offline and cloud backups so you can always recover your files without paying.'
     }
   };
 
@@ -272,6 +415,7 @@
     isLoading: true,
     score: 0,
     highScore: 0,
+    highestWave: 1,
     wave: 1,
     waveEnemiesTarget: 8,
     waveEnemiesSpawned: 0,
@@ -281,7 +425,12 @@
     bombs: 2,
     screenShake: 0,
     width: 800,
-    height: 560
+    height: 560,
+    // Boss system states
+    bossActive: false,
+    bossIntroActive: false,
+    currentBoss: null,
+    defeatedBosses: new Set()
   };
 
   // Inputs
@@ -305,20 +454,45 @@
   let shockwaves = [];
   let floatingTexts = [];
 
-  // High score persistence
-  try {
-    const saved = localStorage.getItem('cyberzero_space_fighter_highscore');
-    if (saved) state.highScore = parseInt(saved, 10) || 0;
-  } catch (e) {}
+  // Progression & High score persistence
+  function loadProgress() {
+    try {
+      const saved = localStorage.getItem('cyberzero_space_fighter_progress');
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.highScore) state.highScore = data.highScore;
+        if (data.highestWave) state.highestWave = data.highestWave;
+        if (Array.isArray(data.defeatedBosses)) {
+          state.defeatedBosses = new Set(data.defeatedBosses);
+        }
+      } else {
+        const legacyHigh = localStorage.getItem('cyberzero_space_fighter_highscore');
+        if (legacyHigh) state.highScore = parseInt(legacyHigh, 10) || 0;
+      }
+    } catch (e) {}
+  }
 
-  function saveHighScore() {
+  function saveProgress() {
     if (state.score > state.highScore) {
       state.highScore = state.score;
-      try {
-        localStorage.setItem('cyberzero_space_fighter_highscore', String(state.highScore));
-      } catch (e) {}
     }
+    state.highestWave = Math.max(state.highestWave || 1, state.wave);
+    try {
+      const data = {
+        highScore: state.highScore,
+        highestWave: state.highestWave,
+        defeatedBosses: Array.from(state.defeatedBosses || [])
+      };
+      localStorage.setItem('cyberzero_space_fighter_progress', JSON.stringify(data));
+      localStorage.setItem('cyberzero_space_fighter_highscore', String(state.highScore));
+    } catch (e) {}
   }
+
+  function saveHighScore() {
+    saveProgress();
+  }
+
+  loadProgress();
 
   // ═══════════════════════════════════════════════════════════════════
   // INITIALIZATION & LOADING SCREEN
@@ -347,10 +521,26 @@
       window.ch2OnSpaceFighterOpened();
     }
 
-    // Start realistic loading sequence every fresh open unless already playing
-    if (!state.isRunning || state.isGameOver) {
-      startLoadingSequence();
+    // Always reset and show the loading screen on every fresh open.
+    // Cancel any running game loop first so there's no stale animation frame.
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
     }
+    if (loadingInterval) {
+      clearInterval(loadingInterval);
+      loadingInterval = null;
+    }
+    state.isRunning = false;
+    state.isGameOver = false;
+    state.isPaused = false;
+    // Reset all keys so held keys from before closing don't persist
+    keys.left = false;
+    keys.right = false;
+    keys.up = false;
+    keys.down = false;
+    keys.fire = false;
+    startLoadingSequence();
   }
 
   function startLoadingSequence() {
@@ -549,11 +739,12 @@
       canvas.addEventListener('mousemove', e => {
         if (!player || state.isPaused || state.isGameOver || state.isLoading) return;
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        // Smooth target steering towards mouse if mouse is moving
-        player.targetX = mx;
-        player.targetY = my;
+        // Scale mouse coords to canvas logical pixels (handles CSS scaling)
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        player.targetX = (e.clientX - rect.left) * scaleX;
+        player.targetY = (e.clientY - rect.top)  * scaleY;
+        player.mouseActive = true;
       });
     }
 
@@ -623,7 +814,10 @@
       weaponTimer: 0,
       targetX: null,
       targetY: null,
-      tilt: 0
+      mouseActive: false,
+      tilt: 0,
+      isLocked: false,
+      lockTimer: 0
     };
   }
 
@@ -642,6 +836,9 @@
       points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
     }
 
+    // Ensure downward velocity is always positive to prevent asteroids moving up forever
+    const safeVy = Math.abs(vy !== null ? vy : Math.random() * 1.5 + 1.0 + (state.wave * 0.12));
+
     asteroids.push({
       size,
       radius,
@@ -651,20 +848,78 @@
       x: x !== null ? x : Math.random() * (state.width - 60) + 30,
       y: y !== null ? y : -radius - 10,
       vx: vx !== null ? vx : (Math.random() - 0.5) * 1.6,
-      vy: vy !== null ? vy : Math.random() * 1.5 + 1.0 + (state.wave * 0.15),
+      vy: safeVy,
       rot: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 0.04
     });
   }
 
-  function spawnEnemy(type = 'scout') {
+  function spawnEnemy(type = 'scout', x = null, y = null) {
+    if (type === 'worm_minion') {
+      enemies.push({
+        type: 'worm_minion',
+        x: x !== null ? x : Math.random() * (state.width - 80) + 40,
+        y: y !== null ? y : -30,
+        targetY: Math.random() * 160 + 60,
+        width: 24,
+        height: 24,
+        hp: 3,
+        maxHp: 3,
+        vx: (Math.random() > 0.5 ? 1 : -1) * 2.8,
+        vy: 1.6,
+        fireTimer: Math.floor(Math.random() * 40) + 35,
+        fireInterval: 65,
+        phase: Math.random() * Math.PI * 2
+      });
+      return;
+    }
+
+    if (type === 'trojan_minion') {
+      enemies.push({
+        type: 'trojan_minion',
+        x: x !== null ? x : Math.random() * (state.width - 80) + 40,
+        y: y !== null ? y : -35,
+        targetY: Math.random() * 180 + 70,
+        width: 28,
+        height: 26,
+        hp: 4,
+        maxHp: 4,
+        vx: (Math.random() > 0.5 ? 1 : -1) * 2.2,
+        vy: 1.5,
+        fireTimer: Math.floor(Math.random() * 35) + 30,
+        fireInterval: 55,
+        phase: Math.random() * Math.PI * 2
+      });
+      return;
+    }
+
+    if (type === 'virus_host') {
+      enemies.push({
+        type: 'virus_host',
+        x: x !== null ? x : Math.random() * (state.width - 80) + 40,
+        y: y !== null ? y : -35,
+        targetY: Math.random() * 160 + 70,
+        width: 32,
+        height: 30,
+        hp: 5,
+        maxHp: 5,
+        isInfected: true,
+        vx: (Math.random() > 0.5 ? 1 : -1) * 2.4,
+        vy: 1.4,
+        fireTimer: Math.floor(Math.random() * 35) + 30,
+        fireInterval: 60,
+        phase: Math.random() * Math.PI * 2
+      });
+      return;
+    }
+
     const isBoss = type === 'boss';
     const isCruiser = type === 'cruiser';
 
     const enemy = {
       type,
-      x: Math.random() * (state.width - 120) + 60,
-      y: isBoss ? -100 : -50,
+      x: x !== null ? x : Math.random() * (state.width - 120) + 60,
+      y: isBoss ? -100 : (y !== null ? y : -50),
       targetY: isBoss ? 90 : Math.random() * 140 + 50,
       width: isBoss ? 90 : isCruiser ? 52 : 36,
       height: isBoss ? 64 : isCruiser ? 42 : 32,
@@ -678,6 +933,82 @@
     };
 
     enemies.push(enemy);
+  }
+
+  function spawnMalwareBoss(level) {
+    const cfg = BOSS_CONFIG[level] || BOSS_CONFIG[5];
+
+    // Clear normal enemies and bullets for a clean boss arena
+    enemies = [];
+    enemyBullets = [];
+
+    const boss = {
+      isBoss: true,
+      bossId: cfg.id,
+      bossLevel: level,
+      type: 'boss',
+      name: cfg.name,
+      malwareType: cfg.type,
+      color: cfg.color,
+      x: state.width / 2,
+      y: -110,
+      targetY: 90,
+      width: cfg.id === 'ransom' ? 110 : cfg.id === 'virus' ? 95 : cfg.id === 'trojan' ? 100 : 90,
+      height: cfg.id === 'ransom' ? 80 : cfg.id === 'virus' ? 95 : cfg.id === 'trojan' ? 70 : 60,
+      hp: cfg.hp,
+      maxHp: cfg.hp,
+      vx: 2.0,
+      vy: 1.4,
+      fireTimer: 45,
+      fireInterval: 50,
+      phase: 0,
+      // WORM-X
+      segments: (cfg.id === 'worm') ? [
+        { x: state.width / 2, y: -140 },
+        { x: state.width / 2, y: -170 },
+        { x: state.width / 2, y: -200 },
+        { x: state.width / 2, y: -230 }
+      ] : [],
+      replicateTimer: 240,
+      // TROJAN-X
+      disguised: (cfg.id === 'trojan'),
+      disguiseTimer: 210,
+      dashTimer: 200,
+      isDashing: false,
+      dashTargetX: 0,
+      dashTargetY: 0,
+      summonTimer: 240,
+      // VIRUS-X
+      infectTimer: 160,
+      radialTimer: 140,
+      tendrilTarget: null,
+      tendrilTimer: 0,
+      // RANSOM-X
+      lockdownTimer: 360,
+      lockdownActive: false
+    };
+
+    state.currentBoss = boss;
+    state.bossActive = true;
+    enemies.push(boss);
+
+    // Update Boss HUD
+    const hudBar = document.getElementById('sf-boss-hud');
+    const hudName = document.getElementById('sf-boss-hud-name');
+    const hudType = document.getElementById('sf-boss-hud-type');
+    const hudPct = document.getElementById('sf-boss-hud-pct');
+    const hudFill = document.getElementById('sf-boss-hud-fill');
+
+    if (hudName) hudName.textContent = cfg.name;
+    if (hudType) hudType.textContent = `(${cfg.type.toUpperCase()})`;
+    if (hudPct) hudPct.textContent = '100%';
+    if (hudFill) {
+      hudFill.style.width = '100%';
+      hudFill.style.background = `linear-gradient(90deg, ${cfg.color}, #ff5500, #ffeb3b)`;
+    }
+    if (hudBar) hudBar.classList.remove('hidden');
+
+    updateHud();
   }
 
   function spawnPowerup(x, y) {
@@ -727,12 +1058,16 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // GAMEPLAY LIFECYCLE
+  // GAMEPLAY LIFECYCLE & MALWARE BOSS CONTROLLERS
   // ═══════════════════════════════════════════════════════════════════
   function startNewGame() {
     state.isRunning = true;
     state.isPaused = false;
     state.isGameOver = false;
+    state.bossActive = false;
+    state.bossIntroActive = false;
+    state.currentBoss = null;
+    state.defeatedBosses = new Set();
     state.score = 0;
     state.wave = 1;
     state.waveEnemiesTarget = 10;
@@ -750,6 +1085,13 @@
     powerups = [];
     shockwaves = [];
     floatingTexts = [];
+
+    // Reset controls
+    keys.left = false;
+    keys.right = false;
+    keys.up = false;
+    keys.down = false;
+    keys.fire = false;
 
     resizeCanvas();
     player = createPlayer();
@@ -772,7 +1114,7 @@
   }
 
   function togglePause() {
-    if (!state.isRunning || state.isGameOver || state.isLoading) return;
+    if (!state.isRunning || state.isGameOver || state.isLoading || state.bossIntroActive) return;
     state.isPaused = !state.isPaused;
 
     const modal = document.getElementById('sf-pause-modal');
@@ -790,6 +1132,167 @@
   function resumeGame() {
     if (state.isPaused) {
       togglePause();
+    }
+  }
+
+  function showBossIntroduction(level) {
+    state.bossIntroActive = true;
+    state.isPaused = true;
+
+    // Clear normal enemies and bullets
+    enemies = [];
+    enemyBullets = [];
+
+    const cfg = BOSS_CONFIG[level] || BOSS_CONFIG[5];
+
+    // Play warning alarm sound
+    SFX.bossAlarm();
+
+    // Populate boss intro modal
+    const modal = document.getElementById('sf-boss-intro-modal');
+    const nameEl = document.getElementById('sf-boss-intro-name');
+    const typeEl = document.getElementById('sf-boss-intro-type');
+    const descEl = document.getElementById('sf-boss-intro-desc');
+    const subEl = document.getElementById('sf-boss-intro-sub');
+    const iconEl = document.getElementById('sf-boss-intro-icon');
+
+    if (nameEl) {
+      nameEl.textContent = cfg.name;
+      nameEl.style.color = cfg.color;
+      nameEl.style.textShadow = `0 0 25px ${cfg.color}`;
+    }
+    if (typeEl) typeEl.textContent = `MALWARE TYPE: ${cfg.type.toUpperCase()}`;
+    if (descEl) descEl.textContent = `"${cfg.desc}"`;
+    if (subEl) subEl.textContent = cfg.introSubtitle;
+    if (iconEl) iconEl.textContent = cfg.icon;
+
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function startBossBattle() {
+    const modal = document.getElementById('sf-boss-intro-modal');
+    if (modal) modal.classList.add('hidden');
+
+    state.bossIntroActive = false;
+    spawnMalwareBoss(state.wave);
+
+    addFloatingText(state.width / 2, state.height / 2 - 40, `BATTLE STARTED: ${BOSS_CONFIG[state.wave] ? BOSS_CONFIG[state.wave].name : 'BOSS'}!`, '#ff0055');
+
+    state.isPaused = false;
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function onBossDefeated(boss) {
+    boss.destroyed = true;
+    state.bossActive = false;
+    state.currentBoss = null;
+
+    const level = boss.bossLevel || state.wave;
+    const cfg = BOSS_CONFIG[level] || BOSS_CONFIG[5];
+
+    // Sound and epic explosions
+    SFX.bossDefeated();
+    state.screenShake = 30;
+    createExplosion(boss.x, boss.y, 50, boss.color || '#ff00aa', true);
+    createExplosion(boss.x - 25, boss.y + 15, 30, '#ffeb3b', true);
+    createExplosion(boss.x + 25, boss.y - 15, 30, '#00f0ff', true);
+
+    const bonusPts = level * 1000 + 4000;
+    state.score += bonusPts;
+    addFloatingText(boss.x, boss.y, `🏆 ${boss.name} DESTROYED! +${bonusPts} PTS`, '#ffeb3b');
+
+    // Boss drops guaranteed powerups
+    spawnPowerup(boss.x - 25, boss.y);
+    spawnPowerup(boss.x + 25, boss.y);
+
+    // Clear enemy bullets and minions
+    enemyBullets = [];
+    enemies = enemies.filter(e => e !== boss && !e.type.includes('minion') && e.type !== 'virus_host');
+
+    // Unlock player if locked by Ransomware
+    if (player) {
+      player.isLocked = false;
+      player.lockTimer = 0;
+    }
+
+    // Hide HUD boss bar
+    const bossHud = document.getElementById('sf-boss-hud');
+    if (bossHud) bossHud.classList.add('hidden');
+
+    saveProgress();
+    updateHud();
+
+    // Pause normal gameplay and show victory modal after short delay
+    setTimeout(() => {
+      showBossVictory(level);
+    }, 700);
+  }
+
+  function showBossVictory(level) {
+    state.isPaused = true;
+    const cfg = BOSS_CONFIG[level] || BOSS_CONFIG[5];
+
+    const modal = document.getElementById('sf-boss-victory-modal');
+    const nameEl = document.getElementById('sf-boss-victory-name');
+    const descEl = document.getElementById('sf-boss-victory-desc');
+    const btnContinue = document.getElementById('sf-btn-continue-level');
+
+    if (nameEl) nameEl.textContent = `${cfg.name} DESTROYED`;
+    if (descEl) descEl.textContent = cfg.victoryMsg;
+    if (btnContinue) btnContinue.textContent = `CONTINUE TO LEVEL ${level + 1} ➔`;
+
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function continueAfterBoss() {
+    const modal = document.getElementById('sf-boss-victory-modal');
+    if (modal) modal.classList.add('hidden');
+
+    // Mark boss defeated
+    state.defeatedBosses.add(state.wave);
+    saveProgress();
+
+    // Reward player: heal + 1 EMP bomb
+    if (player) {
+      player.hp = Math.min(player.maxHp, player.hp + 50);
+      player.isLocked = false;
+      player.lockTimer = 0;
+    }
+    state.bombs = Math.min(5, state.bombs + 1);
+
+    // Advance to next wave
+    state.wave++;
+    state.waveKills = 0;
+    state.waveEnemiesSpawned = 0;
+    state.waveEnemiesTarget = 8 + state.wave * 2;
+    state.waveTransitionTimer = 0;
+
+    addFloatingText(state.width / 2, state.height / 2 - 40, `ENTERING SECTOR ${state.wave}!`, '#ffb74d');
+
+    updateHud();
+    state.isPaused = false;
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function resumeGameOnWindowRestore() {
+    if (!state.isRunning || state.isGameOver || state.isLoading) return;
+
+    const pModal = document.getElementById('sf-pause-modal');
+    const bIntroModal = document.getElementById('sf-boss-intro-modal');
+    const bVicModal = document.getElementById('sf-boss-victory-modal');
+
+    const isModalOpen = (pModal && !pModal.classList.contains('hidden')) ||
+                        (bIntroModal && !bIntroModal.classList.contains('hidden')) ||
+                        (bVicModal && !bVicModal.classList.contains('hidden'));
+
+    if (!isModalOpen) {
+      state.isPaused = false;
+    }
+    resizeCanvas();
+    if (!animFrameId && state.isRunning) {
+      animFrameId = requestAnimationFrame(gameLoop);
     }
   }
 
@@ -824,14 +1327,22 @@
     enemies.forEach(e => {
       e.hp -= 20;
       if (e.hp <= 0) {
-        createExplosion(e.x, e.y, 24, '#ff0055', true);
-        state.score += e.type === 'boss' ? 2500 : 400;
-        state.waveKills++;
+        if (e.isBoss) {
+          onBossDefeated(e);
+        } else {
+          createExplosion(e.x, e.y, 24, '#ff0055', true);
+          state.score += 400;
+          state.waveKills++;
+          e.destroyed = true;
+        }
       } else {
         createExplosion(e.x, e.y, 8, '#ff9900');
+        if (e.bossId === 'trojan' && e.disguised) {
+          e.disguised = false;
+        }
       }
     });
-    enemies = enemies.filter(e => e.hp > 0);
+    enemies = enemies.filter(e => !e.destroyed && e.hp > 0);
 
     saveHighScore();
     updateHud();
@@ -856,6 +1367,8 @@
       player.weaponType = 'standard';
       player.weaponTimer = 0;
       player.invulnerableTimer = 110;
+      player.isLocked = false;
+      player.lockTimer = 0;
       addFloatingText(player.x, player.y - 20, 'RESPAWNING...', '#ffeb3b');
       updateHud();
     }
@@ -893,9 +1406,16 @@
     const goModal = document.getElementById('sf-gameover-modal');
     const pModal = document.getElementById('sf-pause-modal');
     const hModal = document.getElementById('sf-help-modal');
+    const bIntroModal = document.getElementById('sf-boss-intro-modal');
+    const bVicModal = document.getElementById('sf-boss-victory-modal');
+    const bossHud = document.getElementById('sf-boss-hud');
+
     if (goModal) goModal.classList.add('hidden');
     if (pModal) pModal.classList.add('hidden');
     if (hModal) hModal.classList.add('hidden');
+    if (bIntroModal) bIntroModal.classList.add('hidden');
+    if (bVicModal) bVicModal.classList.add('hidden');
+    if (bossHud && !state.bossActive) bossHud.classList.add('hidden');
   }
 
   function showHelpModal() {
@@ -912,14 +1432,27 @@
   // WAVE PROGRESSION & SPAWNING
   // ═══════════════════════════════════════════════════════════════════
   function updateWaveSystem() {
-    // If wave goal reached
-    if (state.waveKills >= state.waveEnemiesTarget && enemies.length === 0 && asteroids.length <= 1) {
+    // If boss intro or boss battle is active, halt normal wave progression and enemy spawning
+    if (state.bossIntroActive || state.bossActive) return;
+
+    // Check if this wave is a configured boss wave that has not yet been defeated
+    const bossCfg = BOSS_CONFIG[state.wave];
+    if (bossCfg && !state.defeatedBosses.has(state.wave)) {
+      enemies = [];
+      enemyBullets = [];
+      showBossIntroduction(state.wave);
+      return;
+    }
+
+    // Normal wave completion: all required enemies killed and no enemies left on screen
+    // (Notice: fixed bug where asteroids.length <= 1 previously softlocked the game!)
+    if (state.waveKills >= state.waveEnemiesTarget && enemies.length === 0) {
       if (state.waveTransitionTimer === 0) {
         state.waveTransitionTimer = 130;
         SFX.waveClear();
         state.score += state.wave * 1000;
         addFloatingText(state.width / 2, state.height / 2 - 40, `SECTOR ${state.wave} CLEARED! +${state.wave * 1000} PTS`, '#50fa7b');
-        saveHighScore();
+        saveProgress();
       }
     }
 
@@ -929,29 +1462,33 @@
         state.wave++;
         state.waveKills = 0;
         state.waveEnemiesSpawned = 0;
-        state.waveEnemiesTarget = 8 + state.wave * 3;
+        state.waveEnemiesTarget = 8 + state.wave * 2;
         addFloatingText(state.width / 2, state.height / 2 - 40, `ENTERING SECTOR ${state.wave}!`, '#ffb74d');
 
-        // Check if boss wave (every 3 waves)
-        if (state.wave % 3 === 0) {
-          spawnEnemy('boss');
+        // Check if next wave is a boss wave
+        const nextBoss = BOSS_CONFIG[state.wave];
+        if (nextBoss && !state.defeatedBosses.has(state.wave)) {
+          showBossIntroduction(state.wave);
+          updateHud();
+          return;
         }
+
         updateHud();
       }
       return;
     }
 
-    // Normal spawning cadence
+    // Normal enemy spawning
     if (state.waveEnemiesSpawned < state.waveEnemiesTarget) {
-      if (Math.random() < 0.02 + state.wave * 0.003 && enemies.length < 5) {
+      if (Math.random() < 0.022 + state.wave * 0.003 && enemies.length < 5) {
         state.waveEnemiesSpawned++;
         const spawnCruiser = state.wave >= 2 && Math.random() < 0.35;
         spawnEnemy(spawnCruiser ? 'cruiser' : 'scout');
       }
     }
 
-    // Continuous asteroid hazard
-    if (asteroids.length < 3 + Math.min(state.wave, 5) && Math.random() < 0.025) {
+    // Continuous asteroid hazard (capped at 4)
+    if (asteroids.length < 3 + Math.min(state.wave, 4) && Math.random() < 0.02) {
       spawnAsteroid('large');
     }
   }
@@ -988,25 +1525,35 @@
       if (keys.up) ay -= 1;
       if (keys.down) ay += 1;
 
-      // Mouse steering assistance
-      if (player.targetX !== null && !keys.left && !keys.right) {
+      // Mouse steering — directly drive the ship toward the cursor.
+      // Only apply when no keyboard key overrides that axis, so keyboard still works normally.
+      if (player.targetX !== null) {
         const dx = player.targetX - player.x;
-        if (Math.abs(dx) > 6) ax += Math.sign(dx) * 0.7;
-      }
-      if (player.targetY !== null && !keys.up && !keys.down) {
-        const dy = player.targetY - player.y;
-        if (Math.abs(dy) > 6) ay += Math.sign(dy) * 0.7;
+        const dy = player.targetY !== null ? player.targetY - player.y : 0;
+
+        if (!keys.left && !keys.right) {
+          if (Math.abs(dx) > 3) ax += Math.sign(dx) * Math.min(1, Math.abs(dx) / 60);
+        }
+        if (!keys.up && !keys.down) {
+          if (Math.abs(dy) > 3) ay += Math.sign(dy) * Math.min(1, Math.abs(dy) / 60);
+        }
       }
 
       const isMalwareLag = typeof window.ch2IsMalwareLagActive === 'function' && window.ch2IsMalwareLagActive();
-      const accelScale = isMalwareLag ? 0.65 : 1.4;
-      player.speed = isMalwareLag ? 3.2 : 6.5;
+      let accelScale = isMalwareLag ? 0.65 : 1.4;
+      let maxSpd = isMalwareLag ? 3.2 : 6.5;
+
+      if (player.isLocked) {
+        maxSpd = 1.3; // 80% speed restriction during Ransomware lockdown
+        accelScale *= 0.3;
+      }
+      player.speed = maxSpd;
       player.fireRate = isMalwareLag ? 22 : 9;
 
       player.vx += ax * accelScale;
       player.vy += ay * accelScale;
 
-      if (keys.left || keys.right || keys.up || keys.down || keys.fire) {
+      if (keys.left || keys.right || keys.up || keys.down || keys.fire || player.mouseActive) {
         if (typeof window.ch2OnSpaceFighterPlayed === 'function') {
           window.ch2OnSpaceFighterPlayed({ lagged: isMalwareLag });
         }
@@ -1035,12 +1582,28 @@
       const targetTilt = (player.vx / player.speed) * 0.45;
       player.tilt += (targetTilt - player.tilt) * 0.18;
 
-      // Clamping within bounds
+      // Clamping within bounds and safety guard against NaN
       const pad = 24;
+      if (isNaN(player.x) || !isFinite(player.x)) player.x = state.width / 2;
+      if (isNaN(player.y) || !isFinite(player.y)) player.y = state.height - 70;
+      if (isNaN(player.vx)) player.vx = 0;
+      if (isNaN(player.vy)) player.vy = 0;
+
       if (player.x < pad) { player.x = pad; player.vx = 0; }
       if (player.x > state.width - pad) { player.x = state.width - pad; player.vx = 0; }
       if (player.y < pad + 30) { player.y = pad + 30; player.vy = 0; }
       if (player.y > state.height - pad) { player.y = state.height - pad; player.vy = 0; }
+
+      // Ransomware simulated lockdown: restricts movement speed
+      if (player.isLocked) {
+        player.lockTimer--;
+        player.speed = 1.3; // 80% speed restriction
+        if (player.lockTimer <= 0) {
+          player.isLocked = false;
+          SFX.lockdownClear();
+          addFloatingText(player.x, player.y - 30, '🔓 DECRYPTED! MOBILITY RESTORED!', '#50fa7b');
+        }
+      }
 
       // Invulnerability timer
       if (player.invulnerableTimer > 0) player.invulnerableTimer--;
@@ -1149,13 +1712,13 @@
               state.score += pts;
               addFloatingText(a.x, a.y, `+${pts}`, '#70f3ff');
 
-              // Split asteroid
+              // Split asteroid with guaranteed downward motion
               if (a.size === 'large') {
-                spawnAsteroid('medium', a.x - 12, a.y, -1.2, a.vy * 1.1);
-                spawnAsteroid('medium', a.x + 12, a.y, 1.2, a.vy * 1.1);
+                spawnAsteroid('medium', a.x - 12, a.y, -1.2, Math.abs(a.vy * 1.1) + 0.3);
+                spawnAsteroid('medium', a.x + 12, a.y, 1.2, Math.abs(a.vy * 1.1) + 0.3);
               } else if (a.size === 'medium') {
-                spawnAsteroid('small', a.x - 8, a.y, -1.8, a.vy * 1.2);
-                spawnAsteroid('small', a.x + 8, a.y, 1.8, a.vy * 1.2);
+                spawnAsteroid('small', a.x - 8, a.y, -1.8, Math.abs(a.vy * 1.2) + 0.4);
+                spawnAsteroid('small', a.x + 8, a.y, 1.8, Math.abs(a.vy * 1.2) + 0.4);
               }
 
               // Powerup drop
@@ -1192,27 +1755,227 @@
     enemies.forEach(e => {
       e.phase += 0.04;
 
-      if (e.type === 'boss') {
-        // Move towards targetY then hover and sweep
+      if (e.isBoss) {
+        // ── WORM-X (LEVEL 5 - COMPUTER WORM) ──
+        if (e.bossId === 'worm') {
+          e.x = (state.width / 2) + Math.sin(e.phase * 0.9) * (state.width * 0.38);
+          e.y = e.targetY + Math.cos(e.phase * 1.6) * 22;
+
+          // Trailing segments follow head
+          if (e.segments && e.segments.length > 0) {
+            let prevX = e.x;
+            let prevY = e.y;
+            e.segments.forEach((seg, i) => {
+              const dx = prevX - seg.x;
+              const dy = prevY - seg.y;
+              seg.x += dx * 0.28;
+              seg.y += dy * 0.28;
+              prevX = seg.x;
+              prevY = seg.y;
+            });
+          }
+
+          // Replication: replicates into mini worm minions
+          e.replicateTimer--;
+          if (e.replicateTimer <= 0) {
+            e.replicateTimer = 260;
+            spawnEnemy('worm_minion', e.x + (Math.random() - 0.5) * 40, e.y + 25);
+            addFloatingText(e.x, e.y + 20, '⚡ WORM REPLICATION!', '#00ff88');
+            SFX.powerup();
+          }
+
+          // Firing: dual acid bolts
+          e.fireTimer--;
+          if (e.fireTimer <= 0) {
+            e.fireTimer = e.fireInterval;
+            SFX.enemyLaser();
+            [-16, 16].forEach(offset => {
+              enemyBullets.push({
+                x: e.x + offset,
+                y: e.y + 22,
+                vx: (player ? (player.x - (e.x + offset)) * 0.015 : 0),
+                vy: 5.2,
+                color: '#00ff88'
+              });
+            });
+          }
+        }
+
+        // ── TROJAN-X (LEVEL 10 - TROJAN HORSE) ──
+        else if (e.bossId === 'trojan') {
+          if (e.disguised) {
+            // Disguised cargo/upgrade craft slowly descending
+            if (e.y < 105) e.y += 0.7;
+            e.x += Math.sin(e.phase * 0.8) * 1.2;
+            e.disguiseTimer--;
+            if (e.disguiseTimer <= 0 || e.hp < e.maxHp) {
+              e.disguised = false;
+              SFX.explosion(true);
+              SFX.bossAlarm();
+              state.screenShake = 18;
+              createExplosion(e.x, e.y, 30, '#ffcc00', true);
+              addFloatingText(e.x, e.y - 30, '⚠️ TROJAN DISGUISE SHATTERED!', '#ffcc00');
+              // Summons initial backdoor drones
+              spawnEnemy('trojan_minion', e.x - 40, e.y + 10);
+              spawnEnemy('trojan_minion', e.x + 40, e.y + 10);
+            }
+          } else {
+            // Revealed form: dash attack and summoning
+            if (e.isDashing) {
+              e.x += (e.dashTargetX - e.x) * 0.08;
+              e.y += e.vy * 4;
+              if (e.y > state.height - 120 || e.y < e.targetY - 10) {
+                e.vy *= -1;
+                if (e.y <= e.targetY) {
+                  e.isDashing = false;
+                  e.y = e.targetY;
+                  e.vy = 1.2;
+                }
+              }
+            } else {
+              e.x += e.vx;
+              if (e.x < 70 || e.x > state.width - 70) e.vx *= -1;
+              if (e.y < e.targetY) e.y += e.vy;
+
+              e.dashTimer--;
+              if (e.dashTimer <= 0) {
+                e.dashTimer = 280;
+                e.isDashing = true;
+                e.dashTargetX = player ? player.x : e.x;
+                e.vy = 2.2;
+                addFloatingText(e.x, e.y - 25, '⚡ SURPRISE DASH ATTACK!', '#ff3366');
+              }
+            }
+
+            // Summon backdoor minions
+            e.summonTimer--;
+            if (e.summonTimer <= 0) {
+              e.summonTimer = 320;
+              spawnEnemy('trojan_minion', e.x + (Math.random() > 0.5 ? 40 : -40), e.y + 20);
+              addFloatingText(e.x, e.y + 30, '👾 BACKDOOR PAYLOAD DEPLOYED!', '#fbbf24');
+            }
+
+            // Firing: spread cluster
+            e.fireTimer--;
+            if (e.fireTimer <= 0) {
+              e.fireTimer = e.fireInterval;
+              SFX.enemyLaser();
+              const angle = Math.atan2((player ? player.y : state.height) - e.y, (player ? player.x : e.x) - e.x);
+              [-0.25, 0, 0.25].forEach(offset => {
+                enemyBullets.push({
+                  x: e.x,
+                  y: e.y + 24,
+                  vx: Math.cos(angle + offset) * 5.4,
+                  vy: Math.sin(angle + offset) * 5.4,
+                  color: '#fbbf24'
+                });
+              });
+            }
+          }
+        }
+
+        // ── VIRUS-X (LEVEL 15 - COMPUTER VIRUS) ──
+        else if (e.bossId === 'virus') {
+          if (e.y < e.targetY) e.y += e.vy;
+          e.x += e.vx;
+          if (e.x < 80 || e.x > state.width - 80) e.vx *= -1;
+
+          // Infection mechanic: infects other enemies and strengthens them
+          e.infectTimer--;
+          if (e.infectTimer <= 0) {
+            e.infectTimer = 190;
+            const target = enemies.find(en => !en.isBoss && !en.isInfected);
+            if (target) {
+              target.isInfected = true;
+              target.hp = Math.min(target.hp * 2, 14);
+              target.maxHp = target.hp;
+              target.vx *= 1.4;
+              e.tendrilTarget = target;
+              e.tendrilTimer = 35;
+              addFloatingText(target.x, target.y - 15, '☣️ ENEMY INFECTED (+50% SPD, 2x HP)!', '#ff0055');
+              SFX.hit();
+            } else if (enemies.filter(en => !en.isBoss).length < 2) {
+              // Spawn a host cell and infect it
+              spawnEnemy('virus_host', e.x + (Math.random() - 0.5) * 60, e.y + 35);
+              addFloatingText(e.x, e.y + 30, '🦠 HOST CELL SPAWNED & INFECTED!', '#ff00aa');
+            }
+          }
+
+          if (e.tendrilTimer > 0) e.tendrilTimer--;
+
+          // Radial spore burst
+          e.radialTimer--;
+          if (e.radialTimer <= 0) {
+            e.radialTimer = 150;
+            SFX.enemyLaser();
+            for (let i = 0; i < 8; i++) {
+              const ang = (i / 8) * Math.PI * 2 + e.phase;
+              enemyBullets.push({
+                x: e.x,
+                y: e.y,
+                vx: Math.cos(ang) * 4.4,
+                vy: Math.sin(ang) * 4.4,
+                color: '#ff0055'
+              });
+            }
+          }
+        }
+
+        // ── RANSOM-X (LEVEL 20 - RANSOMWARE) ──
+        else if (e.bossId === 'ransom') {
+          if (e.y < e.targetY) e.y += e.vy;
+          e.x += e.vx;
+          if (e.x < 90 || e.x > state.width - 90) e.vx *= -1;
+
+          // Simulated Ransomware Lockdown on player
+          e.lockdownTimer--;
+          if (e.lockdownTimer <= 0) {
+            e.lockdownTimer = 480; // every 8 seconds
+            if (player) {
+              player.isLocked = true;
+              player.lockTimer = 240; // 4 seconds
+              SFX.lockdownWarning();
+              state.screenShake = 16;
+              addFloatingText(player.x, player.y - 30, '🔒 RANSOMWARE SPEED LOCKDOWN!', '#ff0000');
+            }
+          }
+
+          // Heavy cipher cannon
+          e.fireTimer--;
+          if (e.fireTimer <= 0) {
+            e.fireTimer = e.fireInterval;
+            SFX.enemyLaser();
+            [-22, 22].forEach(offset => {
+              enemyBullets.push({
+                x: e.x + offset,
+                y: e.y + 30,
+                vx: (player ? (player.x - (e.x + offset)) * 0.016 : 0),
+                vy: 5.6,
+                color: '#ff2222'
+              });
+            });
+          }
+        }
+      } else if (e.type === 'worm_minion' || e.type === 'trojan_minion' || e.type === 'virus_host' || e.isInfected) {
+        // Minions and infected enemies movement
         if (e.y < e.targetY) e.y += e.vy;
         e.x += e.vx;
-        if (e.x < 70 || e.x > state.width - 70) e.vx *= -1;
+        if (e.x < 25 || e.x > state.width - 25) e.vx *= -1;
 
-        // Boss firing pattern
         e.fireTimer--;
         if (e.fireTimer <= 0) {
           e.fireTimer = e.fireInterval;
           SFX.enemyLaser();
-          // Triple aimed shot
-          const angle = Math.atan2((player ? player.y : state.height) - e.y, (player ? player.x : e.x) - e.x);
-          [-0.3, 0, 0.3].forEach(offset => {
-            enemyBullets.push({
-              x: e.x,
-              y: e.y + 24,
-              vx: Math.cos(angle + offset) * 5.2,
-              vy: Math.sin(angle + offset) * 5.2,
-              color: '#ff0055'
-            });
+          const targetX = player ? player.x : e.x;
+          const targetY = player ? player.y : state.height;
+          const angle = Math.atan2(targetY - e.y, targetX - e.x);
+          const color = e.isInfected ? '#ff0055' : e.type === 'worm_minion' ? '#00ff88' : '#fbbf24';
+          enemyBullets.push({
+            x: e.x,
+            y: e.y + 12,
+            vx: Math.cos(angle) * 4.8,
+            vy: Math.sin(angle) * 4.8,
+            color
           });
         }
       } else {
@@ -1262,24 +2025,30 @@
             e.hp--;
             SFX.hit();
             createExplosion(b.x, b.y, 6, '#ffff00');
+            if (e.isBoss) updateHud();
+
+            if (e.bossId === 'trojan' && e.disguised) {
+              e.disguised = false;
+              createExplosion(e.x, e.y, 25, '#ffcc00', true);
+              addFloatingText(e.x, e.y - 25, '⚠️ TROJAN DISGUISE BROKEN!', '#ffcc00');
+            }
 
             if (e.hp <= 0) {
-              e.destroyed = true;
-              state.waveKills++;
-              const isBoss = e.type === 'boss';
-              SFX.explosion(isBoss);
-              createExplosion(e.x, e.y, isBoss ? 36 : 18, isBoss ? '#ff00aa' : '#ff4400', isBoss);
+              if (e.isBoss) {
+                onBossDefeated(e);
+              } else {
+                e.destroyed = true;
+                state.waveKills++;
+                SFX.explosion(false);
+                createExplosion(e.x, e.y, 18, e.isInfected ? '#ff0055' : '#ff4400');
 
-              const pts = isBoss ? 2500 : e.type === 'cruiser' ? 500 : 250;
-              state.score += pts;
-              addFloatingText(e.x, e.y, `+${pts}`, isBoss ? '#ffeb3b' : '#00f0ff');
+                const pts = e.type === 'cruiser' ? 500 : e.type === 'worm_minion' ? 300 : e.type === 'trojan_minion' ? 350 : 250;
+                state.score += pts;
+                addFloatingText(e.x, e.y, `+${pts}`, e.isInfected ? '#ff0055' : '#00f0ff');
 
-              // Boss drops shield and bomb
-              if (isBoss) {
-                spawnPowerup(e.x - 20, e.y);
-                spawnPowerup(e.x + 20, e.y);
-              } else if (Math.random() < 0.28) {
-                spawnPowerup(e.x, e.y);
+                if (Math.random() < 0.28) {
+                  spawnPowerup(e.x, e.y);
+                }
               }
             }
           }
@@ -1297,8 +2066,12 @@
           createExplosion(player.x, player.y, 16, '#ff5500');
 
           if (e.hp <= 0) {
-            e.destroyed = true;
-            state.waveKills++;
+            if (e.isBoss) {
+              onBossDefeated(e);
+            } else {
+              e.destroyed = true;
+              state.waveKills++;
+            }
           }
 
           if (player.hp <= 0) {
@@ -1310,6 +2083,12 @@
       }
     });
     enemies = enemies.filter(e => !e.destroyed && e.y < state.height + 60);
+
+    // Memory limit safety clamps to prevent crashes
+    if (particles.length > 100) particles = particles.slice(particles.length - 100);
+    if (bullets.length > 40) bullets = bullets.slice(bullets.length - 40);
+    if (enemyBullets.length > 60) enemyBullets = enemyBullets.slice(enemyBullets.length - 60);
+    if (floatingTexts.length > 20) floatingTexts = floatingTexts.slice(floatingTexts.length - 20);
 
     // Powerups update & pickup
     powerups.forEach(p => {
@@ -1472,43 +2251,449 @@
       ctx.save();
       ctx.translate(e.x, e.y);
 
-      if (e.type === 'boss') {
-        // Flagship Boss
-        ctx.fillStyle = '#2d113d';
-        ctx.strokeStyle = '#e040fb';
-        ctx.lineWidth = 2.5;
-
-        // Armored hull
+      // Infection Aura (if infected by VIRUS-X)
+      if (e.isInfected) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 0, 85, 0.75)';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 10;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        ctx.moveTo(0, 32);
-        ctx.lineTo(-44, -12);
-        ctx.lineTo(-24, -30);
-        ctx.lineTo(24, -30);
-        ctx.lineTo(44, -12);
+        ctx.arc(0, 0, (e.width || 36) * 0.65 + Math.sin(e.phase * 3) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (e.isBoss) {
+        const hpPct = Math.max(0, e.hp / e.maxHp);
+
+        // ════════════════════════════════════════
+        // BOSS 1: WORM-X (LEVEL 5 - COMPUTER WORM)
+        // ════════════════════════════════════════
+        if (e.bossId === 'worm') {
+          // 1. Draw Trailing Body Segments (connecting back to head)
+          if (e.segments && e.segments.length > 0) {
+            e.segments.forEach((seg, idx) => {
+              const relX = seg.x - e.x;
+              const relY = seg.y - e.y;
+              const segR = Math.max(8, 20 - idx * 2.5);
+
+              // Segment connection beam
+              ctx.save();
+              ctx.strokeStyle = 'rgba(0, 255, 136, 0.5)';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(idx === 0 ? 0 : e.segments[idx - 1].x - e.x, idx === 0 ? 0 : e.segments[idx - 1].y - e.y);
+              ctx.lineTo(relX, relY);
+              ctx.stroke();
+
+              // Segment chitinous armor shell
+              ctx.fillStyle = idx % 2 === 0 ? '#052614' : '#08331b';
+              ctx.strokeStyle = '#00ff88';
+              ctx.lineWidth = 2;
+              ctx.shadowColor = '#00ff88';
+              ctx.shadowBlur = 8;
+              ctx.beginPath();
+              ctx.arc(relX, relY, segR, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+
+              // Segment core glowing node
+              ctx.fillStyle = '#39ff14';
+              ctx.beginPath();
+              ctx.arc(relX, relY, segR * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            });
+          }
+
+          // 2. Draw Worm-X Head
+          ctx.save();
+          ctx.fillStyle = '#0a3319';
+          ctx.strokeStyle = '#00ff88';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = '#00ff88';
+          ctx.shadowBlur = 12;
+
+          // Armored head carapace
+          ctx.beginPath();
+          ctx.moveTo(0, 34); // head snout
+          ctx.lineTo(-32, 10);
+          ctx.lineTo(-24, -26);
+          ctx.lineTo(24, -26);
+          ctx.lineTo(32, 10);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Acid Mandibles (predatory claws)
+          ctx.strokeStyle = '#70ffb0';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          // Left mandible
+          ctx.moveTo(-16, 20);
+          ctx.quadraticCurveTo(-38, 38, -26, 48);
+          ctx.lineTo(-18, 32);
+          // Right mandible
+          ctx.moveTo(16, 20);
+          ctx.quadraticCurveTo(38, 38, 26, 48);
+          ctx.lineTo(18, 32);
+          ctx.stroke();
+
+          // Compound cyber-eyes
+          ctx.fillStyle = '#ff0055';
+          ctx.shadowColor = '#ff0055';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(-14, 8, 4.5, 0, Math.PI * 2);
+          ctx.arc(14, 8, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Antennae
+          ctx.strokeStyle = '#00ff88';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-14, -24);
+          ctx.quadraticCurveTo(-28, -42, -38, -36);
+          ctx.moveTo(14, -24);
+          ctx.quadraticCurveTo(28, -42, 38, -36);
+          ctx.stroke();
+          ctx.restore();
+
+          // Boss Tag
+          ctx.font = 'bold 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#00ff88';
+          ctx.textAlign = 'center';
+          ctx.fillText('WORM-X [COMPUTER WORM]', 0, -44);
+        }
+
+        // ════════════════════════════════════════
+        // BOSS 2: TROJAN-X (LEVEL 10 - TROJAN HORSE)
+        // ════════════════════════════════════════
+        else if (e.bossId === 'trojan') {
+          if (e.disguised) {
+            // DISGUISED FORM: Innocent supply craft
+            ctx.save();
+            ctx.fillStyle = '#0d2d4a';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 8;
+
+            // Sleek cargo shuttle
+            ctx.beginPath();
+            ctx.moveTo(0, 24);
+            ctx.lineTo(-28, 4);
+            ctx.lineTo(-18, -20);
+            ctx.lineTo(18, -20);
+            ctx.lineTo(28, 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Friendly cockpit
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 7, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Deceptive cargo box / gift symbol
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📦', 0, 2);
+
+            // Subtle glitch hint
+            if (Math.random() < 0.15) {
+              ctx.strokeStyle = '#ff3366';
+              ctx.strokeRect(-22, -14, 44, 28);
+            }
+            ctx.restore();
+
+            ctx.font = 'bold 9px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#38bdf8';
+            ctx.textAlign = 'center';
+            ctx.fillText('[SYSTEM_UPDATE.EXE]', 0, -32);
+          } else {
+            // REVEALED FORM: Menacing armored Trojan Dreadnought
+            ctx.save();
+            ctx.fillStyle = '#2b0c16';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.8;
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 14;
+
+            // Armored Warship Hull
+            ctx.beginPath();
+            ctx.moveTo(0, 36); // Ramming prow
+            ctx.lineTo(-45, -6);
+            ctx.lineTo(-35, -28);
+            ctx.lineTo(-12, -22);
+            ctx.lineTo(0, -30);
+            ctx.lineTo(12, -22);
+            ctx.lineTo(35, -28);
+            ctx.lineTo(45, -6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Trojan Horse War Crest (Armor crest in center)
+            ctx.fillStyle = '#ff3366';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(0, 22);
+            ctx.lineTo(-14, 2);
+            ctx.lineTo(0, -14);
+            ctx.lineTo(14, 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Heavy Twin Flank Turrets
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(-42, 4, 8, 14);
+            ctx.fillRect(34, 4, 8, 14);
+            ctx.restore();
+
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#fbbf24';
+            ctx.textAlign = 'center';
+            ctx.fillText('TROJAN-X [TROJAN HORSE]', 0, -44);
+          }
+        }
+
+        // ════════════════════════════════════════
+        // BOSS 3: VIRUS-X (LEVEL 15 - COMPUTER VIRUS)
+        // ════════════════════════════════════════
+        else if (e.bossId === 'virus') {
+          // 1. Draw Electric Contagion Beam to target
+          if (e.tendrilTimer > 0 && e.tendrilTarget) {
+            ctx.save();
+            ctx.strokeStyle = '#ff0055';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 12;
+
+            const tx = e.tendrilTarget.x - e.x;
+            const ty = e.tendrilTarget.y - e.y;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            const midX = tx * 0.5 + (Math.random() - 0.5) * 20;
+            const midY = ty * 0.5 + (Math.random() - 0.5) * 20;
+            ctx.lineTo(midX, midY);
+            ctx.lineTo(tx, ty);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff00aa';
+            ctx.beginPath();
+            ctx.arc(midX, midY, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // 2. Viral Capsid & Radiating Spike Proteins
+          ctx.save();
+          ctx.fillStyle = '#330822';
+          ctx.strokeStyle = '#ff0055';
+          ctx.lineWidth = 2.6;
+          ctx.shadowColor = '#ff0055';
+          ctx.shadowBlur = 14;
+
+          // Draw 10 Radiating Spike Proteins
+          const spikeCount = 10;
+          for (let i = 0; i < spikeCount; i++) {
+            const ang = (i / spikeCount) * Math.PI * 2 + e.phase * 0.6;
+            const spikeLen = 38 + Math.sin(e.phase * 2 + i) * 5;
+            const sx = Math.cos(ang) * spikeLen;
+            const sy = Math.sin(ang) * spikeLen;
+
+            // Spike stalk
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(sx, sy);
+            ctx.stroke();
+
+            // Glycoprotein receptor knob
+            ctx.fillStyle = '#ff00aa';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Central Viral Capsid
+          ctx.fillStyle = '#26061a';
+          ctx.beginPath();
+          ctx.arc(0, 0, 24, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Contaminated Genetic Core
+          ctx.fillStyle = '#ff0055';
+          ctx.shadowColor = '#ff0055';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(0, 0, 11, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.font = 'bold 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#ff0055';
+          ctx.textAlign = 'center';
+          ctx.fillText('VIRUS-X [COMPUTER VIRUS]', 0, -48);
+        }
+
+        // ════════════════════════════════════════
+        // BOSS 4: RANSOM-X (LEVEL 20 - RANSOMWARE)
+        // ════════════════════════════════════════
+        else if (e.bossId === 'ransom') {
+          ctx.save();
+          ctx.fillStyle = '#1c0507';
+          ctx.strokeStyle = '#ff2222';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#ff2222';
+          ctx.shadowBlur = 16;
+
+          // Armored Fortress Hull
+          ctx.beginPath();
+          ctx.moveTo(0, 38);
+          ctx.lineTo(-52, 10);
+          ctx.lineTo(-44, -28);
+          ctx.lineTo(-18, -22);
+          ctx.lineTo(0, -34);
+          ctx.lineTo(18, -22);
+          ctx.lineTo(44, -28);
+          ctx.lineTo(52, 10);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Symmetrical Cipher Shield Plates
+          ctx.fillStyle = '#3a0c10';
+          ctx.strokeStyle = '#ff5555';
+          ctx.lineWidth = 1.5;
+          ctx.fillRect(-38, -12, 18, 22);
+          ctx.strokeRect(-38, -12, 18, 22);
+          ctx.fillRect(20, -12, 18, 22);
+          ctx.strokeRect(20, -12, 18, 22);
+
+          // Central Padlock Core Emblem
+          ctx.fillStyle = '#ff2222';
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 14;
+          ctx.beginPath();
+          ctx.arc(0, 2, 12, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = '16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🔒', 0, 2);
+
+          // Heavy Cipher Cannon Barrels
+          ctx.fillStyle = '#ff2222';
+          ctx.fillRect(-26, 26, 6, 12);
+          ctx.fillRect(20, 26, 6, 12);
+          ctx.restore();
+
+          ctx.font = 'bold 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#ff2222';
+          ctx.textAlign = 'center';
+          ctx.fillText('RANSOM-X [RANSOMWARE]', 0, -46);
+        }
+
+        // Generic fallback boss
+        else {
+          ctx.fillStyle = '#2d113d';
+          ctx.strokeStyle = '#e040fb';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 32);
+          ctx.lineTo(-44, -12);
+          ctx.lineTo(-24, -30);
+          ctx.lineTo(24, -30);
+          ctx.lineTo(44, -12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // On-Canvas Boss Health Bar
+        const barW = 80;
+        const barH = 6;
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(-barW / 2, -34, barW, barH);
+        ctx.fillStyle = e.color || '#ff0055';
+        ctx.fillRect(-barW / 2, -34, barW * hpPct, barH);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-barW / 2, -34, barW, barH);
+
+      } else if (e.type === 'worm_minion') {
+        // Worm Minion: small segmented neon crawler
+        ctx.fillStyle = '#052614';
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 8, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#39ff14';
+        ctx.beginPath();
+        ctx.arc(0, 6, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (e.type === 'trojan_minion') {
+        // Trojan Minion: sharp angular gold backdoor drone
+        ctx.fillStyle = '#261805';
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.moveTo(0, 14);
+        ctx.lineTo(-14, -10);
+        ctx.lineTo(0, -4);
+        ctx.lineTo(14, -10);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Glowing core
-        ctx.fillStyle = '#00f0ff';
-        ctx.shadowColor = '#00f0ff';
-        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#ff3366';
         ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Boss Health Bar above ship
-        ctx.shadowBlur = 0;
-        const barW = 70;
-        const barH = 5;
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(-barW / 2, -42, barW, barH);
-        const hpPct = Math.max(0, e.hp / e.maxHp);
-        ctx.fillStyle = '#e040fb';
-        ctx.fillRect(-barW / 2, -42, barW * hpPct, barH);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(-barW / 2, -42, barW, barH);
+      } else if (e.type === 'virus_host') {
+        // Virus Host: infected biological spore cell
+        ctx.fillStyle = '#26061a';
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(0, 0, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Mini spikes
+        for (let i = 0; i < 6; i++) {
+          const ang = (i / 6) * Math.PI * 2 + e.phase;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(ang) * 12, Math.sin(ang) * 12);
+          ctx.lineTo(Math.cos(ang) * 18, Math.sin(ang) * 18);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ff00aa';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+
       } else if (e.type === 'cruiser') {
         // Heavy Cruiser
         ctx.fillStyle = '#3a1c28';
@@ -1570,6 +2755,42 @@
           ctx.arc(0, 0, 26, 0, Math.PI * 2);
           ctx.stroke();
         }
+      }
+
+      // Ransomware simulated lockdown: red containment padlock & restriction barrier
+      if (player.isLocked && player.lockTimer > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#ff2222';
+        ctx.fillStyle = 'rgba(255, 34, 34, 0.18)';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 12;
+
+        const pulseR = 30 + Math.sin(Date.now() * 0.008) * 3;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2;
+          const px = Math.cos(ang) * pulseR;
+          const py = Math.sin(ang) * pulseR;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔒', 0, -2);
+
+        ctx.font = 'bold 11px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#ff4444';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 5;
+        const lockSecs = (player.lockTimer / 60).toFixed(1);
+        ctx.fillText(`LOCKED: ${lockSecs}s`, 0, -36);
+        ctx.restore();
       }
 
       // Ship Wings & Body
@@ -1673,6 +2894,9 @@
     }
     update();
     render();
+    if (_sfLagTick % 4 === 0) {
+      updateHud();
+    }
     if (state.isRunning) {
       animFrameId = requestAnimationFrame(gameLoop);
     }
@@ -1703,6 +2927,19 @@
     if (elHigh) elHigh.textContent = state.highScore.toLocaleString();
     if (elWave) elWave.textContent = `SECTOR ${state.wave}`;
 
+    // Boss Health Bar HUD
+    const hudBar = document.getElementById('sf-boss-hud');
+    const hudPct = document.getElementById('sf-boss-hud-pct');
+    const hudFill = document.getElementById('sf-boss-hud-fill');
+    if (state.bossActive && state.currentBoss && !state.currentBoss.destroyed) {
+      if (hudBar) hudBar.classList.remove('hidden');
+      const bPct = Math.max(0, Math.min(100, (state.currentBoss.hp / state.currentBoss.maxHp) * 100));
+      if (hudPct) hudPct.textContent = `${Math.ceil(bPct)}%`;
+      if (hudFill) hudFill.style.width = `${bPct}%`;
+    } else {
+      if (hudBar && !state.bossIntroActive) hudBar.classList.add('hidden');
+    }
+
     if (elLives) {
       let livesHtml = '';
       for (let i = 0; i < 3; i++) {
@@ -1722,6 +2959,12 @@
         elBuff.style.color = '#ff5555';
         elBuff.style.borderColor = 'rgba(255,85,85,0.5)';
         elBuff.style.background = 'rgba(255,85,85,0.2)';
+      } else if (player && player.isLocked && player.lockTimer > 0) {
+        elBuff.style.display = 'inline-block';
+        elBuff.textContent = `🔒 RANSOMWARE LOCKDOWN: ${Math.ceil(player.lockTimer / 60)}s`;
+        elBuff.style.color = '#ff4444';
+        elBuff.style.borderColor = 'rgba(255, 68, 68, 0.6)';
+        elBuff.style.background = 'rgba(255, 68, 68, 0.2)';
       } else if (player && player.weaponType === 'triple' && player.weaponTimer > 0) {
         elBuff.style.display = 'inline-block';
         elBuff.textContent = `⚡ TRIPLE LASER: ${Math.ceil(player.weaponTimer / 60)}s`;
@@ -1758,6 +3001,9 @@
   window.sfShowHelp = showHelpModal;
   window.sfCloseHelp = closeHelpModal;
   window.sfStopGameOnClose = stopGameOnWindowClose;
+  window.sfResumeGameOnRestore = resumeGameOnWindowRestore;
+  window.sfStartBossBattle = startBossBattle;
+  window.sfContinueAfterBoss = continueAfterBoss;
 
 })();
 

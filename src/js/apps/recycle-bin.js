@@ -192,6 +192,21 @@
     listEl.innerHTML = '';
     const q = (filterQuery || '').toLowerCase().trim();
 
+    // Ensure any BM app in recycleBinItems has the correct name, type, location, and icon
+    if (Array.isArray(window.recycleBinItems)) {
+      window.recycleBinItems.forEach(item => {
+        if (item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase() === 'bm.exe')) {
+          item.name = 'BM';
+          item.type = 'Application';
+          if (!item.originalLocation || item.originalLocation.includes('Program Files')) {
+            item.originalLocation = 'C:\\Users\\Ethan\\AppData\\Roaming\\BM';
+          }
+          item.size = '48.6 MB';
+          item.icon = '<img src="assets/icons/Chapter 2 new apps/BM.svg" alt="BM" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;display:inline-block;" onerror="this.onerror=null;this.parentElement.textContent=\'⚙️\';" />';
+        }
+      });
+    }
+
     // Filter items
     let items = (window.recycleBinItems || []).slice();
     if (q) {
@@ -228,6 +243,24 @@
         </div>`;
     } else {
       items.forEach(item => {
+        // Auto-fix any BM item in recycleBinItems if it had BM.exe or path icon
+        if (item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase() === 'bm.exe') || (item.name && item.name.toLowerCase() === 'bm')) {
+          item.name = 'BM';
+          item.type = 'Application';
+        }
+
+        // Format row icon safely so path strings don't render as plain text
+        let rowIcon = item.icon || '📄';
+        if (item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase() === 'bm')) {
+          rowIcon = '<img src="assets/icons/Chapter 2 new apps/BM.svg" alt="BM" onerror="this.onerror=null;this.parentElement.textContent=\'⚙️\';" />';
+        } else if (typeof rowIcon === 'string') {
+          const trimmed = rowIcon.trim();
+          if (trimmed.startsWith('assets/') || trimmed.endsWith('.svg') || trimmed.endsWith('.png') || trimmed.endsWith('.ico')) {
+            const imgSrc = (trimmed === 'assets/Desktop/BM.png') ? 'assets/icons/Chapter 2 new apps/BM.svg' : trimmed;
+            rowIcon = `<img src="${imgSrc}" alt="" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />`;
+          }
+        }
+
         const isSelected = (window._selectedRecycleItemId === item.id);
         const row = document.createElement('div');
         row.className = `recycle-file-row ${isSelected ? 'selected' : ''}`;
@@ -252,7 +285,7 @@
 
         row.innerHTML = `
           <div class="rcb-cell-name">
-            <span class="rcb-row-icon">${item.icon}</span>
+            <span class="rcb-row-icon">${rowIcon}</span>
             <span class="rcb-row-title" title="${item.name}">${item.name}</span>
           </div>
           <div class="rcb-cell-loc" title="${item.originalLocation}">${item.originalLocation}</div>
@@ -373,6 +406,15 @@
     if (index === -1) return;
 
     const item = window.recycleBinItems[index];
+
+    // Prevent restoring malicious BM app
+    if (item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase() === 'bm')) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ BM is a malicious mining program and should not be restored. Permanently delete it instead.', 'warning');
+      }
+      return;
+    }
+
     const addFiles = (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined')
       ? EXPLORER_ADDITIONAL_FILES
       : (window.EXPLORER_ADDITIONAL_FILES || {});
@@ -448,6 +490,145 @@
   };
 
   // ══════════════════════════════════════════════════════════════
+  // WINDOWS-STYLE DELETE CONFIRMATION MODAL
+  // ══════════════════════════════════════════════════════════════
+  let _activeConfirmKeyHandler = null;
+
+  window.closeRecycleConfirmModal = function () {
+    const modal = document.getElementById('recycle-confirm-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    if (_activeConfirmKeyHandler) {
+      document.removeEventListener('keydown', _activeConfirmKeyHandler);
+      _activeConfirmKeyHandler = null;
+    }
+  };
+
+  window.showRecycleDeleteConfirmModal = function (opts) {
+    opts = opts || {};
+    const modal = document.getElementById('recycle-confirm-modal');
+    if (!modal) {
+      // Fallback if modal DOM is absent
+      if (confirm(opts.prompt || 'Are you sure you want to permanently delete this file?')) {
+        if (typeof opts.onConfirm === 'function') opts.onConfirm();
+      } else {
+        if (typeof opts.onCancel === 'function') opts.onCancel();
+      }
+      return;
+    }
+
+    // Clean up any lingering key listener
+    if (_activeConfirmKeyHandler) {
+      document.removeEventListener('keydown', _activeConfirmKeyHandler);
+      _activeConfirmKeyHandler = null;
+    }
+
+    const titleEl = document.getElementById('rcb-confirm-title-text');
+    const promptEl = document.getElementById('rcb-confirm-prompt');
+    const warnIconEl = document.getElementById('rcb-confirm-warn-icon');
+    const previewBox = document.getElementById('rcb-confirm-file-preview');
+    const iconEl = document.getElementById('rcb-confirm-file-icon');
+    const nameEl = document.getElementById('rcb-confirm-file-name');
+    const typeEl = document.getElementById('rcb-confirm-file-type');
+    const sizeEl = document.getElementById('rcb-confirm-file-size');
+    const dateEl = document.getElementById('rcb-confirm-file-date');
+    const noteEl = document.getElementById('rcb-confirm-warning-note');
+    const yesBtn = document.getElementById('rcb-confirm-yes-btn');
+    const noBtn = document.getElementById('rcb-confirm-no-btn');
+
+    if (titleEl) titleEl.textContent = opts.title || 'Delete File';
+    if (promptEl) promptEl.textContent = opts.prompt || 'Are you sure you want to permanently delete this file?';
+    if (warnIconEl) warnIconEl.textContent = opts.warnIcon || '🗑️';
+
+    if (opts.item) {
+      const it = opts.item;
+      if (previewBox) previewBox.style.display = 'flex';
+
+      let iconHtml = it.icon || '📄';
+      if (it.id === 'rcb_bm_app' || it.origId === 'app_bm' || (it.name && it.name.toLowerCase() === 'bm') || (it.name && it.name.toLowerCase() === 'bm.exe')) {
+        iconHtml = '<img src="assets/icons/Chapter 2 new apps/BM.svg" alt="BM" style="width:36px;height:36px;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'⚙️\';" />';
+      } else if (typeof iconHtml === 'string') {
+        const trimmed = iconHtml.trim();
+        if (trimmed.startsWith('assets/') || trimmed.endsWith('.svg') || trimmed.endsWith('.png') || trimmed.endsWith('.ico')) {
+          const imgSrc = (trimmed === 'assets/Desktop/BM.png') ? 'assets/icons/Chapter 2 new apps/BM.svg' : trimmed;
+          iconHtml = `<img src="${imgSrc}" alt="" style="width:36px;height:36px;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />`;
+        }
+      }
+
+      if (iconEl) iconEl.innerHTML = iconHtml;
+      if (nameEl) nameEl.textContent = (it.name === 'bm.exe' ? 'BM' : (it.name || 'File'));
+      if (typeEl) typeEl.textContent = `Type: ${it.type || 'File'}`;
+      if (sizeEl) sizeEl.textContent = `Size: ${it.size || '1 KB'}`;
+      if (dateEl) {
+        dateEl.textContent = it.dateDeleted ? `Date deleted: ${it.dateDeleted}` : (it.date ? `Date modified: ${it.date}` : '');
+      }
+      if (noteEl) noteEl.textContent = opts.warningNote || '⚠️ This item will be permanently removed from this computer.';
+    } else if (opts.items && Array.isArray(opts.items)) {
+      if (previewBox) previewBox.style.display = 'flex';
+      if (iconEl) {
+        iconEl.innerHTML = '<img src="assets/icons/apps/recycle.svg" alt="Recycle Bin" style="width:36px;height:36px;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'🗑️\';" />';
+      }
+      if (nameEl) nameEl.textContent = `${opts.items.length} item${opts.items.length > 1 ? 's' : ''}`;
+      if (typeEl) typeEl.textContent = 'Location: Recycle Bin';
+      if (sizeEl) sizeEl.textContent = `Total items: ${opts.items.length}`;
+      if (dateEl) dateEl.textContent = 'All contents will be removed';
+      if (noteEl) noteEl.textContent = opts.warningNote || '⚠️ All items will be permanently erased. This cannot be undone.';
+    } else {
+      if (previewBox) previewBox.style.display = 'none';
+      if (noteEl) noteEl.textContent = opts.warningNote || '⚠️ This action cannot be undone.';
+    }
+
+    if (yesBtn) {
+      yesBtn.textContent = opts.yesText || 'Yes';
+      yesBtn.onclick = function (e) {
+        if (e) e.stopPropagation();
+        closeRecycleConfirmModal();
+        if (typeof opts.onConfirm === 'function') opts.onConfirm();
+      };
+    }
+
+    if (noBtn) {
+      noBtn.textContent = opts.noText || 'No';
+      noBtn.onclick = function (e) {
+        if (e) e.stopPropagation();
+        closeRecycleConfirmModal();
+        if (typeof opts.onCancel === 'function') opts.onCancel();
+      };
+    }
+
+    // Keyboard handling: Enter to confirm, Escape to cancel
+    _activeConfirmKeyHandler = function (e) {
+      if (modal.classList.contains('hidden')) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeRecycleConfirmModal();
+        if (typeof opts.onCancel === 'function') opts.onCancel();
+      } else if (e.key === 'Enter') {
+        if (document.activeElement === noBtn) {
+          e.preventDefault();
+          closeRecycleConfirmModal();
+          if (typeof opts.onCancel === 'function') opts.onCancel();
+        } else {
+          e.preventDefault();
+          closeRecycleConfirmModal();
+          if (typeof opts.onConfirm === 'function') opts.onConfirm();
+        }
+      }
+    };
+    document.addEventListener('keydown', _activeConfirmKeyHandler);
+
+    modal.classList.remove('hidden');
+
+    // Auto-focus the "Yes" button like authentic Windows prompt
+    setTimeout(() => {
+      try {
+        if (yesBtn) yesBtn.focus();
+      } catch (_) {}
+    }, 60);
+  };
+
+  // ══════════════════════════════════════════════════════════════
   // PERMANENT DELETION & EMPTY RECYCLE BIN
   // ══════════════════════════════════════════════════════════════
   window.deletePermanentlySelectedRecycleBinItem = function () {
@@ -459,16 +640,28 @@
     const item = (window.recycleBinItems || []).find(i => i.id === window._selectedRecycleItemId);
     if (!item) return;
 
-    const ok = confirm(`Are you sure you want to permanently delete "${item.name}"?\n\nThis item will be permanently removed from this simulated computer.`);
-    if (!ok) return;
+    showRecycleDeleteConfirmModal({
+      title: 'Delete File',
+      prompt: `Are you sure you want to permanently delete this file?`,
+      warnIcon: '🗑️',
+      item: item,
+      warningNote: '⚠️ This item will be permanently removed from this computer.',
+      onConfirm: function () {
+        const isBm = item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase().includes('bm'));
+        window.recycleBinItems = (window.recycleBinItems || []).filter(i => i.id !== item.id);
+        window._selectedRecycleItemId = null;
 
-    window.recycleBinItems = (window.recycleBinItems || []).filter(i => i.id !== window._selectedRecycleItemId);
-    window._selectedRecycleItemId = null;
+        if (typeof showToast === 'function') {
+          showToast(`🗑️ Permanently deleted "${item.name}".`, 'info');
+        }
+        renderRecycleBin();
 
-    if (typeof showToast === 'function') {
-      showToast(`🗑️ Permanently deleted "${item.name}".`, 'info');
-    }
-    renderRecycleBin();
+        // Chapter 2: Permanently Delete BM App Activity
+        if (isBm && typeof window.ch2OnBmPermanentlyDeleted === 'function') {
+          window.ch2OnBmPermanentlyDeleted();
+        }
+      }
+    });
   };
 
   window.emptyRecycleBin = function () {
@@ -478,16 +671,28 @@
     }
 
     const count = window.recycleBinItems.length;
-    const ok = confirm(`Are you sure you want to permanently delete all ${count} item${count > 1 ? 's' : ''} in the Recycle Bin?\n\nThis cannot be undone.`);
-    if (!ok) return;
+    showRecycleDeleteConfirmModal({
+      title: 'Empty Recycle Bin',
+      prompt: `Are you sure you want to permanently delete all ${count} item${count > 1 ? 's' : ''}?`,
+      warnIcon: '🗑️',
+      items: window.recycleBinItems,
+      warningNote: '⚠️ All items will be permanently erased. This action cannot be undone.',
+      onConfirm: function () {
+        const hadBm = (window.recycleBinItems || []).some(i => i.id === 'rcb_bm_app' || i.origId === 'app_bm' || (i.name && i.name.toLowerCase().includes('bm')));
+        window.recycleBinItems = [];
+        window._selectedRecycleItemId = null;
 
-    window.recycleBinItems = [];
-    window._selectedRecycleItemId = null;
+        if (typeof showToast === 'function') {
+          showToast(`🗑️ Recycle Bin emptied.`, 'info');
+        }
+        renderRecycleBin();
 
-    if (typeof showToast === 'function') {
-      showToast(`🗑️ Recycle Bin emptied.`, 'info');
-    }
-    renderRecycleBin();
+        // Chapter 2: Permanently Delete BM App Activity
+        if (hadBm && typeof window.ch2OnBmPermanentlyDeleted === 'function') {
+          window.ch2OnBmPermanentlyDeleted();
+        }
+      }
+    });
   };
 
   // ══════════════════════════════════════════════════════════════
@@ -509,6 +714,12 @@
     if (!item) return;
     _activePropertyItemId = item.id;
 
+    if (item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase() === 'bm.exe')) {
+      item.name = 'BM';
+      item.type = 'Application';
+      item.originalLocation = 'C:\\Users\\Ethan\\AppData\\Roaming\\BM';
+    }
+
     const modal = document.getElementById('recycle-properties-modal');
     if (!modal) return;
 
@@ -521,9 +732,20 @@
     const sizeEl = document.getElementById('rcb-prop-size');
     const diskSizeEl = document.getElementById('rcb-prop-disk-size');
 
+    let propIcon = item.icon || '📄';
+    if (item.id === 'rcb_bm_app' || item.origId === 'app_bm' || (item.name && item.name.toLowerCase() === 'bm')) {
+      propIcon = '<img src="assets/icons/Chapter 2 new apps/BM.svg" alt="BM" style="width:32px;height:32px;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'⚙️\';" />';
+    } else if (typeof propIcon === 'string') {
+      const trimmed = propIcon.trim();
+      if (trimmed.startsWith('assets/') || trimmed.endsWith('.svg') || trimmed.endsWith('.png') || trimmed.endsWith('.ico')) {
+        const imgSrc = (trimmed === 'assets/Desktop/BM.png') ? 'assets/icons/Chapter 2 new apps/BM.svg' : trimmed;
+        propIcon = `<img src="${imgSrc}" alt="" style="width:32px;height:32px;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />`;
+      }
+    }
+
     if (titleEl) titleEl.textContent = `${item.name} Properties`;
     if (nameInput) nameInput.value = item.name;
-    if (iconEl) iconEl.innerHTML = item.icon || '📄';
+    if (iconEl) iconEl.innerHTML = propIcon;
     if (typeEl) typeEl.textContent = item.type || 'File';
     if (locEl) locEl.textContent = item.originalLocation || 'Unknown Location';
     if (dateEl) dateEl.textContent = item.dateDeleted || 'Unknown Date';
@@ -635,6 +857,7 @@
     window.recycleBinItems = [];
     window._selectedRecycleItemId = null;
     closeRecycleProperties();
+    closeRecycleConfirmModal();
 
     // Close Recycle Bin window if open
     if (typeof closeApp === 'function') {

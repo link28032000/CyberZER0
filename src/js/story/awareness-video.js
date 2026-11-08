@@ -40,8 +40,8 @@ function startAwarenessVideo() {
   vid.currentTime = 0;
   vid.volume = 1;
   vid.play().catch(() => {});
-  const isCh1 = (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing') === 'phishing';
-  if (!isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
+  const isCh1 = typeof _isChapter1Active === 'function' ? _isChapter1Active() : (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing') === 'phishing';
+  if (isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
     window._notifyPostAwardVideoPlay();
   }
 }
@@ -70,6 +70,9 @@ function _avOnTimeUpdate() {
   if (typeof window._ch1OnVideoTimeUpdate === 'function') {
     window._ch1OnVideoTimeUpdate(vid);
   }
+  if (typeof window._ch2OnVideoTimeUpdate === 'function') {
+    window._ch2OnVideoTimeUpdate(vid);
+  }
 }
 
 function _avOnEnded() {
@@ -80,6 +83,10 @@ function _avOnEnded() {
   if (typeof window._ch1OnVideoEnded === 'function') {
     const vid = _avGetVideo();
     window._ch1OnVideoEnded(vid);
+  }
+  if (typeof window._ch2OnVideoEnded === 'function') {
+    const vid = _avGetVideo();
+    window._ch2OnVideoEnded(vid);
   }
 }
 
@@ -100,6 +107,9 @@ function avSeek(e) {
   const newTime = pct * vid.duration;
   if (typeof window._ch1OnVideoSeek === 'function') {
     window._ch1OnVideoSeek(newTime, vid.currentTime, vid);
+  }
+  if (typeof window._ch2OnVideoSeek === 'function') {
+    window._ch2OnVideoSeek(newTime, vid.currentTime, vid);
   }
   vid.currentTime = newTime;
 }

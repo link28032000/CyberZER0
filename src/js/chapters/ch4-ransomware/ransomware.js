@@ -46,6 +46,7 @@ const RANSOMWARE_NODES = [
     actionPhase: 'verify'
   }
 ];
+window.RANSOMWARE_NODES = RANSOMWARE_NODES;
 
 function startRansomwareMission(autoOpenApp = true) {
   closeOverlay('overlay-results');
@@ -263,9 +264,19 @@ function appendRwTerminalLog(msg, type = 'info') {
   logs.scrollTop = logs.scrollHeight;
 }
 
+function isChapter4Complete() {
+  if (Array.isArray(RANSOMWARE_NODES) && RANSOMWARE_NODES.length > 0) {
+    return RANSOMWARE_NODES.every(n => n.status === 'clean' || n.status === 'restored');
+  }
+  return false;
+}
+window.isChapter4Complete = isChapter4Complete;
+
 function finishRansomwareMission() {
-  document.getElementById('res-rw-recovered').textContent = `100% (4 / 4 Nodes)`;
-  document.getElementById('res-rw-score').textContent = gameState.score;
+  const recEl = document.getElementById('res-rw-recovered');
+  if (recEl) recEl.textContent = `100% (4 / 4 Nodes)`;
+  const scoreEl = document.getElementById('res-rw-score');
+  if (scoreEl) scoreEl.textContent = gameState.score;
 
   const rank = 'S';
   const rankEl = document.getElementById('ransomware-results-rank');
@@ -273,7 +284,9 @@ function finishRansomwareMission() {
   if (rankEl) rankEl.textContent = rank;
   if (labelEl) labelEl.textContent = 'RANSOMWARE INCIDENT COMMANDER';
 
-  completeCategory('ransomware', gameState.score, rank);
+  if (typeof completeCategory === 'function') {
+    completeCategory('ransomware', gameState.score, rank);
+  }
 
   if (typeof addSimulationNotification === 'function') {
     addSimulationNotification({
@@ -287,6 +300,290 @@ function finishRansomwareMission() {
     });
   }
 
-  showOverlay('overlay-ransomware-results');
-  if (typeof AudioManager !== 'undefined') AudioManager.playMissionComplete();
+  if (typeof AudioManager !== 'undefined' && AudioManager.playMissionComplete) {
+    AudioManager.playMissionComplete();
+  }
+
+  // Completion dialogue from Ryan (IT Support Mentor)
+  const ryanCompletionLines = [
+    {
+      text: "Outstanding work, Alex! You've successfully contained the ransomware incident across all systems!",
+      state: 'success',
+      label: 'TAP TO CONTINUE'
+    },
+    {
+      text: "You isolated every compromised storage volume, terminated the malicious dropper payload before it could spread laterally, and restored critical project data from our immutable offline backups.",
+      state: 'speaking',
+      label: 'TAP TO CONTINUE'
+    },
+    {
+      text: "Best of all, you proved that proactive defense, rapid incident response, and reliable cold backups beat cyber extortion every time — zero dollars paid in ransom!",
+      state: 'speaking',
+      label: 'TAP TO CONTINUE'
+    },
+    {
+      text: "As your IT Support Mentor, I'm proud to award you the <strong>Malware Trophy</strong> for mastering threat mitigation and ransomware defense. Claim your reward!",
+      state: 'success',
+      label: 'CLAIM REWARD'
+    }
+  ];
+
+  if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+    RyanGuide.releaseMainFlow();
+    RyanGuide.speak(ryanCompletionLines, {
+      mainFlow: true,
+      chapter: 'ransomware',
+      onDone: function() {
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.dismiss) {
+          RyanGuide.dismiss(true);
+          RyanGuide.releaseMainFlow();
+        }
+        showMalwareTrophyModal();
+      }
+    });
+  } else {
+    showMalwareTrophyModal();
+  }
 }
+window.finishRansomwareMission = finishRansomwareMission;
+
+// ─── Malware Trophy Modal (Big Medal + Confetti Celebration) ───────────
+function showMalwareTrophyModal() {
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'malware';
+  const isCh2 = curCat === 'malware';
+  const isClaimed = (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_malware')) || Boolean(window._malwareAwardClaimed);
+
+  let isComplete = false;
+  let count = 0;
+  let total = 0;
+  let rankLabel = '';
+
+  if (isCh2) {
+    const prog = typeof getChapter2Missions1to4Progress === 'function' ? getChapter2Missions1to4Progress() : { count: 0, total: 11, isComplete: false };
+    isComplete = prog.isComplete;
+    count = prog.count;
+    total = prog.total;
+    rankLabel = `${count} / ${total} MISSIONS 1–4 TASKS COMPLETED`;
+  } else {
+    // Chapter 4 (ransomware) or general
+    isComplete = (typeof isChapter4Complete === 'function' && isChapter4Complete()) || (typeof isChapter2Missions1to4Complete === 'function' && isChapter2Missions1to4Complete());
+    if (typeof RANSOMWARE_NODES !== 'undefined' && Array.isArray(RANSOMWARE_NODES)) {
+      count = RANSOMWARE_NODES.filter(n => n.status === 'clean' || n.status === 'restored').length;
+      total = RANSOMWARE_NODES.length;
+      rankLabel = `${count} / ${total} THREAT NODES &amp; INCIDENT MISSIONS COMPLETED`;
+    } else {
+      count = 4;
+      total = 4;
+      rankLabel = `CHAPTER MISSIONS COMPLETED`;
+    }
+  }
+
+  if (!isComplete && !isClaimed) {
+    if (typeof showToast === 'function') {
+      showToast(isCh2 ? '🔒 Complete all Chapter 2 Missions 1–4 tasks first!' : '🔒 Complete all Chapter 4 tasks and incident missions first!', 'warning');
+    }
+    return;
+  }
+
+  const existing = document.getElementById('malware-trophy-modal');
+  if (existing) {
+    if (typeof existing.remove === 'function') existing.remove();
+    else if (existing.parentElement) existing.parentElement.removeChild(existing);
+  }
+
+  const descText = isClaimed
+    ? 'You have claimed the Malware Trophy! Collectible trophy is preserved in your trophies.'
+    : (isCh2
+        ? 'All Chapter 2 Missions 1–4 tasks successfully completed! Workstation threat neutralized. Claim your collectible trophy.'
+        : 'All Chapter 4 tasks and incident response missions successfully completed! Claim your collectible trophy.');
+
+  const modal = document.createElement('div');
+  modal.id = 'malware-trophy-modal';
+  modal.className = 'phish-trophy-modal';
+  modal.innerHTML = `
+    <div class="ptm-backdrop" onclick="closeMalwareTrophyModal(false)"></div>
+    <div class="ptm-confetti-fullscreen" id="mtm-confetti"></div>
+    <div class="ptm-card ptm-card-clean">
+      <div class="ptm-glow-ring"></div>
+      <div class="ptm-big-medal-container">
+        <div class="ptm-big-award-backlight ${isComplete || isClaimed ? 'is-claimed' : 'is-silhouette'}"></div>
+        <img src="assets/Achievement/Malware.png" class="ptm-big-award-img ${isComplete || isClaimed ? 'is-claimed' : 'is-silhouette'}" alt="Malware Trophy" />
+      </div>
+      <h2 class="ptm-big-title">Malware Protection Award</h2>
+      <div class="ptm-big-rank">${rankLabel}</div>
+      <div class="ptm-desc" style="font-size:12px;color:#94a3b8;margin:8px 0 16px;text-align:center;max-width:380px;">
+        ${descText}
+      </div>
+      <div class="ptm-footer" style="margin-top: 14px;">
+        <button class="ptm-close-btn" onclick="${isClaimed ? "closeMalwareTrophyModal(true)" : "attemptClaimMalwareAward()"}">${isClaimed ? 'Award Claimed (Close)' : 'Claim Reward'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const confettiEl = modal.querySelector('#mtm-confetti');
+  if (isComplete && confettiEl) {
+    const palette = ['#00e676', '#ffd700', '#facc15', '#00f0ff', '#ffffff', '#10b981'];
+    for (let i = 0; i < 75; i++) {
+      const p = document.createElement('div');
+      p.className = 'ptm-confetti-particle';
+      const size = 7 + Math.random() * 9;
+      const isRound = Math.random() > 0.6;
+      const isRibbon = !isRound && Math.random() > 0.5;
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        background: ${palette[Math.floor(Math.random() * palette.length)]};
+        animation-delay: ${Math.random() * 2.5}s;
+        animation-duration: ${2.4 + Math.random() * 2}s;
+        width: ${isRibbon ? size * 0.45 : size}px;
+        height: ${isRibbon ? size * 1.8 : size}px;
+        border-radius: ${isRound ? '50%' : '2px'};
+        opacity: ${0.85 + Math.random() * 0.15};
+      `;
+      confettiEl.appendChild(p);
+    }
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => modal.classList.add('ptm-show'));
+  });
+
+  if (isComplete && typeof AudioManager !== 'undefined') {
+    if (AudioManager.playTrophyFanfare) AudioManager.playTrophyFanfare();
+    else if (AudioManager.playCorrect) AudioManager.playCorrect();
+  }
+}
+window.showMalwareTrophyModal = showMalwareTrophyModal;
+
+function attemptClaimMalwareAward() {
+  const isClaimed = (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_malware')) || Boolean(window._malwareAwardClaimed);
+  if (isClaimed) {
+    closeMalwareTrophyModal(true);
+    if (typeof showToast === 'function') {
+      showToast('✓ Malware Trophy already claimed!', 'info');
+    }
+    return;
+  }
+
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'malware';
+  const isCh2 = curCat === 'malware';
+
+  const ch2Complete = typeof isChapter2Missions1to4Complete === 'function' && isChapter2Missions1to4Complete();
+  const ch4Complete = typeof isChapter4Complete === 'function' && isChapter4Complete();
+
+  if (!ch2Complete && !ch4Complete) {
+    if (typeof showToast === 'function') {
+      showToast(isCh2 ? '⚠️ Complete all Chapter 2 Missions 1–4 tasks first!' : '⚠️ Complete all Chapter 4 tasks and incident missions first!', 'warning');
+    }
+    return;
+  }
+
+  window._malwareAwardClaimed = true;
+
+  // Persist claimed status to Main Menu achievements map
+  try {
+    const raw = localStorage.getItem('cyberzero_claimed_achievements');
+    const map = raw ? JSON.parse(raw) : {};
+    map['ach_malware'] = {
+      claimed: true,
+      chapter: isCh2 ? 2 : 4,
+      title: 'Malware Protection Award',
+      claimedAt: Date.now(),
+      claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    };
+    localStorage.setItem('cyberzero_claimed_achievements', JSON.stringify(map));
+  } catch (e) {}
+
+  // Audio fanfare for successful claim
+  if (typeof AudioManager !== 'undefined') {
+    try {
+      if (typeof AudioManager.playTrophyFanfare === 'function') AudioManager.playTrophyFanfare();
+      else if (typeof AudioManager.playPerfectFanfare === 'function') AudioManager.playPerfectFanfare();
+      else if (typeof AudioManager.playMissionComplete === 'function') AudioManager.playMissionComplete();
+      if (typeof AudioManager.playChime === 'function') setTimeout(() => AudioManager.playChime(true), 320);
+    } catch (e) {}
+  }
+
+  // Preserve Chapter 2 progress
+  if (window._ch2Mission) {
+    window._ch2Mission.malwareAwardClaimed = true;
+    if (typeof _persistCh2Mission === 'function') {
+      _persistCh2Mission();
+    } else {
+      try { localStorage.setItem('cyberzero_ch2_mission', JSON.stringify(window._ch2Mission)); } catch (e) {}
+    }
+  }
+
+  // Save session & progress
+  try {
+    const sess = JSON.parse(localStorage.getItem('cyberzero_session_state') || '{}');
+    if (isCh2) {
+      if (!sess.ch2) sess.ch2 = {};
+      sess.ch2.malwareAwardClaimed = true;
+      sess.ch2.completed = true;
+    } else {
+      if (!sess.ch4) sess.ch4 = {};
+      sess.ch4.malwareAwardClaimed = true;
+      sess.ch4.completed = true;
+    }
+    localStorage.setItem('cyberzero_session_state', JSON.stringify(sess));
+  } catch (e) {}
+
+  if (typeof completeCategory === 'function') {
+    completeCategory(isCh2 ? 'malware' : 'ransomware', (typeof gameState !== 'undefined' && gameState.score) || 400, 'S');
+  }
+
+  if (typeof window.saveProgress === 'function') {
+    window.saveProgress().catch(() => {});
+  }
+  if (typeof updateStartButton === 'function') {
+    updateStartButton();
+  }
+  if (typeof updateStickyChecklist === 'function') {
+    try { updateStickyChecklist(); } catch (e) {}
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('🏆 Malware Trophy Claimed! Preserved in your Trophy Cabinet.', 'success');
+  }
+
+  closeMalwareTrophyModal(true);
+
+  // If in Chapter 2, guide Ethan to Mission 5 (Knowledge Assessment)
+  if (isCh2 && window._ch2Mission && !window._ch2Mission.assessmentCompleted) {
+    setTimeout(() => {
+      if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+        RyanGuide.speak([
+          {
+            text: "Congratulations on claiming your Malware Trophy! Before we finish, let's take a quick 4-question Knowledge Assessment to test what you learned about Bitcoin Miner trojans.",
+            state: 'speaking',
+            label: 'START ASSESSMENT'
+          }
+        ], {
+          onDone: function() {
+            if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
+            if (typeof window.launchCh2KnowledgeAssessment === 'function') {
+              window.launchCh2KnowledgeAssessment();
+            }
+          }
+        });
+      }
+    }, 600);
+  }
+}
+window.attemptClaimMalwareAward = attemptClaimMalwareAward;
+
+function closeMalwareTrophyModal(showResults = true) {
+  const modal = document.getElementById('malware-trophy-modal');
+  if (modal) {
+    modal.classList.remove('ptm-show');
+    setTimeout(() => {
+      if (modal.parentElement) modal.parentElement.removeChild(modal);
+    }, 400);
+  }
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+  if (showResults && curCat === 'ransomware' && typeof showOverlay === 'function') {
+    showOverlay('overlay-ransomware-results');
+  }
+}
+window.closeMalwareTrophyModal = closeMalwareTrophyModal;

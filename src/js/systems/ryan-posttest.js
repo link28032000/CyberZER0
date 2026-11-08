@@ -222,6 +222,238 @@ const RyanPosttest = (() => {
     }
   ];
 
+  const MALWARE_QUESTIONS = [
+    // 1. What malware is and how it works
+    {
+      q: "What is malware and how does it compromise computer systems?",
+      c: [
+        "A cooling device installed inside a desktop computer case",
+        "A software utility that automatically optimizes internet bandwidth",
+        "Malicious software designed to infiltrate, damage devices, exploit resources, or steal data",
+        "An official software verification certificate issued by the operating system"
+      ],
+      a: 2,
+      topic: "Malware Concepts"
+    },
+    {
+      q: "What is cryptojacking (Bitcoin Miner malware)?",
+      c: [
+        "Stealthily hijacking a computer's CPU and GPU processing power to mine cryptocurrency without user consent",
+        "Encrypting personal files and demanding bitcoin ransom to unlock them",
+        "Broadcasting fraudulent cryptocurrency promotional links across chat applications",
+        "A legitimate tool bundled with Windows to benchmark mathematical performance"
+      ],
+      a: 0,
+      topic: "Malware Concepts"
+    },
+    // 2. Common types of malware and their characteristics
+    {
+      q: "How does a Trojan horse malware attack typically operate?",
+      c: [
+        "It scans local networks and automatically spreads without user interaction",
+        "It disguises itself as legitimate, helpful, or entertaining software to trick users into running it",
+        "It locks the computer display with a countdown timer immediately upon booting",
+        "It physically damages the motherboard and CPU voltage regulators"
+      ],
+      a: 1,
+      topic: "Malware Types"
+    },
+    {
+      q: "Which of the following correctly distinguishes a computer worm from a trojan?",
+      c: [
+        "Worms can self-replicate and spread across networks independently; trojans rely on deception to be executed",
+        "Trojans only infect mobile phones; worms only infect routers",
+        "Worms always display ransom notes; trojans delete the hard drive immediately",
+        "Trojans replicate through USB drives; worms cannot travel across the internet"
+      ],
+      a: 0,
+      topic: "Malware Types"
+    },
+    {
+      q: "Why do malware programs like Bitcoin Miners attempt to establish persistence on a system?",
+      c: [
+        "To speed up system shutdown and clear RAM caches",
+        "To automatically execute in the background every time the operating system boots",
+        "To assist the operating system in downloading certified security updates",
+        "To prevent the computer monitor from entering low-power sleep mode"
+      ],
+      a: 1,
+      topic: "Malware Types"
+    },
+    // 3. Warning signs and symptoms of malware infection
+    {
+      q: "Which of the following is a classic hardware warning sign of active cryptominer malware?",
+      c: [
+        "The computer fans run constantly at maximum RPM with high heat even when idle",
+        "The optical mouse cursor becomes slightly larger on the desktop",
+        "The screen resolution changes to ultra-wide definition",
+        "The desktop wallpaper automatically inverts its colors"
+      ],
+      a: 0,
+      topic: "Warning Signs"
+    },
+    {
+      q: "How did the Bitcoin Miner malware affect Ethan's workstation during everyday tasks?",
+      c: [
+        "It deleted all picture files from the hard drive",
+        "It caused severe system slowdown, heavy mouse lag, and games to run at unplayable frame rates",
+        "It blocked keyboard input completely and shut down Wi-Fi",
+        "It displayed full-screen ransomware extortion demands"
+      ],
+      a: 1,
+      topic: "Warning Signs"
+    },
+    // 4. How to identify suspicious applications and files
+    {
+      q: "Which of the following downloaded files represents the highest security risk?",
+      c: [
+        "An executable installer downloaded from an unofficial gaming forum or torrent site",
+        "A PNG image viewed from Ethan's local Pictures folder",
+        "An official driver update downloaded directly from the manufacturer's verified domain",
+        "A plain text readme file opened with Notepad"
+      ],
+      a: 0,
+      topic: "Identifying Suspicious Files"
+    },
+    {
+      q: "What is the danger of a file named 'Space_Fighter_Bonus_Pack.zip.exe'?",
+      c: [
+        "It uses a deceptive double extension to disguise an executable malware program as an archive",
+        "It cannot be unzipped by modern operating systems",
+        "It causes permanent physical damage to the computer monitor",
+        "It converts compressed files into encrypted audio files"
+      ],
+      a: 0,
+      topic: "Identifying Suspicious Files"
+    },
+    // 5. How to investigate unusual CPU usage and suspicious processes
+    {
+      q: "What built-in diagnostic tool is best for investigating abnormal system slowdowns in Windows?",
+      c: [
+        "Task Manager",
+        "Character Map",
+        "Paint 3D",
+        "Disk Cleanup"
+      ],
+      a: 0,
+      topic: "Task Manager Investigation"
+    },
+    {
+      q: "In Task Manager's Processes tab, how did you pinpoint the rogue Bitcoin Miner process?",
+      c: [
+        "By sorting by Process Name alphabetically",
+        "By identifying an unfamiliar program (BM) consuming over 80% of CPU capacity",
+        "By looking for processes that use zero network bandwidth",
+        "By checking which process has the most colorful icon"
+      ],
+      a: 1,
+      topic: "Task Manager Investigation"
+    },
+    {
+      q: "In Chapter 2 Mission 2, what immediate step stopped the miner from consuming CPU power?",
+      c: [
+        "Disconnecting the keyboard and mouse",
+        "Selecting the BM process in Task Manager and clicking 'End Task'",
+        "Restarting the computer in safe mode without investigating",
+        "Minimizing all open desktop applications"
+      ],
+      a: 1,
+      topic: "Task Manager Investigation"
+    },
+    // 6. How to remove malware safely
+    {
+      q: "Why is terminating a process with 'End Task' in Task Manager not enough for complete malware removal?",
+      c: [
+        "Because 'End Task' damages the operating system registry",
+        "Because it only stops the active process; the malicious program files remain installed and can restart",
+        "Because Task Manager cannot terminate third-party software",
+        "Because ending a process permanently deletes personal documents"
+      ],
+      a: 1,
+      topic: "Safe Removal"
+    },
+    {
+      q: "What official Windows utility allows you to permanently uninstall rogue software from your system?",
+      c: [
+        "Control Panel → Programs and Features",
+        "Device Manager → Network Adapters",
+        "Windows Media Player → Playlists",
+        "Taskbar Settings → Notification Area"
+      ],
+      a: 0,
+      topic: "Safe Removal"
+    },
+    {
+      q: "Why should you locate and permanently delete the malware installer from the Recycle Bin?",
+      c: [
+        "To ensure the rogue executable cannot be restored or accidentally run again",
+        "To clear space for installing more unverified games",
+        "Because files in the Recycle Bin automatically run every morning",
+        "To prevent the desktop icons from rearranging themselves"
+      ],
+      a: 0,
+      topic: "Safe Removal"
+    },
+    // 7. How to avoid malware infections
+    {
+      q: "What is the safest policy when downloading new applications and utility software?",
+      c: [
+        "Only download from official developer websites, verified app stores, and trusted repositories",
+        "Download software from whatever search link offers the file for free",
+        "Disable real-time antivirus shields whenever an installer requests it",
+        "Always choose 'Express Installation' without reviewing bundled third-party programs"
+      ],
+      a: 0,
+      topic: "Malware Prevention"
+    },
+    {
+      q: "What is a 'drive-by download' and how can you guard against it?",
+      c: [
+        "Malware that automatically downloads when visiting a compromised webpage; mitigate by keeping browsers updated and using ad/script blockers",
+        "Software delivered on a physical USB drive by courier service",
+        "An automatic cloud sync between smartphones and desktop computers",
+        "A vehicle wireless communication protocol used by traffic authorities"
+      ],
+      a: 0,
+      topic: "Malware Prevention"
+    },
+    // 8. How to prevent future malware attacks
+    {
+      q: "Why is regularly installing operating system and application security updates critical?",
+      c: [
+        "It patches known software vulnerabilities before attackers and malware can exploit them",
+        "It removes all user passwords from the computer",
+        "It increases physical hard drive storage capacity",
+        "It prevents all web browsers from saving cookies"
+      ],
+      a: 0,
+      topic: "Malware Prevention"
+    },
+    {
+      q: "What is the primary function of real-time Antivirus and Endpoint Detection and Response (EDR)?",
+      c: [
+        "Continuously scan running processes, file downloads, and memory to detect and quarantine threats before damage occurs",
+        "Encrypt all personal files with a password only the IT department knows",
+        "Speed up 3D gaming frame rates by disabling background security checks",
+        "Automatically delete all files in the Downloads folder at midnight"
+      ],
+      a: 0,
+      topic: "Malware Prevention"
+    },
+    // 9. Important lessons learned from Chapter 2 missions
+    {
+      q: "What was the complete, methodical investigation sequence you executed in Chapter 2?",
+      c: [
+        "Observe performance lag → Investigate CPU in Task Manager → End Task rogue process → Uninstall from Control Panel → Permanently purge from Recycle Bin",
+        "Format hard drive → Reinstall operating system → Replace graphics card → Change passwords",
+        "Ignore the lag → Turn off computer fans → Continue playing Space Fighter → Delete desktop shortcuts",
+        "Open Command Prompt → Delete system folder → Download free registry cleaner from the internet"
+      ],
+      a: 0,
+      topic: "Chapter 2 Lessons"
+    }
+  ];
+
   const LETTERS = ['A', 'B', 'C', 'D'];
   const STORAGE_PREFIX     = 'cyberzero_posttest_';
   const WIP_KEY = 'cyberzero_posttest_wip';
@@ -245,9 +477,30 @@ const RyanPosttest = (() => {
     }
   };
 
+  const MALWARE_RESULT = {
+    mastery: {
+      icon: '🏆', rank: 'Cyber Sentinel', headline: 'Mastery Level!',
+      ryan: 'Twenty out of twenty! Outstanding work, Ethan! You demonstrated flawless cybersecurity instincts, expert forensic analysis, and master-level malware eradication skills.'
+    },
+    expert: {
+      icon: '🥈', rank: 'Malware Specialist', headline: 'Excellent Defense!',
+      ryan: 'Outstanding awareness, Ethan! You caught almost every threat indicator and think like a professional incident response analyst.'
+    },
+    competent: {
+      icon: '🛡️', rank: 'Vigilant Analyst', headline: 'Solid Awareness!',
+      ryan: 'Good job, Ethan! You have built solid malware detection and system investigation habits. Always remember to inspect CPU hogs and verify official downloads.'
+    },
+    developing: {
+      icon: '🌱', rank: 'Developing Defender', headline: 'Good Effort!',
+      ryan: 'You have taken great steps in malware investigation, Ethan! Keep reviewing process behavior and forensic removal steps to sharpen your defense instincts.'
+    }
+  };
+
   const RING_R = 54;
   const RING_C = 2 * Math.PI * RING_R;
 
+  let _currentChapter = 'phishing';
+  let _opts = {};
   let _index = 0;
   let _answers = [];
   let _onDone = null;
@@ -259,9 +512,18 @@ const RyanPosttest = (() => {
 
   const $ = (id) => document.getElementById(id);
 
+  function _isCurrentMalware() {
+    return _currentChapter === 'malware' ||
+      (_opts && _opts.chapter === 'malware') ||
+      window._currentChapterCategory === 'malware' ||
+      (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+      (typeof gameState !== 'undefined' && gameState.phase === 'malware');
+  }
+
   function _getShuffledQuestions() {
-    // Clone each question and randomize choice order while maintaining correct answer index
-    const list = QUESTIONS.map((item, origIdx) => {
+    const isMal = _isCurrentMalware();
+    const sourceQuestions = isMal ? MALWARE_QUESTIONS : QUESTIONS;
+    const list = sourceQuestions.map((item, origIdx) => {
       const correctChoiceText = item.c[item.a];
       const shuffledChoices = [...item.c];
       for (let i = shuffledChoices.length - 1; i > 0; i--) {
@@ -312,15 +574,18 @@ const RyanPosttest = (() => {
         id = firebase.auth().currentUser.uid || id;
       }
     } catch (e) {}
-    return STORAGE_PREFIX + id;
+    return (_isCurrentMalware() ? 'cyberzero_ch2_posttest_' : STORAGE_PREFIX) + id;
   }
 
-  function _wipKey() { return WIP_KEY; }
+  function _wipKey() {
+    return _isCurrentMalware() ? 'cyberzero_ch2_posttest_wip' : WIP_KEY;
+  }
 
   /** Save current in-progress post-test state after every answer. */
   function _saveTestProgress() {
     try {
       const wip = {
+        chapter: _isCurrentMalware() ? 'malware' : 'phishing',
         activeQuestions: _activeQuestions,
         index: _index,
         answers: _answers,
@@ -348,7 +613,9 @@ const RyanPosttest = (() => {
   }
 
   function getResult() {
-    if (typeof gameState !== 'undefined' && gameState.postTestResult) return gameState.postTestResult;
+    const isMal = _isCurrentMalware();
+    if (isMal && typeof gameState !== 'undefined' && gameState.ch2PostTestResult) return gameState.ch2PostTestResult;
+    if (!isMal && typeof gameState !== 'undefined' && gameState.postTestResult) return gameState.postTestResult;
     try {
       const raw = localStorage.getItem(_playerKey());
       return raw ? JSON.parse(raw) : null;
@@ -356,15 +623,29 @@ const RyanPosttest = (() => {
   }
 
   function _save(result) {
+    const isMal = _isCurrentMalware();
     if (typeof gameState !== 'undefined') {
-      gameState.postTestCompleted = true;
-      gameState.postTestScore = result.score;
-      gameState.postTestTotal = result.total;
-      gameState.postTestResult = result;
+      if (isMal) {
+        gameState.ch2PostTestCompleted = true;
+        gameState.ch2PostTestScore = result.score;
+        gameState.ch2PostTestTotal = result.total;
+        gameState.ch2PostTestResult = result;
+      } else {
+        gameState.postTestCompleted = true;
+        gameState.postTestScore = result.score;
+        gameState.postTestTotal = result.total;
+        gameState.postTestResult = result;
+      }
     }
     try { localStorage.setItem(_playerKey(), JSON.stringify(result)); } catch (e) {}
-    if (typeof window.saveAndInjectPosttestDocument === 'function') {
-      window.saveAndInjectPosttestDocument(result);
+    if (isMal) {
+      if (typeof window.saveAndInjectCh2PosttestDocument === 'function') {
+        window.saveAndInjectCh2PosttestDocument(result);
+      }
+    } else {
+      if (typeof window.saveAndInjectPosttestDocument === 'function') {
+        window.saveAndInjectPosttestDocument(result);
+      }
     }
   }
 
@@ -421,8 +702,19 @@ const RyanPosttest = (() => {
   // ══════════════════════════════════════════════════════════
   // POST-TEST EXECUTION
   // ══════════════════════════════════════════════════════════
-  function launch(onDone) {
+  function launch(onDone, opts) {
     if (_running) return;
+
+    _opts = opts || {};
+    if (_opts && _opts.chapter) {
+      _currentChapter = _opts.chapter;
+    } else if (window._currentChapterCategory === 'malware' ||
+               (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+               (typeof gameState !== 'undefined' && gameState.phase === 'malware')) {
+      _currentChapter = 'malware';
+    } else {
+      _currentChapter = 'phishing';
+    }
 
     const bd = $('ryan-posttest-backdrop');
     if (!bd) {
@@ -502,7 +794,8 @@ const RyanPosttest = (() => {
   function _render() {
     const body = $('rpost-body');
     if (!body) return;
-    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const isMal = _isCurrentMalware();
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : (isMal ? MALWARE_QUESTIONS : QUESTIONS);
     const item = questionsList[_index];
     const total = questionsList.length;
     const isLast = _index === total - 1;
@@ -510,7 +803,13 @@ const RyanPosttest = (() => {
     const counter = $('rpost-q-counter');
     if (counter) counter.textContent = `Question ${_index + 1} / ${total}`;
     const totalEl = document.querySelector('.rpost-q-total');
-    if (totalEl) totalEl.textContent = `Post-Test · ${total} Questions`;
+    if (totalEl) totalEl.textContent = isMal ? `Chapter 2 Post-Test · ${total} Questions` : `Post-Test · ${total} Questions`;
+    const subtitleEl = $('rpost-subtitle');
+    if (subtitleEl && _mode === 'question') {
+      subtitleEl.textContent = isMal
+        ? 'Evaluate your malware investigation, process forensics, and permanent threat removal skills.'
+        : 'Inspect each question carefully and apply what you learned.';
+    }
     const fill = $('rpost-progress-fill');
     if (fill) fill.style.width = Math.round((_index / total) * 100) + '%';
 
@@ -562,7 +861,8 @@ const RyanPosttest = (() => {
 
   function _next() {
     if (_mode !== 'question' || _answers[_index] === undefined) return;
-    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const isMal = _isCurrentMalware();
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : (isMal ? MALWARE_QUESTIONS : QUESTIONS);
     if (_index < questionsList.length - 1) {
       _index++;
       _render();
@@ -602,28 +902,33 @@ const RyanPosttest = (() => {
   // ══════════════════════════════════════════════════════════
   function _finish() {
     let score = 0;
-    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : QUESTIONS;
+    const isMal = _isCurrentMalware();
+    const questionsList = (_activeQuestions && _activeQuestions.length > 0) ? _activeQuestions : (isMal ? MALWARE_QUESTIONS : QUESTIONS);
     const detail = questionsList.map((item, i) => {
       const ok = _answers[i] === item.a;
       if (ok) score++;
-      return { q: i + 1, chosen: LETTERS[_answers[i]], correct: LETTERS[item.a], isCorrect: ok };
+      return { q: i + 1, chosen: LETTERS[_answers[i]], correct: LETTERS[item.a], isCorrect: ok, topic: item.topic || 'General' };
     });
 
     const tier = tierOf(score, questionsList.length);
+    const resultMap = isMal ? MALWARE_RESULT : RESULT;
     const result = {
+      chapter: isMal ? 'malware' : 'phishing',
       score: score,
       total: questionsList.length,
       percent: Math.round((score / questionsList.length) * 100),
       tier: tier,
-      rank: RESULT[tier].rank,
+      rank: resultMap[tier].rank,
       answers: detail,
       completedAt: new Date().toISOString()
     };
 
     _clearTestProgress(); // WIP no longer needed — result is being saved
     _save(result);
-    if (typeof window.saveAndInjectPosttestDocument === 'function') {
+    if (!isMal && typeof window.saveAndInjectPosttestDocument === 'function') {
       window.saveAndInjectPosttestDocument(result);
+    } else if (isMal && typeof window.saveAndInjectCh2PosttestDocument === 'function') {
+      window.saveAndInjectCh2PosttestDocument(result);
     }
     _showResult(result);
   }
@@ -859,8 +1164,9 @@ const RyanPosttest = (() => {
     _result = result;
     _canContinue = false;
 
+    const isMal = _isCurrentMalware();
     const tier = result.tier;
-    const copy = RESULT[tier];
+    const copy = isMal ? MALWARE_RESULT[tier] : RESULT[tier];
     const panel = $('ryan-posttest-panel');
     const body = $('rpost-body');
     if (!panel || !body) return;
@@ -871,7 +1177,11 @@ const RyanPosttest = (() => {
     const fill = $('rpost-progress-fill');
     if (fill) fill.style.width = '100%';
     const sub = $('rpost-subtitle');
-    if (sub) sub.textContent = 'Mission Assessment Complete · Phishing Defense Evaluation';
+    if (sub) {
+      sub.textContent = isMal
+        ? 'Mission Assessment Complete · Malware Defense & Incident Response Evaluation'
+        : 'Mission Assessment Complete · Phishing Defense Evaluation';
+    }
 
     body.innerHTML = '';
 
@@ -942,6 +1252,11 @@ const RyanPosttest = (() => {
     statAcc.appendChild(_el('span', 'rpost-hud-val', `${result.percent}%`));
     hudStats.appendChild(statAcc);
 
+    const statBreakdown = _el('div', 'rpost-hud-chip');
+    statBreakdown.appendChild(_el('span', 'rpost-hud-lbl', 'Answers'));
+    statBreakdown.appendChild(_el('span', 'rpost-hud-val', `${result.score} ✓ · ${result.total - result.score} ✕`));
+    hudStats.appendChild(statBreakdown);
+
     const statStatus = _el('div', 'rpost-hud-chip');
     statStatus.appendChild(_el('span', 'rpost-hud-lbl', 'Status'));
     const statusText = (result.score >= 16) ? 'Verified' : (result.score >= 12 ? 'Passed' : 'Reviewed');
@@ -953,13 +1268,41 @@ const RyanPosttest = (() => {
 
     // ── Right Column: Growth Progression Card & Actions ──
     const details = _el('div', 'rpost-result-details');
+    details.style.maxHeight = '72vh';
+    details.style.overflowY = 'auto';
+    details.style.paddingRight = '6px';
 
-    // Growth comparison card against pre-test baseline
-    const preResult = (typeof RyanPretest !== 'undefined' && RyanPretest.getResult)
-      ? RyanPretest.getResult()
-      : (typeof gameState !== 'undefined' ? gameState.preTestResult : null);
+    // 1. Defender Info & Date Strip
+    const traineeName = isMal ? 'Ethan' : (typeof getPlayerDisplayName === 'function' ? getPlayerDisplayName() : 'Alex');
+    const completedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const metaStrip = _el('div', 'rpost-growth-card');
+    metaStrip.style.padding = '10px 14px';
+    metaStrip.style.marginBottom = '12px';
+    metaStrip.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:11.5px; color:#94a3b8; width:100%;">
+        <span><strong>Trainee:</strong> <span style="color:#f8fafc; font-weight:700;">${traineeName}</span></span>
+        <span><strong>Date:</strong> <span style="color:#f8fafc;">${completedDate}</span></span>
+        <span><strong>Document:</strong> <span style="color:#38bdf8; font-weight:700;">${isMal ? 'Chapter 2 Malware Mastery' : 'Chapter 1 Phishing Mastery'}</span></span>
+      </div>
+    `;
+    details.appendChild(metaStrip);
 
-    const prePct = preResult ? (preResult.percent || Math.round((preResult.score / preResult.total) * 100)) : null;
+    // 2. Growth comparison card against pre-test baseline
+    let preResult = null;
+    if (isMal) {
+      if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.getResult) preResult = Ch2Pretest.getResult();
+      if (!preResult) {
+        try {
+          const rawPre = localStorage.getItem('cyberzero_ch2_pretest');
+          if (rawPre) preResult = JSON.parse(rawPre);
+        } catch (e) {}
+      }
+    } else {
+      if (typeof RyanPretest !== 'undefined' && RyanPretest.getResult) preResult = RyanPretest.getResult();
+      else if (typeof gameState !== 'undefined') preResult = gameState.preTestResult;
+    }
+
+    const prePct = preResult ? (preResult.percent || Math.round((preResult.score / (preResult.total || 20)) * 100)) : null;
     const postPct = result.percent;
 
     const growthCard = _el('div', 'rpost-growth-card');
@@ -1011,7 +1354,6 @@ const RyanPosttest = (() => {
 
     growthCard.appendChild(barsWrap);
 
-    // Animate post-test bar width slightly after open
     setTimeout(() => {
       if (postFill) postFill.style.width = `${Math.max(4, postPct)}%`;
     }, 400);
@@ -1023,19 +1365,145 @@ const RyanPosttest = (() => {
     } else if (diff !== null && diff === 0 && postPct >= 90) {
       deltaText = `★ Maintained Flawless Defense Proficiency across All Scenarios!`;
     } else {
-      deltaText = `✓ Phishing Defense Training Completed & Evaluated`;
+      deltaText = isMal ? `✓ Malware Defense Training Completed & Evaluated` : `✓ Phishing Defense Training Completed & Evaluated`;
     }
     const gDelta = _el('div', 'rpost-growth-delta', deltaText);
     growthCard.appendChild(gDelta);
-
     details.appendChild(growthCard);
 
-    // 3. Continue button: Guide to shutdown & save
-    const contBtn = _el('button', 'rpost-continue-btn', 'Proceed to Save Progress ➔');
+    // 3. Overall Performance & Assessment Commentary
+    const perfCard = _el('div', 'rpost-growth-card');
+    perfCard.style.marginTop = '12px';
+    perfCard.innerHTML = `
+      <div class="rpost-growth-header">
+        <div class="rpost-growth-title">🛡️ Overall Performance &amp; Mentor Assessment</div>
+        <div class="rpost-growth-badge" style="color:#10b981; border-color:#10b981;">${copy.rank}</div>
+      </div>
+      <div style="font-size:12px; color:#cbd5e1; line-height:1.55; margin-top:6px;">
+        <em>"${copy.ryan}"</em>
+      </div>
+    `;
+    details.appendChild(perfCard);
+
+    // 4. Chapter 2 Malware Topics Evaluation (Only in Chapter 2)
+    if (isMal) {
+      const topicCard = _el('div', 'rpost-growth-card');
+      topicCard.style.marginTop = '12px';
+
+      const topicItems = [
+        { icon: '🦠', title: 'Malware Concepts & Cryptojacking', desc: 'Understanding stealth cryptominers, CPU hijacking, and unauthorized mining algorithms.', status: '✓ Verified Mastery' },
+        { icon: '⚠️', title: 'Warning Signs & System Symptoms', desc: 'Detecting loud fans, thermal throttling, extreme mouse lag, and gaming performance drops.', status: '✓ Verified Mastery' },
+        { icon: '📊', title: 'Task Manager & Process Forensics', desc: 'Pinpointing rogue processes by CPU utilization and executing immediate process termination.', status: '✓ Verified Mastery' },
+        { icon: '⚙️', title: 'Safe Removal & Uninstallation', desc: 'Navigating Control Panel Programs & Features to purge root files and startup keys.', status: '✓ Verified Mastery' },
+        { icon: '🛡️', title: 'Malware Prevention & Endpoint Defense', desc: 'Safe software downloads, avoiding drive-by scripts, and maintaining active AV definitions.', status: '✓ Verified Mastery' }
+      ];
+
+      let topicHtml = `
+        <div class="rpost-growth-header">
+          <div class="rpost-growth-title">📋 Evaluation of Important Malware Topics</div>
+          <div class="rpost-growth-badge">5 Domains Evaluated</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+      `;
+
+      topicItems.forEach(t => {
+        topicHtml += `
+          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:16px;">${t.icon}</span>
+              <div>
+                <div style="font-size:11.5px; font-weight:700; color:#f1f5f9;">${t.title}</div>
+                <div style="font-size:10.5px; color:#94a3b8;">${t.desc}</div>
+              </div>
+            </div>
+            <span style="font-size:10px; font-weight:700; color:#34d399; background:rgba(52,211,153,0.12); padding:2px 8px; border-radius:4px; border:1px solid rgba(52,211,153,0.3); flex-shrink:0;">${t.status}</span>
+          </div>
+        `;
+      });
+      topicHtml += `</div>`;
+      topicCard.innerHTML = topicHtml;
+      details.appendChild(topicCard);
+
+      // 5. Strengths and Areas That Need Improvement
+      const strengthsCard = _el('div', 'rpost-growth-card');
+      strengthsCard.style.marginTop = '12px';
+      strengthsCard.innerHTML = `
+        <div class="rpost-growth-header">
+          <div class="rpost-growth-title">🎯 Strengths &amp; Areas for Improvement</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+          <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:11.5px; font-weight:700; color:#34d399; margin-bottom:4px;">💪 Core Strengths</div>
+            <div style="font-size:11px; color:#cbd5e1; line-height:1.45;">
+              • Rapidly identifying stealth cryptominers in Task Manager.<br>
+              • Diagnosing hardware symptoms like fan noise and severe lag.<br>
+              • Executing complete uninstallation from Control Panel.
+            </div>
+          </div>
+          <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:11.5px; font-weight:700; color:#38bdf8; margin-bottom:4px;">📈 Areas for Improvement</div>
+            <div style="font-size:11px; color:#cbd5e1; line-height:1.45;">
+              • Strictly avoiding unverified game mods and third-party installers.<br>
+              • Always inspecting file extensions for double extensions (.pdf.exe).<br>
+              • Ensuring real-time antivirus shields are never disabled.
+            </div>
+          </div>
+        </div>
+      `;
+      details.appendChild(strengthsCard);
+
+      // 6. Summary of Lessons Learned & Recommendations
+      const summaryCard = _el('div', 'rpost-growth-card');
+      summaryCard.style.marginTop = '12px';
+      summaryCard.innerHTML = `
+        <div class="rpost-growth-header">
+          <div class="rpost-growth-title">💡 Summary of Lessons &amp; Key Recommendations</div>
+        </div>
+        <div style="font-size:11px; color:#cbd5e1; line-height:1.55; margin-top:8px;">
+          <div style="margin-bottom:6px;"><strong style="color:#f8fafc;">1. Never judge malware by visibility:</strong> Cryptominers operate silently in the background without pop-ups.</div>
+          <div style="margin-bottom:6px;"><strong style="color:#f8fafc;">2. Task Manager is your primary forensic tool:</strong> Sort by CPU % to expose hidden resource hogs.</div>
+          <div style="margin-bottom:6px;"><strong style="color:#f8fafc;">3. Ending tasks is temporary:</strong> Complete elimination requires uninstalling from Control Panel and permanently emptying the Recycle Bin.</div>
+          <div><strong style="color:#f8fafc;">4. Defense Recommendation:</strong> Only download software from official vendor websites and keep system security definitions updated.</div>
+        </div>
+      `;
+      details.appendChild(summaryCard);
+    }
+
+    // 7. Action Buttons (Official Report & Proceed to Free Exploration)
+    const btnRow = _el('div', 'rpost-action-row');
+    btnRow.style.display = 'flex';
+    btnRow.style.gap = '10px';
+    btnRow.style.marginTop = '16px';
+    btnRow.style.flexWrap = 'wrap';
+
+    if (isMal) {
+      const docBtn = _el('button', 'rpost-doc-btn', '📄 Open Official Report in Documents');
+      docBtn.type = 'button';
+      docBtn.style.flex = '1';
+      docBtn.style.padding = '10px 14px';
+      docBtn.style.background = 'rgba(56, 189, 248, 0.15)';
+      docBtn.style.border = '1px solid #38bdf8';
+      docBtn.style.borderRadius = '8px';
+      docBtn.style.color = '#38bdf8';
+      docBtn.style.fontWeight = '700';
+      docBtn.style.fontSize = '12px';
+      docBtn.style.cursor = 'pointer';
+      docBtn.addEventListener('click', () => {
+        if (typeof window.openCh2PosttestDocFromResults === 'function') {
+          window.openCh2PosttestDocFromResults();
+        }
+      });
+      btnRow.appendChild(docBtn);
+    }
+
+    const contBtn = _el('button', 'rpost-continue-btn', isMal ? 'Proceed to Free Exploration ➔' : 'Proceed to Save Progress ➔');
     contBtn.type = 'button';
     contBtn.disabled = true;
+    contBtn.style.flex = '1';
     contBtn.addEventListener('click', _complete);
-    details.appendChild(contBtn);
+    btnRow.appendChild(contBtn);
+
+    details.appendChild(btnRow);
 
     wrap.appendChild(details);
     body.appendChild(wrap);
@@ -1050,6 +1518,24 @@ const RyanPosttest = (() => {
     if (_mode !== 'result' || !_canContinue) return;
     const cb = _onDone;
     const res = _result;
+    const isMal = _isCurrentMalware();
+
+    if (isMal) {
+      if (typeof window.saveAndInjectCh2PosttestDocument === 'function') {
+        window.saveAndInjectCh2PosttestDocument(res);
+      }
+      _close(true);
+      if (typeof window.unlockCh2FreeExploration === 'function') {
+        window.unlockCh2FreeExploration(res);
+      } else if (typeof updateStickyChecklist === 'function') {
+        try { updateStickyChecklist(); } catch (e) {}
+      }
+      if (typeof cb === 'function') {
+        try { cb(res); } catch (e) { console.error('[RyanPosttest] callback failed:', e); }
+      }
+      return;
+    }
+
     if (typeof window.saveAndInjectPosttestDocument === 'function') {
       window.saveAndInjectPosttestDocument(res);
     }
@@ -1135,5 +1621,18 @@ const RyanPosttest = (() => {
 
 if (typeof window !== 'undefined') {
   window.RyanPosttest = RyanPosttest;
+  window.openCh2PosttestDocFromResults = function() {
+    let doc = (typeof getExplorerFileById === 'function') ? getExplorerFileById('doc_ch2_posttest_result') : null;
+    if (!doc && typeof _findCh2PosttestResultData === 'function') {
+      doc = _findCh2PosttestResultData();
+    }
+    if (typeof openFileFromFolder === 'function') {
+      openFileFromFolder('doc_ch2_posttest_result');
+    } else if (typeof openDocxViewerWithFile === 'function' && doc) {
+      openDocxViewerWithFile(doc);
+    } else if (typeof openApp === 'function') {
+      openApp('docviewer');
+    }
+  };
 }
 

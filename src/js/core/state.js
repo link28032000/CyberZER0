@@ -72,5 +72,6 @@ const appState = {
   steam: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   'space-fighter': { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   wannacry: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
+  gta6: { open: false, minimized: false, maximized: false, hasBeenPositioned: false },
   recycle: { open: false, minimized: false, maximized: false, hasBeenPositioned: false }
 };

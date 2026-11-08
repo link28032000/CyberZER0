@@ -100,6 +100,177 @@
   function markOtpVerified(uid) { sessionStorage.setItem(otpKey(uid), '1'); }
   function clearOtpVerified(uid) { if (uid) sessionStorage.removeItem(otpKey(uid)); }
 
+  /* ── 4b. Registered student progress backup & restore ─────────────────
+     When a student plays as a guest on a shared computer, any existing
+     registered student localStorage progress is safely backed up so that
+     temporary guest play does not overwrite the registered student's account.
+  ─────────────────────────────────────────────────────────────────────*/
+  const REG_BACKUP_KEY = 'cyberzero_registered_student_backup';
+  const LS_TRACKED_KEYS = [
+    'cyberzero_categories',
+    'cyberzero_phishing_progress',
+    'cyberzero_claimed_achievements',
+    'cyberzero_newbie_gc_state',
+    'cyberzero_ch2_pretest',
+    'cyberzero_ch2_mission',
+    'cyberzero_session_state',
+    'cyberzero_pretest_wip',
+    'cyberzero_posttest_wip',
+    'cyberzero_pretest_result_file',
+    'cyberzero_posttest_result_file',
+    'cyberzero_ch2_pretest_result_file'
+  ];
+
+  function _backupRegisteredStudentProgressIfNeeded() {
+    try {
+      if (!localStorage.getItem(REG_BACKUP_KEY)) {
+        const backup = {};
+        let hasData = false;
+        LS_TRACKED_KEYS.forEach(key => {
+          const val = localStorage.getItem(key);
+          if (val !== null) {
+            backup[key] = val;
+            hasData = true;
+          }
+        });
+        if (hasData) {
+          localStorage.setItem(REG_BACKUP_KEY, JSON.stringify(backup));
+          console.log('[auth] Registered student progress backed up before guest session.');
+        }
+      }
+    } catch (e) {}
+  }
+
+  function _restoreRegisteredStudentProgress() {
+    try {
+      const raw = localStorage.getItem(REG_BACKUP_KEY);
+      if (raw) {
+        const backup = JSON.parse(raw);
+        Object.keys(backup).forEach(key => {
+          if (backup[key] !== null && backup[key] !== undefined) {
+            localStorage.setItem(key, backup[key]);
+          }
+        });
+        localStorage.removeItem(REG_BACKUP_KEY);
+        console.log('[auth] Registered student progress restored from backup.');
+      }
+    } catch (e) {}
+  }
+
+  function _clearGuestProgressAndRestoreBackup() {
+    try {
+      const raw = localStorage.getItem(REG_BACKUP_KEY);
+      if (raw) {
+        _restoreRegisteredStudentProgress();
+      } else {
+        LS_TRACKED_KEYS.forEach(key => {
+          try { localStorage.removeItem(key); } catch (e) {}
+        });
+        console.log('[auth] Guest transient progress cleared on logout.');
+      }
+    } catch (e) {}
+  }
+
+  window.czIsGuest = function () {
+    try {
+      if (window._czGuestSession) return true;
+      const stored = sessionStorage.getItem('cyberzero_guest_session');
+      if (stored) {
+        window._czGuestSession = JSON.parse(stored);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  window.czGetGuestUser = function () {
+    if (window._czGuestSession) return window._czGuestSession;
+    try {
+      const stored = sessionStorage.getItem('cyberzero_guest_session');
+      if (stored) {
+        window._czGuestSession = JSON.parse(stored);
+        return window._czGuestSession;
+      }
+    } catch (e) {}
+    return null;
+  };
+
+  /**
+   * Updates guest user's display name and refreshes the UI tag.
+   * Can be called with a custom name or will prompt the user if omitted.
+   */
+  window.czUpdateGuestName = function (newName) {
+    if (!window.czIsGuest()) return;
+    const guestUser = window.czGetGuestUser() || {};
+    let name = newName;
+    if (typeof name !== 'string') {
+      const current = guestUser.name || guestUser.displayName || 'Guest';
+      name = prompt('Enter your Guest display name:', current);
+      if (name === null) return; // User cancelled
+    }
+    name = (name || '').trim();
+    if (!name) return;
+    if (name.length > 20) name = name.slice(0, 20);
+
+    guestUser.name = name;
+    guestUser.displayName = name;
+    window._czGuestSession = guestUser;
+    try {
+      sessionStorage.setItem('cyberzero_guest_session', JSON.stringify(guestUser));
+    } catch (e) {}
+
+    updateChip(guestUser);
+    console.log('[auth] Guest name updated to:', name);
+  };
+
+  window.czIsAdmin = function () {
+    // Administrator features are completely inaccessible to guest users
+    if (window.czIsGuest()) return false;
+    return false;
+  };
+
+  window.czPlayAsGuest = function () {
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+
+    // Create unique temporary guest session
+    const randId = Math.floor(1000 + Math.random() * 9000);
+    const guestUser = {
+      isGuest: true,
+      uid: 'guest_' + randId,
+      id: 'guest_' + randId,
+      displayName: 'Guest_' + randId,
+      name: 'Guest_' + randId,
+      isAnonymous: true,
+      createdAt: Date.now()
+    };
+
+    window._czGuestSession = guestUser;
+    try {
+      sessionStorage.setItem('cyberzero_guest_session', JSON.stringify(guestUser));
+    } catch (e) {}
+
+    // Safeguard registered student progress
+    _backupRegisteredStudentProgressIfNeeded();
+
+    // Close the auth overlay
+    closeOverlay();
+
+    // Update user bar with guest display (HIDES the signout/logout button)
+    updateChip(guestUser);
+
+    // Enter Main Menu directly
+    if (typeof showMainMenu === 'function') {
+      showMainMenu();
+    } else {
+      const mm = document.getElementById('overlay-main-menu');
+      if (mm) mm.classList.add('active');
+    }
+
+    if (typeof startMMBgMusic === 'function') {
+      startMMBgMusic();
+    }
+  };
+
   /* ── 5. Error message map ── */
   const GOOGLE_ERRORS = {
     'auth/popup-closed-by-user':            'Google sign-in was cancelled.',
@@ -162,7 +333,7 @@
         <div class="cz-auth-divider" aria-hidden="true"></div>
         <div class="cz-auth-problem" id="cz-problem" hidden></div>
 
-        <!-- ═ PANEL 1: Google Sign-In ═ -->
+        <!-- ═ PANEL 1: Google Sign-In & Guest Access ═ -->
         <div id="cz-panel-google" hidden>
           <button type="button" class="cz-google-btn" id="cz-google-btn" onclick="czSignInWithGoogle()">
             <svg class="cz-google-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -173,6 +344,18 @@
             </svg>
             <span id="cz-google-label">Continue with Google</span>
           </button>
+
+          <div class="cz-auth-or" aria-hidden="true"><span>OR</span></div>
+
+          <button type="button" class="cz-guest-btn" id="cz-guest-btn" onclick="czPlayAsGuest()">
+            <svg class="cz-guest-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>PLAY AS GUEST</span>
+          </button>
+
           <div class="cz-auth-msg" id="cz-google-msg" role="alert"></div>
           <div class="cz-auth-footer">DIGITAL SAFETY SIMULATION GAME &nbsp;·&nbsp; STUDENT AWARENESS</div>
         </div>
@@ -475,6 +658,20 @@
       }
 
       if (!user) {
+        // If an active guest session exists in sessionStorage (e.g. page refresh during guest play),
+        // restore guest state without kicking the player back to the sign-in screen
+        if (typeof window.czIsGuest === 'function' && window.czIsGuest()) {
+          const guestUser = window.czGetGuestUser();
+          closeOverlay();
+          updateChip(guestUser);
+          if (typeof window._czLoadProgressAndShowMenu === 'function') {
+            window._czLoadProgressAndShowMenu();
+          } else if (typeof showMainMenu === 'function') {
+            showMainMenu();
+          }
+          return;
+        }
+
         // ── Signed out ──
         updateChip(null);
         if (!window._czIsSigningOut) {
@@ -556,6 +753,11 @@
 
   /** Step 1: Google Sign-In */
   window.czSignInWithGoogle = async function () {
+    // If a guest session was active, clear it and restore any registered student backup
+    try { sessionStorage.removeItem('cyberzero_guest_session'); } catch (e) {}
+    window._czGuestSession = null;
+    _clearGuestProgressAndRestoreBackup();
+
     // Stop background music immediately when user initiates Google sign-in
     if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
     const mm = document.getElementById('overlay-main-menu');
@@ -657,10 +859,12 @@
     }
   };
 
-  /** Sign out — clears OTP state and Firebase session */
+  /** Sign out — clears OTP state and Firebase session / Guest session */
   window.czSignOut = async function () {
     if (window._czIsSigningOut) return;
     window._czIsSigningOut = true;
+
+    const isGuest = typeof window.czIsGuest === 'function' && window.czIsGuest();
 
     const mm = document.getElementById('overlay-main-menu');
     const isMMActive = mm && (mm.classList.contains('active') || mm.style.display === 'flex');
@@ -669,7 +873,7 @@
 
     if (isMMActive) {
       if (signoutBtn) signoutBtn.classList.add('is-signing-out');
-      if (signoutLabel) signoutLabel.textContent = 'Signing out...';
+      if (signoutLabel) signoutLabel.textContent = isGuest ? 'Logging out...' : 'Signing out...';
       if (mm) mm.classList.add('mm-signing-out');
 
       // Start smooth audio fade-out and cross-dissolve simultaneously
@@ -691,10 +895,20 @@
         mm.classList.remove('mm-signing-out');
       }
       if (signoutBtn) signoutBtn.classList.remove('is-signing-out');
-      if (signoutLabel) signoutLabel.textContent = 'Sign out';
+      if (signoutLabel) signoutLabel.textContent = isGuest ? 'Log out' : 'Sign out';
     } else {
       if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
       enterAuthRequired();
+    }
+
+    if (isGuest) {
+      try { sessionStorage.removeItem('cyberzero_guest_session'); } catch (e) {}
+      window._czGuestSession = null;
+      _clearGuestProgressAndRestoreBackup();
+      updateChip(null);
+      window._czIsSigningOut = false;
+      console.log('[auth] Successfully logged out as guest.');
+      return;
     }
 
     const user = auth && auth.currentUser;
@@ -714,6 +928,11 @@
     }
   };
 
+  /** Alias for guest logout */
+  window.czLogoutAsGuest = async function () {
+    return window.czSignOut();
+  };
+
   /* ── 14. Signed-in user bar on main menu (Top-Right Corner) ────────────
      Targets #mm-user-bar / #mm-user-name / #mm-user-avatar in index.html.
      The bar is inside #overlay-main-menu so it auto-hides with the menu.
@@ -725,9 +944,49 @@
   }
 
   function updateChip(u) {
-    const bar       = document.getElementById('mm-user-bar');
+    const bar         = document.getElementById('mm-user-bar');
     const avatarInner = document.querySelector('#mm-user-avatar .mm-avatar-inner');
+    const signoutBtn  = document.getElementById('mm-signout-btn');
+    const guestTag    = document.getElementById('mm-guest-tag');
     if (!bar) return;
+
+    const isGuest = (u && u.isGuest) || (typeof window.czIsGuest === 'function' && window.czIsGuest());
+
+    if (isGuest) {
+      const guestInfo = (u && u.isGuest) ? u : (typeof window.czGetGuestUser === 'function' ? window.czGetGuestUser() : null);
+      const guestName = (guestInfo && guestInfo.name) ? guestInfo.name : 'Guest';
+
+      if (avatarInner) {
+        avatarInner.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color:#00f0ff;"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+      }
+      // GUEST SESSION: Enable Log Out button for guest users
+      if (signoutBtn) {
+        signoutBtn.style.display = '';
+        signoutBtn.removeAttribute('aria-hidden');
+        signoutBtn.setAttribute('title', 'Log out as guest');
+        signoutBtn.setAttribute('aria-label', 'Log out as guest');
+        const signoutLabel = signoutBtn.querySelector('.mm-signout-label');
+        if (signoutLabel) signoutLabel.textContent = 'Log out';
+      }
+      if (guestTag) {
+        guestTag.style.display = 'inline-flex';
+        guestTag.textContent = guestName;
+        guestTag.setAttribute('title', 'Guest: ' + guestName + ' (Click to rename)');
+      }
+      bar.hidden = false;
+      return;
+    }
+
+    // Registered user / Normal state:
+    if (guestTag) guestTag.style.display = 'none';
+    if (signoutBtn) {
+      signoutBtn.style.display = '';
+      signoutBtn.removeAttribute('aria-hidden');
+      signoutBtn.setAttribute('title', 'Sign out');
+      signoutBtn.setAttribute('aria-label', 'Sign out');
+      const signoutLabel = signoutBtn.querySelector('.mm-signout-label');
+      if (signoutLabel) signoutLabel.textContent = 'Sign out';
+    }
 
     if (u) {
       // Inject photo into mm-avatar-inner if the user has one
@@ -754,8 +1013,9 @@
   window.mainMenuStart = function () {
     authReady.then(() => {
       const user = auth && auth.currentUser;
-      // Fully authenticated: Google user AND (skip mode OR OTP verified)
-      if (user && (otpSkip || isOtpVerified(user.uid))) {
+      const isGuest = typeof window.czIsGuest === 'function' && window.czIsGuest();
+      // Fully authenticated: Guest OR Google user AND (skip mode OR OTP verified)
+      if (isGuest || (user && (otpSkip || isOtpVerified(user.uid)))) {
         origStart.apply(null, arguments);
       } else {
         // Kick back to auth
@@ -768,13 +1028,24 @@
   };
 
   /* ── 16. Loading state: show overlay immediately while Firebase checks ── */
-  // Ensure background sound is stopped and main menu is inactive during auth loading
-  if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
-  const initMM = document.getElementById('overlay-main-menu');
-  if (initMM) initMM.classList.remove('active');
-  buildOverlay();
-  root.classList.add('active', 'locked');
-  setSub('Checking session…');
-  showPanel('loading');
+  if (typeof window.czIsGuest === 'function' && window.czIsGuest()) {
+    const guestUser = window.czGetGuestUser();
+    closeOverlay();
+    updateChip(guestUser);
+    if (typeof window._czLoadProgressAndShowMenu === 'function') {
+      window._czLoadProgressAndShowMenu();
+    } else if (typeof showMainMenu === 'function') {
+      showMainMenu();
+    }
+  } else {
+    // Ensure background sound is stopped and main menu is inactive during auth loading
+    if (typeof stopMMBgMusic === 'function') stopMMBgMusic();
+    const initMM = document.getElementById('overlay-main-menu');
+    if (initMM) initMM.classList.remove('active');
+    buildOverlay();
+    root.classList.add('active', 'locked');
+    setSub('Checking session…');
+    showPanel('loading');
+  }
 
 })();

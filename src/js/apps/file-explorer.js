@@ -104,6 +104,16 @@ function getExplorerCurrentFiles() {
       } else if (typeof window !== 'undefined' && typeof window.initCh2PretestResultDocument === 'function') {
         window.initCh2PretestResultDocument();
       }
+      if (typeof initCh2AssessmentResultDocument === 'function') {
+        initCh2AssessmentResultDocument();
+      } else if (typeof window !== 'undefined' && typeof window.initCh2AssessmentResultDocument === 'function') {
+        window.initCh2AssessmentResultDocument();
+      }
+      if (typeof initCh2PosttestResultDocument === 'function') {
+        initCh2PosttestResultDocument();
+      } else if (typeof window !== 'undefined' && typeof window.initCh2PosttestResultDocument === 'function') {
+        window.initCh2PosttestResultDocument();
+      }
     }
     const docFiles = _additionalFiles['documents'] || [];
     if (isCh2) {
@@ -112,9 +122,9 @@ function getExplorerCurrentFiles() {
         return f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1;
       });
     } else {
-      // Hide Chapter 2 pre-test result and assessment result in Chapter 1
+      // Hide Chapter 2 pre-test result, assessment result, and post-test result in Chapter 1
       result = docFiles.filter(function(f) {
-        return f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.chapter !== 2;
+        return f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.id !== 'doc_ch2_posttest_result' && f.chapter !== 2;
       });
     }
   } else if (currentExplorerFolder === 'desktop') {
@@ -128,16 +138,34 @@ function getExplorerCurrentFiles() {
       result = deskFiles;
     }
   } else if (currentExplorerFolder === 'pictures') {
-    // Pictures folder is Chapter 2 only — Ethan's personal photos
+    // Pictures folder: Chapter 2 has Ethan's personal photos; Chapter 1 has an empty pictures folder (no pictures)
     const isCh2 = (window._currentChapterCategory === 'malware' ||
                    (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
                    (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')));
     const picFiles = _additionalFiles['pictures'] || [];
     if (isCh2) {
-      result = picFiles; // show all 3 personal photos
+      result = picFiles; // show all 3 personal photos in Chapter 2
     } else {
-      // Chapter 1 and others: hide Ch2 personal photos
-      result = picFiles.filter(function(f) { return !f.chapter || f.chapter !== 2; });
+      // In Chapter 1 and other chapters: folder is available, but has no pictures
+      result = [];
+    }
+  } else if (currentExplorerFolder === 'videos') {
+    // Chapter isolation for Videos folder:
+    // Chapter 2 shows "What Is Malware.mp4" for learning activity.
+    // Chapter 1 shows "cyber_awareness_clip.mp4".
+    const isCh2 = (window._currentChapterCategory === 'malware' ||
+                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                   (typeof gameState !== 'undefined' && (gameState.phase === 'malware' || gameState.chapter === 'malware')) ||
+                   (typeof _isChapter2Active === 'function' && _isChapter2Active()));
+    const vidFiles = _additionalFiles['videos'] || [];
+    if (isCh2) {
+      result = vidFiles.filter(function(f) {
+        return f.id === 'vid_what_is_malware' || (f.name && f.name.toLowerCase().includes('malware'));
+      });
+    } else {
+      result = vidFiles.filter(function(f) {
+        return f.id !== 'vid_what_is_malware' && (!f.name || !f.name.toLowerCase().includes('malware'));
+      });
     }
   } else {
     result = _additionalFiles[currentExplorerFolder] || [];
@@ -202,6 +230,19 @@ function getExplorerFileById(fileId) {
     let foundDoc = docs.find(f => f.id === 'doc_ch2_pretest_result');
     if (!foundDoc && typeof _findCh2PretestResultData === 'function') {
       foundDoc = _findCh2PretestResultData();
+      if (foundDoc && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+        EXPLORER_ADDITIONAL_FILES.documents.push(foundDoc);
+      }
+    }
+    if (foundDoc) return foundDoc;
+  }
+
+  if (fileId === 'doc_ch2_posttest_result' || fileId === 'ch2_posttest_result_report.docx' || fileId === 'ch2_posttest_report.docx' || fileId === 'Cybersecurity Malware Post-Test Assessment Report.docx' || (isCh2 && fileId === 'posttest_result_report.docx')) {
+    const _additionalFiles = _getExplorerAdditionalFiles();
+    const docs = _additionalFiles.documents || [];
+    let foundDoc = docs.find(f => f.id === 'doc_ch2_posttest_result');
+    if (!foundDoc && typeof _findCh2PosttestResultData === 'function') {
+      foundDoc = _findCh2PosttestResultData();
       if (foundDoc && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
         EXPLORER_ADDITIONAL_FILES.documents.push(foundDoc);
       }
@@ -407,18 +448,34 @@ function renderFolderFiles(filterQuery = '') {
       };
 
       const isPictureFile = (file.realExt === 'png' || file.realExt === 'jpg' || file.realExt === 'jpeg' || file.realExt === 'gif' || file.realExt === 'webp');
-      const rowIcon = (isPictureFile && currentExplorerFolder === 'pictures')
-        ? '<img class="explorer-detail-photo-icon" src="assets/Pictures/image.svg" alt="Photo" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;display:inline-block;" />'
-        : file.icon;
+      let rowIcon = file.icon;
+      if (!rowIcon) {
+        if (file.fakeExt === 'dir' || file.realExt === 'dir') {
+          rowIcon = '📁';
+        } else if (file.realExt === 'docx' || file.realExt === 'doc') {
+          rowIcon = '<img src="assets/Desktop/Word.png" alt="Word" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;display:inline-block;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />';
+        } else {
+          rowIcon = '📄';
+        }
+      } else if (typeof rowIcon === 'string' && (rowIcon.startsWith('assets/') || rowIcon.endsWith('.png') || rowIcon.endsWith('.svg'))) {
+        rowIcon = `<img src="${rowIcon}" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;display:inline-block;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />`;
+      }
+      if (isPictureFile && currentExplorerFolder === 'pictures') {
+        rowIcon = '<img class="explorer-detail-photo-icon" src="assets/Pictures/image.svg" alt="Photo" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;display:inline-block;" />';
+      }
+
+      const fileDate = file.date || file.dateModified || '—';
+      const fileType = file.type || (file.realExt ? `${file.realExt.toUpperCase()} File` : 'File');
+      const fileSize = file.size || '—';
 
       row.innerHTML = `
         <div class="file-name-cell">
           <span class="file-icon">${rowIcon}</span>
           <span class="file-name-text" title="${file.name}">${file.name}</span>
         </div>
-        <div>${file.date}</div>
-        <div>${file.type}</div>
-        <div>${file.size}</div>`;
+        <div>${fileDate}</div>
+        <div>${fileType}</div>
+        <div>${fileSize}</div>`;
 
       list.appendChild(row);
     } else {
@@ -436,10 +493,23 @@ function renderFolderFiles(filterQuery = '') {
         }
       };
 
+      let cardIcon = file.icon;
+      if (!cardIcon) {
+        if (file.fakeExt === 'dir' || file.realExt === 'dir') {
+          cardIcon = '📁';
+        } else if (file.realExt === 'docx' || file.realExt === 'doc') {
+          cardIcon = '<img src="assets/Desktop/Word.png" alt="Word" style="width:38px;height:38px;object-fit:contain;display:block;margin:0 auto;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />';
+        } else {
+          cardIcon = '📄';
+        }
+      } else if (typeof cardIcon === 'string' && (cardIcon.startsWith('assets/') || cardIcon.endsWith('.png') || cardIcon.endsWith('.svg'))) {
+        cardIcon = `<img src="${cardIcon}" alt="" style="width:38px;height:38px;object-fit:contain;display:block;margin:0 auto;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />`;
+      }
+
       card.innerHTML = `
-        <div class="grid-card-icon">${file.icon}</div>
+        <div class="grid-card-icon">${cardIcon}</div>
         <div class="grid-card-name" title="${file.name}">${file.name}</div>
-        ${isDesktop ? '' : `<div class="grid-card-tag">${file.size}</div>`}`;
+        ${isDesktop ? '' : `<div class="grid-card-tag">${file.size || ''}</div>`}`;
 
       list.appendChild(card);
     }
@@ -488,23 +558,23 @@ function switchExplorerFolder(folderKey) {
     }
     return;
   }
-  // Pictures folder is Chapter 2 only (Ethan's personal photos)
-  if (folderKey === 'pictures' && !isCh2FolderCheck) {
-    if (typeof showToast === 'function') {
-      showToast('🖼️ Pictures folder is not available in this chapter.', 'info');
-    }
-    return;
-  }
   currentExplorerFolder = folderKey;
   if (typeof window !== 'undefined') window.currentExplorerFolder = folderKey;
 
-  // Auto-switch to Large Icons (grid/thumbnail) view for Pictures folder
+  // Auto-switch view mode: Pictures -> grid, Documents/Downloads -> details
   if (folderKey === 'pictures') {
     if (typeof setExplorerViewMode === 'function') {
       setExplorerViewMode('grid');
     } else {
       explorerViewMode = 'grid';
       if (typeof window !== 'undefined') window.explorerViewMode = 'grid';
+    }
+  } else if (folderKey === 'documents' || folderKey === 'downloads' || folderKey === 'thispc_contents') {
+    if (typeof setExplorerViewMode === 'function') {
+      setExplorerViewMode('details');
+    } else {
+      explorerViewMode = 'details';
+      if (typeof window !== 'undefined') window.explorerViewMode = 'details';
     }
   }
 
@@ -514,11 +584,21 @@ function switchExplorerFolder(folderKey) {
   }
 
   // Notify Chapter 2 mission tracker
-  if (folderKey === 'pictures' && typeof window.ch2OnPicturesFolderOpened === 'function') {
-    window.ch2OnPicturesFolderOpened();
-  }
-  if (typeof window._ch2NotifyFolderOpen === 'function') {
-    window._ch2NotifyFolderOpen(folderKey);
+  const _isCh2Active = (window._currentChapterCategory === 'malware' ||
+                        (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
+                        (typeof gameState !== 'undefined' && gameState.phase === 'malware') ||
+                        Boolean(window._ch2MissionStarted));
+  if (_isCh2Active) {
+    if (folderKey === 'pictures' && typeof window.ch2OnPicturesFolderOpened === 'function') {
+      window.ch2OnPicturesFolderOpened();
+    }
+    if (typeof window._ch2NotifyFolderOpen === 'function') {
+      window._ch2NotifyFolderOpen(folderKey);
+    }
+    const note = document.getElementById('sticky-note');
+    if (note && !note.classList.contains('hidden') && typeof updateStickyNoteForPhase === 'function') {
+      updateStickyNoteForPhase('malware');
+    }
   }
 
   // Update history
@@ -553,7 +633,7 @@ function switchExplorerFolder(folderKey) {
   const allDocs = Array.isArray(_additionalFiles.documents) ? _additionalFiles.documents : [];
   const visibleDocs = isCh2
     ? allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1)
-    : allDocs.filter(f => f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.chapter !== 2);
+    : allDocs.filter(f => f.id !== 'doc_ch2_pretest_result' && f.id !== 'doc_ch2_assessment_result' && f.id !== 'doc_ch2_posttest_result' && f.chapter !== 2);
   const docCount = visibleDocs.length;
   if (docBadge) {
     docBadge.textContent = docCount;
@@ -871,12 +951,15 @@ function selectFolderFile(fileId) {
 
   if (ext === 'docx') {
     const isPretestDoc = file.id === 'doc_pretest_result' || file.id === 'doc_ch2_pretest_result';
-    const isPosttestDoc = file.id === 'doc_posttest_result';
+    const isPosttestDoc = file.id === 'doc_posttest_result' || file.id === 'doc_ch2_posttest_result';
     const isCh2Pretest = file.id === 'doc_ch2_pretest_result';
-    const docTitle = isPosttestDoc
-      ? 'Cybersecurity Post-Test Assessment Report'
-      : (isCh2Pretest ? 'Chapter 2 Malware Pre-Test Assessment Report' : (isPretestDoc ? 'Cybersecurity Pre-Test Assessment Report' : file.name));
-    const docSnippet = isPosttestDoc
+    const isCh2Posttest = file.id === 'doc_ch2_posttest_result';
+    const docTitle = isCh2Posttest
+      ? 'Chapter 2 Malware Post-Test Assessment Report'
+      : (isPosttestDoc
+          ? 'Cybersecurity Post-Test Assessment Report'
+          : (isCh2Pretest ? 'Chapter 2 Malware Pre-Test Assessment Report' : (isPretestDoc ? 'Cybersecurity Pre-Test Assessment Report' : file.name)));
+    const docSnippet = (isPosttestDoc || isCh2Posttest)
       ? 'Official final mastery score & evaluation report. Verified clean.'
       : (isPretestDoc ? 'Official baseline score & evaluation report. Verified clean.' : (file.analysis || 'Verified clean document.'));
     quickPreviewHtml = `
@@ -941,6 +1024,50 @@ function selectFolderFile(fileId) {
           <span>📂</span> Inspect File
         </button>
       </div>`;
+  } else if (file.id === 'game_gta6' || (file.name && file.name.includes('GTA VI')) || (file.name && file.name.toLowerCase() === 'gta 6')) {
+    quickPreviewHtml = `
+      <div class="fdp-quick-preview fdp-preview-gta-advisory">
+        <div class="fdp-gta-hero-badge">
+          <span class="fdp-gta-hero-icon">⚠️</span>
+          <div>
+            <div class="fdp-gta-hero-title">UNVERIFIED FAKE GAME INSTALLER</div>
+            <div class="fdp-gta-hero-sub">Grand Theft Auto VI is not released on PC yet</div>
+          </div>
+        </div>
+
+        <div class="fdp-gta-card">
+          <div class="fdp-gta-card-hdr">📁 About Your File</div>
+          <div class="fdp-gta-card-body">
+            This file points to a counterfeit installer downloaded from an unofficial site. Attackers use unreleased gaming hype as a <strong>Trojan Horse trap</strong> to infect PCs with cryptominers (like the BM app) and ransomware.
+          </div>
+        </div>
+
+        <div class="fdp-gta-card">
+          <div class="fdp-gta-card-hdr">🛡️ How to Prevent Infection</div>
+          <div class="fdp-gta-card-body">
+            • <strong>Never download cracked or unreleased games:</strong> Torrents and unofficial "free leaks" are prime malware distribution traps.<br>
+            • <strong>Keep Antivirus (ShieldAV) active:</strong> Never turn off real-time protection to run a suspicious setup file.<br>
+            • <strong>Verify release dates:</strong> Always check official publisher channels (Rockstar Games) before trusting downloads.
+          </div>
+        </div>
+
+        <div class="fdp-gta-card fdp-gta-card-support">
+          <div class="fdp-gta-card-hdr">🎮 Download Officially &amp; Support Game Developers</div>
+          <div class="fdp-gta-card-body">
+            If you want a game, <strong>always download it through the official website or verified platforms like Steam</strong>. This guarantees 100% clean, virus-free game files and directly supports the developers who spent years creating the game!
+          </div>
+        </div>
+
+        <div class="fdp-gta-actions">
+          <button type="button" class="fdp-gta-btn-steam" onclick="openApp('steam'); if(typeof steamFocusGame==='function') steamFocusGame('gta6');">
+            <img src="assets/icons/Chapter 2 new apps/steam.svg" alt="" style="width:13px;height:13px;vertical-align:middle;margin-right:5px;" />
+            View Official Steam Store Page
+          </button>
+          <button type="button" class="fdp-gta-btn-advisory" onclick="showGtaSecurityAdvisoryModal()">
+            <span>🛡️</span> Full Security Advisory
+          </button>
+        </div>
+      </div>`;
   } else if (file.isMalware || ext === 'exe' || ext === 'scr' || ext === 'vbs') {
     quickPreviewHtml = `
       <div class="fdp-quick-preview" style="background:rgba(255,82,82,0.08);border-color:rgba(255,82,82,0.3)">
@@ -987,7 +1114,15 @@ function selectFolderFile(fileId) {
     <div class="fdp-analysis-box ${analysisClass}">
       ${file.analysis}
     </div>`;
+
+  // Trigger Ryan Guide dialogue and advisory when GTA VI is clicked/selected
+  if (file.id === 'game_gta6' || (file.name && file.name.includes('GTA VI')) || (file.name && file.name.toLowerCase() === 'gta 6')) {
+    if (typeof showGtaEducationalDialogue === 'function') {
+      showGtaEducationalDialogue();
+    }
+  }
 }
+window.selectFolderFile = selectFolderFile;
 
 
 
@@ -997,3 +1132,62 @@ function scanFileInAntivirus(fileId) {
   focusWindow('antivirus');
   startActiveScan();
 }
+
+// ══════════════════════════════════════════════════════════════
+// GTA VI SECURITY & EDUCATIONAL ADVISORY
+// ══════════════════════════════════════════════════════════════
+window.showGtaEducationalDialogue = function () {
+  if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+    RyanGuide.speak([
+      {
+        text: "Hold on, Ethan! That GTA VI download is a trap—attackers disguised dangerous <strong>WannaCry Ransomware</strong> as a fake game installer!",
+        state: 'alert',
+        label: 'CONTINUE'
+      },
+      {
+        text: "<strong>Ransomware</strong> is malicious software that secretly encrypts your files and locks you out until you pay a ransom.",
+        state: 'speaking',
+        label: 'IS IT SAFE?'
+      },
+      {
+        text: "🛡️ Don't worry—this is a <strong>harmless educational simulation</strong> designed to teach you how ransomware works.",
+        state: 'thinking',
+        label: 'CONTINUE'
+      },
+      {
+        text: "No real files on your computer will be affected! Double-click it to start the simulation safely.",
+        state: 'success',
+        label: 'UNDERSTOOD'
+      }
+    ], { chapter: 'malware' });
+  }
+  if (typeof showToast === 'function') {
+    showToast('⚠️ GTA VI: Ransomware simulation. Double-click to launch safely.', 'warning');
+  }
+};
+
+window.showGtaSecurityAdvisoryModal = function () {
+  const modal = document.getElementById('gta-security-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+  } else if (typeof showGtaEducationalDialogue === 'function') {
+    showGtaEducationalDialogue();
+  }
+};
+
+window.closeGtaSecurityAdvisoryModal = function () {
+  const modal = document.getElementById('gta-security-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+};
+
+// Dismiss GTA security advisory modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('gta-security-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      closeGtaSecurityAdvisoryModal();
+    }
+  }
+});

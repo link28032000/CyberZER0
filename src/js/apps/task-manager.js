@@ -99,6 +99,7 @@ var _tmGroupExpanded = { apps: true, bg: true };
 var _tmProcSort      = { col: 'name', dir: 'asc' };
 var _tmDetailSort    = { col: 'name', dir: 'asc' };
 var _tmResizeObserver = null;
+var _tmKilledPids    = {};
 
 var TM_GRAPH_COLORS = {
   cpu:  '#38bdf8',
@@ -258,10 +259,22 @@ function tmSelectRow(pid) {
     }
   }
   document.querySelectorAll('.tm-process-row, .tm-detail-row').forEach(function(r) {
-    if (r.getAttribute('data-pid') === String(pid)) {
+    var rPid = r.getAttribute('data-pid');
+    var isThis = (rPid === String(pid));
+    if (isThis) {
       r.classList.add('selected-row');
     } else {
       r.classList.remove('selected-row');
+    }
+    // Update inline End Task button state: only functional for the selected process
+    var btn = r.querySelector('.tm-end-btn');
+    if (btn) {
+      btn.disabled = !isThis;
+      if (isThis) {
+        btn.setAttribute('title', 'End selected process');
+      } else {
+        btn.setAttribute('title', 'Select process to enable End Task');
+      }
     }
   });
   _tmUpdateCommandBar();
@@ -280,6 +293,8 @@ function _tmUpdateCommandBar() {
 function tmEndSelectedTask() {
   if (!_tmSelectedPid) return;
   var pid = _tmSelectedPid;
+  _tmKilledPids[pid] = true;
+
   if (pid === '3844' || (TM_CH2_BM_PROC && String(TM_CH2_BM_PROC.pid) === pid) || (TM_CH2_COINMINER_PROC && String(TM_CH2_COINMINER_PROC.pid) === pid)) {
     if (typeof window.ch2OnProcessKilled === 'function') {
       window.ch2OnProcessKilled('BM', pid);
@@ -304,6 +319,8 @@ function tmEndSelectedTask() {
     showToast('Process PID ' + pid + ' terminated.', 'info');
   }
   _tmSimulateProcessKill(pid);
+  _tmRenderProcesses();
+  _tmUpdateStatusBar();
 }
 
 function _tmSimulateProcessKill(pid) {
@@ -409,7 +426,8 @@ function _tmRenderProcesses() {
 function _tmAppRow(p, isTerminatedMalware) {
   var isSusp = !!p.suspicious;
   var isCh2Killed = !!(p.ch2Trojan && window._ch2Mission && (window._ch2Mission.bmKilled || window._ch2Mission.trojanKilled || window._ch2Mission.bmUninstalled || window._ch2Mission.trojanUninstalled));
-  var isKilled = (isSusp && isTerminatedMalware) || isCh2Killed;
+  var isGenericKilled = !!_tmKilledPids[String(p.pid)];
+  var isKilled = (isSusp && isTerminatedMalware) || isCh2Killed || isGenericKilled;
   var cpuVal = isKilled ? 0.0 : p.cpu();
   var memVal = isKilled ? 0 : p.mem();
 
@@ -427,12 +445,15 @@ function _tmAppRow(p, isTerminatedMalware) {
     : (isSusp ? '<span class="tm-status-warn-tag">⚠️ Suspicious</span>' : '<span class="tm-status-running-tag">Running</span>');
 
   var actionBtn = '';
-  if (isSusp || p.ch2Trojan) {
-    if (isKilled) {
-      actionBtn = '<span class="tm-terminated-tag">✓ Stopped</span>';
-    } else {
-      actionBtn = '<button type="button" class="tm-end-btn" onclick="event.stopPropagation(); tmSelectRow(\'' + p.pid + '\'); tmEndSelectedTask()">End Task</button>';
-    }
+  if (isKilled) {
+    actionBtn = '<span class="tm-terminated-tag">✓ Stopped</span>';
+  } else {
+    // Functional End Task button for all application processes; works only when process is selected
+    actionBtn = '<button type="button" class="tm-end-btn" ' +
+      (isSelected ? '' : 'disabled ') +
+      'onclick="event.stopPropagation(); if(_tmSelectedPid===\'' + p.pid + '\'){ tmEndSelectedTask(); }" ' +
+      'title="' + (isSelected ? 'End selected process' : 'Select process to enable End Task') + '">' +
+      'End Task</button>';
   }
 
   var rowClasses = 'tm-process-row' +
@@ -858,6 +879,17 @@ function renderG4TaskManager() {
   initTaskManager();
 }
 window.renderG4TaskManager = renderG4TaskManager;
+
+/**
+ * Stop Task Manager live-update intervals so they don't keep firing after a
+ * chapter restart. Called by game-reset.js during any chapter restart sequence.
+ * Safe to call even when Task Manager was never opened (intervals are null).
+ */
+function _tmStopAllIntervals() {
+  if (_tmIntervalId)  { clearInterval(_tmIntervalId);  _tmIntervalId  = null; }
+  if (_tmUptimeTimer) { clearInterval(_tmUptimeTimer); _tmUptimeTimer = null; }
+}
+window.tmStopAllIntervals = _tmStopAllIntervals;
 
 (function() {
   for (var i = 0; i < 40; i++) {

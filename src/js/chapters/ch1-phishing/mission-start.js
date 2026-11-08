@@ -150,7 +150,7 @@ window.resetCh1ZmailInterface = resetCh1ZmailInterface;
 // MISSION
 // ═══════════════════════════════════════════════════════════
 
-function startMission(openGmail = false, forceFresh = false) {
+function startMission(openGmail = false, forceFresh = false, delayIntro = false) {
   // Guard: If another chapter is currently active, abort immediately to prevent cross-chapter leakage
   const activeCatCheck = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
   if (activeCatCheck && activeCatCheck !== 'phishing') {
@@ -363,117 +363,9 @@ function startMission(openGmail = false, forceFresh = false) {
     clearTimeout(window._ryanMissionIntroTimer);
     window._ryanMissionIntroTimer = null;
   }
-  if (typeof RyanGuide !== 'undefined') {
+  if (!delayIntro && typeof RyanGuide !== 'undefined') {
     window._ryanMissionIntroTimer = setTimeout(function() {
-      const activeCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
-      if (activeCat !== 'phishing' || gameState.phase !== 'mission') return;
-
-      // ── If a WIP post-test is pending from a mid-test page refresh, relaunch it ──
-      // Note: pre-test always shows fresh Ryan intro (WIP was cleared above).
-      if (window._pendingTestResume === 'posttest') {
-        window._pendingTestResume = null;
-        setTimeout(function() {
-          if (typeof RyanPosttest !== 'undefined' &&
-              RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress()) {
-            RyanPosttest.launch(null);
-            if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
-          } else {
-            if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
-          }
-        }, 300);
-        return;
-      }
-
-      // Ryan's intro is calm and friendly, and is written to lead straight
-      // into the 20-question pre-test. After the test he reacts to the score
-      // (see RYAN_PRETEST_REACTIONS) and then bridges into the lesson.
-     var ryanIntroPart1 = [
-  { text: "Hey Alex! Welcome to Technical Solutions!. I'm Ryan, your IT support mentor. It's your first day as our new intern, right? Glad to have you on board!", state: 'speaking' },
-  { text: "Before we get started with your tasks, I'd like you to take a short pre-test about cybersecurity. It's just to see what you already know about online threats and scams.", state: 'speaking' },
-  { text: "Don't worry, Alex. This isn't a graded exam, so there's no pressure to get everything right. Just answer based on what you know.", state: 'thinking' },
-  { text: "Ready for your first activity? Let's see what you've got!", state: 'success', label: "Let's Begin" }
-];
-var ryanReactions = {
-  perfect: [
-    { text: "Wow, Alex! 20 out of 20! That's impressive. Looks like you already know your way around cybersecurity!", state: 'success' },
-    { text: "Great job! Now let's see how you handle some real situations. Things can get a little tricky from here!", state: 'speaking' }
-  ],
-  great: [
-    { text: "Nice work, Alex! You've got a pretty good understanding of online safety.", state: 'success' },
-    { text: "You missed a few tricky ones, but that's okay. We'll go over those as we work through your training.", state: 'speaking' }
-  ],
-  ok: [
-    { text: "Not bad, Alex! You've got the basics down, and that's a good start.", state: 'success' },
-    { text: "There are still a few things to learn, but don't worry. I'll help you get better at spotting online threats.", state: 'speaking' }
-  ],
-  low: [
-    { text: "Hey, Alex, don't let the score get you down. It's your first day, after all!", state: 'speaking' },
-    { text: "You're here to learn, and that's what matters. We'll take it one step at a time, and I'll help you spot those threats along the way.", state: 'success' }
-  ]
-};
-
-    var ryanIntroPart2 = [
-  // === Bridge from the pre-test into the lesson ===
-  { text: "So, Alex, here's something you should know. Hackers don't always use complicated tricks to break into systems. Sometimes, they just trick people into giving away important information.", state: 'thinking' },
-  { text: "They might send messages that make you panic, rush into something, or get excited about winning a free prize. That's how they catch people off guard.", state: 'concerned' },
-
-  // === Common Threats ===
-  { text: "One common trick is called <strong>Phishing</strong>. Scammers pretend to be someone you trust, like a bank, a company, or even a coworker, just to steal your information.", state: 'speaking' },
-  { text: "They can also use phone calls. That's called <strong>Vishing</strong>. When they do it through text messages, it's called <strong>Smishing</strong>. Different methods, but the same goal: to trick you.", state: 'speaking' },
-  { text: "Be careful with links and login pages, too. Some fake websites look almost exactly like the real ones. They can even contain harmful files called <strong>Malware</strong>.", state: 'concerned' },
-
-  // === Why It Matters ===
-  { text: "Here's why this matters, Alex. Imagine someone in this office clicks a dangerous link. It could put their computer and even the company's network at risk.", state: 'thinking' },
-  { text: "That's why we need you to stay alert. As part of the team, you can help keep our systems and everyone's information safe.", state: 'success' },
-
-  // === STOP → CHECK → VERIFY → ACT ===
-  { text: "Now, whenever you receive a suspicious email, remember these four simple steps. They'll help you make safer decisions.", state: 'thinking' },
-  { text: "<strong>1. STOP:</strong> Don't rush to click anything. Take a moment to think.", state: 'speaking' },
-  { text: "<strong>2. CHECK:</strong> Look at the sender's email address, check the links, and watch out for spelling mistakes.", state: 'speaking' },
-  { text: "<strong>3. VERIFY:</strong> If something seems suspicious, contact the person or company through their official channels. You can also ask the IT team.", state: 'speaking' },
-  { text: "<strong>4. ACT:</strong> If you confirm that the email is suspicious, report it to the IT team. Never click the links or share your information.", state: 'speaking' },
-
-  // === Transition to Zmail ===
-  { text: "Alright, Alex! That's enough for our little lesson. Let's put what you've learned into practice.", state: 'speaking' },
-  { text: "Open <strong>Zmail</strong> on your desktop. You'll find your first set of emails there. Don't forget to check your <strong>Sticky Notes</strong> for your mission goals and helpful reminders!", state: 'success' }
-];
-
-      var ryanFinishLesson = function() {
-        if (gameState.phase !== 'mission') return;
-        // Release the main-flow lock so reactive app-open dialogues work after this
-        if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
-        // ch1InjectWave calls renderEmailList + updateFolderCounts internally
-        if (ch1InboxEmails.length === 0) {
-          ch1InjectWave(1);
-        }
-        if (typeof IconAttention !== 'undefined') IconAttention.show('gmail');
-      };
-
-      // Pre-test always runs — Ryan reacts to the actual score, then continues with the lesson.
-      var ryanContinueLesson = function(result, info) {
-        if (gameState.phase !== 'mission') return;
-        // Release the main-flow lock — pretest is done, gameplay dialogues must work freely
-        if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
-        var key = null;
-        if (result && typeof RyanPretest !== 'undefined') {
-          key = RyanPretest.tierOf(result);
-        }
-        var reaction = key && ryanReactions[key] ? ryanReactions[key] : [];
-        RyanGuide.speak(reaction.concat(ryanIntroPart2), { mainFlow: true, onDone: ryanFinishLesson });
-      };
-
-      RyanGuide.speak(ryanIntroPart1, {
-        mainFlow: true,
-        moreAfter: true,
-        onDone: function() {
-          if (gameState.phase !== 'mission') return;
-          if (typeof RyanPretest !== 'undefined') {
-            RyanPretest.launch(ryanContinueLesson);
-          } else {
-            ryanContinueLesson(null);
-          }
-        }
-      });
+      startCh1RyanIntro();
     }, 2000);
   }
 
@@ -483,6 +375,139 @@ var ryanReactions = {
     // Sticky note opens manually — do NOT auto-open here
   }
 }
+
+/** Starts Ryan's Chapter 1 introductory desktop dialogue */
+function startCh1RyanIntro() {
+  if (window._ryanMissionIntroTimer) {
+    clearTimeout(window._ryanMissionIntroTimer);
+    window._ryanMissionIntroTimer = null;
+  }
+  window._currentChapterCategory = 'phishing';
+  if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'phishing';
+  if (typeof gameState !== 'undefined') {
+    gameState.phase = 'mission';
+    gameState.currentChapter = 1;
+    gameState.playerName = 'Alex';
+  }
+  if (typeof RyanGuide === 'undefined') return;
+
+  const desktop = document.getElementById('desktop');
+  if (desktop) {
+    desktop.style.visibility = 'visible';
+    desktop.style.opacity = '1';
+    desktop.style.pointerEvents = 'auto';
+  }
+
+  // ── If a WIP post-test is pending from a mid-test page refresh, relaunch it ──
+  // Note: pre-test always shows fresh Ryan intro (WIP was cleared above).
+  if (window._pendingTestResume === 'posttest') {
+    window._pendingTestResume = null;
+    setTimeout(function() {
+      if (typeof RyanPosttest !== 'undefined' &&
+          RyanPosttest.hasWipProgress && RyanPosttest.hasWipProgress()) {
+        RyanPosttest.launch(null);
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+      } else {
+        if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+      }
+    }, 300);
+    return;
+  }
+
+  // Ryan's intro is calm and friendly, and is written to lead straight
+  // into the 20-question pre-test. After the test he reacts to the score
+  // (see RYAN_PRETEST_REACTIONS) and then bridges into the lesson.
+  var ryanIntroPart1 = [
+    { text: "Hey Alex! Welcome to Technical Solutions!. I'm Ryan, your IT support mentor. It's your first day as our new intern, right? Glad to have you on board!", state: 'speaking' },
+    { text: "Before we get started with your tasks, I'd like you to take a short pre-test about cybersecurity. It's just to see what you already know about online threats and scams.", state: 'speaking' },
+    { text: "Don't worry, Alex. This isn't a graded exam, so there's no pressure to get everything right. Just answer based on what you know.", state: 'thinking' },
+    { text: "Ready for your first activity? Let's see what you've got!", state: 'success', label: "Let's Begin" }
+  ];
+  var ryanReactions = {
+    perfect: [
+      { text: "Wow, Alex! 20 out of 20! That's impressive. Looks like you already know your way around cybersecurity!", state: 'success' },
+      { text: "Great job! Now let's see how you handle some real situations. Things can get a little tricky from here!", state: 'speaking' }
+    ],
+    great: [
+      { text: "Nice work, Alex! You've got a pretty good understanding of online safety.", state: 'success' },
+      { text: "You missed a few tricky ones, but that's okay. We'll go over those as we work through your training.", state: 'speaking' }
+    ],
+    ok: [
+      { text: "Not bad, Alex! You've got the basics down, and that's a good start.", state: 'success' },
+      { text: "There are still a few things to learn, but don't worry. I'll help you get better at spotting online threats.", state: 'speaking' }
+    ],
+    low: [
+      { text: "Hey, Alex, don't let the score get you down. It's your first day, after all!", state: 'speaking' },
+      { text: "You're here to learn, and that's what matters. We'll take it one step at a time, and I'll help you spot those threats along the way.", state: 'success' }
+    ]
+  };
+
+  var ryanIntroPart2 = [
+    // === Bridge from the pre-test into the lesson ===
+    { text: "So, Alex, here's something you should know. Hackers don't always use complicated tricks to break into systems. Sometimes, they just trick people into giving away important information.", state: 'thinking' },
+    { text: "They might send messages that make you panic, rush into something, or get excited about winning a free prize. That's how they catch people off guard.", state: 'concerned' },
+
+    // === Common Threats ===
+    { text: "One common trick is called <strong>Phishing</strong>. Scammers pretend to be someone you trust, like a bank, a company, or even a coworker, just to steal your information.", state: 'speaking' },
+    { text: "They can also use phone calls. That's called <strong>Vishing</strong>. When they do it through text messages, it's called <strong>Smishing</strong>. Different methods, but the same goal: to trick you.", state: 'speaking' },
+    { text: "Be careful with links and login pages, too. Some fake websites look almost exactly like the real ones. They can even contain harmful files called <strong>Malware</strong>.", state: 'concerned' },
+
+    // === Why It Matters ===
+    { text: "Here's why this matters, Alex. Imagine someone in this office clicks a dangerous link. It could put their computer and even the company's network at risk.", state: 'thinking' },
+    { text: "That's why we need you to stay alert. As part of the team, you can help keep our systems and everyone's information safe.", state: 'success' },
+
+    // === STOP → CHECK → VERIFY → ACT ===
+    { text: "Now, whenever you receive a suspicious email, remember these four simple steps. They'll help you make safer decisions.", state: 'thinking' },
+    { text: "<strong>1. STOP:</strong> Don't rush to click anything. Take a moment to think.", state: 'speaking' },
+    { text: "<strong>2. CHECK:</strong> Look at the sender's email address, check the links, and watch out for spelling mistakes.", state: 'speaking' },
+    { text: "<strong>3. VERIFY:</strong> If something seems suspicious, contact the person or company through their official channels. You can also ask the IT team.", state: 'speaking' },
+    { text: "<strong>4. ACT:</strong> If you confirm that the email is suspicious, report it to the IT team. Never click the links or share your information.", state: 'speaking' },
+
+    // === Transition to Zmail ===
+    { text: "Alright, Alex! That's enough for our little lesson. Let's put what you've learned into practice.", state: 'speaking' },
+    { text: "Open <strong>Zmail</strong> on your desktop. You'll find your first set of emails there. Don't forget to check your <strong>Sticky Notes</strong> for your mission goals and helpful reminders!", state: 'success' }
+  ];
+
+  var ryanFinishLesson = function() {
+    if (gameState.phase !== 'mission' && gameState.phase !== 'phishing') return;
+    // Release the main-flow lock so reactive app-open dialogues work after this
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+    // ch1InjectWave calls renderEmailList + updateFolderCounts internally
+    if (ch1InboxEmails.length === 0) {
+      ch1InjectWave(1);
+    }
+    if (typeof IconAttention !== 'undefined') IconAttention.show('gmail');
+  };
+
+  // Pre-test always runs — Ryan reacts to the actual score, then continues with the lesson.
+  var ryanContinueLesson = function(result, info) {
+    if (gameState.phase !== 'mission' && gameState.phase !== 'phishing') return;
+    // Release the main-flow lock — pretest is done, gameplay dialogues must work freely
+    if (typeof RyanGuide !== 'undefined' && RyanGuide.releaseMainFlow) RyanGuide.releaseMainFlow();
+    var key = null;
+    if (result && typeof RyanPretest !== 'undefined') {
+      key = RyanPretest.tierOf(result);
+    }
+    var reaction = key && ryanReactions[key] ? ryanReactions[key] : [];
+    RyanGuide.speak(reaction.concat(ryanIntroPart2), { mainFlow: true, chapter: 'phishing', onDone: ryanFinishLesson });
+  };
+
+  RyanGuide.releaseMainFlow();
+  RyanGuide.speak(ryanIntroPart1, {
+    mainFlow: true,
+    moreAfter: true,
+    chapter: 'phishing',
+    onDone: function() {
+      if (gameState.phase !== 'mission' && gameState.phase !== 'phishing') return;
+      if (typeof RyanPretest !== 'undefined') {
+        RyanPretest.launch(ryanContinueLesson);
+      } else {
+        ryanContinueLesson(null);
+      }
+    }
+  });
+}
+window.startCh1RyanIntro = startCh1RyanIntro;
 
 /**
 
@@ -630,6 +655,12 @@ function resumeChapter1Mission(savedData) {
   gameState.phase = 'mission';
   window._currentChapterCategory = 'phishing';
   if (typeof activeCategoryStory !== 'undefined') activeCategoryStory = 'phishing';
+  if (typeof updateLoginScreenForChapter === 'function') {
+    updateLoginScreenForChapter('phishing');
+  }
+  if (typeof setupChapterDesktop === 'function') {
+    setupChapterDesktop('phishing');
+  }
 
   // Restore scores & counts
   if (savedData) {

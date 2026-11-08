@@ -962,6 +962,21 @@ function submitBrowserUrl() {
   if (input) browserGo(input.value);
 }
 
+function _extractSearchQuery(raw) {
+  if (!raw) return '';
+  const str = String(raw).trim();
+  if (/^https?:\/\/(www\.)?google\.com\/search/i.test(str)) {
+    try {
+      const u = new URL(str);
+      return (u.searchParams.get('q') || '').trim();
+    } catch (_) {
+      const parts = str.split('q=')[1];
+      if (parts) return decodeURIComponent(parts.split('&')[0] || '').trim();
+    }
+  }
+  return str;
+}
+
 function browserGo(raw) {
   const trimmed = (raw || '').trim();
   if (!trimmed) return;
@@ -971,13 +986,24 @@ function browserGo(raw) {
 
   // Only mark checklist complete if the search query returns real results (a known cyber topic).
   // Searches that produce a "did not match" no-results page do NOT count.
-  if (window._awardClaimed && window._postAwardTasks && !isPhish && isSearch) {
+  const _isCh1PostAward = (typeof _isChapter1Active === 'function' ? _isChapter1Active() : (!window._currentChapterCategory || window._currentChapterCategory === 'phishing')) && window._awardClaimed;
+  if (_isCh1PostAward && window._postAwardTasks && !isPhish && isSearch) {
     const _q = trimmed.toLowerCase();
     const _hasCyberResults =
       /cyber|phish|malware|trojan|virus|spyware|worm|ransomware|encrypt|ransom|scam|spoof|social.?engineer|fake.?login|infosec|security|email|download|cisa|tips?/i.test(_q);
     if (_hasCyberResults) {
       window._postAwardTasks.phishingSearched = true;
       if (typeof _refreshPostAwardChecklist === 'function') _refreshPostAwardChecklist();
+    }
+  }
+
+  // Chapter 2: Search for Malware on the Browser (requires user to search for malware-related topics)
+  const _isCh2 = (typeof _isChapter2Active === 'function' ? _isChapter2Active() : (window._currentChapterCategory === 'malware'));
+  if (_isCh2 && typeof window.ch2OnBrowserSearch === 'function' && !isPhish) {
+    const qText = _extractSearchQuery(trimmed);
+    const isMalwareSearch = /malware|trojan|cryptominer|crypto.?miner|bitcoin.?miner|ransomware|spyware|adware|worm|rootkit|botnet|keylogger|backdoor|virus/i.test(qText);
+    if (isMalwareSearch) {
+      window.ch2OnBrowserSearch(qText);
     }
   }
 
@@ -1556,9 +1582,18 @@ window.BROWSER_HOME_HTML = BROWSER_HOME_HTML;
 function switchGoogleSearchTab(tabName, query) {
   const cleanQ = (query || 'phishing').trim();
   const targetUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanQ)}&tab=${encodeURIComponent(tabName)}`;
-  if (window._awardClaimed && window._postAwardTasks) {
+  const _isCh1PostAward = (typeof _isChapter1Active === 'function' ? _isChapter1Active() : (!window._currentChapterCategory || window._currentChapterCategory === 'phishing')) && window._awardClaimed;
+  if (_isCh1PostAward && window._postAwardTasks) {
     window._postAwardTasks.phishingSearched = true;
     if (typeof _refreshPostAwardChecklist === 'function') _refreshPostAwardChecklist();
+  }
+  const _isCh2 = (typeof _isChapter2Active === 'function' ? _isChapter2Active() : (window._currentChapterCategory === 'malware'));
+  if (_isCh2 && typeof window.ch2OnBrowserSearch === 'function') {
+    const qText = _extractSearchQuery(cleanQ);
+    const isMalwareSearch = /malware|trojan|cryptominer|crypto.?miner|bitcoin.?miner|ransomware|spyware|adware|worm|rootkit|botnet|keylogger|backdoor|virus/i.test(qText);
+    if (isMalwareSearch) {
+      window.ch2OnBrowserSearch(qText);
+    }
   }
   const tab = getActiveTab();
   if (tab) {

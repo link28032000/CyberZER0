@@ -442,3 +442,342 @@
   filter: drop-shadow(0 0 4px #ef4444);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   GTA VI APPLICATION & IN-APP WANNACRY SIMULATION STYLES
+   ══════════════════════════════════════════════════════════════ */
+#win-gta6 {
+  width: 900px;
+  height: 620px;
+  min-width: 720px;
+  min-height: 500px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 25px 75px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#win-gta6.hidden,
+#win-gta6.minimized {
+  display: none !important;
+}
+
+.gta-titlebar {
+  background: #111827;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.gta-window-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #090d16;
+  position: relative;
+}
+
+/* ── View 1: Normal GTA VI Launcher State ── */
+.gta-normal-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #090e17;
+}
+
+.gta-launcher-hero {
+  position: relative;
+  min-height: 280px;
+  background: linear-gradient(135deg, #2b0938 0%, #1e1b4b 45%, #0369a1 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 24px 28px;
+  overflow: hidden;
+}
+
+.gta-hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(244, 63, 94, 0.35) 0%, transparent 60%),
+              linear-gradient(to top, rgba(9, 14, 23, 0.95) 0%, transparent 80%);
+  pointer-events: none;
+}
+
+.gta-hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.gta-hero-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+
+.gta-hero-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.gta-hero-subtitle {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  margin: 0 0 16px 0;
+}
+
+.gta-hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.gta-play-btn {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  border: 1px solid #38bdf8;
+  border-radius: 5px;
+  padding: 10px 24px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+  transition: all 0.15s ease;
+}
+
+.gta-play-btn:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.55);
+}
+
+.gta-steam-link-btn {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gta-steam-link-btn:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.gta-launcher-details {
+  padding: 20px 28px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.gta-detail-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.gta-detail-label {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gta-detail-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.gta-detail-val.ready {
+  color: #22c55e;
+}
+
+/* ── View 2: Ransomware View (Inside GTA VI Window) ── */
+.gta-ransomware-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1e293b;
+}
+
+.gta-sim-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, #7f1d1d, #991b1b);
+  border-bottom: 2px solid #ef4444;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.gta-sim-badge {
+  font-size: 12.5px;
+  color: #fee2e2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gta-sim-alert-dot {
+  font-size: 16px;
+  animation: wncryPulse 1s infinite alternate;
+}
+
+/* ── PROMINENT EXIT SIMULATION BUTTON ── */
+.gta-exit-sim-btn {
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.7);
+  transition: all 0.15s ease;
+}
+
+.gta-exit-sim-btn:hover {
+  background: #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.95);
+  transform: translateY(-1px);
+}
+
+.gta-exit-sim-btn:active {
+  transform: translateY(0);
+}
+
+.gta-wncry-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.gta-wncry-left {
+  width: 320px;
+  min-width: 290px;
+  background: #0f172a;
+  border-right: 2px solid #b91c1c;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gta-wncry-right {
+  flex: 1;
+  background: #090d16;
+  color: #f1f5f9;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gta-wncry-scroll {
+  flex: 1;
+  padding: 18px 22px;
+  overflow-y: auto;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.gta-btn-continue {
+  background: #0284c7;
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 8px 20px;
+  font-size: 13px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gta-btn-continue:hover {
+  background: #0369a1;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.gta-btn-exit {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+  font-weight: 600;
+  padding: 8px 18px;
+  font-size: 13px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gta-btn-exit:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.gta-advisory-hero {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(245, 158, 11, 0.16));
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.gta-advisory-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.gta-advisory-text {
+  flex: 1;
+}
+
+.gta-advisory-desc {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fee2e2;
+  line-height: 1.5;
+  font-style: italic;
+}
+

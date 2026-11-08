@@ -269,7 +269,9 @@ function renderSteamStore() {
       <div class="steam-advisory-text">
         <div class="steam-advisory-title">Official Steam &amp; Rockstar Games Security Notice</div>
         <div class="steam-advisory-body">
-          <strong>Grand Theft Auto VI has NOT released for PC yet.</strong> Attackers frequently prey on anticipation by advertising fake "early leak installers", cracked game torrents, and mod executables. As explored with Ryan in Chapter 2, these files contain dangerous <strong>Trojan Horses, Worms, and Spyware</strong>. Always check the official Steam Store and never run unauthorized setup files on your system!
+          <strong>Grand Theft Auto VI has NOT released for PC yet.</strong> Attackers frequently prey on anticipation by advertising fake "early leak installers", cracked game torrents, and mod executables. As explored with Ryan in Chapter 2, these files contain dangerous <strong>Trojan Horses, Worms, and Spyware</strong>.<br><br>
+          🛡️ <strong>How to Prevent:</strong> Never download unverified or cracked game files from third-party sites, and always keep your antivirus active.<br>
+          🎮 <strong>Support Game Developers:</strong> If you want a game, always download it through official websites or verified platforms like Steam. Legitimate purchases ensure your computer remains safe and directly support the hard-working developers who create the games you love!
         </div>
       </div>
     </div>
@@ -610,7 +612,7 @@ function steamFocusGame(gameId) {
     if (vp) vp.scrollTo({ top: 0, behavior: 'smooth' });
     const g = STEAM_STORE_GAMES[idx];
     if (g && g.isGta6 && typeof showToast === 'function') {
-      showToast('⚠️ Security Notice: Grand Theft Auto VI is NOT on PC yet! Beware of malicious fake installers.', 'warning');
+      showToast('⚠️ Security Notice: GTA VI is NOT on PC yet! Download from Steam or official sites to support developers.', 'warning');
     }
   }
 }

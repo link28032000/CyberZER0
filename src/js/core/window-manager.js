@@ -158,9 +158,16 @@ function openApp(appName) {
   if (appName === 'folder') {
     const isCh2 = (window._currentChapterCategory === 'malware' ||
                    (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
-                   (typeof gameState !== 'undefined' && gameState.phase === 'malware'));
-    if (isCh2 && typeof window.ch2OnExplorerOpened === 'function') {
-      window.ch2OnExplorerOpened();
+                   (typeof gameState !== 'undefined' && gameState.phase === 'malware') ||
+                   Boolean(window._ch2MissionStarted));
+    if (isCh2) {
+      if (typeof window.ch2OnExplorerOpened === 'function') {
+        window.ch2OnExplorerOpened();
+      }
+      const note = document.getElementById('sticky-note');
+      if (note && !note.classList.contains('hidden') && typeof updateStickyNoteForPhase === 'function') {
+        updateStickyNoteForPhase('malware');
+      }
     }
     if (!isCh2) {
       if (typeof initPretestResultDocument === 'function') initPretestResultDocument();
@@ -241,6 +248,16 @@ function openApp(appName) {
 
   if (appName === 'videoplayer') {
     if (typeof syncMediaPlayerVolume === 'function') syncMediaPlayerVolume();
+    const isCh2 = typeof _isChapter2Active === 'function' && _isChapter2Active();
+    if (isCh2) {
+      const vid = document.getElementById('videoplayer-video');
+      if (vid && (!vid.src || !vid.src.toLowerCase().includes('malware'))) {
+        const malFile = (typeof getExplorerFileById === 'function' ? getExplorerFileById('vid_what_is_malware') : null);
+        if (typeof openVideoPlayer === 'function') {
+          openVideoPlayer(malFile);
+        }
+      }
+    }
   }
 
   if (appName === 'comms') {
@@ -464,7 +481,10 @@ function minimizeApp(appName) {
   if (appName === 'videoplayer' && typeof vpExitFullscreen === 'function') vpExitFullscreen();
   if (appName === 'space-fighter' && typeof sfStopGameOnClose === 'function') sfStopGameOnClose();
   const win = document.getElementById(`win-${appName}`);
-  appState[appName].minimized = true;
+  if (!win) return;
+  if (appState[appName]) {
+    appState[appName].minimized = true;
+  }
   win.classList.add('minimized');
   win.classList.remove('focused');
   updateTaskbar();
@@ -574,17 +594,23 @@ function taskbarClick(appName) {
 
 function minimizeApp_restore(appName) {
   const win = document.getElementById(`win-${appName}`);
-  appState[appName].minimized = false;
-  win.classList.remove('minimized');
+  if (!win) return;
+  if (appState[appName]) {
+    appState[appName].minimized = false;
+  }
+  win.classList.remove('minimized', 'hidden');
   focusWindow(appName);
   updateTaskbar();
+  if (appName === 'space-fighter' && typeof sfResumeGameOnRestore === 'function') {
+    sfResumeGameOnRestore();
+  }
 }
 
 function updateTaskbar() {
   updateAppLockStates();
   ['gmail', 'browser', 'folder', 'antivirus', 'comms', 'ransomware',
   'wifi-settings', 'docviewer', 'imageviewer', 'videoplayer', 'taskmanager', 'control-panel', 'steam',
-  'space-fighter', 'wannacry', 'recycle'].forEach(appName => {
+  'space-fighter', 'wannacry', 'recycle', 'gta6'].forEach(appName => {
     const btn = document.getElementById(`taskbar-${appName}`);
     if (!btn) return;
     const state = appState[appName];
@@ -600,7 +626,7 @@ function updateTaskbar() {
         btn.classList.add('active');
       }
     } else {
-      if (appName === 'docviewer' || appName === 'imageviewer' || appName === 'videoplayer' || appName === 'control-panel' || appName === 'steam' || appName === 'ransomware' || appName === 'space-fighter' || appName === 'wannacry' || appName === 'recycle') {
+      if (appName === 'docviewer' || appName === 'imageviewer' || appName === 'videoplayer' || appName === 'control-panel' || appName === 'steam' || appName === 'ransomware' || appName === 'space-fighter' || appName === 'wannacry' || appName === 'recycle' || appName === 'gta6') {
         btn.classList.add('hidden');
       }
     }

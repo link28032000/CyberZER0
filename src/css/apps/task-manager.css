@@ -523,6 +523,13 @@
   background: #b91c1c;
   box-shadow: 0 2px 8px rgba(185, 28, 28, 0.5);
 }
+.tm-end-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #64748b;
+  box-shadow: none;
+  pointer-events: none;
+}
 
 /* Empty Search Results Notice */
 .tm-no-results {

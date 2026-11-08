@@ -47,10 +47,10 @@ const RyanGuide = (() => {
   // Show / hide overlay
   function _show() {
     const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
-    if (activeCat !== 'phishing' && activeCat !== 'malware') return; // Allow Chapter 1 and Chapter 2 mentor guide Ryan
+    if (activeCat !== 'phishing' && activeCat !== 'malware' && activeCat !== 'ransomware') return; // Allow Chapter 1, Chapter 2, and Chapter 4 mentor guide Ryan
     // Guard: do not show dialogue while the main menu is visible
     const _mmGuard = document.getElementById('overlay-main-menu');
-    if (_mmGuard && (_mmGuard.classList.contains('active') || (_mmGuard.style.display !== 'none' && _mmGuard.style.display !== ''))) return;
+    if (_mmGuard && _mmGuard.classList.contains('active')) return;
     const o = el().overlay;
     if (!o) return;
     const roleEl = o.querySelector('.ryan-role');
@@ -289,7 +289,7 @@ const RyanGuide = (() => {
    */
   function speak(messages, opts) {
     const activeCat = window._currentChapterCategory || activeCategoryStory || 'phishing';
-    if (activeCat !== 'phishing' && activeCat !== 'malware') {
+    if (activeCat !== 'phishing' && activeCat !== 'malware' && activeCat !== 'ransomware') {
       dismiss();
       return;
     }
@@ -312,6 +312,15 @@ const RyanGuide = (() => {
       });
       if (isCh2) {
         console.warn('[RyanGuide.speak] Blocked Chapter 2 dialogue while in Chapter 1');
+        return;
+      }
+    } else if (activeCat === 'ransomware' && Array.isArray(messages)) {
+      const isOther = messages.some(function(m) {
+        const txt = (typeof m === 'string') ? m : (m && m.text ? String(m.text) : '');
+        return /Ethan\b|GTA VI|TrojanCoinBitMiner|CoinBitMiner|Space Fighter/i.test(txt);
+      });
+      if (isOther) {
+        console.warn('[RyanGuide.speak] Blocked other chapter dialogue while in Chapter 4');
         return;
       }
     }
@@ -462,6 +471,12 @@ const RyanGuide = (() => {
     _mainFlowLocked = false;
     _onDoneCallback = null;
     dismiss(true);
+    const o = el().overlay;
+    if (o) {
+      _clearAnimHandler();
+      o.classList.remove('ryan-animate-in', 'ryan-animate-out', 'ryan-speaking', 'ryan-thinking', 'ryan-concerned', 'ryan-success');
+      o.classList.add('hidden');
+    }
   }
 
   function lockMainFlow()    { _mainFlowLocked = true; }

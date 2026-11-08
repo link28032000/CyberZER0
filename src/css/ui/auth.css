@@ -276,6 +276,94 @@
   flex-shrink: 0;
 }
 
+/* ── OR Divider ── */
+.cz-auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.cz-auth-or::before,
+.cz-auth-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Play as Guest Button ── */
+.cz-guest-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(0, 229, 255, 0.35);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.08), rgba(0, 150, 255, 0.04));
+  color: #00f0ff;
+  font: 700 14px var(--font-main, sans-serif);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background  0.22s ease,
+    border-color 0.22s ease,
+    transform   0.16s ease,
+    box-shadow  0.22s ease,
+    color       0.22s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.cz-guest-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(0, 229, 255, 0.15) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.cz-guest-btn:hover::after {
+  transform: translateX(100%);
+}
+
+.cz-guest-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(0, 150, 255, 0.12));
+  border-color: #00f0ff;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.4),
+    0 0 25px rgba(0, 229, 255, 0.3);
+}
+
+.cz-guest-btn:active {
+  transform: translateY(0);
+}
+
+.cz-guest-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 /* Auth message */
 .cz-auth-msg {
   min-height: 18px;

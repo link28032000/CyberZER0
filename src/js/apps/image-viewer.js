@@ -16,26 +16,31 @@ function openImageViewer(file) {
   const canvasEl = document.getElementById('photos-canvas');
   const imgSrc = file.mediaSrc || 'assets/Pictures/cat.png';
 
-  // Check if we need to simulate the slow image loading
-  // Slow loading happens in Chapter 2 Mission 1 before BM is terminated
-  const shouldSimulateSlowLoad = isCh2 && window._ch2Mission &&
-    (!window._ch2Mission.m1PictureViewed || (!window._ch2Mission.bmKilled && window._ch2Mission.currentMission === 1));
+  // Simulate slow image loading while the BM malware process is active.
+  // The slowdown is caused by the BM process consuming excessive CPU resources
+  // in the background. It stops once BM is terminated (Mission 3+) or uninstalled.
+  const bmActive = isCh2 && window._ch2Mission &&
+    !window._ch2Mission.bmKilled && !window._ch2Mission.bmUninstalled &&
+    !window._ch2Mission.trojanKilled && !window._ch2Mission.trojanUninstalled &&
+    (window._ch2Mission.currentMission <= 2);
+
+  const shouldSimulateSlowLoad = bmActive;
 
   if (shouldSimulateSlowLoad) {
     if (imgEl) {
       imgEl.style.display = 'none';
       imgEl.src = imgSrc;
     }
-    // Show spinner overlay
+    // Show a silent spinner — no text hints about CPU or malware.
+    // The slowness itself is the clue the user needs to discover.
     let overlay = document.getElementById('photos-slow-loading-overlay');
     if (!overlay && canvasEl) {
       overlay = document.createElement('div');
       overlay.id = 'photos-slow-loading-overlay';
-      overlay.style.cssText = 'position:absolute;inset:0;background:rgba(15,23,42,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;color:#f8fafc;font-family:system-ui,sans-serif;';
+      overlay.style.cssText = 'position:absolute;inset:0;background:rgba(15,23,42,0.80);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;color:#f8fafc;font-family:system-ui,sans-serif;';
       overlay.innerHTML = `
         <div style="width:40px;height:40px;border:3px solid rgba(56,189,248,0.25);border-top-color:#38bdf8;border-radius:50%;animation:photosSpinner 0.8s linear infinite;margin-bottom:12px;"></div>
-        <div style="font-weight:600;font-size:14px;color:#f1f5f9;">Loading high-resolution picture...</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">High CPU load &middot; System running slower than usual</div>
+        <div style="font-size:13px;color:#94a3b8;letter-spacing:0.02em;">Opening...</div>
       `;
       if (!document.getElementById('photos-spinner-style')) {
         const style = document.createElement('style');
@@ -48,6 +53,7 @@ function openImageViewer(file) {
     }
     if (overlay) overlay.style.display = 'flex';
 
+    // 3-second delay simulates the system struggling due to BM's CPU usage
     setTimeout(() => {
       if (overlay) overlay.style.display = 'none';
       if (imgEl) {
@@ -59,9 +65,9 @@ function openImageViewer(file) {
       if (typeof window.ch2OnPictureViewed === 'function') {
         window.ch2OnPictureViewed(file);
       }
-    }, 2200);
+    }, 3000);
   } else {
-    // Normal / Fast load (Mission 4+ or other chapters)
+    // Normal / instant load — BM has been uninstalled or this is Chapter 1
     const overlay = document.getElementById('photos-slow-loading-overlay');
     if (overlay) overlay.style.display = 'none';
     if (imgEl) {
@@ -71,10 +77,14 @@ function openImageViewer(file) {
       imgViewerRotation = 0;
       imgEl.style.transform = `scale(${imgViewerScale}) rotate(${imgViewerRotation}deg)`;
     }
-    if (isCh2 && window._ch2Mission && (window._ch2Mission.bmKilled || window._ch2Mission.currentMission >= 4)) {
+    if (isCh2 && window._ch2Mission && (window._ch2Mission.bmKilled || window._ch2Mission.currentMission >= 3)) {
       if (typeof window.ch2OnPictureViewedAgain === 'function') {
         window.ch2OnPictureViewedAgain(file);
       }
+    }
+    // Chapter 2: View All Malware Pictures Activity
+    if (typeof window.ch2OnMalwarePictureViewed === 'function') {
+      window.ch2OnMalwarePictureViewed(file);
     }
   }
 

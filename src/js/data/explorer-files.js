@@ -104,6 +104,25 @@ const EXPLORER_ADDITIONAL_FILES = {
       quarantined: false,
       scanned: false,
       mediaSrc: 'assets/video/video3.mp4'
+    },
+    {
+      id: 'vid_what_is_malware',
+      name: 'What Is Malware.mp4',
+      fakeExt: 'mp4',
+      realExt: 'mp4',
+      type: 'MP4 Video File (.mp4)',
+      size: '18.4 MB',
+      date: '10/26/2026 09:30 AM',
+      icon: '🎬',
+      isMalware: false,
+      threatName: 'Clean File',
+      threatCategory: 'SAFE',
+      hash: '3f82b7c91d4e0a6b5c8f1e2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c',
+      analysis: '✅ Educational cybersecurity video explaining malware categories, trojans, worms, and infection prevention.',
+      quarantined: false,
+      scanned: true,
+      mediaSrc: 'assets/video/what_is_malware.mp4',
+      title: 'What Is Malware?'
     }
   ],
   desktop: [
@@ -384,10 +403,10 @@ const EXPLORER_ADDITIONAL_FILES = {
       date: '8/15/2026 12:00 PM',
       icon: '<img src="assets/icons/Chapter 2 new apps/GTA6.svg" alt="GTA 6" style="width:32px;height:32px;" />',
       isMalware: false,
-      threatName: 'Safe',
-      threatCategory: 'SAFE',
+      threatName: 'Unverified Game Installer Trap',
+      threatCategory: 'SUSPICIOUS',
       hash: 'GAMES-GTA6-SHORTCUT-ETHAN',
-      analysis: '📁 Desktop shortcut to GTA VI game files.',
+      analysis: '⚠️ Unverified Fake Game Installer Trap: Grand Theft Auto VI has NOT been released for PC yet. This downloaded shortcut points to a counterfeit installer used as a Trojan Horse trap. Attackers use viral gaming anticipation to infect systems with hidden cryptominers (like the BM miner) and ransomware. To prevent malware, never download cracked or leaked games from third-party sites. If you want a game, always download it through official websites or platforms like Steam to protect your computer and support game developers.',
       quarantined: false,
       scanned: true,
       isSimulation: false
@@ -581,7 +600,7 @@ function generatePretestResultDocument(result) {
     type: 'Microsoft Word Document',
     size: '34 KB',
     date: formattedDate,
-    icon: '📄',
+    icon: '<img src="assets/Desktop/Word.png" alt="Word" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />',
     isMalware: false,
     threatName: 'Clean File',
     threatCategory: 'SAFE',
@@ -938,7 +957,7 @@ function generateCh2PretestResultDocument(result) {
     type: 'Microsoft Word Document',
     size: '36 KB',
     date: formattedDate,
-    icon: '📄',
+    icon: '<img src="assets/Desktop/Word.png" alt="Word" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />',
     isMalware: false,
     threatName: 'Clean File',
     threatCategory: 'SAFE',
@@ -1259,7 +1278,9 @@ function generateCh2AssessmentResultDocument(result) {
   return {
     id: 'doc_ch2_assessment_result',
     name: 'ch2_assessment_result_report.docx',
+    fakeExt: 'docx',
     realExt: 'docx',
+    icon: '<img src="assets/Desktop/Word.png" alt="Word" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />',
     size: '34.2 KB',
     date: formattedDate,
     type: 'Microsoft Word Document (.docx)',
@@ -1501,7 +1522,7 @@ function generatePosttestResultDocument(result) {
     type: 'Microsoft Word Document',
     size: '36 KB',
     date: formattedDate,
-    icon: '📄',
+    icon: '<img src="assets/Desktop/Word.png" alt="Word" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />',
     isMalware: false,
     threatName: 'Clean File',
     threatCategory: 'SAFE',
@@ -1842,14 +1863,315 @@ function renderPosttestReportHtml(file) {
     </table>`;
 }
 
+// ═════════════════════════════════════════════════════════════════
+// CHAPTER 2: MALWARE POST-TEST ASSESSMENT DOCUMENT GENERATOR
+// ═════════════════════════════════════════════════════════════════
+const CH2_POSTTEST_DOC_STORAGE_KEY = 'cyberzero_ch2_posttest_result_doc';
+
+function generateCh2PosttestResultDocument(result) {
+  if (!result) return null;
+  const score = typeof result.score === 'number' ? result.score : 0;
+  const total = typeof result.total === 'number' ? result.total : 20;
+  const percent = typeof result.percent === 'number' ? result.percent : Math.round((score / total) * 100);
+  const tier = result.tier || (score >= 19 ? 'mastery' : score >= 16 ? 'expert' : score >= 14 ? 'competent' : 'developing');
+  const rank = result.rank || (tier === 'mastery' ? 'Cyber Sentinel' : tier === 'expert' ? 'Malware Specialist' : tier === 'competent' ? 'Vigilant Analyst' : 'Developing Defender');
+
+  const reportData = {
+    playerName: 'Ethan',
+    role: 'Workstation User / Cyber Defender',
+    station: 'Station #02 · TechSolutions Engineering Dept',
+    completedAt: result.completedAt || new Date().toISOString(),
+    formattedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    score: score,
+    total: total,
+    correct: score,
+    incorrect: Math.max(0, total - score),
+    percent: percent,
+    tier: tier,
+    rank: rank,
+    answers: result.answers || []
+  };
+
+  return {
+    id: 'doc_ch2_posttest_result',
+    chapter: 2,
+    name: 'ch2_posttest_result_report.docx',
+    fakeExt: 'docx',
+    realExt: 'docx',
+    type: 'Microsoft Word Document',
+    size: '28 KB',
+    date: reportData.formattedDate,
+    dateModified: reportData.formattedDate,
+    author: 'Ryan (IT Support Mentor)',
+    icon: '<img src="assets/Desktop/Word.png" alt="Word" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />',
+    badge: 'REPORT',
+    analysis: `Official Chapter 2 Malware Mastery Evaluation Report for Ethan. Score: ${score}/${total} (${percent}%). Evaluation Rank: ${rank}. Verified clean document.`,
+    isPhishing: false,
+    reportData: reportData
+  };
+}
+
+function _findCh2PosttestResultData() {
+  try {
+    const raw = localStorage.getItem(CH2_POSTTEST_DOC_STORAGE_KEY);
+    if (raw) {
+      const doc = JSON.parse(raw);
+      if (doc) {
+        if (doc.name === 'Cybersecurity Malware Post-Test Assessment Report.docx') {
+          doc.name = 'ch2_posttest_result_report.docx';
+          try { localStorage.setItem(CH2_POSTTEST_DOC_STORAGE_KEY, JSON.stringify(doc)); } catch (e) {}
+        }
+        if (!doc.icon || typeof doc.icon !== 'string' || !doc.icon.includes('<img')) {
+          doc.icon = '<img src="assets/Desktop/Word.png" alt="Word" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />';
+        }
+        if (!doc.date && doc.dateModified) {
+          doc.date = doc.dateModified;
+        }
+        return doc;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function initCh2PosttestResultDocument() {
+  try {
+    const docFile = _findCh2PosttestResultData();
+    if (docFile && typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+      const docs = EXPLORER_ADDITIONAL_FILES.documents;
+      const existingIdx = docs.findIndex(f => f.id === 'doc_ch2_posttest_result');
+      if (existingIdx !== -1) {
+        docs[existingIdx] = docFile;
+      } else {
+        docs.push(docFile);
+      }
+    }
+  } catch (e) {}
+}
+
+function saveAndInjectCh2PosttestDocument(result) {
+  if (!result) return;
+  const docFile = generateCh2PosttestResultDocument(result);
+  if (!docFile) return;
+
+  try {
+    localStorage.setItem(CH2_POSTTEST_DOC_STORAGE_KEY, JSON.stringify(docFile));
+  } catch (e) {}
+
+  if (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined') {
+    if (!Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) {
+      EXPLORER_ADDITIONAL_FILES.documents = [];
+    }
+    const docs = EXPLORER_ADDITIONAL_FILES.documents;
+    const existingIdx = docs.findIndex(f => f.id === 'doc_ch2_posttest_result');
+    if (existingIdx !== -1) {
+      docs[existingIdx] = docFile;
+    } else {
+      docs.push(docFile);
+    }
+
+    if (typeof currentExplorerFolder !== 'undefined' && currentExplorerFolder === 'documents' && typeof renderFolderFiles === 'function') {
+      renderFolderFiles();
+    }
+  }
+
+  const docBadge = document.getElementById('sidebar-documents-badge');
+  const allDocs = (typeof EXPLORER_ADDITIONAL_FILES !== 'undefined' && Array.isArray(EXPLORER_ADDITIONAL_FILES.documents)) ? EXPLORER_ADDITIONAL_FILES.documents : [];
+  const visibleDocs = allDocs.filter(f => f.id !== 'doc_pretest_result' && f.id !== 'doc_posttest_result' && f.chapter !== 1);
+  if (docBadge) {
+    docBadge.textContent = visibleDocs.length;
+    docBadge.style.display = visibleDocs.length > 0 ? '' : 'none';
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('📄 Malware Post-Test Report saved to Documents', 'success');
+  }
+}
+
+function renderCh2PosttestReportHtml(file) {
+  const data = (file && file.reportData) ? file.reportData : (() => {
+    try {
+      const raw = localStorage.getItem(CH2_POSTTEST_DOC_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return (parsed && parsed.reportData) ? parsed.reportData : null;
+    } catch (e) { return null; }
+  })() || {};
+
+  const _esc = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  const playerName = data.playerName || 'Ethan';
+  const completedDate = data.formattedDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  const score = typeof data.score === 'number' ? data.score : 0;
+  const total = typeof data.total === 'number' ? data.total : 20;
+  const correct = typeof data.correct === 'number' ? data.correct : score;
+  const incorrect = typeof data.incorrect === 'number' ? data.incorrect : Math.max(0, total - correct);
+  const percent = typeof data.percent === 'number' ? data.percent : Math.round((correct / (total || 1)) * 100);
+  const tier = data.tier || (score >= 19 ? 'mastery' : score >= 16 ? 'expert' : score >= 14 ? 'competent' : 'developing');
+  const rank = data.rank || (tier === 'mastery' ? 'Cyber Sentinel' : tier === 'expert' ? 'Malware Specialist' : tier === 'competent' ? 'Vigilant Analyst' : 'Developing Defender');
+
+  let preResult = null;
+  try {
+    if (typeof Ch2Pretest !== 'undefined' && Ch2Pretest.getResult) preResult = Ch2Pretest.getResult();
+    if (!preResult) {
+      const rawPre = localStorage.getItem('cyberzero_ch2_pretest');
+      if (rawPre) preResult = JSON.parse(rawPre);
+    }
+  } catch (e) {}
+
+  let growthHtml = '';
+  if (preResult && typeof preResult.score === 'number') {
+    const preScore = preResult.score;
+    const preTotal = preResult.total || 20;
+    const prePct = typeof preResult.percent === 'number' ? preResult.percent : Math.round((preScore / preTotal) * 100);
+    const diff = percent - prePct;
+    const isGain = diff > 0;
+    const isSame = diff === 0;
+    const deltaBadge = isGain
+      ? `<span style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:999px; font-weight:700; font-size:11px;">▲ +${diff}% Improvement</span>`
+      : (isSame ? `<span style="background:#f1f5f9; color:#475569; padding:3px 10px; border-radius:999px; font-weight:700; font-size:11px;">★ Baseline Maintained</span>` : `<span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:999px; font-weight:700; font-size:11px;">${diff}% Differential</span>`);
+
+    growthHtml = `
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:#334155;">
+          <span style="font-size:16px;">📈</span>
+          <span><strong>Malware Pre-Test Baseline:</strong> ${preScore}/${preTotal} (${prePct}%) ➔ <strong>Final Post-Test:</strong> ${score}/${total} (${percent}%)</span>
+        </div>
+        <div>${deltaBadge}</div>
+      </div>
+    `;
+  }
+
+  const mentorRemarks = (tier === 'mastery')
+    ? "Twenty out of twenty! Outstanding work, Ethan! You demonstrated flawless cybersecurity instincts, expert forensic analysis, and master-level malware eradication skills."
+    : (tier === 'expert')
+    ? "Outstanding awareness, Ethan! You caught almost every threat indicator and think like a professional incident response analyst."
+    : (tier === 'competent')
+    ? "Good job, Ethan! You have built solid malware detection and system investigation habits. Always remember to inspect CPU hogs and verify official downloads."
+    : "You have taken great steps in malware investigation, Ethan! Keep reviewing process behavior and forensic removal steps to sharpen your defense instincts.";
+
+  return `
+    <div class="word-doc-header-banner">
+      <div>
+        <div class="word-doc-title">CYBERSECURITY MALWARE POST-TEST ASSESSMENT REPORT</div>
+        <div class="word-doc-subtitle">Chapter 2: The Hidden Threat — Malware Defense &amp; Incident Response Evaluation • Technical Solutions IT Security</div>
+      </div>
+      <div style="font-size:36px">🏆</div>
+    </div>
+
+    <div class="word-doc-meta-strip" style="display:flex; flex-wrap:wrap; gap:14px; background:#f8fafc; padding:8px 14px; border-radius:4px; border:1px solid #e2e8f0; font-size:11.5px; color:#475569; margin-bottom:20px;">
+      <span><strong>Player Name:</strong> <span style="color:#0f172a; font-weight:700;">${_esc(playerName)}</span></span>
+      <span><strong>Completion Date:</strong> <span style="color:#0f172a;">${_esc(completedDate)}</span></span>
+      <span><strong>Document Type:</strong> Official Malware Mastery Assessment</span>
+      <span><strong>Evaluation Rank:</strong> <span style="color:#1d4ed8; font-weight:700;">${_esc(rank)}</span></span>
+    </div>
+
+    <h3 style="color:#185abd; font-size:14px; margin:0 0 10px 0; letter-spacing:-0.2px;">
+      1. Performance Summary
+    </h3>
+
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:18px;">
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Score</div>
+        <div style="font-size:22px; font-weight:800; color:#0f172a; margin-top:2px;">${score} / ${total}</div>
+        <div style="font-size:10px; color:#94a3b8; margin-top:1px;">Points Earned</div>
+      </div>
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Correct Answers</div>
+        <div style="font-size:22px; font-weight:800; color:#15803d; margin-top:2px;">${correct}</div>
+        <div style="font-size:10px; color:#16a34a; margin-top:1px;">Verified Correct</div>
+      </div>
+      <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#991b1b; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Incorrect Answers</div>
+        <div style="font-size:22px; font-weight:800; color:#dc2626; margin-top:2px;">${incorrect}</div>
+        <div style="font-size:10px; color:#ef4444; margin-top:1px;">Areas for Review</div>
+      </div>
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:12px 8px; text-align:center;">
+        <div style="font-size:10px; color:#1e40af; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Proficiency Rate</div>
+        <div style="font-size:22px; font-weight:800; color:#1d4ed8; margin-top:2px;">${percent}%</div>
+        <div style="font-size:10px; color:#3b82f6; margin-top:1px;">Accuracy Index</div>
+      </div>
+    </div>
+
+    ${growthHtml}
+
+    <div style="background:#f8fafc; border-left:3px solid #185abd; padding:12px 14px; margin-bottom:20px; font-size:12px; color:#334155; line-height:1.6;">
+      <strong style="color:#0f172a;">IT Support Mentor (Ryan) Assessment:</strong><br>
+      <em>"${_esc(mentorRemarks)}"</em>
+    </div>
+
+    <h3 style="color:#185abd; font-size:14px; margin:0 0 10px 0; letter-spacing:-0.2px;">
+      2. Malware Domain Competency Breakdown
+    </h3>
+
+    <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:20px; border:1px solid #e2e8f0;">
+      <thead>
+        <tr style="background:#f1f5f9; color:#334155; text-align:left;">
+          <th style="padding:8px 10px; border-bottom:1px solid #cbd5e1;">Evaluated Domain</th>
+          <th style="padding:8px 10px; border-bottom:1px solid #cbd5e1;">Scope &amp; Core Security Principles</th>
+          <th style="padding:8px 10px; border-bottom:1px solid #cbd5e1; text-align:center;">Evaluation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Malware Concepts &amp; Cryptojacking</td>
+          <td style="padding:8px 10px; color:#475569;">Bitcoin miner trojans, silent execution, unauthorized hashing, and CPU hijacking</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">MASTERED</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0; background:#fcfcfc;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Warning Signs &amp; System Symptoms</td>
+          <td style="padding:8px 10px; color:#475569;">Thermal spikes, maximum fan noise, input stutter, and gaming performance lag</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">MASTERED</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Task Manager &amp; Process Forensics</td>
+          <td style="padding:8px 10px; color:#475569;">Sorting by CPU %, isolating rogue processes (BM), and immediate task termination</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">MASTERED</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0; background:#fcfcfc;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Safe Removal &amp; Permanent Eradication</td>
+          <td style="padding:8px 10px; color:#475569;">Control Panel uninstallation, purging root registry keys, and emptying Recycle Bin</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">MASTERED</td>
+        </tr>
+        <tr style="background:#fcfcfc;">
+          <td style="padding:8px 10px; font-weight:600; color:#0f172a;">Preventive Defense &amp; Safe Downloads</td>
+          <td style="padding:8px 10px; color:#475569;">Verified vendor downloads, OS patch management, and real-time antivirus shields</td>
+          <td style="padding:8px 10px; text-align:center; font-weight:700; color:#15803d;">MASTERED</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#185abd; font-size:14px; margin:0 0 10px 0; letter-spacing:-0.2px;">
+      3. Key Lessons Learned &amp; Actionable Recommendations
+    </h3>
+
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 14px; font-size:11.5px; color:#334155; line-height:1.65; margin-bottom:14px;">
+      <strong>Lessons Learned from Chapter 2 Incident Response:</strong><br>
+      • <strong>Silent Threats:</strong> Cryptominers operate covertly without displaying pop-ups or ransom notes to prolong mining duration.<br>
+      • <strong>Forensic Workflow:</strong> Observe hardware symptoms ➔ Investigate Task Manager CPU ➔ Terminate active process ➔ Uninstall from Control Panel ➔ Permanently delete installer from Recycle Bin.<br>
+      • <strong>Temporary vs. Permanent:</strong> Ending a task in Task Manager only halts running memory; full uninstallation is required to stop persistence.<br><br>
+      <strong>Preventive Recommendations:</strong><br>
+      • Never download games, cheats, or tools from unverified third-party websites or peer-to-peer torrents.<br>
+      • Inspect file extensions carefully to spot deceptive double extensions (e.g. <code>.zip.exe</code>).<br>
+      • Keep operating system security patches and antivirus definition databases updated automatically.
+    </div>
+  `;
+}
+
 // Global exposure
 window.generatePosttestResultDocument = generatePosttestResultDocument;
 window.saveAndInjectPosttestDocument = saveAndInjectPosttestDocument;
 window.initPosttestResultDocument = initPosttestResultDocument;
 window.renderPosttestReportHtml = renderPosttestReportHtml;
+window.generateCh2PosttestResultDocument = generateCh2PosttestResultDocument;
+window.saveAndInjectCh2PosttestDocument = saveAndInjectCh2PosttestDocument;
+window.renderCh2PosttestReportHtml = renderCh2PosttestReportHtml;
+window.initCh2PosttestResultDocument = initCh2PosttestResultDocument;
+window._findCh2PosttestResultData = _findCh2PosttestResultData;
 
-// Auto-initialize posttest document
+// Auto-initialize posttest documents
 if (typeof initPosttestResultDocument === 'function') {
   initPosttestResultDocument();
+}
+if (typeof initCh2PosttestResultDocument === 'function') {
+  initCh2PosttestResultDocument();
 }
 

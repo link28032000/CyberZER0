@@ -87,8 +87,8 @@
   max-height: calc(100vh - 48px);
 }
 
-.app-window.hidden { display: none; }
-.app-window.minimized { display: none; }
+.app-window.hidden { display: none !important; }
+.app-window.minimized { display: none !important; }
 
 .app-window.maximized {
   position: fixed !important;

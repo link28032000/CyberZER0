@@ -228,17 +228,25 @@ function getUninstalledAppIds() {
   }
 }
 
+// Helper to detect if Chapter 2 (Ethan / Malware) is currently active
+function _cpIsChapter2Active() {
+  if (window._currentChapterCategory === 'malware') return true;
+  if (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') return true;
+  if (typeof gameState !== 'undefined' && gameState && (gameState.phase === 'malware' || gameState.chapter === 'malware')) return true;
+  try {
+    const raw = localStorage.getItem('cyberzero_session_state');
+    if (raw) {
+      const sess = JSON.parse(raw);
+      if (sess && sess.activeChapter === 'malware' && window._currentChapterCategory !== 'phishing') return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
 // Helper to get currently installed programs (filtered by uninstalled state + chapter context)
 function getEffectiveInstalledPrograms() {
   let uninstalled = getUninstalledAppIds();
-
-  // Strict Chapter 1 isolation: only block BM if we are definitely inside Chapter 1 phishing
-  const isCh1 = (
-    window._currentChapterCategory === 'phishing' &&
-    typeof gameState !== 'undefined' &&
-    gameState &&
-    gameState.phase === 'phishing'
-  );
+  const isCh2 = _cpIsChapter2Active();
 
   // Check if BM has been uninstalled in Chapter 2
   const isBmUninstalled = !!(
@@ -251,8 +259,8 @@ function getEffectiveInstalledPrograms() {
     })()
   );
 
-  // Ensure BM is not blocked by stale uninstalled_apps localStorage if not actually uninstalled
-  if (!isBmUninstalled && uninstalled.includes('bm')) {
+  // In Chapter 2: ensure BM is not blocked by stale uninstalled_apps localStorage if not actually uninstalled
+  if (isCh2 && !isBmUninstalled && uninstalled.includes('bm')) {
     uninstalled = uninstalled.filter(id => id !== 'bm');
     try {
       localStorage.setItem('cyberzero_uninstalled_apps', JSON.stringify(uninstalled));
@@ -260,11 +268,9 @@ function getEffectiveInstalledPrograms() {
   }
 
   return CP_MASTER_PROGRAMS.filter(p => {
-    // Hide BM strictly in Chapter 1 phishing
-    if (p.id === 'bm' && isCh1) return false;
-
-    // In Chapter 2 (Ethan) and all other views, BM is installed until uninstalled
+    // BM (Bitcoin Miner) is strictly for Chapter 2 — hide it in Chapter 1
     if (p.id === 'bm') {
+      if (!isCh2) return false;
       return !isBmUninstalled;
     }
 

@@ -205,12 +205,19 @@ function ch1CheckRoundCompletion() {
     }
   });
 
-  // Check checklist completion (requires all 4 checklist items)
+  // Check checklist completion (requires all 5 checklist items)
   const checklistCount = (typeof getCompletedTasksCount === 'function') ? getCompletedTasksCount() : 0;
-  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 4;
+  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 5;
   const isChecklistDone = (typeof isPhishingTrophyUnlocked === 'function')
     ? isPhishingTrophyUnlocked()
     : (checklistCount >= totalTasks);
+
+  // If all checklist items are fulfilled (including 12 email verdicts), investigation is complete!
+  if (isChecklistDone) {
+    ch1InvestigationComplete = true;
+    ch1FinishInvestigationPhase();
+    return true;
+  }
 
   // 3. Are there any incorrectly identified emails?
   // TRIGGER THE SHUFFLE NOW and resend ONLY the incorrect emails in randomized order!
@@ -237,7 +244,7 @@ function ch1CheckRoundCompletion() {
     return false;
   }
 
-  // 4. ALL emails are correctly identified AND checklist is 4/4!
+  // 4. ALL emails are correctly identified AND checklist is 5/5!
   ch1InvestigationComplete = true;
   ch1FinishInvestigationPhase();
   return true;
@@ -249,41 +256,12 @@ function ch1CheckRoundCompletion() {
 function ch1FinishInvestigationPhase() {
   ch1InvestigationComplete = true;
 
-  // Mark award claimed / post-investigation mission active
-  window._awardClaimed = true;
-  if (!window._postAwardTasks) {
-    window._postAwardTasks = {
-      browserOpened:    false,
-      browserNavigated: false,
-      phishingSearched: false,
-      phishingVisited:  false,
-      explorerOpened:   false,
-      videoFolderOpen:  false,
-      videoPlayed:      false,
-      gcOpened:         false,
-      helloSent:        false,
-      postTestDone:     false
-    };
+  // Unlock trophy achievements without prematurely claiming the award
+  if (typeof _achievementUnlocked !== 'undefined') {
+    _achievementUnlocked.add('task_all_complete');
+    _achievementUnlocked.add('phish_trophy_unlocked');
+    _achievementUnlocked.add('ach_phishing');
   }
-
-  // Sync claimed status to Main Menu achievements map
-  try {
-    const ACH_KEY = 'cyberzero_claimed_achievements';
-    let claimedMap = {};
-    try { claimedMap = JSON.parse(localStorage.getItem(ACH_KEY) || '{}'); } catch(e) {}
-    if (!claimedMap['ach_phishing']) {
-      claimedMap['ach_phishing'] = {
-        claimed: true,
-        chapter: 1,
-        title: 'Phishing Investigation Award',
-        claimedAt: Date.now(),
-        claimedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-      };
-      localStorage.setItem(ACH_KEY, JSON.stringify(claimedMap));
-    }
-    if (typeof renderMainMenuAchievements === 'function') renderMainMenuAchievements();
-    if (typeof updateAchievementNotificationBadge === 'function') updateAchievementNotificationBadge();
-  } catch(e) {}
 
   if (typeof updateDesktopTrophyDisplay === 'function') {
     updateDesktopTrophyDisplay();
@@ -293,9 +271,9 @@ function ch1FinishInvestigationPhase() {
   if (typeof updateFolderCounts === 'function') updateFolderCounts();
   if (typeof updateHUD === 'function') updateHUD();
 
-  // Immediately display the new checklist for the next mission in Sticky Notes
-  if (typeof _refreshPostAwardChecklist === 'function') {
-    _refreshPostAwardChecklist();
+  // Keep the 5/5 completed checklist visible with Claim Award button until claimed
+  if (typeof updateStickyChecklist === 'function') {
+    updateStickyChecklist();
   }
   if (typeof showStickyNote === 'function') {
     showStickyNote();
@@ -324,7 +302,7 @@ function ch1FinishInvestigationPhase() {
 
   // Toast
   if (typeof showToast === 'function') {
-    showToast('🏆 Phishing investigation complete! Next mission checklist active in Sticky Notes.', 'success');
+    showToast('🏆 Phishing investigation complete! 12/12 verdicts submitted. Claim your award!', 'success');
   }
 
   // Display the earned trophy reward modal with Claim Reward button!

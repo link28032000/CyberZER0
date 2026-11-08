@@ -11,15 +11,32 @@ function openFileFromFolder(fileId) {
   if (!file) return;
 
   // ══════════════════════════════════════════════════════════════
-  // WannaCry simulation: intercept ALL file/app/folder interactions
-  // Show encrypted notice for every item while simulation is active.
-  // Exceptions: ShieldAV (antivirus) and the WannaCry window itself
-  // so the player can still remediate the infection.
+  // WannaCry simulation: intercept file/app/folder interactions
+  // Show encrypted notice for all data files while simulation is active.
+  // Exceptions:
+  // - dropped @Please_Read_Me@.txt ransom note
+  // - GTA VI / WannaCry simulation windows
+  // - ShieldAV (antivirus) so player can remediate if needed
   // ══════════════════════════════════════════════════════════════
+  if (file.id && file.id.startsWith('wncry_readme')) {
+    if (typeof openDocViewer === 'function') {
+      openDocViewer(file);
+    }
+    return;
+  }
+
+  const isGtaViItem = (file.id === 'game_gta6' || file.id === 'desk_app_gta6' || file.name === 'GTA VI' || (file.name && file.name.includes('GTA VI')));
+  if (isGtaViItem) {
+    if (typeof openGtaViApp === 'function') {
+      openGtaViApp();
+      return;
+    }
+  }
+
   if (window._wannaCryActive) {
-    const safeApps = ['antivirus', 'wannacry'];
+    const safeApps = ['antivirus', 'wannacry', 'gta6'];
     const isSafeApp = file.appId && safeApps.includes(file.appId);
-    const isWannaCryWindow = (file.id === 'wannacry' || file.appId === 'wannacry');
+    const isWannaCryWindow = (file.id === 'wannacry' || file.appId === 'wannacry' || isGtaViItem);
     if (!isSafeApp && !isWannaCryWindow) {
       const fnNotice = (typeof showWannaCryEncryptedNotice === 'function')
         ? showWannaCryEncryptedNotice
@@ -69,13 +86,19 @@ function openFileFromFolder(fileId) {
     return;
   }
 
-  // ── Chapter 2: Opening GTA VI triggers WannaCry Decryptor 3.0 simulation ──
+  // ── Chapter 2: Opening GTA VI triggers security advisory & WannaCry Decryptor 3.0 simulation ──
   if (file.id === 'game_gta6' || file.name === 'GTA VI' || (file.name && file.name.includes('GTA VI'))) {
-    const fn = (typeof launchWannaCrySimulation === 'function')
-      ? launchWannaCrySimulation
-      : (typeof window !== 'undefined' ? window.launchWannaCrySimulation : null);
-    if (typeof fn === 'function') {
-      fn();
+    if (typeof openGtaViApp === 'function') {
+      openGtaViApp();
+    } else if (typeof showGtaSecurityAdvisoryModal === 'function') {
+      showGtaSecurityAdvisoryModal();
+    } else {
+      const fn = (typeof launchWannaCrySimulation === 'function')
+        ? launchWannaCrySimulation
+        : (typeof window !== 'undefined' ? window.launchWannaCrySimulation : null);
+      if (typeof fn === 'function') {
+        fn();
+      }
     }
     return;
   }
@@ -286,6 +309,21 @@ Status: DEVICE HARDWARE IS HEALTHY AND AUTHORIZED FOR USE.
       page.innerHTML = typeof renderPosttestReportHtml === 'function'
         ? renderPosttestReportHtml(file)
         : (typeof window.renderPosttestReportHtml === 'function' ? window.renderPosttestReportHtml(file) : '');
+    }
+    openApp('docviewer');
+    focusWindow('docviewer');
+    showToast(`📄 Opened "${file.name}" in Microsoft Word.`, 'success');
+    return;
+  }
+
+  // Chapter 2 Malware Post-Test Assessment Report
+  if (file.id === 'doc_ch2_posttest_result' || file.name === 'ch2_posttest_result_report.docx' || file.name === 'ch2_posttest_report.docx' || file.name === 'Cybersecurity Malware Post-Test Assessment Report.docx') {
+    if (titleText) titleText.textContent = `Microsoft Word — ${file.name}`;
+    const page = document.getElementById('docviewer-page-content');
+    if (page) {
+      page.innerHTML = typeof renderCh2PosttestReportHtml === 'function'
+        ? renderCh2PosttestReportHtml(file)
+        : (typeof window.renderCh2PosttestReportHtml === 'function' ? window.renderCh2PosttestReportHtml(file) : '');
     }
     openApp('docviewer');
     focusWindow('docviewer');

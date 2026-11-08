@@ -9,8 +9,19 @@ function openVideoPlayer(file) {
   window._vpCurrentMediaType = 'video';
   window._vpCurrentFile = file || null;
 
+  const malwareCandidateSources = [
+    'assets/video/what_is_malware.mp4',
+    'assets/video/What is Malware.mp4',
+    'assets/videos/what_is_malware.mp4',
+    'assets/videos/What is Malware.mp4',
+    'assets/video/What%20is%20Malware.mp4'
+  ];
+
+  const isMalware = (file && (file.id === 'vid_what_is_malware' || (file.name && file.name.toLowerCase().includes('malware')) || (file.mediaSrc && file.mediaSrc.toLowerCase().includes('malware')))) ||
+                    (typeof _isChapter2Active === 'function' && _isChapter2Active() && (!file || file.id === 'vid_what_is_malware' || (file.name && file.name.toLowerCase().includes('malware'))));
+
   const titleText = document.getElementById('videoplayer-title-text');
-  if (titleText) titleText.textContent = `Media Player — ${file ? file.name : 'Video'}`;
+  if (titleText) titleText.textContent = `Media Player — ${isMalware ? 'What Is Malware.mp4' : (file ? file.name : 'Video')}`;
 
   const audioStage = document.getElementById('vp-audio-stage');
   if (audioStage) {
@@ -22,23 +33,57 @@ function openVideoPlayer(file) {
   if (vid) {
     vid._vpMediaType = 'video';
     vid._vpCurrentFile = file || null;
-    vid._isAwarenessVideo = !!(file && (
-      file.id === 'vid_awareness' ||
-      (file.name && file.name.toLowerCase().includes('awareness')) ||
-      (file.mediaSrc && file.mediaSrc.includes('video3.mp4'))
-    )) || true; // All video files in Chapter 1 map to the awareness briefing
+
+    // Chapter 2: Watch the Malware Video Activity Started
+    if (typeof window.ch2OnMalwareVideoStarted === 'function') {
+      window.ch2OnMalwareVideoStarted(file, vid);
+    }
+    let currentCandidateIndex = 0;
+    let videoSource = (file && file.mediaSrc) ? file.mediaSrc : '';
+    if (isMalware) {
+      videoSource = malwareCandidateSources[0];
+      vid._isMalwareVideo = true;
+      vid._isAwarenessVideo = false;
+    } else {
+      if (!videoSource) videoSource = 'assets/video/video3.mp4';
+      vid._isMalwareVideo = false;
+      vid._isAwarenessVideo = true;
+    }
 
     vid.style.display = 'block';
-    vid.src = (file && file.mediaSrc) ? file.mediaSrc : 'assets/video/video3.mp4';
-    vid.currentTime = 0;
+
+    // Robust candidate fallback chaining
+    vid.onerror = () => {
+      if (isMalware && currentCandidateIndex + 1 < malwareCandidateSources.length) {
+        currentCandidateIndex++;
+        const nextSrc = malwareCandidateSources[currentCandidateIndex];
+        vid.src = nextSrc;
+        vid.load();
+        const p = vid.play();
+        if (p !== undefined) p.catch(() => {});
+      }
+    };
+
+    if (vid.src !== videoSource && !vid.src.endsWith(videoSource)) {
+      vid.src = videoSource;
+      vid.load();
+    }
+    try {
+      vid.currentTime = 0;
+    } catch (_) {}
     syncMediaPlayerVolume();
 
     // Wire up events once
     if (!vid._vpWired) {
       vid._vpWired = true;
       vid.addEventListener('loadedmetadata', () => {
-        if (vid._vpMediaType === 'video' && typeof window._ch1OnVideoMetadataLoaded === 'function') {
-          window._ch1OnVideoMetadataLoaded(vid);
+        if (vid._vpMediaType === 'video') {
+          if (typeof window._ch1OnVideoMetadataLoaded === 'function') {
+            window._ch1OnVideoMetadataLoaded(vid);
+          }
+          if (typeof window._ch2OnVideoMetadataLoaded === 'function') {
+            window._ch2OnVideoMetadataLoaded(vid, window._vpCurrentFile);
+          }
         }
       });
       vid.addEventListener('timeupdate', _vpOnTimeUpdate);
@@ -59,19 +104,35 @@ function openVideoPlayer(file) {
           document.getElementById('vp-audio-stage')?.classList.remove('vp-audio-playing');
         }
       });
+    } else {
+      if (isMalware && typeof window._ch2OnVideoMetadataLoaded === 'function' && vid.duration > 0) {
+        window._ch2OnVideoMetadataLoaded(vid, file);
+      }
     }
 
-    vid.play().catch(() => {});
+    const playPromise = vid.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        const btn = document.getElementById('vp-play-btn');
+        if (btn) btn.textContent = '⏸';
+        document.getElementById('vp-center-overlay')?.classList.add('hidden');
+      }).catch(() => {
+        // Autoplay blocked by browser policy — show center play overlay so user can click to start
+        const btn = document.getElementById('vp-play-btn');
+        if (btn) btn.textContent = '▶';
+        document.getElementById('vp-center-overlay')?.classList.remove('hidden');
+      });
+    }
   }
 
   openApp('videoplayer');
   focusWindow('videoplayer');
 
-  const isCh1 = (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing') === 'phishing';
-  if (!isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
+  const isCh1 = typeof _isChapter1Active === 'function' ? _isChapter1Active() : (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing') === 'phishing';
+  if (isCh1 && typeof window._notifyPostAwardVideoPlay === 'function') {
     window._notifyPostAwardVideoPlay();
   }
-  showToast(`🎬 Playing "${file ? file.name : 'Video'}" in Media Player.`, 'success');
+  showToast(`🎬 Playing "${file ? file.name : (isMalware ? 'What Is Malware.mp4' : 'Video')}" in Media Player.`, 'success');
 }
 
 // ─── 4. MEDIA / AUDIO PLAYER (MP3 & MUSIC FILES) ────────────
@@ -107,8 +168,13 @@ function openAudioPlayer(file) {
     if (!vid._vpWired) {
       vid._vpWired = true;
       vid.addEventListener('loadedmetadata', () => {
-        if (vid._vpMediaType === 'video' && typeof window._ch1OnVideoMetadataLoaded === 'function') {
-          window._ch1OnVideoMetadataLoaded(vid);
+        if (vid._vpMediaType === 'video') {
+          if (typeof window._ch1OnVideoMetadataLoaded === 'function') {
+            window._ch1OnVideoMetadataLoaded(vid);
+          }
+          if (typeof window._ch2OnVideoMetadataLoaded === 'function') {
+            window._ch2OnVideoMetadataLoaded(vid, window._vpCurrentFile);
+          }
         }
       });
       vid.addEventListener('timeupdate', _vpOnTimeUpdate);
@@ -129,6 +195,10 @@ function openAudioPlayer(file) {
           document.getElementById('vp-audio-stage')?.classList.remove('vp-audio-playing');
         }
       });
+    } else {
+      if (isMalware && typeof window._ch2OnVideoMetadataLoaded === 'function' && vid.duration > 0) {
+        window._ch2OnVideoMetadataLoaded(vid, file);
+      }
     }
 
     vid.play().catch(() => {});
@@ -147,10 +217,36 @@ function openAudioPlayer(file) {
 function vpTogglePlay() {
   const vid = document.getElementById('videoplayer-video');
   if (!vid) return;
+
+  // If in Chapter 2 and no source is set or wrong source is set, ensure malware video is ready
+  if (typeof _isChapter2Active === 'function' && _isChapter2Active()) {
+    const src = (vid.currentSrc || vid.src || '').toLowerCase();
+    if (!src.includes('malware')) {
+      vid.src = 'assets/video/what_is_malware.mp4';
+      vid._isMalwareVideo = true;
+      vid._isAwarenessVideo = false;
+      vid.load();
+    }
+  }
+
   if (vid.paused || vid.ended) {
-    vid.play().catch(() => {});
+    const p = vid.play();
+    if (p !== undefined) {
+      p.then(() => {
+        const btn = document.getElementById('vp-play-btn');
+        if (btn) btn.textContent = '⏸';
+        document.getElementById('vp-center-overlay')?.classList.add('hidden');
+      }).catch(() => {
+        const btn = document.getElementById('vp-play-btn');
+        if (btn) btn.textContent = '▶';
+        document.getElementById('vp-center-overlay')?.classList.remove('hidden');
+      });
+    }
   } else {
     vid.pause();
+    const btn = document.getElementById('vp-play-btn');
+    if (btn) btn.textContent = '▶';
+    document.getElementById('vp-center-overlay')?.classList.remove('hidden');
   }
 }
 
@@ -161,6 +257,9 @@ function vpSkip(secs) {
   if (vid._vpMediaType !== 'audio' && window._vpCurrentMediaType !== 'audio') {
     if (typeof window._ch1OnVideoSkip === 'function') {
       window._ch1OnVideoSkip(secs, vid);
+    }
+    if (typeof window._ch2OnVideoSkip === 'function') {
+      window._ch2OnVideoSkip(secs, vid, window._vpCurrentFile);
     }
   } else if (typeof window._onMusicPlayerSkip === 'function') {
     window._onMusicPlayerSkip(secs, vid);
@@ -181,6 +280,9 @@ function vpSeek(e) {
   if (vid._vpMediaType !== 'audio' && window._vpCurrentMediaType !== 'audio') {
     if (typeof window._ch1OnVideoSeek === 'function') {
       window._ch1OnVideoSeek(newTime, vid.currentTime, vid);
+    }
+    if (typeof window._ch2OnVideoSeek === 'function') {
+      window._ch2OnVideoSeek(newTime, vid.currentTime, vid, window._vpCurrentFile);
     }
   } else if (typeof window._onMusicPlayerSeek === 'function') {
     window._onMusicPlayerSeek(newTime, vid.currentTime, vid);
@@ -216,6 +318,9 @@ function _vpOnTimeUpdate() {
     if (typeof window._ch1OnVideoTimeUpdate === 'function') {
       window._ch1OnVideoTimeUpdate(vid);
     }
+    if (typeof window._ch2OnVideoTimeUpdate === 'function') {
+      window._ch2OnVideoTimeUpdate(vid, window._vpCurrentFile);
+    }
   }
 }
 
@@ -236,6 +341,9 @@ function _vpOnEnded() {
     // Only video media triggers video awareness completion
     if (typeof window._ch1OnVideoEnded === 'function') {
       window._ch1OnVideoEnded(vid);
+    }
+    if (typeof window._ch2OnVideoEnded === 'function') {
+      window._ch2OnVideoEnded(vid, window._vpCurrentFile);
     }
   }
 }

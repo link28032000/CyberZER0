@@ -71,7 +71,10 @@ function showMainMenu() {
 /** Hide the main menu overlay */
 function hideMainMenu() {
   const mm = document.getElementById('overlay-main-menu');
-  if (mm) mm.classList.remove('active');
+  if (mm) {
+    mm.classList.remove('active');
+    mm.style.display = 'none';
+  }
   // Close any open sub-modals
   closeMainMenuAbout();
   closeMainMenuAchievement();
@@ -81,7 +84,7 @@ function hideMainMenu() {
 }
 
 /** Show Story Selection screen directly, unlocking and selecting the target chapter (e.g. Chapter 2) */
-function showStorySelectionScreen(selectChapterId = 'malware') {
+function showStorySelectionScreen(selectChapterId = null) {
   if (typeof hideAllOverlays === 'function') {
     hideAllOverlays(false);
   }
@@ -102,7 +105,19 @@ function showStorySelectionScreen(selectChapterId = 'malware') {
   }
 
   // Normalize target chapter id
-  let targetId = selectChapterId || 'malware';
+  let targetId = selectChapterId;
+  if (!targetId) {
+    targetId = window._pendingStoryChapter || window._currentChapterCategory;
+  }
+  if (!targetId) {
+    try {
+      const sessRaw = localStorage.getItem('cyberzero_session_state');
+      if (sessRaw) {
+        const sess = JSON.parse(sessRaw);
+        if (sess && sess.activeChapter) targetId = sess.activeChapter;
+      }
+    } catch (e) {}
+  }
   if (targetId === 'malware' || targetId === 2) {
     targetId = 'malware';
   } else {
@@ -441,8 +456,9 @@ function selectStoryCard(cardEl, categoryId, chapterNum, playSound = true, allow
     if (footer && !footer.querySelector('.ss-play-btn')) {
       const playBtn = document.createElement('button');
       playBtn.className = 'ss-play-btn';
-      const isChapterDone = (typeof _isCategoryCompleted === 'function') && _isCategoryCompleted(categoryId);
-      const btnLabel = isChapterDone ? 'RESUME DESKTOP' : 'START MISSION';
+      const hasSavedProg = (typeof hasChapterProgress === 'function' && hasChapterProgress(categoryId)) ||
+                           (typeof _isCategoryCompleted === 'function' && _isCategoryCompleted(categoryId));
+      const btnLabel = hasSavedProg ? 'RESUME DESKTOP' : 'START MISSION';
       playBtn.innerHTML = `<span>${btnLabel}</span> <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
       playBtn.onclick = (e) => {
         e.stopPropagation();
@@ -728,7 +744,8 @@ const MISSION_ACHIEVEMENTS = [
       { id: 'task_report_phishing', label: 'Report 5 Phishing Emails' },
       { id: 'task_verify_legit', label: 'Verify 5 Clean Emails' },
       { id: 'task_fake_sender', label: 'Document 5 Fake Senders' },
-      { id: 'task_phish_indicators', label: 'Flag 5 Threat Indicators' }
+      { id: 'task_phish_indicators', label: 'Flag 5 Threat Indicators' },
+      { id: 'task_submit_all_verdicts', label: 'Submit all 12 email verdicts' }
     ]
   },
   {
@@ -778,7 +795,7 @@ function isChapterChecklistComplete(ach) {
       if (phishSaved) {
         const pData = JSON.parse(phishSaved);
         const unl = Array.isArray(pData.unlockedAchievements) ? pData.unlockedAchievements : [];
-        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators'];
+        const requiredTaskIds = ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts'];
         const allPresent = requiredTaskIds.every(id => unl.includes(id));
         if (pData.trophyUnlocked || unl.includes('task_all_complete') || allPresent) {
           savedAllTasks = true;
@@ -792,8 +809,12 @@ function isChapterChecklistComplete(ach) {
     return !!isComplete;
   }
 
-  if (catId === 'malware') {
-    // CHAPTER 2: Requires completing Chapter 2 (all 4 malware quarantined)
+  if (catId === 'malware' || (ach && ach.id === 'ach_malware')) {
+    if (isAchievementClaimed('ach_malware')) return true;
+    if (typeof isChapter2Missions1to4Complete === 'function' && isChapter2Missions1to4Complete()) return true;
+    if (typeof isChapter4Complete === 'function' && isChapter4Complete()) return true;
+    const catRansom = cats.find(c => c.id === 'ransomware');
+    if (catRansom && catRansom.completed) return true;
     return !!(cat && cat.completed);
   }
 
@@ -826,6 +847,19 @@ function isChecklistItemDone(ach, item, itemIndex) {
   }
 
   if (ach.catId === 'malware') {
+    const m = window._ch2Mission;
+    if (item.id === 'ch2_games' || item.id === 'ch2_m1') {
+      return !!(m && (m.tasks[1] || m.tasks[2] || m.gamesOpened || m.m1PictureViewed || m.m1GameObserved));
+    }
+    if (item.id === 'ch2_av' || item.id === 'ch2_m2') {
+      return !!(m && (m.tasks[6] || m.tasks[7] || m.bmKilled));
+    }
+    if (item.id === 'ch2_quarantine' || item.id === 'ch2_m3') {
+      return !!(m && (m.tasks[12] || m.tasks[14]));
+    }
+    if (item.id === 'ch2_cleared' || item.id === 'ch2_m4') {
+      return !!(m && (m.tasks[20] || m.bmUninstalled));
+    }
     try {
       if (typeof gameState !== 'undefined') {
         if (item.id === 'ch2_games') return !!(gameState.malwareExaminedCount > 0 || gameState.malwareQuarantined > 0);
@@ -861,6 +895,7 @@ function isAchievementClaimed(achId) {
   if (!map || !map[achId]) return false;
   return !!(map[achId].claimed || map[achId].tier);
 }
+window.isAchievementClaimed = isAchievementClaimed;
 
 /**
  * Claim an achievement award when its chapter checklist is completed.
@@ -944,6 +979,31 @@ function claimAchievement(achId) {
     }
   }
 
+  if (achId === 'ach_malware') {
+    window._malwareAwardClaimed = true;
+    if (window._ch2Mission) {
+      window._ch2Mission.malwareAwardClaimed = true;
+      if (typeof _persistCh2Mission === 'function') _persistCh2Mission();
+      else {
+        try { localStorage.setItem('cyberzero_ch2_mission', JSON.stringify(window._ch2Mission)); } catch (e) {}
+      }
+    }
+    try {
+      const sess = JSON.parse(localStorage.getItem('cyberzero_session_state') || '{}');
+      if (!sess.ch2) sess.ch2 = {};
+      sess.ch2.malwareAwardClaimed = true;
+      if (!sess.ch4) sess.ch4 = {};
+      sess.ch4.malwareAwardClaimed = true;
+      localStorage.setItem('cyberzero_session_state', JSON.stringify(sess));
+    } catch (e) {}
+    if (typeof window.saveProgress === 'function') {
+      window.saveProgress().catch(() => {});
+    }
+    if (typeof updateStickyChecklist === 'function') {
+      try { updateStickyChecklist(); } catch (e) {}
+    }
+  }
+
   // Audio fanfare
   if (typeof AudioManager !== 'undefined') {
     try {
@@ -975,6 +1035,7 @@ function claimAchievement(achId) {
     updateAchievementNotificationBadge();
   }, 250);
 }
+window.claimAchievement = claimAchievement;
 
 /**
  * Claim all available completed achievements at once
@@ -1291,7 +1352,7 @@ window.devUnlockAchievements = function() {
   // Mark all 4 phishing checklist tasks done in localStorage
   try {
     const pData = {
-      unlockedAchievements: ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_collect_evidence', 'task_all_complete', 'phish_trophy_unlocked'],
+      unlockedAchievements: ['task_report_phishing', 'task_verify_legit', 'task_fake_sender', 'task_phish_indicators', 'task_submit_all_verdicts', 'task_collect_evidence', 'task_all_complete', 'phish_trophy_unlocked'],
       trophyUnlocked: true,
       awardClaimed: false
     };
@@ -1461,13 +1522,28 @@ function updateStartButton() {
   // ─── PASS 1: Immediate local check (synchronous, instant UI response) ───
   let localCatId = null;
   if (_hasAnyLocalProgress()) {
+    // Check saved session state first to prioritize the exact chapter user was playing
     try {
-      const raw = localStorage.getItem('cyberzero_categories');
-      if (raw) localCatId = _extractCatId(JSON.parse(raw));
+      const sessRaw = localStorage.getItem('cyberzero_session_state');
+      if (sessRaw) {
+        const sess = JSON.parse(sessRaw);
+        if (sess && sess.activeChapter) {
+          localCatId = sess.activeChapter;
+        }
+      }
     } catch (e) {}
+
     if (!localCatId && (typeof window._currentChapterCategory !== 'undefined' && window._currentChapterCategory)) {
       localCatId = window._currentChapterCategory;
     }
+
+    if (!localCatId) {
+      try {
+        const raw = localStorage.getItem('cyberzero_categories');
+        if (raw) localCatId = _extractCatId(JSON.parse(raw));
+      } catch (e) {}
+    }
+
     if (!localCatId) localCatId = 'phishing';
   }
   _applyButtonState(localCatId);
@@ -1504,12 +1580,23 @@ function updateStartButton() {
       console.log('[updateStartButton] Firestore: Save document found for user ' + user.uid + ' -> Continue');
 
       let fsCatId = null;
-      if (data.ls && data.ls['cyberzero_categories']) {
+      if (data.sessionState && data.sessionState.activeChapter) {
+        fsCatId = data.sessionState.activeChapter;
+      }
+      if (!fsCatId && data.activeChapter) {
+        fsCatId = data.activeChapter;
+      }
+      if (!fsCatId && data.ls && data.ls['cyberzero_session_state']) {
+        try {
+          const fsSess = JSON.parse(data.ls['cyberzero_session_state']);
+          if (fsSess && fsSess.activeChapter) fsCatId = fsSess.activeChapter;
+        } catch (e) {}
+      }
+      if (!fsCatId && data.ls && data.ls['cyberzero_categories']) {
         try {
           fsCatId = _extractCatId(JSON.parse(data.ls['cyberzero_categories']));
         } catch (e) {}
       }
-      if (!fsCatId && data.activeChapter) fsCatId = data.activeChapter;
       if (!fsCatId) fsCatId = 'phishing';
 
       // Restore localStorage blobs so game state stays synchronized

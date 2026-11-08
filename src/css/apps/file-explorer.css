@@ -670,8 +670,8 @@
 /* Table Header (Details View) */
 .folder-file-table-header {
   display: grid;
-  grid-template-columns: 2.4fr 1.3fr 1.1fr 0.9fr;
-  padding: 7px 16px;
+  grid-template-columns: 2.8fr 1.2fr 1.1fr 0.9fr;
+  padding: 6px 14px;
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
@@ -692,10 +692,10 @@
 }
 .folder-file-list.view-details .folder-file-row {
   display: grid;
-  grid-template-columns: 2.4fr 1.3fr 1.1fr 0.9fr;
+  grid-template-columns: 2.8fr 1.2fr 1.1fr 0.9fr;
   align-items: center;
-  padding: 8px 16px;
-  font-size: 12px;
+  padding: 6px 14px;
+  font-size: 11.5px;
   color: #cbd5e1;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   cursor: pointer;
@@ -721,6 +721,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 11.5px;
   font-weight: 500;
 }
 .file-name-cell .file-icon {
@@ -733,14 +734,14 @@
   height: 20px;
 }
 .file-name-cell .file-icon img {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   display: block;
 }
 .grid-card-icon img {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   display: block;
   margin: 0 auto;
@@ -757,19 +758,19 @@
   background: #0f172a;
 }
 .file-name-cell .file-icon img.explorer-photo-thumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   object-fit: cover;
   border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .fdp-icon-large img {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   display: block;
 }
-.file-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; }
 
 /* File List (Large Icons Grid View) — Horizontal Left→Right Flow */
 .folder-file-list.view-grid {
@@ -821,12 +822,12 @@
 }
 .grid-file-card:hover .grid-card-icon { transform: scale(1.08); }
 .grid-card-name {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 500;
   color: #e2e8f0;
   word-break: break-word;
-  line-height: 1.3;
-  max-height: 2.6em;
+  line-height: 1.25;
+  max-height: 2.5em;
   overflow: hidden;
 }
 .grid-card-tag {
@@ -944,12 +945,12 @@
   margin-bottom: 6px;
 }
 .folder-file-list.view-grid .grid-card-name {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 500;
   text-align: center;
   word-break: break-word;
-  line-height: 1.3;
-  max-height: 2.6em;
+  line-height: 1.25;
+  max-height: 2.5em;
   overflow: hidden;
 }
 
@@ -1062,7 +1063,7 @@
   gap: 10px;
 }
 .fdp-icon-large { font-size: 32px; flex-shrink: 0; }
-.fdp-name { font-size: 13.5px; font-weight: 700; color: #fff; word-break: break-all; }
+.fdp-name { font-size: 12px; font-weight: 600; color: #fff; word-break: break-word; }
 
 /* In-pane quick preview card */
 .fdp-quick-preview {
@@ -1197,5 +1198,348 @@
 .status-view-btn.active {
   background: rgba(255, 255, 255, 0.08);
   color: #00e5ff;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GTA VI SECURITY ADVISORY & PREVENTION STYLES
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── GTA VI Security Modal ── */
+.gta-security-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: gtaFadeIn 0.16s ease-out;
+}
+
+.gta-security-modal.hidden {
+  display: none !important;
+}
+
+@keyframes gtaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gtaPopIn {
+  from { transform: scale(0.94); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.gta-modal-card {
+  width: 600px;
+  max-width: 94vw;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.88), 0 0 1px rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #f1f5f9;
+  animation: gtaPopIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gta-modal-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #1e293b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.gta-modal-title {
+  display: flex;
+  align-items: center;
+}
+
+.gta-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1.2;
+  transition: all 0.12s ease;
+}
+
+.gta-modal-close:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.gta-modal-body {
+  padding: 14px 18px;
+  max-height: 74vh;
+  overflow-y: auto;
+}
+
+.gta-alert-hero {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(245, 158, 11, 0.16));
+  border: 1px solid rgba(239, 68, 68, 0.38);
+  border-radius: 8px;
+  padding: 11px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.gta-alert-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.gta-alert-hero-text {
+  flex: 1;
+}
+
+.gta-alert-hero-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f87171;
+  margin-bottom: 2px;
+}
+
+.gta-alert-hero-desc {
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+.gta-info-card {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.gta-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.gta-card-icon {
+  font-size: 15px;
+}
+
+.gta-card-title {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.card-about .gta-card-title { color: #fbbf24; }
+.card-prevent .gta-card-title { color: #38bdf8; }
+.card-support .gta-card-title { color: #34d399; }
+
+.gta-card-content {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.gta-points-list {
+  margin: 4px 0 0 16px;
+  padding: 0;
+}
+
+.gta-points-list li {
+  margin-bottom: 5px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.gta-support-highlight {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  border-radius: 6px;
+  padding: 9px 12px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: #a7f3d0;
+  line-height: 1.5;
+}
+
+.gta-modal-footer {
+  background: #090e1a;
+  padding: 10px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gta-btn {
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.12s ease;
+}
+
+.gta-btn-steam {
+  background: linear-gradient(135deg, #171a21, #1b2838);
+  border: 1px solid #66c0f4;
+  color: #66c0f4;
+}
+
+.gta-btn-steam:hover {
+  background: #2a475e;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(102, 192, 244, 0.35);
+}
+
+.gta-btn-sim {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #f87171;
+}
+
+.gta-btn-sim:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+}
+
+.gta-btn-close {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+
+.gta-btn-close:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+/* ── File Explorer Details Pane GTA Advisory Widget ── */
+.fdp-preview-gta-advisory {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95)) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  border-radius: 8px;
+  padding: 12px 10px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fdp-gta-hero-badge {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.fdp-gta-hero-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.fdp-gta-hero-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #f87171;
+  letter-spacing: 0.02em;
+}
+
+.fdp-gta-hero-sub {
+  font-size: 9.5px;
+  color: #cbd5e1;
+}
+
+.fdp-gta-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.fdp-gta-card-hdr {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 3px;
+}
+
+.fdp-gta-card-body {
+  font-size: 10px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.fdp-gta-card-support .fdp-gta-card-hdr {
+  color: #34d399;
+}
+
+.fdp-gta-card-support {
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.fdp-gta-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.fdp-gta-btn-steam {
+  background: linear-gradient(135deg, #1b2838, #2a475e);
+  border: 1px solid #66c0f4;
+  color: #ffffff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.fdp-gta-btn-steam:hover {
+  background: #31587a;
+  box-shadow: 0 0 8px rgba(102, 192, 244, 0.35);
+}
+
+.fdp-gta-btn-advisory {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.fdp-gta-btn-advisory:hover {
+  background: rgba(56, 189, 248, 0.25);
+  color: #ffffff;
 }
 

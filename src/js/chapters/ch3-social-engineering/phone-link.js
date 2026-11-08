@@ -123,6 +123,12 @@ const NEWBIE_GC_INFO = {
 };
 
 function loadNewbieGcState() {
+  let isUnlocked = false;
+  try {
+    if (localStorage.getItem('cyberzero_gc_unlocked') === 'true') isUnlocked = true;
+    if (typeof isChapter1CompletedAndSaved === 'function' && isChapter1CompletedAndSaved()) isUnlocked = true;
+  } catch(e) {}
+
   try {
     const raw = localStorage.getItem(NEWBIE_GC_STORAGE_KEY);
     if (raw) {
@@ -135,13 +141,17 @@ function loadNewbieGcState() {
           m.id !== 'init_ryan_1' &&
           m.id !== 'init_alex_1'
         );
+        if (isUnlocked) {
+          parsed.created = true;
+          parsed.joined = true;
+        }
         return parsed;
       }
     }
   } catch (e) {}
   return {
-    created: false,
-    joined: false,
+    created: isUnlocked,
+    joined: isUnlocked,
     hasUnread: false,
     seenByRyan: false,
     playerMessages: []
@@ -156,11 +166,31 @@ function saveNewbieGcState(state) {
 
 function isNewbieGcActive() {
   const curCatId = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
-  // In Chapter 2, Chapter 3, and Chapter 4, Phone Link group chat is always active!
+  // 1. In Chapter 2, Chapter 3, and Chapter 4, Phone Link group chat is always active!
   if (curCatId !== 'phishing' && curCatId !== 'mission') {
     return true;
   }
-  // During Chapter 1 / first checklist, Phone Link group chat is strictly INACTIVE until the award is claimed
+  // 2. If Chapter 1 was ever completed and saved, group chat is permanently restored
+  if (typeof isChapter1CompletedAndSaved === 'function' && isChapter1CompletedAndSaved()) {
+    return true;
+  }
+  // 3. If group chat was ever unlocked in storage or award was claimed
+  try {
+    if (localStorage.getItem('cyberzero_gc_unlocked') === 'true') return true;
+    const rawGc = localStorage.getItem(NEWBIE_GC_STORAGE_KEY);
+    if (rawGc) {
+      const gc = JSON.parse(rawGc);
+      if (gc && (gc.created || gc.joined || gc.accepted || (Array.isArray(gc.playerMessages) && gc.playerMessages.length > 0))) {
+        return true;
+      }
+    }
+    const rawAch = localStorage.getItem('cyberzero_claimed_achievements');
+    if (rawAch) {
+      const ach = JSON.parse(rawAch);
+      if (ach && (ach['ach_phishing'] || ach['task_all_complete'])) return true;
+    }
+  } catch(e) {}
+  // 4. During Chapter 1 / first checklist, Phone Link group chat is strictly INACTIVE until the award is claimed
   if (typeof window !== 'undefined' && !window._awardClaimed) {
     return false;
   }
@@ -174,6 +204,9 @@ function setNewbieGcCreated(andHighlight = false) {
   state.accepted = true;
   state.hasUnread = false;
   saveNewbieGcState(state);
+  try {
+    localStorage.setItem('cyberzero_gc_unlocked', 'true');
+  } catch(e) {}
   updatePhoneLinkBadges();
   // Never glow phone link desktop icon — user follows sticky notes checklist
   unhighlightPhoneLinkApp();
@@ -251,6 +284,118 @@ let g4GroupChecked = false;
 let g4PhoneScreenView = 'home'; // 'home' | 'messages' | 'calls'
 // g4ActiveTab declared in data.js
 g4ActiveTab = 'messages';
+
+// ── CONNECTION STATUS HELPERS ─────────────────────────────────
+
+function isChapter1CompletedAndSaved() {
+  let ch1Done = false;
+
+  // 1. In-memory category completion
+  if (typeof CATEGORIES !== 'undefined' && Array.isArray(CATEGORIES) && CATEGORIES[0] && CATEGORIES[0].completed) {
+    ch1Done = true;
+  }
+
+  // 2. LocalStorage category completion
+  if (!ch1Done) {
+    try {
+      const rawCat = localStorage.getItem('cyberzero_categories');
+      if (rawCat) {
+        const cats = JSON.parse(rawCat);
+        if (Array.isArray(cats) && cats[0] && cats[0].completed) {
+          ch1Done = true;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 3. Claimed achievements or trophy
+  if (!ch1Done && typeof _achievementUnlocked !== 'undefined' && _achievementUnlocked.has('ach_phishing')) {
+    ch1Done = true;
+  }
+  if (!ch1Done) {
+    try {
+      const rawAch = localStorage.getItem('cyberzero_claimed_achievements');
+      if (rawAch) {
+        const achMap = JSON.parse(rawAch);
+        if (achMap && (achMap['ach_phishing'] || achMap['task_all_complete'])) {
+          ch1Done = true;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 4. Post-test completed and award claimed
+  if (!ch1Done) {
+    const postTestFile = localStorage.getItem('cyberzero_posttest_result_file');
+    const isAwardDone = (typeof window !== 'undefined' && window._awardClaimed) || (function(){
+      try {
+        const p = localStorage.getItem('cyberzero_phishing_progress');
+        return p && JSON.parse(p).awardClaimed;
+      } catch(e){ return false; }
+    })();
+    if (postTestFile && isAwardDone) {
+      ch1Done = true;
+    }
+  }
+
+  if (!ch1Done) return false;
+
+  // Check saved progress
+  let isSaved = false;
+  try {
+    const rawSess = localStorage.getItem('cyberzero_session_state');
+    if (rawSess) {
+      const sess = JSON.parse(rawSess);
+      if (sess && (sess.savedAt || sess.ch1 || sess.activeChapter)) isSaved = true;
+    }
+  } catch(e) {}
+  if (!isSaved) {
+    try {
+      if (localStorage.getItem('cyberzero_phishing_progress') || localStorage.getItem('cyberzero_categories')) {
+        isSaved = true;
+      }
+    } catch(e) {}
+  }
+
+  return isSaved;
+}
+window.isChapter1CompletedAndSaved = isChapter1CompletedAndSaved;
+
+// ── RYAN MENTOR DIRECT MESSAGE STORAGE ────────────────────────
+const RYAN_MENTOR_STORAGE_KEY = 'cyberzero_pl_ryan_mentor_msgs';
+
+function loadRyanMentorMessages() {
+  try {
+    const raw = localStorage.getItem(RYAN_MENTOR_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch(e) {}
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return [
+    {
+      id: 'init_ryan_mentor',
+      from: 'ryan',
+      author: 'Ryan',
+      roleTag: 'IT SUPPORT MENTOR',
+      roleClass: 'pl-gc-role-mentor',
+      avatar: 'assets/Character/Ryan.png',
+      time: timeStr,
+      text: "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!"
+    }
+  ];
+}
+
+function saveRyanMentorMessages(msgs) {
+  try {
+    localStorage.setItem(RYAN_MENTOR_STORAGE_KEY, JSON.stringify(msgs));
+  } catch(e) {}
+}
+
+window._ryanMentorIsTyping = false;
 
 // ── CONNECTION STATUS HELPERS ─────────────────────────────────
 
@@ -362,19 +507,119 @@ function renderDisconnectedHeroView(isAirplane) {
 }
 
 function renderNoInternetBannerHtml() {
+  const conn = getPhoneLinkConnectionStatus();
+  let reasonText = "Messages can't be sent right now. Check your Wi-Fi connection.";
+  let btnText = "Turn on Wi-Fi";
+  let btnIcon = "📶";
+  let iconSymbol = "⚠️";
+  let btnAction = "turnOnWifiFromPhoneLink()";
+
+  if (conn.isAirplane) {
+    reasonText = "Airplane Mode is turned on. Wireless communication and internet access are suspended.";
+    btnText = "Turn off Airplane Mode";
+    btnIcon = "✈️";
+    iconSymbol = "✈️";
+    btnAction = "turnOffAirplaneFromPhoneLink()";
+  } else if (typeof networkSettings !== 'undefined' && !networkSettings.wifi) {
+    reasonText = "Wi-Fi is turned off. Turn on Wi-Fi to send and receive messages.";
+    btnText = "Turn on Wi-Fi";
+    btnIcon = "📶";
+    iconSymbol = "📡";
+    btnAction = "turnOnWifiFromPhoneLink()";
+  } else if (typeof networkSettings !== 'undefined' && !networkSettings.currentSsid) {
+    reasonText = "Not connected to any Wi-Fi network. Connect to a network to message teammates.";
+    btnText = "Connect to Wi-Fi";
+    btnIcon = "📶";
+    iconSymbol = "⚠️";
+    btnAction = "turnOnWifiFromPhoneLink()";
+  } else if (typeof networkSettings !== 'undefined' && networkSettings.noInternet) {
+    reasonText = "Connected without internet access. Check your router or connection.";
+    btnText = "Reconnect Wi-Fi";
+    btnIcon = "🔄";
+    iconSymbol = "⚠️";
+    btnAction = "turnOnWifiFromPhoneLink()";
+  }
+
   return `
     <div class="pl-no-internet-banner" id="pl-no-internet-banner">
       <div class="pl-no-internet-content">
-        <span class="pl-no-internet-icon">⚠️</span>
-        <div class="pl-no-internet-text">
-          <strong>No internet connection</strong> — Messages can't be sent or synced right now. Check your Wi-Fi connection.
+        <div class="pl-banner-icon-badge">
+          <span class="pl-banner-radar-ring"></span>
+          <span class="pl-banner-icon-symbol">${iconSymbol}</span>
+        </div>
+        <div class="pl-banner-text-group">
+          <div class="pl-banner-title-row">
+            <span class="pl-banner-title">No Internet Connection</span>
+            <span class="pl-banner-status-chip">OFFLINE</span>
+          </div>
+          <div class="pl-banner-desc">${reasonText}</div>
         </div>
       </div>
-      <button type="button" class="pl-no-internet-btn" onclick="turnOnWifiFromPhoneLink()">
-        Turn on Wi-Fi
+      <button type="button" class="pl-no-internet-btn" onclick="${btnAction}">
+        <span>${btnIcon}</span>
+        <span>${btnText}</span>
       </button>
     </div>
   `;
+}
+
+function syncPhoneLinkOfflineBanner() {
+  const conn = getPhoneLinkConnectionStatus();
+  const bannerSlot = document.querySelector('.pl-banner-slot');
+  if (bannerSlot) {
+    const existingBanner = bannerSlot.querySelector('.pl-no-internet-banner');
+    if (!conn.isInternetConnected) {
+      const newBannerHtml = renderNoInternetBannerHtml();
+      if (!existingBanner) {
+        bannerSlot.innerHTML = newBannerHtml;
+      } else {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newBannerHtml;
+        const newInner = tempDiv.firstElementChild ? tempDiv.firstElementChild.innerHTML : '';
+        if (newInner && existingBanner.innerHTML !== newInner) {
+          existingBanner.innerHTML = newInner;
+        }
+      }
+    } else {
+      if (existingBanner && !existingBanner.classList.contains('pl-banner-leaving')) {
+        existingBanner.classList.add('pl-banner-leaving');
+        setTimeout(() => {
+          const slot = document.querySelector('.pl-banner-slot');
+          if (slot) slot.innerHTML = '';
+        }, 290);
+      }
+    }
+  }
+
+  // Live update header status pill
+  const headerSummary = document.querySelector('.pl-gc-members-summary');
+  if (headerSummary) {
+    const isOffline = !conn.isInternetConnected;
+    if (isOffline) {
+      headerSummary.innerHTML = headerSummary.innerHTML
+        .replace(/🟢\s*Online/g, '🟡 Offline')
+        .replace(/color:#22c55e;/g, 'color:#f59e0b;');
+    } else {
+      headerSummary.innerHTML = headerSummary.innerHTML
+        .replace(/🟡\s*Offline/g, '🟢 Online')
+        .replace(/color:#f59e0b;/g, 'color:#22c55e;');
+    }
+  }
+
+  // Live update Ryan mentor row in contacts list if present
+  const ryanRow = document.querySelector('.pl-ryan-mentor-row');
+  if (ryanRow) {
+    const statusText = ryanRow.querySelector('.pl-contact-meta span:last-child');
+    if (statusText) {
+      statusText.textContent = conn.isInternetConnected ? '● Online' : '● Offline';
+      statusText.style.color = conn.isInternetConnected ? '#22c55e' : '#f59e0b';
+    }
+    const dot = ryanRow.querySelector('.pl-ryan-status-dot');
+    if (dot) {
+      dot.style.background = conn.isInternetConnected ? '#22c55e' : '#f59e0b';
+      dot.style.boxShadow = conn.isInternetConnected ? '0 0 5px #22c55e' : '0 0 5px #f59e0b';
+    }
+  }
 }
 
 function updatePhoneLinkConnectionState() {
@@ -461,37 +706,18 @@ function updatePhoneLinkConnectionState() {
       switchPhoneTab('calls');
     } else {
       if (g4ActiveConvo === 'business_newbie_gc') {
-        openNewbieGcConversation();
+        renderNewbieGcChat(content);
+      } else if (g4ActiveConvo === 'ryan_mentor') {
+        renderRyanMentorChat(content);
       } else if (g4ActiveConvo) {
-        openPhoneConversation(g4ActiveConvo);
+        renderIndividualConvo(g4ActiveConvo, content);
       } else {
-        switchPhoneTab('messages');
+        renderPhoneMessages(content);
       }
     }
   } else {
-    // Re-sync no internet banner if already viewing messages or group chat
-    if (g4ActiveTab === 'messages') {
-      const bannerExists = !!content.querySelector('.pl-no-internet-banner');
-      if (!conn.isInternetConnected && !bannerExists) {
-        // Needs banner
-        if (g4ActiveConvo === 'business_newbie_gc') {
-          openNewbieGcConversation();
-        } else if (g4ActiveConvo) {
-          openPhoneConversation(g4ActiveConvo);
-        } else {
-          renderPhoneMessages(content);
-        }
-      } else if (conn.isInternetConnected && bannerExists) {
-        // Needs banner removed
-        if (g4ActiveConvo === 'business_newbie_gc') {
-          openNewbieGcConversation();
-        } else if (g4ActiveConvo) {
-          openPhoneConversation(g4ActiveConvo);
-        } else {
-          renderPhoneMessages(content);
-        }
-      }
-    }
+    // Already viewing active view: smoothly sync the offline banner without rebuilding DOM
+    syncPhoneLinkOfflineBanner();
   }
 }
 
@@ -574,7 +800,10 @@ function showPhoneInAppScreen(app) {
   const isMsg = app === 'messages';
   const title = isMsg ? 'Messages' : 'Calls';
 
-  if (isMsg && isNewbieGcActive()) {
+  const ch1Unlocked = isChapter1CompletedAndSaved();
+  const gcActive = isNewbieGcActive() || ch1Unlocked || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
+
+  if (isMsg && (gcActive || ch1Unlocked)) {
     const gcState = loadNewbieGcState();
     const curChar = getCurrentPhoneCharacter();
     const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
@@ -584,6 +813,12 @@ function showPhoneInAppScreen(app) {
       ? `${lastSender}: ${lastMsg.text}`
       : 'Ryan added you';
 
+    const ryanMsgs = loadRyanMentorMessages();
+    const lastRyanMsg = ryanMsgs.length > 0 ? ryanMsgs[ryanMsgs.length - 1] : null;
+    const lastRyanPreview = lastRyanMsg
+      ? lastRyanMsg.text
+      : "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+
     phoneContent.innerHTML = `
       <div class="pl-phone-inapp-view">
         <div class="pl-phone-inapp-header">
@@ -591,7 +826,20 @@ function showPhoneInAppScreen(app) {
           <span class="pl-phone-screen-title">${title}</span>
           <span style="width:36px"></span>
         </div>
-        <div class="pl-phone-inapp-body" style="padding:8px;justify-content:flex-start;">
+        <div class="pl-phone-inapp-body" style="padding:8px;justify-content:flex-start;gap:6px;">
+          <!-- Ryan (IT Mentor) Card placed directly ABOVE new intern team 2027 -->
+          <div style="background:rgba(2,132,199,0.18);border:1px solid rgba(56,189,248,0.4);border-radius:10px;padding:7px 9px;cursor:pointer;width:100%;box-sizing:border-box;text-align:left;transition:all 0.15s ease;" onclick="openRyanMentorConversation()" title="Ryan (IT Mentor) — Message">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+              <img src="assets/Character/Ryan.png" alt="Ryan" style="width:16px;height:16px;border-radius:50%;object-fit:cover;border:1px solid #38bdf8;">
+              <span style="font-size:10px;font-weight:800;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Ryan (IT Mentor)</span>
+              <span style="font-size:7.5px;background:#0284c7;color:#fff;border-radius:3px;padding:1px 4px;margin-left:auto;font-weight:700;">MENTOR</span>
+            </div>
+            <div style="font-size:8px;color:#93c5fd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              ${escapeHtml(lastRyanPreview)}
+            </div>
+          </div>
+
+          <!-- new intern team 2027 card -->
           <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:8px 10px;cursor:pointer;width:100%;box-sizing:border-box;text-align:left;" onclick="openNewbieGcConversation()">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
               <span style="font-size:13px;">👥</span>
@@ -667,7 +915,15 @@ function switchPhoneTab(tab) {
   }
 
   if (tab === 'messages') {
-    renderPhoneMessages(content);
+    if (g4ActiveConvo === 'ryan_mentor') {
+      renderRyanMentorChat(content);
+    } else if (g4ActiveConvo === 'business_newbie_gc') {
+      renderNewbieGcChat(content);
+    } else if (g4ActiveConvo) {
+      renderIndividualConvo(g4ActiveConvo, content);
+    } else {
+      renderPhoneMessages(content);
+    }
     if (g4PhoneScreenView !== 'home') {
       showPhoneInAppScreen('messages');
     }
@@ -687,7 +943,8 @@ function switchPhoneTab(tab) {
 
 function renderPhoneMessages(container) {
   updatePhoneLinkBadges();
-  const gcActive = isNewbieGcActive();
+  const ch1Unlocked = isChapter1CompletedAndSaved();
+  const gcActive = isNewbieGcActive() || ch1Unlocked || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
   const gcState = loadNewbieGcState();
   const conn = getPhoneLinkConnectionStatus();
 
@@ -696,9 +953,39 @@ function renderPhoneMessages(container) {
     bannerHtml = renderNoInternetBannerHtml();
   }
 
-  let html = bannerHtml + '<div class="pl-contacts-list">';
+  let html = `<div id="pl-messages-banner-slot" class="pl-banner-slot">${bannerHtml}</div><div class="pl-contacts-list">`;
 
-  // 1. Group Chat Row (Pinned at top if active)
+  // 1. Ryan (IT Mentor) Contact Row — Placed directly ABOVE "new intern team 2027"
+  const ryanMsgs = loadRyanMentorMessages();
+  const lastRyanMsg = ryanMsgs.length > 0 ? ryanMsgs[ryanMsgs.length - 1] : null;
+  const lastRyanPreview = lastRyanMsg
+    ? lastRyanMsg.text
+    : "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+  const ryanTime = lastRyanMsg ? lastRyanMsg.time : '10:45 AM';
+
+  html += `
+    <div class="pl-contact-row pl-ryan-mentor-row ${!ch1Unlocked ? 'pl-mentor-locked' : ''}" onclick="openRyanMentorConversation()" title="Ryan (IT Mentor) — Phishing Practice & Retries">
+      <div style="position:relative;margin-right:12px;flex-shrink:0;">
+        <img src="assets/Character/Ryan.png" alt="Ryan" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;box-shadow:0 0 10px rgba(56,189,248,0.4);display:block;">
+        <span class="pl-ryan-status-dot" style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};border:2px solid #0f172a;border-radius:50%;box-shadow:0 0 5px ${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};"></span>
+      </div>
+      <div class="pl-contact-info" style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+          <span class="pl-contact-name" style="font-size:13.5px;font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:6px;">
+            Ryan (IT Mentor)
+            <span style="background:rgba(2,132,199,0.25);border:1px solid #38bdf8;color:#7dd3fc;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;letter-spacing:0.5px;">MENTOR</span>
+          </span>
+          <span style="font-size:10px;font-weight:600;color:#38bdf8;">${ryanTime}</span>
+        </div>
+        <div class="pl-contact-meta" style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;color:#cbd5e1;font-size:11.5px;">${escapeHtml(lastRyanPreview)}</span>
+          <span class="pl-ryan-status-text" style="font-size:10px;color:${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};font-weight:600;margin-left:8px;white-space:nowrap;">● ${conn.isInternetConnected ? 'Online' : 'Offline'}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 2. Group Chat Row ("new intern team 2027")
   if (gcActive) {
     const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
     const curChar = getCurrentPhoneCharacter();
@@ -750,7 +1037,8 @@ function renderPhoneMessages(container) {
 
   html += '</div>';
 
-  if (!gcActive && (!g4State || g4State.stage < 3)) {
+  const hasContacts = html.includes('pl-contact-row');
+  if (!hasContacts) {
     container.innerHTML = bannerHtml + `
       <div class="pl-empty-state">
         <div class="pl-empty-state-icon">💬</div>
@@ -764,21 +1052,23 @@ function renderPhoneMessages(container) {
 }
 
 function openNewbieGcConversation() {
-  if (!isNewbieGcActive()) {
-    switchPhoneTab('messages');
+  const ch1Unlocked = isChapter1CompletedAndSaved();
+  const gcActive = isNewbieGcActive() || ch1Unlocked || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
+  if (!gcActive) {
+    g4ActiveConvo = null;
+    const content = document.getElementById('pl-tab-content');
+    if (content) renderPhoneMessages(content);
     return;
   }
 
-  // Ensure network and bluetooth connections are active so group chat opens seamlessly
-  if (typeof networkSettings !== 'undefined') {
-    if (!networkSettings.bluetooth) networkSettings.bluetooth = true;
-    if (!networkSettings.wifi) networkSettings.wifi = true;
-    if (!networkSettings.currentSsid) networkSettings.currentSsid = 'HomeNetwork_5G';
-    networkSettings.noInternet = false;
-    networkSettings.airplane = false;
-  }
   g4ActiveConvo = 'business_newbie_gc';
-  switchPhoneTab('messages');
+  g4ActiveTab = 'messages';
+
+  const tabs = document.querySelectorAll('.pl-tab');
+  tabs.forEach(t => {
+    const id = t.id.replace('pl-tab-', '');
+    t.classList.toggle('active', id === 'messages');
+  });
 
   const content = document.getElementById('pl-tab-content');
   if (!content) return;
@@ -900,7 +1190,7 @@ function acceptNewbieGcInvite() {
 function renderNewbieGcChat(container, options = {}) {
   const state = loadNewbieGcState();
   const conn = getPhoneLinkConnectionStatus();
-  const isOffline = !conn.isInternetConnected && !conn.isBluetoothConnected;
+  const isOffline = !conn.isInternetConnected;
   const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
   const curChar = getCurrentPhoneCharacter();
 
@@ -913,41 +1203,41 @@ function renderNewbieGcChat(container, options = {}) {
     <div class="pl-convo-view" style="display:flex;flex-direction:column;height:100%;background:#090e18;">
       <!-- Header -->
       <div class="pl-convo-header" style="background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;gap:12px;">
-        <button class="pl-back-btn" onclick="switchPhoneTab('messages')">← Back</button>
+        <button class="pl-back-btn" onclick="g4ActiveConvo = null; switchPhoneTab('messages')">← Back</button>
         <div class="pl-contact-avatar pl-gc-avatar-stack" style="width:34px;height:34px;font-size:16px;">👥</div>
         <div class="pl-gc-header-info">
           <div class="pl-convo-name" style="font-size:13.5px;font-weight:800;color:#ffffff;line-height:1.2;">${NEWBIE_GC_INFO.name}</div>
-          <div class="pl-gc-members-summary">Group created by Ryan · 4 members (Ryan, Ethan, Pia, Alex) · <span style="color:#22c55e;">🟢 Online</span></div>
+          <div class="pl-gc-members-summary">Group created by <span onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="color:#38bdf8;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">Ryan</span> · 4 members (<span onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="color:#38bdf8;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">Ryan</span>, Ethan, Pia, Alex) · ${isOffline ? '<span style="color:#f59e0b;">🟡 Offline</span>' : '<span style="color:#22c55e;">🟢 Online</span>'}</div>
         </div>
       </div>
 
       <!-- Optional No Internet Banner -->
-      ${bannerHtml}
+      <div id="pl-gc-banner-slot" class="pl-banner-slot">${bannerHtml}</div>
 
       <!-- Messages Thread -->
       <div class="pl-convo-messages" id="pl-gc-messages-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
         <!-- Group system creation event -->
         <div class="pl-gc-system-events-container">
           <div class="pl-gc-system-pill">
-            👑 <strong>Ryan${curChar.id === 'ryan' ? ' (You)' : ''}</strong> created group <strong>"${NEWBIE_GC_INFO.name}"</strong>
+            👑 <strong onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan${curChar.id === 'ryan' ? ' (You)' : ''}</strong> created group <strong>"${NEWBIE_GC_INFO.name}"</strong>
           </div>
           ${curChar.id === 'alex' ? `
             <div class="pl-gc-system-pill pl-gc-pill-you">
-              👋 <strong>Ryan</strong> added <strong>Alex (You)</strong>
+              👋 <strong onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan</strong> added <strong>Alex (You)</strong>
             </div>
           ` : curChar.id === 'ethan' ? `
             <div class="pl-gc-system-pill">
-              👋 <strong>Ryan</strong> added <strong>Alex</strong>
+              👋 <strong onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan</strong> added <strong>Alex</strong>
             </div>
             <div class="pl-gc-system-pill pl-gc-pill-you">
-              👋 <strong>Ryan</strong> added <strong>Ethan (You)</strong>
+              👋 <strong onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan</strong> added <strong>Ethan (You)</strong>
             </div>
           ` : curChar.id === 'pia' ? `
             <div class="pl-gc-system-pill">
-              👋 <strong>Ryan</strong> added <strong>Alex</strong> and <strong>Ethan</strong>
+              👋 <strong onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan</strong> added <strong>Alex</strong> and <strong>Ethan</strong>
             </div>
             <div class="pl-gc-system-pill pl-gc-pill-you">
-              👋 <strong>Ryan</strong> added <strong>Pia (You)</strong>
+              👋 <strong onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan</strong> added <strong>Pia (You)</strong>
             </div>
           ` : `
             <div class="pl-gc-system-pill pl-gc-pill-you">
@@ -980,12 +1270,18 @@ function renderNewbieGcChat(container, options = {}) {
           let seenReceiptHtml = '';
           if (isMine) {
             const isLatestMine = !allMessages.slice(idx + 1).some(m => (m.from === curChar.id) || (m.isPlayer && m.playerCharId === curChar.id));
-            if (isLatestMine) {
+            if (msg.notDelivered) {
+              seenReceiptHtml = `
+                <div class="pl-gc-seen-row pl-msg-failed-row" style="color:#ef4444;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;margin-top:2px;" title="Not delivered — no internet connection">
+                  <span>⚠️ Not Delivered • No internet connection</span>
+                </div>
+              `;
+            } else if (isLatestMine) {
               if (state.seenByRyan) {
                 seenReceiptHtml = `
                   <div class="pl-gc-seen-row" title="Seen by Team">
                     <span class="pl-gc-seen-label">Seen</span>
-                    <img src="assets/Character/Ryan.png" class="pl-gc-seen-avatar" alt="Ryan" title="Seen by Ryan">
+                    <img src="assets/Character/Ryan.png" class="pl-gc-seen-avatar" alt="Ryan" title="Seen by Ryan (Click to message)" onclick="openRyanMentorConversation()" style="cursor:pointer;">
                   </div>
                 `;
               } else {
@@ -1001,16 +1297,20 @@ function renderNewbieGcChat(container, options = {}) {
           const isNew = !!msg.isNew;
           const animClass = isNew ? 'pl-msg-new' : '';
 
+          const isRyan = (msg.from === 'ryan') || (authorName.toLowerCase().startsWith('ryan'));
+          const ryanAvatarClick = isRyan ? 'onclick="openRyanMentorConversation()" title="Click Ryan\'s profile to message him" style="cursor:pointer;border:2px solid #38bdf8;"' : '';
+          const ryanAuthorClick = isRyan ? 'onclick="openRyanMentorConversation()" title="Click Ryan\'s profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;"' : '';
+
           return `
             <div class="pl-gc-msg-item ${isMine ? 'mine' : 'theirs'} ${animClass}">
-              <img src="${avatarSrc}" class="pl-gc-msg-avatar ${isMine ? 'avatar-mine' : ''}" alt="${escapeHtml(authorName)}">
+              <img src="${avatarSrc}" class="pl-gc-msg-avatar ${isMine ? 'avatar-mine' : ''}" alt="${escapeHtml(authorName)}" ${ryanAvatarClick}>
               <div class="pl-gc-msg-col">
                 <div class="pl-gc-msg-meta">
-                  <span class="pl-gc-msg-author">${escapeHtml(authorName)}</span>
+                  <span class="pl-gc-msg-author" ${ryanAuthorClick}>${escapeHtml(authorName)}</span>
                   <span class="pl-gc-msg-role-tag ${roleClass}">${escapeHtml(roleTag)}</span>
                   <span class="pl-gc-msg-time-inline">${msg.time}</span>
                 </div>
-                <div class="pl-gc-bubble">${escapeHtml(msg.text)}</div>
+                <div class="pl-gc-bubble ${msg.notDelivered ? 'pl-gc-bubble-error' : ''}">${escapeHtml(msg.text)}</div>
                 ${seenReceiptHtml}
               </div>
             </div>
@@ -1019,10 +1319,10 @@ function renderNewbieGcChat(container, options = {}) {
 
         ${state.typingMember ? `
           <div class="pl-gc-msg-item theirs pl-typing-active" id="pl-gc-typing-item">
-            <img src="${state.typingMember.avatar}" class="pl-gc-msg-avatar" alt="${escapeHtml(state.typingMember.name)}">
+            <img src="${state.typingMember.avatar}" class="pl-gc-msg-avatar" alt="${escapeHtml(state.typingMember.name)}" ${state.typingMember.id === 'ryan' ? 'onclick="openRyanMentorConversation()" title="Click Ryan\'s profile to message him" style="cursor:pointer;"' : ''}>
             <div class="pl-gc-msg-col">
               <div class="pl-gc-msg-meta">
-                <span class="pl-gc-msg-author">${escapeHtml(state.typingMember.name)}</span>
+                <span class="pl-gc-msg-author" ${state.typingMember.id === 'ryan' ? 'onclick="openRyanMentorConversation()" title="Click Ryan\'s profile to message him" style="cursor:pointer;color:#38bdf8;"' : ''}>${escapeHtml(state.typingMember.name)}</span>
                 <span class="pl-gc-msg-role-tag ${state.typingMember.roleClass}">${escapeHtml(state.typingMember.roleTag)}</span>
               </div>
               <div class="pl-gc-bubble pl-gc-typing-bubble">
@@ -1037,10 +1337,10 @@ function renderNewbieGcChat(container, options = {}) {
           </div>
         ` : (state.ryanIsTyping ? `
           <div class="pl-gc-msg-item theirs pl-typing-active" id="pl-gc-typing-item">
-            <img src="assets/Character/Ryan.png" class="pl-gc-msg-avatar" alt="Ryan">
+            <img src="assets/Character/Ryan.png" class="pl-gc-msg-avatar" alt="Ryan" onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;border:2px solid #38bdf8;">
             <div class="pl-gc-msg-col">
               <div class="pl-gc-msg-meta">
-                <span class="pl-gc-msg-author">Ryan</span>
+                <span class="pl-gc-msg-author" onclick="openRyanMentorConversation()" title="Click Ryan's profile to message him" style="cursor:pointer;color:#38bdf8;text-decoration:underline;text-underline-offset:2px;">Ryan</span>
                 <span class="pl-gc-msg-role-tag pl-gc-role-mentor">CREATOR</span>
               </div>
               <div class="pl-gc-bubble pl-gc-typing-bubble">
@@ -1183,13 +1483,67 @@ function sendPlayerGcMessage(text) {
 
   if (!msgText) return;
 
-  // Auto-ensure connection state is restored
-  if (typeof networkSettings !== 'undefined') {
-    if (!networkSettings.bluetooth) networkSettings.bluetooth = true;
-    if (!networkSettings.wifi) networkSettings.wifi = true;
-    if (!networkSettings.currentSsid) networkSettings.currentSsid = 'HomeNetwork_5G';
-    networkSettings.noInternet = false;
-    networkSettings.airplane = false;
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isInternetConnected) {
+    if (!state.playerMessages) state.playerMessages = [];
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const playerMsg = {
+      id: 'p_' + Date.now(),
+      from: curChar.id,
+      playerCharId: curChar.id,
+      isPlayer: true,
+      author: curChar.displayName,
+      roleTag: curChar.roleTag,
+      roleClass: curChar.roleClass,
+      avatar: curChar.avatar,
+      time: timeStr,
+      text: msgText,
+      isNew: true,
+      notDelivered: true
+    };
+    state.playerMessages.push(playerMsg);
+    saveNewbieGcState(state);
+
+    const content = document.getElementById('pl-tab-content');
+    if (content && g4ActiveConvo === 'business_newbie_gc') {
+      renderNewbieGcChat(content, { smoothScroll: true });
+    }
+
+    const bar = document.querySelector('#pl-tab-content .pl-gc-input-bar');
+    if (bar) {
+      bar.classList.remove('pl-input-bar-error');
+      void bar.offsetWidth;
+      bar.classList.add('pl-input-bar-error');
+      setTimeout(() => bar.classList.remove('pl-input-bar-error'), 500);
+    }
+    const inp = document.getElementById('pl-gc-text-input');
+    if (inp) {
+      inp.classList.remove('pl-input-error');
+      void inp.offsetWidth;
+      inp.classList.add('pl-input-error');
+      setTimeout(() => inp.classList.remove('pl-input-error'), 500);
+    }
+    const banner = document.getElementById('pl-no-internet-banner');
+    if (banner) {
+      banner.classList.remove('pl-banner-flash-attention');
+      void banner.offsetWidth;
+      banner.classList.add('pl-banner-flash-attention');
+      setTimeout(() => banner.classList.remove('pl-banner-flash-attention'), 700);
+    }
+
+    const reason = conn.isAirplane
+      ? '✈️ Message not delivered: Airplane Mode is active. Turn off Airplane Mode to send messages.'
+      : (typeof networkSettings !== 'undefined' && !networkSettings.wifi
+          ? '📶 Message not delivered: Wi-Fi is turned off. Turn on Wi-Fi to send messages.'
+          : '📶 Message not delivered: No internet connection. Please connect to Wi-Fi to send messages.');
+    if (typeof showToast === 'function') {
+      showToast(reason, 'error');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playWarning) {
+      AudioManager.playWarning();
+    }
+    return;
   }
 
   if (!state.playerMessages) state.playerMessages = [];
@@ -1395,16 +1749,22 @@ function triggerTeammateReplies(curChar, msgText) {
 }
 
 function resetPhoneLinkChat() {
+  window._ryanMentorIsTyping = false;
   if (Array.isArray(window._plTypingTimers)) {
     window._plTypingTimers.forEach(id => clearTimeout(id));
     window._plTypingTimers = [];
   }
   try {
     localStorage.removeItem(NEWBIE_GC_STORAGE_KEY);
+    localStorage.removeItem(RYAN_MENTOR_STORAGE_KEY);
   } catch(e) {}
   const content = document.getElementById('pl-tab-content');
-  if (content && g4ActiveConvo === 'business_newbie_gc') {
-    renderNewbieGcChat(content);
+  if (content) {
+    if (g4ActiveConvo === 'business_newbie_gc') {
+      renderNewbieGcChat(content);
+    } else if (g4ActiveConvo === 'ryan_mentor') {
+      renderRyanMentorChat(content);
+    }
   }
 }
 window.resetPhoneLinkChat = resetPhoneLinkChat;
@@ -1412,6 +1772,717 @@ window.sendPlayerGcQuickReply = sendPlayerGcQuickReply;
 window.sendPlayerGcMessage = sendPlayerGcMessage;
 window.sendCustomPlayerGcMessage = sendCustomPlayerGcMessage;
 
+// ═══════════════════════════════════════════════════════════════
+// RYAN (IT SUPPORT MENTOR) DIRECT CHAT & PHISHING PRACTICE ACTIONS
+// ═══════════════════════════════════════════════════════════════
+
+function openRyanMentorConversation() {
+  g4ActiveConvo = 'ryan_mentor';
+  g4ActiveTab = 'messages';
+
+  const tabs = document.querySelectorAll('.pl-tab');
+  tabs.forEach(t => {
+    const id = t.id.replace('pl-tab-', '');
+    t.classList.toggle('active', id === 'messages');
+  });
+
+  const content = document.getElementById('pl-tab-content');
+  if (!content) return;
+
+  renderRyanMentorChat(content);
+
+  if (g4PhoneScreenView !== 'home') {
+    showPhoneInAppScreen('messages');
+  }
+}
+
+function renderRyanMentorChat(container, options = {}) {
+  const conn = getPhoneLinkConnectionStatus();
+  const isOffline = !conn.isInternetConnected;
+  const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
+  const isCh1Unlocked = isChapter1CompletedAndSaved();
+  const allMessages = loadRyanMentorMessages();
+
+  const existingInput = document.getElementById('pl-ryan-text-input');
+  const preservedText = existingInput ? existingInput.value : '';
+
+  container.innerHTML = `
+    <div class="pl-convo-view" style="display:flex;flex-direction:column;height:100%;background:#090e18;">
+      <!-- Header -->
+      <div class="pl-convo-header" style="background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;gap:12px;">
+        <button class="pl-back-btn" onclick="g4ActiveConvo = null; switchPhoneTab('messages')">← Back</button>
+        <div style="position:relative;width:36px;height:36px;flex-shrink:0;">
+          <img src="assets/Character/Ryan.png" alt="Ryan" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;">
+          <span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:${isOffline ? '#f59e0b' : '#22c55e'};border:1.5px solid #0f172a;border-radius:50%;"></span>
+        </div>
+        <div class="pl-gc-header-info">
+          <div class="pl-convo-name" style="font-size:13.5px;font-weight:800;color:#ffffff;line-height:1.2;display:flex;align-items:center;gap:6px;">
+            <span>Ryan (IT Support Mentor)</span>
+            <span class="pl-gc-msg-role-tag pl-gc-role-mentor">MENTOR</span>
+          </div>
+          <div class="pl-gc-members-summary">IT Support Mentor · ${isOffline ? '<span style="color:#f59e0b;">🟡 Offline</span>' : '<span style="color:#22c55e;">🟢 Online</span>'}</div>
+        </div>
+      </div>
+
+      <!-- Optional No Internet Banner -->
+      <div id="pl-gc-banner-slot" class="pl-banner-slot">${bannerHtml}</div>
+
+      <!-- Messages Thread -->
+      <div class="pl-convo-messages" id="pl-ryan-messages-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <!-- System event pills matching New Intern Team -->
+        <div class="pl-gc-system-events-container">
+          <div class="pl-gc-system-pill">
+            🛡️ <strong>Ryan</strong> is your assigned <strong>IT Support Mentor</strong>
+          </div>
+          <div class="pl-gc-system-pill pl-gc-pill-you">
+            🔒 Direct support line · Phishing training &amp; simulation assistance
+          </div>
+        </div>
+
+        ${allMessages.map((msg, idx) => {
+          const isMine = (msg.from === 'alex') || (msg.from === 'player') || (msg.isPlayer);
+          const authorName = isMine ? 'Alex (You)' : 'Ryan';
+          const avatarSrc = isMine ? 'assets/Character/Alex.png' : 'assets/Character/Ryan.png';
+          const roleTag = isMine ? 'RECRUIT' : (msg.roleTag || 'MENTOR');
+          const roleClass = isMine ? 'pl-gc-role-you' : 'pl-gc-role-mentor';
+
+          let seenReceiptHtml = '';
+          if (isMine) {
+            const isLatestMine = !allMessages.slice(idx + 1).some(m => (m.from === 'alex') || (m.from === 'player') || (m.isPlayer));
+            if (msg.notDelivered) {
+              seenReceiptHtml = `
+                <div class="pl-gc-seen-row pl-msg-failed-row" style="color:#ef4444;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;margin-top:2px;" title="Not delivered — no internet connection">
+                  <span>⚠️ Not Delivered • No internet connection</span>
+                </div>
+              `;
+            } else if (isLatestMine) {
+              if (!_ryanMentorIsTyping) {
+                seenReceiptHtml = `
+                  <div class="pl-gc-seen-row" title="Seen by Ryan">
+                    <span class="pl-gc-seen-label">Seen</span>
+                    <img src="assets/Character/Ryan.png" class="pl-gc-seen-avatar" alt="Ryan">
+                  </div>
+                `;
+              } else {
+                seenReceiptHtml = `
+                  <div class="pl-gc-seen-row" title="Sent">
+                    <span class="pl-gc-seen-label" style="color:#64748b;">✓ Sent</span>
+                  </div>
+                `;
+              }
+            }
+          }
+
+          const isNew = !!msg.isNew;
+          const animClass = isNew ? 'pl-msg-new' : '';
+
+          return `
+            <div class="pl-gc-msg-item ${isMine ? 'mine' : 'theirs'} ${animClass}">
+              <img src="${avatarSrc}" class="pl-gc-msg-avatar ${isMine ? 'avatar-mine' : ''}" alt="${escapeHtml(authorName)}">
+              <div class="pl-gc-msg-col">
+                <div class="pl-gc-msg-meta">
+                  <span class="pl-gc-msg-author">${escapeHtml(authorName)}</span>
+                  <span class="pl-gc-msg-role-tag ${roleClass}">${escapeHtml(roleTag)}</span>
+                  <span class="pl-gc-msg-time-inline">${msg.time}</span>
+                </div>
+                <div class="pl-gc-bubble ${msg.notDelivered ? 'pl-gc-bubble-error' : ''}">${escapeHtml(msg.text)}</div>
+                ${seenReceiptHtml}
+              </div>
+            </div>
+          `;
+        }).join('')}
+
+        ${_ryanMentorIsTyping ? `
+          <div class="pl-gc-msg-item theirs pl-typing-active" id="pl-ryan-typing-item">
+            <img src="assets/Character/Ryan.png" class="pl-gc-msg-avatar" alt="Ryan">
+            <div class="pl-gc-msg-col">
+              <div class="pl-gc-msg-meta">
+                <span class="pl-gc-msg-author">Ryan</span>
+                <span class="pl-gc-msg-role-tag pl-gc-role-mentor">MENTOR</span>
+              </div>
+              <div class="pl-gc-bubble pl-gc-typing-bubble">
+                <span class="pl-typing-dots" aria-hidden="true">
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                </span>
+                <span class="pl-typing-label">Ryan is typing…</span>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Quick Replies & Input Bar (Matching New Intern Team 2027 design) -->
+      <div class="pl-gc-input-area">
+        <div class="pl-gc-quick-replies" style="display:flex;gap:8px;padding:4px 0;flex-wrap:wrap;align-items:center;">
+          ${isCh1Unlocked ? `
+            <button type="button" class="pl-gc-chip pl-gc-chip-highlight" data-action="retry_investigation" onclick="sendRyanMentorRequest('retry_investigation')" style="cursor:pointer;background:rgba(56,189,248,0.2);border:1.5px solid #38bdf8;color:#f0f9ff;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:5px 12px;font-size:12px;box-shadow:0 2px 8px rgba(56,189,248,0.25);" title="Restart all 5 emails in Zmail &amp; reset checklist for a full retry">
+              <span>🔁</span> <span>Retry Phishing Investigation</span> <span style="font-size:10px;color:#7dd3fc;margin-left:2px;">(Click to retry)</span>
+            </button>
+            <button type="button" class="pl-gc-chip" data-qr="How do I spot phishing clues, Ryan?" onclick="sendCustomRyanMentorMessage('How do I spot phishing clues, Ryan?')" style="cursor:pointer;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#cbd5e1;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:5px 12px;font-size:12px;" title="Ask for phishing tips">
+              <span>💡</span> <span>How do I spot phishing clues?</span>
+            </button>
+          ` : `
+            <div style="font-size:11px;color:#94a3b8;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:4px 10px;border-radius:12px;">
+              <span>🔒</span> <span>Complete Chapter 1 &amp; save desktop progress to unlock Phishing Retries</span>
+            </div>
+          `}
+        </div>
+        <div class="pl-gc-input-bar">
+          <input
+            type="text"
+            id="pl-ryan-text-input"
+            class="pl-gc-input"
+            placeholder="Message Ryan (IT Support Mentor)..."
+            maxlength="200"
+            autocomplete="off"
+            value="${escapeHtml(preservedText)}"
+            onkeydown="if(event.key==='Enter') sendCustomRyanMentorMessage();"
+          >
+          <button type="button" class="pl-gc-send-btn" onclick="sendCustomRyanMentorMessage()">
+            Send 📨
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Restore preserved input text if user had already begun typing
+  const inp = document.getElementById('pl-ryan-text-input');
+  if (inp && preservedText) {
+    inp.value = preservedText;
+  }
+
+  // Auto-scroll to latest message: smooth on send/receive/typing, instant on initial open
+  const isSmooth = !!options.smoothScroll;
+  const list = document.getElementById('pl-ryan-messages-list');
+  if (list) {
+    if (isSmooth) {
+      list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+      setTimeout(() => {
+        const l2 = document.getElementById('pl-ryan-messages-list');
+        if (l2) l2.scrollTo({ top: l2.scrollHeight, behavior: 'smooth' });
+      }, 70);
+    } else {
+      list.scrollTop = list.scrollHeight;
+      setTimeout(() => {
+        const l2 = document.getElementById('pl-ryan-messages-list');
+        if (l2) l2.scrollTop = l2.scrollHeight;
+      }, 40);
+    }
+  }
+
+  if (inp && options.focusInput !== false) {
+    setTimeout(() => {
+      const i2 = document.getElementById('pl-ryan-text-input');
+      if (i2 && document.activeElement !== i2 && !options.noFocus) {
+        i2.focus();
+      }
+    }, 60);
+  }
+
+  // Clear isNew flag on messages after their animation finishes (400ms)
+  let hadNew = false;
+  allMessages.forEach(m => {
+    if (m.isNew) {
+      hadNew = true;
+      m.isNew = false;
+    }
+  });
+  if (hadNew) {
+    setTimeout(() => {
+      saveRyanMentorMessages(allMessages);
+    }, 450);
+  }
+}
+
+function sendRyanMentorRequest(type, customText) {
+  if (_ryanMentorIsTyping) return;
+
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isInternetConnected) {
+    const reason = conn.isAirplane
+      ? '✈️ Cannot reach Ryan: Airplane Mode is active. Turn off Airplane Mode to contact your mentor.'
+      : (typeof networkSettings !== 'undefined' && !networkSettings.wifi
+          ? '📶 Cannot reach Ryan: Wi-Fi is turned off. Turn on Wi-Fi to contact your mentor.'
+          : '📶 Cannot reach Ryan: No internet connection. Please connect to Wi-Fi to contact your mentor.');
+    if (typeof showToast === 'function') {
+      showToast(reason, 'error');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playWarning) {
+      AudioManager.playWarning();
+    }
+    const bar = document.querySelector('#pl-tab-content .pl-gc-input-bar');
+    if (bar) {
+      bar.classList.remove('pl-input-bar-error');
+      void bar.offsetWidth;
+      bar.classList.add('pl-input-bar-error');
+      setTimeout(() => bar.classList.remove('pl-input-bar-error'), 500);
+    }
+    const inp = document.getElementById('pl-ryan-text-input');
+    if (inp) {
+      inp.classList.remove('pl-input-error');
+      void inp.offsetWidth;
+      inp.classList.add('pl-input-error');
+      setTimeout(() => inp.classList.remove('pl-input-error'), 500);
+    }
+    const banner = document.getElementById('pl-no-internet-banner');
+    if (banner) {
+      banner.classList.remove('pl-banner-flash-attention');
+      void banner.offsetWidth;
+      banner.classList.add('pl-banner-flash-attention');
+      setTimeout(() => banner.classList.remove('pl-banner-flash-attention'), 700);
+    }
+    return;
+  }
+
+  const msgs = loadRyanMentorMessages();
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  let playerText = customText || '';
+  if (!playerText) {
+    playerText = "Ryan, can I retry the phishing investigation from the beginning?";
+  }
+
+  msgs.push({
+    id: 'alex_req_' + Date.now(),
+    from: 'alex',
+    author: 'Alex',
+    roleTag: 'RECRUIT',
+    roleClass: 'pl-gc-role-you',
+    avatar: 'assets/Character/Alex.png',
+    time: timeStr,
+    text: playerText,
+    isNew: true
+  });
+  saveRyanMentorMessages(msgs);
+
+  if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+    AudioManager.playClick();
+  }
+
+  _ryanMentorIsTyping = true;
+  const content = document.getElementById('pl-tab-content');
+  if (content && g4ActiveConvo === 'ryan_mentor') {
+    renderRyanMentorChat(content, { smoothScroll: true });
+  }
+
+  setTimeout(() => {
+    _ryanMentorIsTyping = false;
+    retryPhishingActivity();
+    const ryanReplyText = "Ok. Good luck! Here are some tips to help with your investigation:\n\n" +
+      "💡 Inspect the Sender: Always check the sender's full email address carefully for slight typos, numbers, or lookalike domains (e.g. paypa1.com).\n" +
+      "💡 Watch for Urgency: Phishing emails often pressure you with urgent deadlines, threats of account lockout, or fear.\n" +
+      "💡 Check Links & Attachments: Hover over links to preview the real destination URL, and be suspicious of unexpected file attachments.\n" +
+      "💡 Flag Clues First: Use Flag Mode in Zmail to pinpoint evidence before submitting your verdict.\n\n" +
+      "I've reset all 5 emails in Zmail and your Sticky Note checklist goals. Head over to Zmail and take your time!";
+
+    const replyNow = new Date();
+    const replyTime = replyNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const updatedMsgs = loadRyanMentorMessages();
+    updatedMsgs.push({
+      id: 'ryan_reply_' + Date.now(),
+      from: 'ryan',
+      author: 'Ryan',
+      roleTag: 'IT SUPPORT MENTOR',
+      roleClass: 'pl-gc-role-mentor',
+      avatar: 'assets/Character/Ryan.png',
+      time: replyTime,
+      text: ryanReplyText,
+      isNew: true
+    });
+    saveRyanMentorMessages(updatedMsgs);
+
+    if (content && g4ActiveConvo === 'ryan_mentor') {
+      renderRyanMentorChat(content, { smoothScroll: true });
+    }
+
+    if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+      AudioManager.playNotification();
+    }
+  }, 1000);
+}
+
+function sendCustomRyanMentorMessage(overrideText) {
+  if (_ryanMentorIsTyping) return;
+  const input = document.getElementById('pl-ryan-text-input');
+  let typed = (typeof overrideText === 'string' && overrideText.trim())
+    ? overrideText.trim()
+    : (input ? (input.value || '').trim() : '');
+
+  if (!typed) {
+    if (input) input.focus();
+    return;
+  }
+  if (input) input.value = '';
+
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isInternetConnected) {
+    const msgs = loadRyanMentorMessages();
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    msgs.push({
+      id: 'alex_msg_' + Date.now(),
+      from: 'alex',
+      author: 'Alex',
+      roleTag: 'RECRUIT',
+      roleClass: 'pl-gc-role-you',
+      avatar: 'assets/Character/Alex.png',
+      time: timeStr,
+      text: typed,
+      isNew: true,
+      notDelivered: true
+    });
+    saveRyanMentorMessages(msgs);
+
+    const content = document.getElementById('pl-tab-content');
+    if (content && g4ActiveConvo === 'ryan_mentor') {
+      renderRyanMentorChat(content, { smoothScroll: true });
+    }
+
+    const bar = document.querySelector('#pl-tab-content .pl-gc-input-bar');
+    if (bar) {
+      bar.classList.remove('pl-input-bar-error');
+      void bar.offsetWidth;
+      bar.classList.add('pl-input-bar-error');
+      setTimeout(() => bar.classList.remove('pl-input-bar-error'), 500);
+    }
+    const inp = document.getElementById('pl-ryan-text-input');
+    if (inp) {
+      inp.classList.remove('pl-input-error');
+      void inp.offsetWidth;
+      inp.classList.add('pl-input-error');
+      setTimeout(() => inp.classList.remove('pl-input-error'), 500);
+    }
+    const banner = document.getElementById('pl-no-internet-banner');
+    if (banner) {
+      banner.classList.remove('pl-banner-flash-attention');
+      void banner.offsetWidth;
+      banner.classList.add('pl-banner-flash-attention');
+      setTimeout(() => banner.classList.remove('pl-banner-flash-attention'), 700);
+    }
+
+    const reason = conn.isAirplane
+      ? '✈️ Message not delivered: Airplane Mode is active. Turn off Airplane Mode to message Ryan.'
+      : (typeof networkSettings !== 'undefined' && !networkSettings.wifi
+          ? '📶 Message not delivered: Wi-Fi is turned off. Turn on Wi-Fi to message Ryan.'
+          : '📶 Message not delivered: No internet connection. Please connect to Wi-Fi to message Ryan.');
+    if (typeof showToast === 'function') {
+      showToast(reason, 'error');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playWarning) {
+      AudioManager.playWarning();
+    }
+    return;
+  }
+
+  const msgs = loadRyanMentorMessages();
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  msgs.push({
+    id: 'alex_msg_' + Date.now(),
+    from: 'alex',
+    author: 'Alex',
+    roleTag: 'RECRUIT',
+    roleClass: 'pl-gc-role-you',
+    avatar: 'assets/Character/Alex.png',
+    time: timeStr,
+    text: typed,
+    isNew: true
+  });
+  saveRyanMentorMessages(msgs);
+
+  if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+    AudioManager.playClick();
+  }
+
+  _ryanMentorIsTyping = true;
+  const content = document.getElementById('pl-tab-content');
+  if (content && g4ActiveConvo === 'ryan_mentor') {
+    renderRyanMentorChat(content, { smoothScroll: true });
+  }
+
+  setTimeout(() => {
+    _ryanMentorIsTyping = false;
+    const lower = typed.toLowerCase();
+    let ryanReplyText = "";
+
+    const isCh1Unlocked = isChapter1CompletedAndSaved();
+
+    if (!isCh1Unlocked) {
+      ryanReplyText = "Hey Alex! Make sure to complete Chapter 1 (Phishing Investigation) and save your desktop progress first. Once that's done, you can message me here anytime to retry the phishing activity or restart the Zmail investigation!";
+    } else if (lower.includes('retry') || lower.includes('practice') || lower.includes('start over') || lower.includes('again')) {
+      retryPhishingActivity();
+      ryanReplyText = "Ok. Good luck! Here are some tips to help with your investigation:\n\n" +
+        "💡 Inspect the Sender: Always check the sender's full email address carefully for slight typos, numbers, or lookalike domains (e.g. paypa1.com).\n" +
+        "💡 Watch for Urgency: Phishing emails often pressure you with urgent deadlines, threats of account lockout, or fear.\n" +
+        "💡 Check Links & Attachments: Hover over links to preview the real destination URL, and be suspicious of unexpected file attachments.\n" +
+        "💡 Flag Clues First: Use Flag Mode in Zmail to pinpoint evidence before submitting your verdict.\n\n" +
+        "I've reset all 5 emails in Zmail and your Sticky Note checklist goals. Head over to Zmail and take your time!";
+    } else if (lower.includes('zmail') || lower.includes('email') || lower.includes('inbox')) {
+      ryanReplyText = "In Zmail, remember to inspect the sender domain, check for urgent or threatening language, and hover over links before clicking. Click 'Retry Phishing Investigation' below anytime to restart your practice!";
+    } else if (lower.includes('checklist') || lower.includes('sticky') || lower.includes('notes') || lower.includes('goal')) {
+      ryanReplyText = "Your Sticky Notes checklist tracks all 5 phishing mission goals. You can click 'Retry Phishing Investigation' below to clear your checklist goals and practice again from scratch!";
+    } else if (lower.includes('help') || lower.includes('tip') || lower.includes('how')) {
+      ryanReplyText = "Pro tip: Phishers love using lookalike domains (like paypa1.com or support-secure.net) and creating fake urgency. Always check the full sender address and inspect links carefully!";
+    } else {
+      ryanReplyText = "I'm right here if you need anything! If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+    }
+
+    const replyNow = new Date();
+    const replyTime = replyNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const updatedMsgs = loadRyanMentorMessages();
+    updatedMsgs.push({
+      id: 'ryan_reply_' + Date.now(),
+      from: 'ryan',
+      author: 'Ryan',
+      roleTag: 'IT SUPPORT MENTOR',
+      roleClass: 'pl-gc-role-mentor',
+      avatar: 'assets/Character/Ryan.png',
+      time: replyTime,
+      text: ryanReplyText,
+      isNew: true
+    });
+    saveRyanMentorMessages(updatedMsgs);
+
+    if (content && g4ActiveConvo === 'ryan_mentor') {
+      renderRyanMentorChat(content, { smoothScroll: true });
+    }
+
+    if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+      AudioManager.playNotification();
+    }
+  }, 1000);
+}
+
+// ── THREE PHISHING RETRY ACTIONS (STRICT CHAPTER 1 SCOPE ONLY) ──
+
+function retryPhishingActivity() {
+  // 1. Reset Zmail interface completely
+  if (typeof resetCh1ZmailInterface === 'function') {
+    resetCh1ZmailInterface();
+  }
+  // 2. Clear gameState phishing variables
+  if (typeof gameState !== 'undefined') {
+    gameState.score = 0;
+    gameState.correctDecisions = 0;
+    gameState.phishingDetected = 0;
+    gameState.legitimateDetected = 0;
+    gameState.evidenceFoundTotal = 0;
+    gameState.currentEmail = 0;
+    gameState.emailResults = [];
+    gameState.flagModeActive = false;
+    gameState.currentEmailFlags = [];
+    gameState.pendingLinkUrl = null;
+    gameState.pendingLinkFlagId = null;
+    gameState.pendingLinkFlagType = null;
+    gameState.phase = 'mission';
+  }
+  window._isPhishingRetryActive = true;
+  window._currentChapterCategory = 'phishing';
+  window._awardClaimed = false;
+  window._ch1CompletedSandbox = false;
+  window._phishAutoModalShown = false;
+  if (typeof _phishingEarnedAward !== 'undefined') {
+    _phishingEarnedAward = null;
+  }
+
+  // 3. Reset Wave 1 emails in Zmail
+  if (typeof ch1InjectWave === 'function') {
+    ch1InjectWave(1);
+  }
+  // 4. Reset checklist achievements
+  if (typeof _achievementUnlocked !== 'undefined') {
+    _achievementUnlocked.delete('task_report_phishing');
+    _achievementUnlocked.delete('task_verify_legit');
+    _achievementUnlocked.delete('task_fake_sender');
+    _achievementUnlocked.delete('task_phish_indicators');
+    _achievementUnlocked.delete('task_submit_all_verdicts');
+    _achievementUnlocked.delete('task_all_complete');
+    _achievementUnlocked.delete('phish_trophy_unlocked');
+    _achievementUnlocked.delete('ach_phishing');
+  }
+  // Ensure the intern group chat in Phone Link remains restored and active
+  try {
+    localStorage.setItem('cyberzero_gc_unlocked', 'true');
+  } catch(e) {}
+  if (typeof setNewbieGcCreated === 'function') {
+    setNewbieGcCreated(false);
+  }
+
+  // 5. Reset desktop trophy visual
+  if (typeof updateDesktopTrophyDisplay === 'function') {
+    updateDesktopTrophyDisplay();
+  }
+  // 6. Update Sticky Notes to show the phishing investigation checklist
+  if (typeof renderPhishingChecklist === 'function') {
+    renderPhishingChecklist();
+  } else if (typeof updateStickyNoteForPhase === 'function') {
+    updateStickyNoteForPhase('phishing');
+  } else if (typeof updateStickyChecklist === 'function') {
+    updateStickyChecklist();
+  }
+  if (typeof showStickyNote === 'function') {
+    showStickyNote();
+  }
+  // 7. Save phishing state locally
+  if (typeof savePhishingProgress === 'function') {
+    savePhishingProgress();
+  }
+  // 8. Open Zmail app
+  if (typeof openApp === 'function') {
+    openApp('email');
+  }
+  if (typeof showToast === 'function') {
+    showToast('🔄 Phishing investigation reset! All emails and checklist refreshed.', 'info');
+  }
+}
+
+function restartPhishingInvestigationZmail() {
+  // 1. Reset Zmail interface completely
+  if (typeof resetCh1ZmailInterface === 'function') {
+    resetCh1ZmailInterface();
+  }
+  // 2. Clear Zmail email results & active email
+  if (typeof gameState !== 'undefined') {
+    gameState.currentEmail = 0;
+    gameState.emailResults = [];
+    gameState.phishingDetected = 0;
+    gameState.legitimateDetected = 0;
+    gameState.evidenceFoundTotal = 0;
+    gameState.flagModeActive = false;
+    gameState.currentEmailFlags = [];
+    gameState.phase = 'mission';
+  }
+  window._isPhishingRetryActive = true;
+  window._currentChapterCategory = 'phishing';
+  window._awardClaimed = false;
+  window._ch1CompletedSandbox = false;
+  window._phishAutoModalShown = false;
+  // 3. Clear dynamic inbox & re-inject Wave 1
+  if (typeof ch1InjectWave === 'function') {
+    ch1InjectWave(1);
+  }
+  // 4. Update Sticky Notes
+  if (typeof renderPhishingChecklist === 'function') {
+    renderPhishingChecklist();
+  }
+  if (typeof showStickyNote === 'function') {
+    showStickyNote();
+  }
+  // 5. Save progress
+  if (typeof savePhishingProgress === 'function') {
+    savePhishingProgress();
+  }
+  // 6. Open Zmail app
+  if (typeof openApp === 'function') {
+    openApp('email');
+  }
+  if (typeof showToast === 'function') {
+    showToast('📧 Zmail emails & investigation refreshed! Ready for practice.', 'info');
+  }
+}
+
+function restartPhishingChecklistOnly() {
+  // 1. Reset only checklist achievements
+  if (typeof _achievementUnlocked !== 'undefined') {
+    _achievementUnlocked.delete('task_report_phishing');
+    _achievementUnlocked.delete('task_verify_legit');
+    _achievementUnlocked.delete('task_fake_sender');
+    _achievementUnlocked.delete('task_phish_indicators');
+    _achievementUnlocked.delete('task_submit_all_verdicts');
+    _achievementUnlocked.delete('task_all_complete');
+    _achievementUnlocked.delete('phish_trophy_unlocked');
+    _achievementUnlocked.delete('ach_phishing');
+  }
+  if (typeof gameState !== 'undefined') {
+    gameState.phase = 'mission';
+  }
+  window._isPhishingRetryActive = true;
+  window._currentChapterCategory = 'phishing';
+  window._awardClaimed = false;
+  window._ch1CompletedSandbox = false;
+  window._phishAutoModalShown = false;
+  if (typeof _phishingEarnedAward !== 'undefined') {
+    _phishingEarnedAward = null;
+  }
+  // Ensure the intern group chat in Phone Link remains restored and active
+  try {
+    localStorage.setItem('cyberzero_gc_unlocked', 'true');
+  } catch(e) {}
+  if (typeof setNewbieGcCreated === 'function') {
+    setNewbieGcCreated(false);
+  }
+  // 2. Reset desktop trophy visual
+  if (typeof updateDesktopTrophyDisplay === 'function') {
+    updateDesktopTrophyDisplay();
+  }
+  // 3. Re-render Sticky Note checklist
+  if (typeof renderPhishingChecklist === 'function') {
+    renderPhishingChecklist();
+  }
+  if (typeof showStickyNote === 'function') {
+    showStickyNote();
+  }
+  // 4. Save progress
+  if (typeof savePhishingProgress === 'function') {
+    savePhishingProgress();
+  }
+  // 5. Open Sticky Notes app
+  if (typeof openApp === 'function') {
+    openApp('notes');
+  }
+  if (typeof showToast === 'function') {
+    showToast('📝 Phishing checklist reset! Opening Sticky Notes...', 'info');
+  }
+}
+
+window.openRyanMentorConversation = openRyanMentorConversation;
+window.renderRyanMentorChat = renderRyanMentorChat;
+window.sendRyanMentorRequest = sendRyanMentorRequest;
+window.sendCustomRyanMentorMessage = sendCustomRyanMentorMessage;
+window.loadRyanMentorMessages = loadRyanMentorMessages;
+window.saveRyanMentorMessages = saveRyanMentorMessages;
+window.retryPhishingActivity = retryPhishingActivity;
+window.retryPhishingInvestigation = retryPhishingActivity;
+window.restartPhishingInvestigationZmail = restartPhishingInvestigationZmail;
+window.restartPhishingChecklistOnly = restartPhishingChecklistOnly;
+window.renderPhoneMessages = renderPhoneMessages;
+window.switchPhoneTab = switchPhoneTab;
+window.showPhoneInAppScreen = showPhoneInAppScreen;
+window.openNewbieGcConversation = openNewbieGcConversation;
+window.renderNewbieGcChat = renderNewbieGcChat;
+window.openPhoneConversation = openPhoneConversation;
+window.getPhoneLinkConnectionStatus = getPhoneLinkConnectionStatus;
+window.renderNoInternetBannerHtml = renderNoInternetBannerHtml;
+window.updatePhoneLinkConnectionState = updatePhoneLinkConnectionState;
+window.turnOnWifiFromPhoneLink = turnOnWifiFromPhoneLink;
+window.turnOffAirplaneFromPhoneLink = turnOffAirplaneFromPhoneLink;
+
+
+function renderIndividualConvo(contactId, content) {
+  const conn = getPhoneLinkConnectionStatus();
+  const contact = G4_CONTACTS.find(c => c.id === contactId);
+  const bannerHtml = !conn.isInternetConnected ? renderNoInternetBannerHtml() : '';
+
+  content.innerHTML = `
+    <div class="pl-convo-view">
+      <div class="pl-convo-header">
+        <button class="pl-back-btn" onclick="g4ActiveConvo = null; switchPhoneTab('messages')">← Back</button>
+        <div class="pl-convo-name">${contact?.name || contactId}</div>
+      </div>
+      <div class="pl-banner-slot">${bannerHtml}</div>
+      <div class="pl-empty-state" style="flex:1;">
+        <div class="pl-empty-state-icon">💬</div>
+        <div class="pl-empty-state-title">No messages</div>
+        <div class="pl-empty-state-sub">This conversation is currently empty.</div>
+      </div>
+    </div>
+  `;
+}
 
 function openPhoneConversation(contactId) {
   const conn = getPhoneLinkConnectionStatus();
@@ -1421,28 +2492,18 @@ function openPhoneConversation(contactId) {
   }
 
   g4ActiveConvo = contactId;
-  switchPhoneTab('messages');
+  g4ActiveTab = 'messages';
+
+  const tabs = document.querySelectorAll('.pl-tab');
+  tabs.forEach(t => {
+    const id = t.id.replace('pl-tab-', '');
+    t.classList.toggle('active', id === 'messages');
+  });
 
   const content = document.getElementById('pl-tab-content');
   if (!content) return;
 
-  const contact = G4_CONTACTS.find(c => c.id === contactId);
-  const bannerHtml = !conn.isInternetConnected ? renderNoInternetBannerHtml() : '';
-
-  content.innerHTML = `
-    <div class="pl-convo-view">
-      <div class="pl-convo-header">
-        <button class="pl-back-btn" onclick="switchPhoneTab('messages')">← Back</button>
-        <div class="pl-convo-name">${contact?.name || contactId}</div>
-      </div>
-      ${bannerHtml}
-      <div class="pl-empty-state" style="flex:1;">
-        <div class="pl-empty-state-icon">💬</div>
-        <div class="pl-empty-state-title">No messages</div>
-        <div class="pl-empty-state-sub">This conversation is currently empty.</div>
-      </div>
-    </div>
-  `;
+  renderIndividualConvo(contactId, content);
 }
 
 function buildPhoneActionHtml(contactId) {

@@ -803,14 +803,13 @@ function finishMission() {
   const completedTasksCount = (typeof getCompletedTasksCount === 'function')
     ? getCompletedTasksCount()
     : (typeof SN_ACHIEVEMENTS !== 'undefined' ? SN_ACHIEVEMENTS.filter(ach => ach.check()).length : 0);
-  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 4;
+  const totalTasks = (typeof SN_ACHIEVEMENTS !== 'undefined' && Array.isArray(SN_ACHIEVEMENTS)) ? SN_ACHIEVEMENTS.length : 5;
   const allTasksDone = (completedTasksCount >= totalTasks) && (typeof isPhishingTrophyUnlocked === 'function' ? isPhishingTrophyUnlocked() : true);
 
   if (allTasksDone) {
     _achievementUnlocked.add('task_all_complete');
     _achievementUnlocked.add('phish_trophy_unlocked');
     _achievementUnlocked.add('ach_phishing');
-    window._awardClaimed = true;
     if (!window._postAwardTasks) {
       window._postAwardTasks = {
         browserOpened:    false,
@@ -825,9 +824,6 @@ function finishMission() {
         postTestDone:     false
       };
     }
-    if (typeof _refreshPostAwardChecklist === 'function') {
-      _refreshPostAwardChecklist();
-    }
   }
 
   const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -838,8 +834,8 @@ function finishMission() {
     title: 'Phishing Investigation Award',
     image: 'assets/Achievement/Phishing.png',
     badge: 'CHAPTER 1 · INVESTIGATION AWARD',
-    rank: '${totalTasks}/${totalTasks} Missions Completed',
-    sub: 'All ${totalTasks} Investigation Checklist Tasks & Evidence Completed',
+    rank: `${totalTasks}/${totalTasks} Missions Completed`,
+    sub: `All ${totalTasks} Investigation Checklist Tasks & Evidence Completed`,
     desc: 'Outstanding detective work! You successfully analyzed all suspicious emails, exposed deceptive phishing lures, documented spoofed senders, and safeguarded authentic communications.',
     tasksCompleted: totalTasks,
     unlockedDate: dateStr
