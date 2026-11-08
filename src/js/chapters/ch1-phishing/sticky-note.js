@@ -29,27 +29,50 @@ window._ch1VideoTracker = {
   _lastRefresh: 0
 };
 
-function _isChapter2Active() {
-  if (window._isPhishingRetryActive) return false;
-  if (window._currentChapterCategory === 'malware') return true;
-  if (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') return true;
-  if (typeof gameState !== 'undefined' && gameState && (gameState.phase === 'malware' || gameState.chapter === 'malware')) return true;
-  if (Boolean(window._ch2MissionStarted) || Boolean(window._ch2IntroActive) || Boolean(window._ch2Mission) || Boolean(window._ch2FreeExploration)) return true;
-  return false;
+function getActiveChapterCategory() {
+  if (window._isPhishingRetryActive) return 'phishing';
+
+  // 1. Explicit window._currentChapterCategory
+  const curCat = window._currentChapterCategory;
+  if (curCat) {
+    if (curCat === 'phishing' || curCat === 'mission') return 'phishing';
+    if (curCat === 'malware') return 'malware';
+    if (curCat === 'social_engineering') return 'social_engineering';
+    if (curCat === 'ransomware') return 'ransomware';
+  }
+
+  // 2. activeCategoryStory
+  if (typeof activeCategoryStory !== 'undefined' && activeCategoryStory) {
+    if (activeCategoryStory === 'phishing') return 'phishing';
+    if (activeCategoryStory === 'malware') return 'malware';
+    if (activeCategoryStory === 'social_engineering') return 'social_engineering';
+    if (activeCategoryStory === 'ransomware') return 'ransomware';
+  }
+
+  // 3. gameState phase or chapter
+  if (typeof gameState !== 'undefined' && gameState) {
+    const ph = gameState.chapter || gameState.phase;
+    if (ph === 'malware') return 'malware';
+    if (ph === 'social_engineering') return 'social_engineering';
+    if (ph === 'ransomware') return 'ransomware';
+    if (ph === 'phishing' || ph === 'mission' || ph === 'briefing' || ph === 'results') return 'phishing';
+  }
+
+  return 'phishing';
 }
-window._isChapter2Active = _isChapter2Active;
+window.getActiveChapterCategory = getActiveChapterCategory;
 
 function _isChapter1Active() {
   if (window._isPhishingRetryActive) return true;
-  if (_isChapter2Active()) return false;
-  if (window._currentChapterCategory === 'social_engineering' || window._currentChapterCategory === 'ransomware') return false;
-  const cat = window._currentChapterCategory ||
-              (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) ||
-              (typeof gameState !== 'undefined' && gameState ? (gameState.phase || gameState.chapter) : null) ||
-              'phishing';
-  return cat === 'phishing' || cat === 'mission';
+  return getActiveChapterCategory() === 'phishing';
 }
 window._isChapter1Active = _isChapter1Active;
+
+function _isChapter2Active() {
+  if (window._isPhishingRetryActive) return false;
+  return getActiveChapterCategory() === 'malware';
+}
+window._isChapter2Active = _isChapter2Active;
 
 function _ch1FmtTime(sec) {
   if (isNaN(sec) || sec < 0) return '0:00';
@@ -1101,13 +1124,7 @@ function renderPhishingChecklist() {
 window.renderPhishingChecklist = renderPhishingChecklist;
 window.updateStickyNoteProgress = renderPhishingChecklist;
 
-function updateStickyChecklist() {
-  if (_isChapter2Active()) {
-    if (typeof updateStickyNoteForPhase === 'function') {
-      updateStickyNoteForPhase('malware');
-    }
-    return;
-  }
+function updatePhishingStickyChecklist() {
   if (!_isChapter1Active()) {
     return;
   }
@@ -1176,6 +1193,26 @@ function updateStickyChecklist() {
 
   html += '</ul>';
   section.innerHTML = html;
+}
+window.updatePhishingStickyChecklist = updatePhishingStickyChecklist;
+
+function updateStickyChecklist() {
+  if (typeof _isChapter2Active === 'function' && _isChapter2Active()) {
+    if (typeof TrojanInvestigation !== 'undefined' && TrojanInvestigation.updateStickyChecklist) {
+      TrojanInvestigation.updateStickyChecklist();
+      return;
+    }
+    const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
+    if (scrollEl && typeof TrojanInvestigation !== 'undefined' && TrojanInvestigation.renderChecklist) {
+      TrojanInvestigation.renderChecklist(scrollEl);
+      return;
+    }
+    return;
+  }
+  if (typeof _isChapter1Active === 'function' && _isChapter1Active()) {
+    updatePhishingStickyChecklist();
+    return;
+  }
 }
 window.updateStickyChecklist = updateStickyChecklist;
 
@@ -2158,10 +2195,22 @@ function updateStickyNoteForPhase(phase) {
   const scrollEl = document.querySelector('#sticky-note .sticky-note-scroll');
   if (!scrollEl) return;
 
-  const currentCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing';
+  const currentCat = (typeof getActiveChapterCategory === 'function')
+    ? getActiveChapterCategory()
+    : (window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || 'phishing');
 
-  // In Chapter 1 (phishing), show checklist or post-award checklist
-  if (_isChapter1Active() && (phase === 'phishing' || !phase || currentCat === 'phishing')) {
+  // Enforce chapter boundaries:
+  // If active chapter is phishing, NEVER allow phase='malware' to override.
+  // If active chapter is malware, NEVER allow phase='phishing' to override.
+  let effectiveCat = currentCat;
+  if (phase === 'malware' && currentCat === 'malware') {
+    effectiveCat = 'malware';
+  } else if (phase === 'phishing' && currentCat === 'phishing') {
+    effectiveCat = 'phishing';
+  }
+
+  // ── CHAPTER 1 (Phishing Investigation) ──
+  if (effectiveCat === 'phishing') {
     if (titleEl) titleEl.textContent = "Sticky Notes";
 
     if (_isInvestigationFinished() && !window._isPhishingRetryActive) {
@@ -2172,12 +2221,12 @@ function updateStickyNoteForPhase(phase) {
     if (!document.getElementById('sn-checklist-section')) {
       scrollEl.innerHTML = `<div id="sn-checklist-section"></div>`;
     }
-    updateStickyChecklist();
+    updatePhishingStickyChecklist();
     return;
   }
 
-  // Chapter 2 (malware) notes — TrojanCoinBitMiner Interactive Checklist
-  if (_isChapter2Active() || phase === 'malware' || currentCat === 'malware') {
+  // ── CHAPTER 2 (Malware Investigation) ──
+  if (effectiveCat === 'malware') {
     if (titleEl) titleEl.textContent = 'Sticky Notes';
     window._ch2ChecklistUnlocked = true;
 
@@ -2319,15 +2368,16 @@ function handleDesktopTrophyClick() {
 }
 window.handleDesktopTrophyClick = handleDesktopTrophyClick;
 
-// Automatically update desktop trophy when checklist changes
+// Automatically update desktop trophy when Chapter 1 checklist changes
 (function() {
-  const origUpdateChecklist = updateStickyChecklist;
-  updateStickyChecklist = function() {
-    origUpdateChecklist.apply(this, arguments);
+  const origUpdatePhishing = updatePhishingStickyChecklist;
+  updatePhishingStickyChecklist = function() {
+    origUpdatePhishing.apply(this, arguments);
     if (typeof updateDesktopTrophyDisplay === 'function') {
-      updateDesktopTrophyDisplay();
+      try { updateDesktopTrophyDisplay(); } catch (e) {}
     }
   };
+  window.updatePhishingStickyChecklist = updatePhishingStickyChecklist;
 })();
 
 // ─── Incomplete Claim Dialogue & Simulated Phishing Email Injection ───────────

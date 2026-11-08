@@ -584,10 +584,7 @@ function switchExplorerFolder(folderKey) {
   }
 
   // Notify Chapter 2 mission tracker
-  const _isCh2Active = (window._currentChapterCategory === 'malware' ||
-                        (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
-                        (typeof gameState !== 'undefined' && gameState.phase === 'malware') ||
-                        Boolean(window._ch2MissionStarted));
+  const _isCh2Active = typeof _isChapter2Active === 'function' ? _isChapter2Active() : (window._currentChapterCategory === 'malware');
   if (_isCh2Active) {
     if (folderKey === 'pictures' && typeof window.ch2OnPicturesFolderOpened === 'function') {
       window.ch2OnPicturesFolderOpened();

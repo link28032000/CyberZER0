@@ -156,10 +156,7 @@ function openApp(appName) {
     setTimeout(refreshAvForCurrentChapter, 50);
   }
   if (appName === 'folder') {
-    const isCh2 = (window._currentChapterCategory === 'malware' ||
-                   (typeof activeCategoryStory !== 'undefined' && activeCategoryStory === 'malware') ||
-                   (typeof gameState !== 'undefined' && gameState.phase === 'malware') ||
-                   Boolean(window._ch2MissionStarted));
+    const isCh2 = typeof _isChapter2Active === 'function' ? _isChapter2Active() : (window._currentChapterCategory === 'malware');
     if (isCh2) {
       if (typeof window.ch2OnExplorerOpened === 'function') {
         window.ch2OnExplorerOpened();
