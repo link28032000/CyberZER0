@@ -1152,9 +1152,10 @@ function updatePhishingStickyChecklist() {
     if (ach.check()) completedCount++;
   });
   const progressPercent = Math.round((completedCount / totalGoals) * 100);
+  const isAllComplete = (completedCount >= totalGoals) || (typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked());
 
   let html = `
-    <div class="sn-progress-card">
+    <div class="sn-progress-card" onclick="if ((${completedCount} >= ${totalGoals} || (typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked())) && !window._awardClaimed && typeof showPhishingAchievementModal === 'function') showPhishingAchievementModal();" style="${isAllComplete && !window._awardClaimed ? 'cursor: pointer;' : ''}">
       <div class="sn-progress-header">
         <span class="sn-progress-title">📋 Checklist</span>
         <span class="sn-progress-count">${completedCount} of ${totalGoals} Done</span>
@@ -1193,6 +1194,20 @@ function updatePhishingStickyChecklist() {
 
   html += '</ul>';
   section.innerHTML = html;
+
+  // Automatically display the trophy reward modal with Claim Reward button once checklist is completed
+  if (isAllComplete && !window._awardClaimed && !window._phishAutoModalShown) {
+    window._phishAutoModalShown = true;
+    _achievementUnlocked.add('task_all_complete');
+    _achievementUnlocked.add('phish_trophy_unlocked');
+    _achievementUnlocked.add('ach_phishing');
+    savePhishingProgress();
+    setTimeout(() => {
+      if (typeof showPhishingAchievementModal === 'function') {
+        showPhishingAchievementModal();
+      }
+    }, 600);
+  }
 }
 window.updatePhishingStickyChecklist = updatePhishingStickyChecklist;
 
@@ -1253,8 +1268,8 @@ function showAchievementToast(ach) {
 
 // ─── Phishing Achievement Modal (Big Medal + Confetti Celebration) ───────────
 function showPhishingAchievementModal(customAward, customCount) {
-  const isClaimed = Boolean(window._awardClaimed) || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing'));
-  const isComplete = typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked();
+  const isClaimed = !window._isPhishingRetryActive && (Boolean(window._awardClaimed) || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing')));
+  const isComplete = (typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked()) || (typeof getCompletedTasksCount === 'function' && getCompletedTasksCount() >= 5);
 
   if (!isComplete && !isClaimed) {
     const missing = [];
@@ -1288,7 +1303,7 @@ function showPhishingAchievementModal(customAward, customCount) {
   modal.id = 'phish-trophy-modal';
   modal.className = 'phish-trophy-modal';
   modal.innerHTML = `
-    <div class="ptm-backdrop" onclick="this.parentElement.remove(); if (typeof showStickyNote === 'function') showStickyNote();"></div>
+    <div class="ptm-backdrop" onclick="this.parentElement.remove(); window._phishAutoModalShown = false; if (typeof showStickyNote === 'function') showStickyNote();"></div>
     <div class="ptm-confetti-fullscreen" id="ptm-confetti"></div>
     <div class="ptm-card ptm-card-clean">
       <div class="ptm-glow-ring"></div>
@@ -1343,7 +1358,7 @@ function showPhishingAchievementModal(customAward, customCount) {
 
 function attemptClaimPhishingAward() {
   // Prevent duplicate claims
-  if (window._awardClaimed || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing'))) {
+  if (!window._isPhishingRetryActive && (window._awardClaimed || (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_phishing')))) {
     const modal = document.getElementById('phish-trophy-modal');
     if (modal) modal.remove();
     if (typeof showToast === 'function') {
@@ -1351,7 +1366,8 @@ function attemptClaimPhishingAward() {
     }
     return;
   }
-  if (!isPhishingTrophyUnlocked()) {
+  const isComplete = (typeof isPhishingTrophyUnlocked === 'function' && isPhishingTrophyUnlocked()) || (typeof getCompletedTasksCount === 'function' && getCompletedTasksCount() >= 5);
+  if (!isComplete) {
     // DENIED: Do not play reward-claim sound! Keep trophy locked as silhouette.
     const missing = [];
     if (typeof SN_ACHIEVEMENTS !== 'undefined') {
@@ -1383,6 +1399,8 @@ function closePhishingTrophy() {
 
   // Mark award as claimed — switches sticky note to post-award checklist
   window._awardClaimed = true;
+  window._isPhishingRetryActive = false;
+  window._phishAutoModalShown = true;
   window._postAwardPostTestDialogueFired = false;
 
   // Audio fanfare for successful claim
