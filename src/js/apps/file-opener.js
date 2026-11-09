@@ -27,6 +27,17 @@ function openFileFromFolder(fileId) {
 
   const isGtaViItem = (file.id === 'game_gta6' || file.id === 'desk_app_gta6' || file.name === 'GTA VI' || (file.name && file.name.includes('GTA VI')));
   if (isGtaViItem) {
+    const isUnlocked = typeof isChapter2ChecklistComplete === 'function'
+      ? isChapter2ChecklistComplete()
+      : (typeof window.isChapter2ChecklistComplete === 'function' ? window.isChapter2ChecklistComplete() : true);
+    if (!isUnlocked) {
+      if (typeof window.onLockedGtaViAttempt === 'function') {
+        window.onLockedGtaViAttempt();
+      } else if (typeof showToast === 'function') {
+        showToast('🔒 GTA VI Installer is locked: Complete all Chapter 2 checklist missions first!', 'warning');
+      }
+      return;
+    }
     if (typeof openGtaViApp === 'function') {
       openGtaViApp();
       return;
@@ -88,6 +99,17 @@ function openFileFromFolder(fileId) {
 
   // ── Chapter 2: Opening GTA VI triggers security advisory & WannaCry Decryptor 3.0 simulation ──
   if (file.id === 'game_gta6' || file.name === 'GTA VI' || (file.name && file.name.includes('GTA VI'))) {
+    const isUnlocked = typeof isChapter2ChecklistComplete === 'function'
+      ? isChapter2ChecklistComplete()
+      : (typeof window.isChapter2ChecklistComplete === 'function' ? window.isChapter2ChecklistComplete() : true);
+    if (!isUnlocked) {
+      if (typeof window.onLockedGtaViAttempt === 'function') {
+        window.onLockedGtaViAttempt();
+      } else if (typeof showToast === 'function') {
+        showToast('🔒 GTA VI Installer is locked: Complete all Chapter 2 checklist missions first!', 'warning');
+      }
+      return;
+    }
     if (typeof openGtaViApp === 'function') {
       openGtaViApp();
     } else if (typeof showGtaSecurityAdvisoryModal === 'function') {
@@ -518,3 +540,5 @@ function runMalwareSimulation(file) {
     }, i * 700);
   });
 }
+
+window.openFileFromFolder = openFileFromFolder;

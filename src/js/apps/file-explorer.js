@@ -433,9 +433,14 @@ function renderFolderFiles(filterQuery = '') {
   }
 
   filtered.forEach(file => {
+    const isGtaItem = (file.id === 'game_gta6' || (file.name && file.name.includes('GTA VI')) || (file.name && file.name.toLowerCase() === 'gta 6'));
+    const isGtaLocked = isGtaItem && (typeof isChapter2ChecklistComplete === 'function'
+      ? !isChapter2ChecklistComplete()
+      : (typeof window.isChapter2ChecklistComplete === 'function' ? !window.isChapter2ChecklistComplete() : false));
+
     if (effectiveViewMode === 'details') {
       const row = document.createElement('div');
-      row.className = `folder-file-row ${file.id === gameState.selectedFolderFileId ? 'selected' : ''} ${file.quarantined ? 'quarantined' : ''}`;
+      row.className = `folder-file-row ${file.id === gameState.selectedFolderFileId ? 'selected' : ''} ${file.quarantined ? 'quarantined' : ''} ${isGtaLocked ? 'locked-installer' : ''}`;
       row.onclick = () => selectFolderFile(file.id);
       row.ondblclick = () => openFileFromFolder(file.id);
       row.oncontextmenu = (e) => {
@@ -468,10 +473,15 @@ function renderFolderFiles(filterQuery = '') {
       const fileType = file.type || (file.realExt ? `${file.realExt.toUpperCase()} File` : 'File');
       const fileSize = file.size || '—';
 
+      const lockedBadge = isGtaLocked
+        ? '<span class="file-locked-badge" style="display:inline-flex;align-items:center;font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(239,68,68,0.18);color:#fca5a5;border:1px solid rgba(239,68,68,0.4);margin-left:6px;font-weight:600;" title="Locked: Complete all Chapter 2 checklist missions first">🔒 Locked</span>'
+        : '';
+
       row.innerHTML = `
         <div class="file-name-cell">
           <span class="file-icon">${rowIcon}</span>
           <span class="file-name-text" title="${file.name}">${file.name}</span>
+          ${lockedBadge}
         </div>
         <div>${fileDate}</div>
         <div>${fileType}</div>
@@ -481,7 +491,7 @@ function renderFolderFiles(filterQuery = '') {
     } else {
       // Large Icons Grid View
       const card = document.createElement('div');
-      card.className = `grid-file-card ${file.id === gameState.selectedFolderFileId ? 'selected' : ''} ${file.quarantined ? 'quarantined' : ''}`;
+      card.className = `grid-file-card ${file.id === gameState.selectedFolderFileId ? 'selected' : ''} ${file.quarantined ? 'quarantined' : ''} ${isGtaLocked ? 'locked-installer' : ''}`;
       card.onclick = () => selectFolderFile(file.id);
       card.ondblclick = () => openFileFromFolder(file.id);
       card.oncontextmenu = (e) => {
@@ -506,10 +516,22 @@ function renderFolderFiles(filterQuery = '') {
         cardIcon = `<img src="${cardIcon}" alt="" style="width:38px;height:38px;object-fit:contain;display:block;margin:0 auto;" onerror="this.onerror=null;this.parentElement.textContent=\'📄\';" />`;
       }
 
+      let cardIconHtml = cardIcon;
+      let cardTagHtml = isDesktop ? '' : `<div class="grid-card-tag">${file.size || ''}</div>`;
+
+      if (isGtaLocked) {
+        cardIconHtml = `
+          <div style="position:relative;display:inline-block;">
+            ${cardIcon}
+            <span class="grid-card-lock-badge" style="position:absolute;bottom:-2px;right:-4px;font-size:12px;line-height:1;background:#0f172a;border:1px solid #ef4444;border-radius:50%;padding:2px;box-shadow:0 2px 5px rgba(0,0,0,0.7);" title="Locked: Complete all Chapter 2 checklist missions first">🔒</span>
+          </div>`;
+        cardTagHtml = `<div class="grid-card-tag" style="color:#ef4444;font-weight:700;">🔒 Locked</div>`;
+      }
+
       card.innerHTML = `
-        <div class="grid-card-icon">${cardIcon}</div>
+        <div class="grid-card-icon">${cardIconHtml}</div>
         <div class="grid-card-name" title="${file.name}">${file.name}</div>
-        ${isDesktop ? '' : `<div class="grid-card-tag">${file.size || ''}</div>`}`;
+        ${cardTagHtml}`;
 
       list.appendChild(card);
     }
@@ -1022,49 +1044,90 @@ function selectFolderFile(fileId) {
         </button>
       </div>`;
   } else if (file.id === 'game_gta6' || (file.name && file.name.includes('GTA VI')) || (file.name && file.name.toLowerCase() === 'gta 6')) {
-    quickPreviewHtml = `
-      <div class="fdp-quick-preview fdp-preview-gta-advisory">
-        <div class="fdp-gta-hero-badge">
-          <span class="fdp-gta-hero-icon">⚠️</span>
-          <div>
-            <div class="fdp-gta-hero-title">UNVERIFIED FAKE GAME INSTALLER</div>
-            <div class="fdp-gta-hero-sub">Grand Theft Auto VI is not released on PC yet</div>
-          </div>
-        </div>
+    const isGtaUnlocked = typeof isChapter2ChecklistComplete === 'function'
+      ? isChapter2ChecklistComplete()
+      : (typeof window.isChapter2ChecklistComplete === 'function' ? window.isChapter2ChecklistComplete() : true);
 
-        <div class="fdp-gta-card">
-          <div class="fdp-gta-card-hdr">📁 About Your File</div>
-          <div class="fdp-gta-card-body">
-            This file points to a counterfeit installer downloaded from an unofficial site. Attackers use unreleased gaming hype as a <strong>Trojan Horse trap</strong> to infect PCs with cryptominers (like the BM app) and ransomware.
+    if (!isGtaUnlocked) {
+      quickPreviewHtml = `
+        <div class="fdp-quick-preview fdp-preview-gta-locked" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.35);border-radius:8px;padding:12px;margin:10px 0;">
+          <div class="fdp-gta-hero-badge" style="display:flex;align-items:center;gap:10px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:6px;padding:8px 12px;margin-bottom:12px;">
+            <span class="fdp-gta-hero-icon" style="font-size:22px;">🔒</span>
+            <div>
+              <div class="fdp-gta-hero-title" style="color:#ef4444;font-weight:800;font-size:12px;letter-spacing:0.5px;">INSTALLER DISABLED &amp; LOCKED</div>
+              <div class="fdp-gta-hero-sub" style="color:#cbd5e1;font-size:11px;">Complete all Chapter 2 checklist missions first</div>
+            </div>
           </div>
-        </div>
 
-        <div class="fdp-gta-card">
-          <div class="fdp-gta-card-hdr">🛡️ How to Prevent Infection</div>
-          <div class="fdp-gta-card-body">
-            • <strong>Never download cracked or unreleased games:</strong> Torrents and unofficial "free leaks" are prime malware distribution traps.<br>
-            • <strong>Keep Antivirus (ShieldAV) active:</strong> Never turn off real-time protection to run a suspicious setup file.<br>
-            • <strong>Verify release dates:</strong> Always check official publisher channels (Rockstar Games) before trusting downloads.
+          <div class="fdp-gta-card" style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;margin-bottom:8px;font-size:11.5px;color:#cbd5e1;line-height:1.5;">
+            <div class="fdp-gta-card-hdr" style="font-weight:700;color:#f87171;margin-bottom:4px;">📋 Investigation In Progress</div>
+            <div class="fdp-gta-card-body">
+              Ethan's workstation is currently compromised by background malware. Complete all malware investigation tasks on your <strong>Sticky Notes checklist</strong> before attempting to open any untrusted installer files!
+            </div>
           </div>
-        </div>
 
-        <div class="fdp-gta-card fdp-gta-card-support">
-          <div class="fdp-gta-card-hdr">🎮 Download Officially &amp; Support Game Developers</div>
-          <div class="fdp-gta-card-body">
-            If you want a game, <strong>always download it through the official website or verified platforms like Steam</strong>. This guarantees 100% clean, virus-free game files and directly supports the developers who spent years creating the game!
+          <div class="fdp-gta-card fdp-gta-card-support" style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;margin-bottom:12px;font-size:11.5px;color:#cbd5e1;line-height:1.5;">
+            <div class="fdp-gta-card-hdr" style="font-weight:700;color:#38bdf8;margin-bottom:4px;">🎮 Safe Gaming Practice</div>
+            <div class="fdp-gta-card-body">
+              Never run unverified game installers or cracked files. Once your investigation is complete, you can review the educational security advisory.
+            </div>
           </div>
-        </div>
 
-        <div class="fdp-gta-actions">
-          <button type="button" class="fdp-gta-btn-steam" onclick="openApp('steam'); if(typeof steamFocusGame==='function') steamFocusGame('gta6');">
-            <img src="assets/icons/Chapter 2 new apps/steam.svg" alt="" style="width:13px;height:13px;vertical-align:middle;margin-right:5px;" />
-            View Official Steam Store Page
-          </button>
-          <button type="button" class="fdp-gta-btn-advisory" onclick="showGtaSecurityAdvisoryModal()">
-            <span>🛡️</span> Full Security Advisory
-          </button>
-        </div>
-      </div>`;
+          <div class="fdp-gta-actions" style="display:flex;flex-direction:column;gap:8px;">
+            <button type="button" class="fdp-gta-btn-steam" onclick="openApp('steam'); if(typeof steamFocusGame==='function') steamFocusGame('gta6');" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;background:#1b2838;border:1px solid #2a475e;border-radius:6px;color:#c7d5e0;font-size:11.5px;font-weight:600;cursor:pointer;">
+              <img src="assets/icons/Chapter 2 new apps/steam.svg" alt="" style="width:13px;height:13px;vertical-align:middle;" />
+              View Official Steam Store Page
+            </button>
+            <button type="button" class="fdp-gta-btn-advisory disabled" onclick="if(typeof onLockedGtaViAttempt==='function'){onLockedGtaViAttempt();}else if(typeof onLockedGtaViSelected==='function'){onLockedGtaViSelected();}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;background:#334155;border:1px solid #475569;border-radius:6px;color:#94a3b8;font-size:11.5px;font-weight:700;cursor:not-allowed;" title="Locked: Complete all Chapter 2 checklist missions first">
+              <span>🔒</span> Locked — Complete Checklist First
+            </button>
+          </div>
+        </div>`;
+    } else {
+      quickPreviewHtml = `
+        <div class="fdp-quick-preview fdp-preview-gta-advisory">
+          <div class="fdp-gta-hero-badge" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);">
+            <span class="fdp-gta-hero-icon">🔓</span>
+            <div>
+              <div class="fdp-gta-hero-title" style="color:#34d399;">INSTALLER UNLOCKED — ADVISORY READY</div>
+              <div class="fdp-gta-hero-sub">Missions complete. Educational simulation available</div>
+            </div>
+          </div>
+
+          <div class="fdp-gta-card">
+            <div class="fdp-gta-card-hdr">📁 About Your File</div>
+            <div class="fdp-gta-card-body">
+              This file points to a counterfeit installer downloaded from an unofficial site. Attackers use unreleased gaming hype as a <strong>Trojan Horse trap</strong> to infect PCs with cryptominers (like the BM app) and ransomware.
+            </div>
+          </div>
+
+          <div class="fdp-gta-card">
+            <div class="fdp-gta-card-hdr">🛡️ How to Prevent Infection</div>
+            <div class="fdp-gta-card-body">
+              • <strong>Never download cracked or unreleased games:</strong> Torrents and unofficial "free leaks" are prime malware distribution traps.<br>
+              • <strong>Keep Antivirus (ShieldAV) active:</strong> Never turn off real-time protection to run a suspicious setup file.<br>
+              • <strong>Verify release dates:</strong> Always check official publisher channels (Rockstar Games) before trusting downloads.
+            </div>
+          </div>
+
+          <div class="fdp-gta-card fdp-gta-card-support">
+            <div class="fdp-gta-card-hdr">🎮 Download Officially &amp; Support Game Developers</div>
+            <div class="fdp-gta-card-body">
+              If you want a game, <strong>always download it through the official website or verified platforms like Steam</strong>. This guarantees 100% clean, virus-free game files and directly supports the developers who spent years creating the game!
+            </div>
+          </div>
+
+          <div class="fdp-gta-actions">
+            <button type="button" class="fdp-gta-btn-steam" onclick="openApp('steam'); if(typeof steamFocusGame==='function') steamFocusGame('gta6');">
+              <img src="assets/icons/Chapter 2 new apps/steam.svg" alt="" style="width:13px;height:13px;vertical-align:middle;margin-right:5px;" />
+              View Official Steam Store Page
+            </button>
+            <button type="button" class="fdp-gta-btn-advisory" onclick="showGtaSecurityAdvisoryModal()">
+              <span>🛡️</span> Full Security Advisory &amp; Launch
+            </button>
+          </div>
+        </div>`;
+    }
   } else if (file.isMalware || ext === 'exe' || ext === 'scr' || ext === 'vbs') {
     quickPreviewHtml = `
       <div class="fdp-quick-preview" style="background:rgba(255,82,82,0.08);border-color:rgba(255,82,82,0.3)">
@@ -1114,14 +1177,55 @@ function selectFolderFile(fileId) {
 
   // Trigger Ryan Guide dialogue and advisory when GTA VI is clicked/selected
   if (file.id === 'game_gta6' || (file.name && file.name.includes('GTA VI')) || (file.name && file.name.toLowerCase() === 'gta 6')) {
-    if (typeof showGtaEducationalDialogue === 'function') {
+    const isUnlocked = typeof isChapter2ChecklistComplete === 'function'
+      ? isChapter2ChecklistComplete()
+      : (typeof window.isChapter2ChecklistComplete === 'function' ? window.isChapter2ChecklistComplete() : true);
+    if (!isUnlocked) {
+      if (typeof onLockedGtaViSelected === 'function') {
+        onLockedGtaViSelected();
+      } else if (typeof onLockedGtaViAttempt === 'function') {
+        onLockedGtaViAttempt();
+      } else if (typeof showToast === 'function') {
+        showToast('🔒 GTA VI Installer is locked: Complete all Chapter 2 checklist missions first!', 'warning');
+      }
+    } else if (typeof showGtaEducationalDialogue === 'function') {
       showGtaEducationalDialogue();
     }
   }
 }
 window.selectFolderFile = selectFolderFile;
 
-
+window.onLockedGtaViSelected = function () {
+  if (typeof showToast === 'function') {
+    showToast('🔒 GTA VI Installer is locked: Complete all Chapter 2 checklist missions first!', 'warning');
+  }
+  if (typeof AudioManager !== 'undefined') {
+    if (typeof AudioManager.playWrong === 'function') {
+      AudioManager.playWrong();
+    } else if (typeof AudioManager.playAlert === 'function') {
+      AudioManager.playAlert();
+    }
+  }
+  if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
+    RyanGuide.speak([
+      {
+        text: "Hold on, Ethan! The <strong>GTA VI Installer</strong> is currently locked. Complete all investigation missions on your <strong>Sticky Notes checklist</strong> before launching the installer!",
+        state: 'concerned',
+        label: 'VIEW CHECKLIST'
+      }
+    ], {
+      chapter: 'malware',
+      onDone: function() {
+        if (typeof toggleStickyNote === 'function') {
+          const note = document.getElementById('sticky-note');
+          if (!note || note.classList.contains('hidden')) {
+            toggleStickyNote();
+          }
+        }
+      }
+    });
+  }
+};
 
 function scanFileInAntivirus(fileId) {
   selectFolderFile(fileId);
@@ -1164,6 +1268,19 @@ window.showGtaEducationalDialogue = function () {
 };
 
 window.showGtaSecurityAdvisoryModal = function () {
+  const isUnlocked = typeof isChapter2ChecklistComplete === 'function'
+    ? isChapter2ChecklistComplete()
+    : (typeof window.isChapter2ChecklistComplete === 'function' ? window.isChapter2ChecklistComplete() : true);
+  if (!isUnlocked) {
+    if (typeof onLockedGtaViAttempt === 'function') {
+      onLockedGtaViAttempt();
+    } else if (typeof onLockedGtaViSelected === 'function') {
+      onLockedGtaViSelected();
+    } else if (typeof showToast === 'function') {
+      showToast('🔒 GTA VI Installer is locked: Complete all Chapter 2 checklist missions first!', 'warning');
+    }
+    return;
+  }
   const modal = document.getElementById('gta-security-modal');
   if (modal) {
     modal.classList.remove('hidden');

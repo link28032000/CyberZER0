@@ -1266,18 +1266,15 @@ const RyanPosttest = (() => {
     hero.appendChild(hudStats);
     wrap.appendChild(hero);
 
-    // ── Right Column: Growth Progression Card & Actions ──
+    // ── Right Column: Growth Progression Card & Actions (Clean & Simple like Chapter 1) ──
     const details = _el('div', 'rpost-result-details');
-    details.style.maxHeight = '72vh';
-    details.style.overflowY = 'auto';
-    details.style.paddingRight = '6px';
 
     // 1. Defender Info & Date Strip
     const traineeName = isMal ? 'Ethan' : (typeof getPlayerDisplayName === 'function' ? getPlayerDisplayName() : 'Alex');
     const completedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     const metaStrip = _el('div', 'rpost-growth-card');
     metaStrip.style.padding = '10px 14px';
-    metaStrip.style.marginBottom = '12px';
+    metaStrip.style.flex = '0 0 auto';
     metaStrip.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:11.5px; color:#94a3b8; width:100%;">
         <span><strong>Trainee:</strong> <span style="color:#f8fafc; font-weight:700;">${traineeName}</span></span>
@@ -1371,119 +1368,36 @@ const RyanPosttest = (() => {
     growthCard.appendChild(gDelta);
     details.appendChild(growthCard);
 
-    // 3. Overall Performance & Assessment Commentary
-    const perfCard = _el('div', 'rpost-growth-card');
-    perfCard.style.marginTop = '12px';
-    perfCard.innerHTML = `
-      <div class="rpost-growth-header">
-        <div class="rpost-growth-title">🛡️ Overall Performance &amp; Mentor Assessment</div>
-        <div class="rpost-growth-badge" style="color:#10b981; border-color:#10b981;">${copy.rank}</div>
-      </div>
-      <div style="font-size:12px; color:#cbd5e1; line-height:1.55; margin-top:6px;">
-        <em>"${copy.ryan}"</em>
-      </div>
-    `;
-    details.appendChild(perfCard);
-
-    // 4. Chapter 2 Malware Topics Evaluation (Only in Chapter 2)
-    if (isMal) {
-      const topicCard = _el('div', 'rpost-growth-card');
-      topicCard.style.marginTop = '12px';
-
-      const topicItems = [
-        { icon: '🦠', title: 'Malware Concepts & Cryptojacking', desc: 'Understanding stealth cryptominers, CPU hijacking, and unauthorized mining algorithms.', status: '✓ Verified Mastery' },
-        { icon: '⚠️', title: 'Warning Signs & System Symptoms', desc: 'Detecting loud fans, thermal throttling, extreme mouse lag, and gaming performance drops.', status: '✓ Verified Mastery' },
-        { icon: '📊', title: 'Task Manager & Process Forensics', desc: 'Pinpointing rogue processes by CPU utilization and executing immediate process termination.', status: '✓ Verified Mastery' },
-        { icon: '⚙️', title: 'Safe Removal & Uninstallation', desc: 'Navigating Control Panel Programs & Features to purge root files and startup keys.', status: '✓ Verified Mastery' },
-        { icon: '🛡️', title: 'Malware Prevention & Endpoint Defense', desc: 'Safe software downloads, avoiding drive-by scripts, and maintaining active AV definitions.', status: '✓ Verified Mastery' }
-      ];
-
-      let topicHtml = `
+    // 3. Overall Performance & Assessment Commentary (Chapter 1 only)
+    if (!isMal) {
+      const perfCard = _el('div', 'rpost-growth-card');
+      perfCard.innerHTML = `
         <div class="rpost-growth-header">
-          <div class="rpost-growth-title">📋 Evaluation of Important Malware Topics</div>
-          <div class="rpost-growth-badge">5 Domains Evaluated</div>
+          <div class="rpost-growth-title">🛡️ Overall Performance &amp; Mentor Assessment</div>
+          <div class="rpost-growth-badge" style="color:#10b981; border-color:#10b981;">${copy.rank}</div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-      `;
-
-      topicItems.forEach(t => {
-        topicHtml += `
-          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:16px;">${t.icon}</span>
-              <div>
-                <div style="font-size:11.5px; font-weight:700; color:#f1f5f9;">${t.title}</div>
-                <div style="font-size:10.5px; color:#94a3b8;">${t.desc}</div>
-              </div>
-            </div>
-            <span style="font-size:10px; font-weight:700; color:#34d399; background:rgba(52,211,153,0.12); padding:2px 8px; border-radius:4px; border:1px solid rgba(52,211,153,0.3); flex-shrink:0;">${t.status}</span>
-          </div>
-        `;
-      });
-      topicHtml += `</div>`;
-      topicCard.innerHTML = topicHtml;
-      details.appendChild(topicCard);
-
-      // 5. Strengths and Areas That Need Improvement
-      const strengthsCard = _el('div', 'rpost-growth-card');
-      strengthsCard.style.marginTop = '12px';
-      strengthsCard.innerHTML = `
-        <div class="rpost-growth-header">
-          <div class="rpost-growth-title">🎯 Strengths &amp; Areas for Improvement</div>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
-          <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:10px 12px;">
-            <div style="font-size:11.5px; font-weight:700; color:#34d399; margin-bottom:4px;">💪 Core Strengths</div>
-            <div style="font-size:11px; color:#cbd5e1; line-height:1.45;">
-              • Rapidly identifying stealth cryptominers in Task Manager.<br>
-              • Diagnosing hardware symptoms like fan noise and severe lag.<br>
-              • Executing complete uninstallation from Control Panel.
-            </div>
-          </div>
-          <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:10px 12px;">
-            <div style="font-size:11.5px; font-weight:700; color:#38bdf8; margin-bottom:4px;">📈 Areas for Improvement</div>
-            <div style="font-size:11px; color:#cbd5e1; line-height:1.45;">
-              • Strictly avoiding unverified game mods and third-party installers.<br>
-              • Always inspecting file extensions for double extensions (.pdf.exe).<br>
-              • Ensuring real-time antivirus shields are never disabled.
-            </div>
-          </div>
+        <div style="font-size:12px; color:#cbd5e1; line-height:1.55; margin-top:6px;">
+          <em>"${copy.ryan}"</em>
         </div>
       `;
-      details.appendChild(strengthsCard);
-
-      // 6. Summary of Lessons Learned & Recommendations
-      const summaryCard = _el('div', 'rpost-growth-card');
-      summaryCard.style.marginTop = '12px';
-      summaryCard.innerHTML = `
-        <div class="rpost-growth-header">
-          <div class="rpost-growth-title">💡 Summary of Lessons &amp; Key Recommendations</div>
-        </div>
-        <div style="font-size:11px; color:#cbd5e1; line-height:1.55; margin-top:8px;">
-          <div style="margin-bottom:6px;"><strong style="color:#f8fafc;">1. Never judge malware by visibility:</strong> Cryptominers operate silently in the background without pop-ups.</div>
-          <div style="margin-bottom:6px;"><strong style="color:#f8fafc;">2. Task Manager is your primary forensic tool:</strong> Sort by CPU % to expose hidden resource hogs.</div>
-          <div style="margin-bottom:6px;"><strong style="color:#f8fafc;">3. Ending tasks is temporary:</strong> Complete elimination requires uninstalling from Control Panel and permanently emptying the Recycle Bin.</div>
-          <div><strong style="color:#f8fafc;">4. Defense Recommendation:</strong> Only download software from official vendor websites and keep system security definitions updated.</div>
-        </div>
-      `;
-      details.appendChild(summaryCard);
+      details.appendChild(perfCard);
     }
 
-    // 7. Action Buttons (Official Report & Proceed to Free Exploration)
+    // 4. Action Buttons (Clean & Simple like Chapter 1)
     const btnRow = _el('div', 'rpost-action-row');
     btnRow.style.display = 'flex';
     btnRow.style.gap = '10px';
-    btnRow.style.marginTop = '16px';
-    btnRow.style.flexWrap = 'wrap';
+    btnRow.style.width = '100%';
+    btnRow.style.flex = '0 0 auto';
 
     if (isMal) {
-      const docBtn = _el('button', 'rpost-doc-btn', '📄 Open Official Report in Documents');
+      const docBtn = _el('button', 'rpost-doc-btn', '📄 Open Report in Documents');
       docBtn.type = 'button';
       docBtn.style.flex = '1';
-      docBtn.style.padding = '10px 14px';
+      docBtn.style.padding = '12px 14px';
       docBtn.style.background = 'rgba(56, 189, 248, 0.15)';
       docBtn.style.border = '1px solid #38bdf8';
-      docBtn.style.borderRadius = '8px';
+      docBtn.style.borderRadius = '10px';
       docBtn.style.color = '#38bdf8';
       docBtn.style.fontWeight = '700';
       docBtn.style.fontSize = '12px';
@@ -1499,7 +1413,7 @@ const RyanPosttest = (() => {
     const contBtn = _el('button', 'rpost-continue-btn', isMal ? 'Proceed to Free Exploration ➔' : 'Proceed to Save Progress ➔');
     contBtn.type = 'button';
     contBtn.disabled = true;
-    contBtn.style.flex = '1';
+    contBtn.style.flex = isMal ? '1.2' : '1';
     contBtn.addEventListener('click', _complete);
     btnRow.appendChild(contBtn);
 

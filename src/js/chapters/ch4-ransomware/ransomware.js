@@ -351,6 +351,9 @@ window.finishRansomwareMission = finishRansomwareMission;
 function showMalwareTrophyModal() {
   const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'malware';
   const isCh2 = curCat === 'malware';
+  if (isCh2 && typeof window.ch2ShowMalwareTrophyModal === 'function') {
+    return window.ch2ShowMalwareTrophyModal();
+  }
   const isClaimed = (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_malware')) || Boolean(window._malwareAwardClaimed);
 
   let isComplete = false;
@@ -456,6 +459,12 @@ function showMalwareTrophyModal() {
 window.showMalwareTrophyModal = showMalwareTrophyModal;
 
 function attemptClaimMalwareAward() {
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'malware';
+  const isCh2 = curCat === 'malware';
+  if (isCh2 && typeof window.ch2AttemptClaimMalwareAward === 'function') {
+    return window.ch2AttemptClaimMalwareAward();
+  }
+
   const isClaimed = (typeof isAchievementClaimed === 'function' && isAchievementClaimed('ach_malware')) || Boolean(window._malwareAwardClaimed);
   if (isClaimed) {
     closeMalwareTrophyModal(true);
@@ -464,9 +473,6 @@ function attemptClaimMalwareAward() {
     }
     return;
   }
-
-  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'malware';
-  const isCh2 = curCat === 'malware';
 
   const ch2Complete = typeof isChapter2Missions1to4Complete === 'function' && isChapter2Missions1to4Complete();
   const ch4Complete = typeof isChapter4Complete === 'function' && isChapter4Complete();
@@ -549,31 +555,26 @@ function attemptClaimMalwareAward() {
 
   closeMalwareTrophyModal(true);
 
-  // If in Chapter 2, guide Ethan to Mission 5 (Knowledge Assessment)
+  // If in Chapter 2, speak Ryan's dialogue to give the questionnaire
   if (isCh2 && window._ch2Mission && !window._ch2Mission.assessmentCompleted) {
     setTimeout(() => {
-      if (typeof RyanGuide !== 'undefined' && RyanGuide.speak) {
-        RyanGuide.speak([
-          {
-            text: "Congratulations on claiming your Malware Trophy! Before we finish, let's take a quick 4-question Knowledge Assessment to test what you learned about Bitcoin Miner trojans.",
-            state: 'speaking',
-            label: 'START ASSESSMENT'
-          }
-        ], {
-          onDone: function() {
-            if (typeof updateStickyChecklist === 'function') updateStickyChecklist();
-            if (typeof window.launchCh2KnowledgeAssessment === 'function') {
-              window.launchCh2KnowledgeAssessment();
-            }
-          }
-        });
+      if (typeof window.speakCh2QuestionnaireDialogue === 'function') {
+        window.speakCh2QuestionnaireDialogue();
+      } else if (typeof window.launchCh2KnowledgeAssessment === 'function') {
+        window.launchCh2KnowledgeAssessment();
       }
-    }, 600);
+    }, 550);
   }
 }
 window.attemptClaimMalwareAward = attemptClaimMalwareAward;
 
 function closeMalwareTrophyModal(showResults = true) {
+  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
+  const isCh2 = curCat === 'malware';
+  if (isCh2 && typeof window.ch2CloseMalwareTrophyModal === 'function') {
+    return window.ch2CloseMalwareTrophyModal(showResults);
+  }
+
   const modal = document.getElementById('malware-trophy-modal');
   if (modal) {
     modal.classList.remove('ptm-show');
@@ -581,7 +582,6 @@ function closeMalwareTrophyModal(showResults = true) {
       if (modal.parentElement) modal.parentElement.removeChild(modal);
     }, 400);
   }
-  const curCat = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null);
   if (showResults && curCat === 'ransomware' && typeof showOverlay === 'function') {
     showOverlay('overlay-ransomware-results');
   }
