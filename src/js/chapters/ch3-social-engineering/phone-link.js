@@ -29,7 +29,12 @@ const CHAR_ROSTER = {
     roleTag: 'ETHAN (YOU)',
     roleClass: 'pl-gc-role-sysadmin',
     phoneDeviceName: "Ethan's Phone",
-    quickReplies: ["Alex, it’s me, your high school classmate!"],
+    quickReplies: [
+      "Alex, it’s me, your high school classmate!",
+      "Team, my workstation is detecting strange background processes.",
+      "Anyone want to grab lunch after checking the network logs?",
+      "SysAdmin station is up and running!"
+    ],
     chapterNum: 2
   },
   pia: {
@@ -57,9 +62,10 @@ const CHAR_ROSTER = {
 };
 
 function getCurrentPhoneCharacter() {
+  const isCh2 = (typeof _isChapter2Active === 'function' && _isChapter2Active());
   const curCatId = window._currentChapterCategory || (typeof activeCategoryStory !== 'undefined' ? activeCategoryStory : null) || (typeof gameState !== 'undefined' ? gameState.phase : null) || 'phishing';
 
-  if (curCatId === 'malware' || curCatId === 2 || curCatId === 'ch2') {
+  if (isCh2 || curCatId === 'malware' || curCatId === 2 || curCatId === 'ch2') {
     return CHAR_ROSTER.ethan;
   }
   if (curCatId === 'social_engineering' || curCatId === 'social' || curCatId === 'social-engineering' || curCatId === 3 || curCatId === 'ch3') {
@@ -361,12 +367,18 @@ function isChapter1CompletedAndSaved() {
 }
 window.isChapter1CompletedAndSaved = isChapter1CompletedAndSaved;
 
-// ── RYAN MENTOR DIRECT MESSAGE STORAGE ────────────────────────
+// ── RYAN MENTOR & ALEX FRIEND DIRECT MESSAGE STORAGE ───────────
 const RYAN_MENTOR_STORAGE_KEY = 'cyberzero_pl_ryan_mentor_msgs';
+const RYAN_ETHAN_STORAGE_KEY = 'cyberzero_pl_ryan_ethan_msgs';
+const ALEX_FRIEND_STORAGE_KEY = 'cyberzero_pl_alex_ethan_msgs';
 
 function loadRyanMentorMessages() {
+  const curChar = getCurrentPhoneCharacter();
+  const isEthan = curChar.id === 'ethan';
+  const storageKey = isEthan ? RYAN_ETHAN_STORAGE_KEY : RYAN_MENTOR_STORAGE_KEY;
+
   try {
-    const raw = localStorage.getItem(RYAN_MENTOR_STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -375,6 +387,22 @@ function loadRyanMentorMessages() {
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  if (isEthan) {
+    return [
+      {
+        id: 'init_ryan_mentor_ethan',
+        from: 'ryan',
+        author: 'Ryan',
+        roleTag: 'IT SUPPORT MENTOR',
+        roleClass: 'pl-gc-role-mentor',
+        avatar: 'assets/Character/Ryan.png',
+        time: timeStr,
+        text: "Hey Ethan! Welcome to your SysAdmin & infrastructure station. I'm here as your IT Support Mentor. If you have questions about malware analysis, suspicious processes, trojans, network security, or IT career paths, feel free to ask me anytime!"
+      }
+    ];
+  }
+
   return [
     {
       id: 'init_ryan_mentor',
@@ -390,12 +418,46 @@ function loadRyanMentorMessages() {
 }
 
 function saveRyanMentorMessages(msgs) {
+  const curChar = getCurrentPhoneCharacter();
+  const storageKey = curChar.id === 'ethan' ? RYAN_ETHAN_STORAGE_KEY : RYAN_MENTOR_STORAGE_KEY;
   try {
-    localStorage.setItem(RYAN_MENTOR_STORAGE_KEY, JSON.stringify(msgs));
+    localStorage.setItem(storageKey, JSON.stringify(msgs));
   } catch(e) {}
 }
 
 window._ryanMentorIsTyping = false;
+window._alexFriendIsTyping = false;
+
+function loadAlexFriendMessages() {
+  try {
+    const raw = localStorage.getItem(ALEX_FRIEND_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch(e) {}
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return [
+    {
+      id: 'init_alex_ethan_1',
+      from: 'alex',
+      author: 'Alex',
+      roleTag: 'FRIEND',
+      roleClass: 'pl-gc-role-newbie',
+      avatar: 'assets/Character/Alex.png',
+      time: timeStr,
+      text: "Yo Ethan! Dude, can you believe we actually survived high school and made it into this internship together? Still feels unreal haha."
+    }
+  ];
+}
+
+function saveAlexFriendMessages(msgs) {
+  try {
+    localStorage.setItem(ALEX_FRIEND_STORAGE_KEY, JSON.stringify(msgs));
+  } catch(e) {}
+}
 
 // ── CONNECTION STATUS HELPERS ─────────────────────────────────
 
@@ -620,6 +682,21 @@ function syncPhoneLinkOfflineBanner() {
       dot.style.boxShadow = conn.isInternetConnected ? '0 0 5px #22c55e' : '0 0 5px #f59e0b';
     }
   }
+
+  // Live update Alex friend row in contacts list if present
+  const alexRow = document.querySelector('.pl-alex-friend-row');
+  if (alexRow) {
+    const statusText = alexRow.querySelector('.pl-contact-meta span:last-child');
+    if (statusText) {
+      statusText.textContent = conn.isInternetConnected ? '● Online' : '● Offline';
+      statusText.style.color = conn.isInternetConnected ? '#22c55e' : '#f59e0b';
+    }
+    const dot = alexRow.querySelector('.pl-ryan-status-dot');
+    if (dot) {
+      dot.style.background = conn.isInternetConnected ? '#22c55e' : '#f59e0b';
+      dot.style.boxShadow = conn.isInternetConnected ? '0 0 5px #22c55e' : '0 0 5px #f59e0b';
+    }
+  }
 }
 
 function updatePhoneLinkConnectionState() {
@@ -709,6 +786,8 @@ function updatePhoneLinkConnectionState() {
         renderNewbieGcChat(content);
       } else if (g4ActiveConvo === 'ryan_mentor') {
         renderRyanMentorChat(content);
+      } else if (g4ActiveConvo === 'alex_friend') {
+        renderAlexFriendChat(content);
       } else if (g4ActiveConvo) {
         renderIndividualConvo(g4ActiveConvo, content);
       } else {
@@ -801,11 +880,12 @@ function showPhoneInAppScreen(app) {
   const title = isMsg ? 'Messages' : 'Calls';
 
   const ch1Unlocked = isChapter1CompletedAndSaved();
-  const gcActive = isNewbieGcActive() || ch1Unlocked || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
+  const curChar = getCurrentPhoneCharacter();
+  const isEthan = curChar.id === 'ethan';
+  const gcActive = isNewbieGcActive() || ch1Unlocked || isEthan || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
 
-  if (isMsg && (gcActive || ch1Unlocked)) {
+  if (isMsg && (gcActive || ch1Unlocked || isEthan)) {
     const gcState = loadNewbieGcState();
-    const curChar = getCurrentPhoneCharacter();
     const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
     const lastMsg = hasPlayerMsgs ? gcState.playerMessages[gcState.playerMessages.length - 1] : null;
     const lastSender = lastMsg ? (lastMsg.from === curChar.id ? curChar.displayName : (lastMsg.author || lastMsg.from)) : '';
@@ -817,7 +897,29 @@ function showPhoneInAppScreen(app) {
     const lastRyanMsg = ryanMsgs.length > 0 ? ryanMsgs[ryanMsgs.length - 1] : null;
     const lastRyanPreview = lastRyanMsg
       ? lastRyanMsg.text
-      : "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+      : (isEthan
+          ? "Welcome to your SysAdmin station! Ask me about malware analysis, trojans, and IT careers."
+          : "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!");
+
+    let alexCardHtml = '';
+    if (isEthan) {
+      const alexMsgs = loadAlexFriendMessages();
+      const lastAlexMsg = alexMsgs.length > 0 ? alexMsgs[alexMsgs.length - 1] : null;
+      const lastAlexPreview = lastAlexMsg ? lastAlexMsg.text : 'Yo Ethan! Still feels unreal haha.';
+      alexCardHtml = `
+        <!-- Alex (Best Friend) Card -->
+        <div style="background:rgba(234,179,8,0.14);border:1px solid rgba(250,204,21,0.4);border-radius:10px;padding:7px 9px;cursor:pointer;width:100%;box-sizing:border-box;text-align:left;transition:all 0.15s ease;" onclick="openAlexFriendConversation()" title="Alex (Best Friend) — Message">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <img src="assets/Character/Alex.png" alt="Alex" style="width:16px;height:16px;border-radius:50%;object-fit:cover;border:1px solid #facc15;">
+            <span style="font-size:10px;font-weight:800;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Alex</span>
+            <span style="font-size:7.5px;background:#ca8a04;color:#fff;border-radius:3px;padding:1px 4px;margin-left:auto;font-weight:700;">FRIEND</span>
+          </div>
+          <div style="font-size:8px;color:#fde047;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${escapeHtml(lastAlexPreview)}
+          </div>
+        </div>
+      `;
+    }
 
     phoneContent.innerHTML = `
       <div class="pl-phone-inapp-view">
@@ -827,6 +929,7 @@ function showPhoneInAppScreen(app) {
           <span style="width:36px"></span>
         </div>
         <div class="pl-phone-inapp-body" style="padding:8px;justify-content:flex-start;gap:6px;">
+          ${alexCardHtml}
           <!-- Ryan (IT Mentor) Card placed directly ABOVE new intern team 2027 -->
           <div style="background:rgba(2,132,199,0.18);border:1px solid rgba(56,189,248,0.4);border-radius:10px;padding:7px 9px;cursor:pointer;width:100%;box-sizing:border-box;text-align:left;transition:all 0.15s ease;" onclick="openRyanMentorConversation()" title="Ryan (IT Mentor) — Message">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
@@ -915,7 +1018,9 @@ function switchPhoneTab(tab) {
   }
 
   if (tab === 'messages') {
-    if (g4ActiveConvo === 'ryan_mentor') {
+    if (g4ActiveConvo === 'alex_friend') {
+      renderAlexFriendChat(content);
+    } else if (g4ActiveConvo === 'ryan_mentor') {
       renderRyanMentorChat(content);
     } else if (g4ActiveConvo === 'business_newbie_gc') {
       renderNewbieGcChat(content);
@@ -943,8 +1048,10 @@ function switchPhoneTab(tab) {
 
 function renderPhoneMessages(container) {
   updatePhoneLinkBadges();
+  const curChar = getCurrentPhoneCharacter();
+  const isEthan = curChar.id === 'ethan';
   const ch1Unlocked = isChapter1CompletedAndSaved();
-  const gcActive = isNewbieGcActive() || ch1Unlocked || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
+  const gcActive = isNewbieGcActive() || ch1Unlocked || isEthan || (typeof window !== 'undefined' && Boolean(window._awardClaimed));
   const gcState = loadNewbieGcState();
   const conn = getPhoneLinkConnectionStatus();
 
@@ -955,16 +1062,52 @@ function renderPhoneMessages(container) {
 
   let html = `<div id="pl-messages-banner-slot" class="pl-banner-slot">${bannerHtml}</div><div class="pl-contacts-list">`;
 
-  // 1. Ryan (IT Mentor) Contact Row — Placed directly ABOVE "new intern team 2027"
+  // 1. IF CHAPTER 2 (ETHAN): Alex (Best Friend) Contact Row at Top
+  if (isEthan) {
+    const alexMsgs = loadAlexFriendMessages();
+    const lastAlexMsg = alexMsgs.length > 0 ? alexMsgs[alexMsgs.length - 1] : null;
+    const lastAlexSender = lastAlexMsg ? (lastAlexMsg.from === 'ethan' ? 'You' : 'Alex') : '';
+    const lastAlexPreview = lastAlexMsg
+      ? `${lastAlexSender ? lastAlexSender + ': ' : ''}${lastAlexMsg.text}`
+      : 'Yo Ethan! Still feels unreal haha.';
+    const alexTime = lastAlexMsg ? lastAlexMsg.time : '10:42 AM';
+
+    html += `
+      <div class="pl-contact-row pl-alex-friend-row" onclick="openAlexFriendConversation()" title="Alex — Best Friend &amp; High School Classmate">
+        <div style="position:relative;margin-right:12px;flex-shrink:0;">
+          <img src="assets/Character/Alex.png" alt="Alex" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #eab308;box-shadow:0 0 10px rgba(234,179,8,0.4);display:block;">
+          <span class="pl-ryan-status-dot" style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};border:2px solid #0f172a;border-radius:50%;box-shadow:0 0 5px ${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};"></span>
+        </div>
+        <div class="pl-contact-info" style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+            <span class="pl-contact-name" style="font-size:13.5px;font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:6px;">
+              Alex
+              <span style="background:rgba(234,179,8,0.22);border:1px solid rgba(234,179,8,0.5);color:#facc15;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;letter-spacing:0.5px;">FRIEND</span>
+            </span>
+            <span style="font-size:10px;font-weight:600;color:#facc15;">${alexTime}</span>
+          </div>
+          <div class="pl-contact-meta" style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;color:#cbd5e1;font-size:11.5px;">${escapeHtml(lastAlexPreview)}</span>
+            <span class="pl-ryan-status-text" style="font-size:10px;color:${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};font-weight:600;margin-left:8px;white-space:nowrap;">● ${conn.isInternetConnected ? 'Online' : 'Offline'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 2. Ryan (IT Mentor) Contact Row
   const ryanMsgs = loadRyanMentorMessages();
   const lastRyanMsg = ryanMsgs.length > 0 ? ryanMsgs[ryanMsgs.length - 1] : null;
+  const lastRyanSender = lastRyanMsg ? (lastRyanMsg.from === curChar.id ? 'You' : 'Ryan') : '';
   const lastRyanPreview = lastRyanMsg
-    ? lastRyanMsg.text
-    : "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+    ? `${lastRyanSender ? lastRyanSender + ': ' : ''}${lastRyanMsg.text}`
+    : (isEthan
+        ? "Welcome to your SysAdmin station! Ask me about malware analysis, trojans, and IT careers."
+        : "If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!");
   const ryanTime = lastRyanMsg ? lastRyanMsg.time : '10:45 AM';
 
   html += `
-    <div class="pl-contact-row pl-ryan-mentor-row ${!ch1Unlocked ? 'pl-mentor-locked' : ''}" onclick="openRyanMentorConversation()" title="Ryan (IT Mentor) — Phishing Practice & Retries">
+    <div class="pl-contact-row pl-ryan-mentor-row ${(!isEthan && !ch1Unlocked) ? 'pl-mentor-locked' : ''}" onclick="openRyanMentorConversation()" title="Ryan (IT Mentor) — ${isEthan ? 'Malware &amp; IT Mentorship' : 'Phishing Practice &amp; Retries'}">
       <div style="position:relative;margin-right:12px;flex-shrink:0;">
         <img src="assets/Character/Ryan.png" alt="Ryan" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;box-shadow:0 0 10px rgba(56,189,248,0.4);display:block;">
         <span class="pl-ryan-status-dot" style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};border:2px solid #0f172a;border-radius:50%;box-shadow:0 0 5px ${conn.isInternetConnected ? '#22c55e' : '#f59e0b'};"></span>
@@ -985,10 +1128,9 @@ function renderPhoneMessages(container) {
     </div>
   `;
 
-  // 2. Group Chat Row ("new intern team 2027")
+  // 3. Group Chat Row ("new intern team 2027")
   if (gcActive) {
     const hasPlayerMsgs = gcState.playerMessages && gcState.playerMessages.length > 0;
-    const curChar = getCurrentPhoneCharacter();
     const lastMsg = hasPlayerMsgs ? gcState.playerMessages[gcState.playerMessages.length - 1] : null;
     const lastSender = lastMsg ? (lastMsg.from === curChar.id ? curChar.displayName : (lastMsg.author || lastMsg.from)) : '';
     const preview = lastMsg
@@ -1626,28 +1768,69 @@ function triggerTeammateReplies(curChar, msgText) {
       return;
     }
   } else if (curChar.id === 'ethan') {
-    // ── Chapter 2: Ethan’s Message ──
-    // - Ethan manually sends Alex this message: “Alex, it’s me, your high school classmate!”
-    // - Alex automatically replies: “What, Ryan?”
-    if (!state.alexRepliedEthan) {
+    // ── Chapter 2: Ethan’s Message in Group Chat ──
+    const lowerText = (msgText || '').toLowerCase();
+    if (lowerText.includes('classmate') || lowerText.includes('high school') || !state.alexRepliedEthan) {
       state.alexRepliedEthan = true;
       saveNewbieGcState(state);
       repliers.push({
         member: CHAR_ROSTER.alex,
-        text: 'What, Ryan?',
+        text: 'What, Ryan? Wait— Ethan?! No way! You\'re the SysAdmin intern here?!',
         delay: 850,
         typingDuration: 1100
       });
+      repliers.push({
+        member: CHAR_ROSTER.ryan,
+        text: 'Haha yes! Ethan and Alex, glad you two already know each other. Welcome aboard team!',
+        delay: 2400,
+        typingDuration: 1200
+      });
+    } else if (lowerText.includes('process') || lowerText.includes('malware') || lowerText.includes('strange') || lowerText.includes('background')) {
+      repliers.push({
+        member: CHAR_ROSTER.alex,
+        text: 'Check the Task Manager and Process Viewer! Don\'t let it run wild bro!',
+        delay: 850,
+        typingDuration: 1100
+      });
+      repliers.push({
+        member: CHAR_ROSTER.ryan,
+        text: 'Good eye, Ethan. Inspect the CPU usage and memory footprint. If it looks unsigned or suspicious, analyze the executable.',
+        delay: 2400,
+        typingDuration: 1300
+      });
+    } else if (lowerText.includes('lunch') || lowerText.includes('food') || lowerText.includes('eat') || lowerText.includes('ramen')) {
+      repliers.push({
+        member: CHAR_ROSTER.alex,
+        text: 'Count me in! There\'s a good ramen place right around the corner 🍜',
+        delay: 850,
+        typingDuration: 1000
+      });
+      repliers.push({
+        member: CHAR_ROSTER.pia,
+        text: 'Save me a seat! Need a break from documentation.',
+        delay: 2200,
+        typingDuration: 1000
+      });
+    } else if (lowerText.includes('sysadmin') || lowerText.includes('station') || lowerText.includes('running') || lowerText.includes('up')) {
+      repliers.push({
+        member: CHAR_ROSTER.ryan,
+        text: 'Awesome job Ethan. Keep your eyes on the system health and alert logs.',
+        delay: 850,
+        typingDuration: 1100
+      });
+      repliers.push({
+        member: CHAR_ROSTER.alex,
+        text: 'Let\'s crush this internship bro! 💪',
+        delay: 2300,
+        typingDuration: 1000
+      });
     } else {
-      // All other messages must be sent manually by the user. Do not automate any additional replies.
-      setTimeout(() => {
-        const sState = loadNewbieGcState();
-        sState.seenByRyan = true;
-        saveNewbieGcState(sState);
-        const c = document.getElementById('pl-tab-content');
-        if (c && g4ActiveConvo === 'business_newbie_gc') renderNewbieGcChat(c, { smoothScroll: true });
-      }, 700);
-      return;
+      repliers.push({
+        member: CHAR_ROSTER.alex,
+        text: 'Haha nice one Ethan! Let\'s get through these morning tasks first.',
+        delay: 850,
+        typingDuration: 1000
+      });
     }
   } else if (curChar.id === 'pia') {
     // ── Chapter 3: Pia ──
@@ -1750,6 +1933,7 @@ function triggerTeammateReplies(curChar, msgText) {
 
 function resetPhoneLinkChat() {
   window._ryanMentorIsTyping = false;
+  window._alexFriendIsTyping = false;
   if (Array.isArray(window._plTypingTimers)) {
     window._plTypingTimers.forEach(id => clearTimeout(id));
     window._plTypingTimers = [];
@@ -1757,6 +1941,8 @@ function resetPhoneLinkChat() {
   try {
     localStorage.removeItem(NEWBIE_GC_STORAGE_KEY);
     localStorage.removeItem(RYAN_MENTOR_STORAGE_KEY);
+    localStorage.removeItem(RYAN_ETHAN_STORAGE_KEY);
+    localStorage.removeItem(ALEX_FRIEND_STORAGE_KEY);
   } catch(e) {}
   const content = document.getElementById('pl-tab-content');
   if (content) {
@@ -1764,6 +1950,8 @@ function resetPhoneLinkChat() {
       renderNewbieGcChat(content);
     } else if (g4ActiveConvo === 'ryan_mentor') {
       renderRyanMentorChat(content);
+    } else if (g4ActiveConvo === 'alex_friend') {
+      renderAlexFriendChat(content);
     }
   }
 }
@@ -1773,8 +1961,671 @@ window.sendPlayerGcMessage = sendPlayerGcMessage;
 window.sendCustomPlayerGcMessage = sendCustomPlayerGcMessage;
 
 // ═══════════════════════════════════════════════════════════════
-// RYAN (IT SUPPORT MENTOR) DIRECT CHAT & PHISHING PRACTICE ACTIONS
+// ALEX (CLOSE FRIEND & HIGH SCHOOL CLASSMATE) DIRECT CHAT (CHAPTER 2)
 // ═══════════════════════════════════════════════════════════════
+
+function openAlexFriendConversation() {
+  g4ActiveConvo = 'alex_friend';
+  g4ActiveTab = 'messages';
+
+  const tabs = document.querySelectorAll('.pl-tab');
+  tabs.forEach(t => {
+    const id = t.id.replace('pl-tab-', '');
+    t.classList.toggle('active', id === 'messages');
+  });
+
+  const content = document.getElementById('pl-tab-content');
+  if (!content) return;
+
+  renderAlexFriendChat(content);
+
+  if (g4PhoneScreenView !== 'home') {
+    showPhoneInAppScreen('messages');
+  }
+}
+
+function getAlexFriendQuickReplies(allMessages) {
+  const ethanMsgs = (allMessages || []).filter(m => (m.from === 'ethan') || (m.from === 'player') || (m.isPlayer));
+  if (!ethanMsgs || ethanMsgs.length === 0) {
+    return [
+      { icon: '🎓', label: 'Remember our capstone all-nighter?', text: 'Remember our capstone project all-nighter with only 3 hours left? 😂' },
+      { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' },
+      { icon: '🚀', label: "What's your dream IT role?", text: "What's your dream IT role once we finish college, Alex?" },
+      { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" },
+      { icon: '🤝', label: "We've got this, Alex!", text: "We’ve got this, Alex. Step by step, we're becoming real IT pros." }
+    ];
+  }
+
+  const lastEthan = ethanMsgs[ethanMsgs.length - 1];
+  const lastText = (lastEthan.text || '').toLowerCase();
+
+  if (lastText.includes('capstone') || lastText.includes('all-nighter')) {
+    return [
+      { icon: '💻', label: 'Compiler hated us personally', text: 'We really thought the compiler hated us personally.' },
+      { icon: '🙌', label: 'Peak teamwork', text: 'Honestly, that thesis was peak teamwork.' },
+      { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' },
+      { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" }
+    ];
+  }
+
+  if (lastText.includes('compiler') || lastText.includes('teamwork')) {
+    return [
+      { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' },
+      { icon: '🚀', label: "What's your dream IT role?", text: "What's your dream IT role once we finish college, Alex?" },
+      { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" },
+      { icon: '🤝', label: "We've got this, Alex!", text: "We’ve got this, Alex. Step by step, we're becoming real IT pros." }
+    ];
+  }
+
+  if (lastText.includes('space fighter') || lastText.includes('high score') || lastText.includes('1v1')) {
+    return [
+      { icon: '🍜', label: 'Deal! Get your wallet ready', text: 'Deal! Get your wallet ready for ramen tomorrow, Alex 🍜' },
+      { icon: '🛡️', label: 'Don\'t download shady mods', text: 'Just don\'t download any suspicious game mods like last time!' },
+      { icon: '🎓', label: 'Remember our capstone all-nighter?', text: 'Remember our capstone project all-nighter with only 3 hours left? 😂' },
+      { icon: '🚀', label: "What's your dream IT role?", text: "What's your dream IT role once we finish college, Alex?" }
+    ];
+  }
+
+  if (lastText.includes('wallet') || lastText.includes('mods')) {
+    return [
+      { icon: '🚀', label: "What's your dream IT role?", text: "What's your dream IT role once we finish college, Alex?" },
+      { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" },
+      { icon: '🎓', label: 'Remember our capstone all-nighter?', text: 'Remember our capstone project all-nighter with only 3 hours left? 😂' },
+      { icon: '🤝', label: "We've got this, Alex!", text: "We’ve got this, Alex. Step by step, we're becoming real IT pros." }
+    ];
+  }
+
+  if (lastText.includes('dream it role') || lastText.includes('finish college') || lastText.includes('dream role')) {
+    return [
+      { icon: '☁️', label: 'SysAdmin & Cloud Security', text: 'Definitely SysAdmin & Cloud Security. I love architecting and securing networks.' },
+      { icon: '🛡️', label: 'SOC Analyst sounds amazing', text: 'Security Operations Center (SOC) analyst sounds amazing too.' },
+      { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" },
+      { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' }
+    ];
+  }
+
+  if (lastText.includes('sysadmin') || lastText.includes('soc analyst') || lastText.includes('cloud')) {
+    return [
+      { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" },
+      { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' },
+      { icon: '🎓', label: 'Remember our capstone all-nighter?', text: 'Remember our capstone project all-nighter with only 3 hours left? 😂' },
+      { icon: '🤝', label: "We've got this, Alex!", text: "We’ve got this, Alex. Step by step, we're becoming real IT pros." }
+    ];
+  }
+
+  if (lastText.includes('station feeling') || lastText.includes('office life')) {
+    return [
+      { icon: '🔍', label: 'Found suspicious processes', text: 'Found some weird suspicious processes already. Digging into the memory dump.' },
+      { icon: '⚡', label: 'Loving dual monitors & fiber', text: 'Loving the dual monitors and fast fiber line!' },
+      { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' },
+      { icon: '🤝', label: "We've got this, Alex!", text: "We’ve got this, Alex. Step by step, we're becoming real IT pros." }
+    ];
+  }
+
+  return [
+    { icon: '🎓', label: 'Remember our capstone all-nighter?', text: 'Remember our capstone project all-nighter with only 3 hours left? 😂' },
+    { icon: '🎮', label: '1v1 in Space Fighter tonight?', text: '1v1 in Space Fighter tonight? I beat your high score by 5,000 points!' },
+    { icon: '🚀', label: "What's your dream IT role?", text: "What's your dream IT role once we finish college, Alex?" },
+    { icon: '🏢', label: "How's your station feeling?", text: "How's your station feeling so far? Getting used to office life?" },
+    { icon: '🤝', label: "We've got this, Alex!", text: "We’ve got this, Alex. Step by step, we're becoming real IT pros." }
+  ];
+}
+
+function getAlexFriendReply(ethanText) {
+  const lower = (ethanText || '').toLowerCase();
+
+  if (lower.includes('capstone') || lower.includes('all-nighter')) {
+    return "Bro don't remind me 😂! You were debugging the database in full panic mode while I was frantically printing our documentation at 5 AM!\n\nWalking up that graduation stage with our diplomas in front of our parents made all those sleepless nights worth it though. Do you still remember that compiler bug?";
+  }
+  if (lower.includes('compiler') || lower.includes('semicolon')) {
+    return "100%! 99 errors in the terminal, you fix one missing semicolon, and suddenly there's 102 errors lmao! But look at us now, working on real enterprise tech stations!";
+  }
+  if (lower.includes('teamwork') || lower.includes('thesis')) {
+    return "Fr! That’s why when Ryan accepted us both as interns, I was so hyped. We’ve always had each other’s backs, from high school projects to corporate cybersecurity.";
+  }
+  if (lower.includes('space fighter') || lower.includes('high score') || lower.includes('1v1')) {
+    return "Wait WHAT?! No way, I held that leaderboard spot for 3 whole weeks! 😤 You definitely got lucky on the asteroid wave.\n\nRematch at 8 PM tonight, no excuses. Loser buys lunch tomorrow!";
+  }
+  if (lower.includes('wallet') || lower.includes('ramen')) {
+    return "Keep talking Ethan! I discovered a secret laser power-up route on Stage 4. You’re definitely treating me to extra chashu ramen tomorrow! 🍜";
+  }
+  if (lower.includes('mod') || lower.includes('pirated') || lower.includes('cracked')) {
+    return "Hahaha fair point! Remember that shady 'infinite ammo' mod that turned my old PC into a jet engine? My fans were screaming at 100%! Never again. Now I check hashes and scan everything before running it.";
+  }
+  if (lower.includes('dream it role') || lower.includes('finish college') || lower.includes('dream role')) {
+    return "Man, I really want to specialize in ethical hacking and penetration testing. Finding security holes before bad actors exploit them sounds so awesome.\n\nWhat about you? Still aiming for Cloud Infrastructure or SysAdmin?";
+  }
+  if (lower.includes('sysadmin') || lower.includes('cloud')) {
+    return "That fits you so well, Ethan! You were always the guy fixing everyone's Wi-Fi routers and setting up home servers in school haha. We’re gonna build a crazy good IT startup together someday!";
+  }
+  if (lower.includes('soc analyst') || lower.includes('soc')) {
+    return "Yesss! Threat hunting, reading live packet logs, incident response... We're gonna crush it. Let's make sure we both get certified while we're young!";
+  }
+  if (lower.includes('station feeling') || lower.includes('office life')) {
+    return "It's so weird having a set 8-to-5 schedule instead of school bells, not gonna lie! But having free coffee and crazy fast fiber internet is a massive upgrade. Ryan is super chill as a mentor too.\n\nHow's your malware investigation station going?";
+  }
+  if (lower.includes('suspicious') || lower.includes('dump') || lower.includes('process')) {
+    return "Ooh SysAdmin detective mode! Be careful with live payloads though. Don't blow up the network subnet yet bro! 🕵️ Let me know if you need a second pair of eyes.";
+  }
+  if (lower.includes('dual monitor') || lower.includes('fiber')) {
+    return "Right?! At home I had to wait 2 hours just to download a 10 GB patch. Here it downloads before I finish stirring my coffee. Blessed enterprise bandwidth!";
+  }
+  if (lower.includes('we\'ve got this') || lower.includes('we’ve got this') || lower.includes('real it pros') || lower.includes('encourag')) {
+    return "Always, bro! From cramming for finals together in the library to protecting real company systems. Let’s do our best and make everyone proud! 💪";
+  }
+  if (lower.includes('lunch') || lower.includes('food') || lower.includes('eat') || lower.includes('coffee')) {
+    return "Bro I'm starving! Let's definitely grab lunch together once we wrap up this morning's investigation tasks. Spicy ramen is calling our names!";
+  }
+  if (lower.includes('graduat') || lower.includes('diploma') || lower.includes('ceremony')) {
+    return "Seeing our families in the crowd when they called our names was unforgettable. After all the grinding in high school, seeing us both here feels like Chapter 2 of our lives.";
+  }
+  if (lower.includes('haha') || lower.includes('lol') || lower.includes('bro') || lower.includes('dude') || lower.includes('yo')) {
+    return "Haha classic! Seriously glad we're doing this internship side by side. Makes the whole corporate environment way less intimidating.";
+  }
+
+  return "Totally with you, Ethan! Having you as a teammate here makes this whole internship way more fun. Let's keep our momentum going!";
+}
+
+function renderAlexFriendChat(container, options = {}) {
+  const conn = getPhoneLinkConnectionStatus();
+  const isOffline = !conn.isInternetConnected;
+  const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
+  const allMessages = loadAlexFriendMessages();
+
+  const existingInput = document.getElementById('pl-alex-text-input');
+  const preservedText = existingInput ? existingInput.value : '';
+
+  container.innerHTML = `
+    <div class="pl-convo-view" style="display:flex;flex-direction:column;height:100%;background:#090e18;">
+      <!-- Header -->
+      <div class="pl-convo-header" style="background:#0f172a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;gap:12px;">
+        <button class="pl-back-btn" onclick="g4ActiveConvo = null; switchPhoneTab('messages')">← Back</button>
+        <div style="position:relative;width:36px;height:36px;flex-shrink:0;">
+          <img src="assets/Character/Alex.png" alt="Alex" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #eab308;">
+          <span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:${isOffline ? '#f59e0b' : '#22c55e'};border:1.5px solid #0f172a;border-radius:50%;"></span>
+        </div>
+        <div class="pl-gc-header-info">
+          <div class="pl-convo-name" style="font-size:13.5px;font-weight:800;color:#ffffff;line-height:1.2;display:flex;align-items:center;gap:6px;">
+            <span>Alex</span>
+            <span class="pl-gc-msg-role-tag" style="background:rgba(234,179,8,0.22);color:#facc15;border:1px solid rgba(234,179,8,0.5);">FRIEND</span>
+          </div>
+          <div class="pl-gc-members-summary">Best Friend &amp; High School Classmate · ${isOffline ? '<span style="color:#f59e0b;">🟡 Offline</span>' : '<span style="color:#22c55e;">🟢 Online</span>'}</div>
+        </div>
+      </div>
+
+      <!-- Optional No Internet Banner -->
+      <div id="pl-gc-banner-slot" class="pl-banner-slot">${bannerHtml}</div>
+
+      <!-- Messages Thread -->
+      <div class="pl-convo-messages" id="pl-alex-messages-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <!-- System event pills -->
+        <div class="pl-gc-system-events-container">
+          <div class="pl-gc-system-pill">
+            🎓 <strong>Alex</strong> is your close friend &amp; high school classmate
+          </div>
+          <div class="pl-gc-system-pill pl-gc-pill-you">
+            💬 Personal chat · Catching up after graduation &amp; internship banter
+          </div>
+        </div>
+
+        ${allMessages.map((msg, idx) => {
+          const isMine = (msg.from === 'ethan') || (msg.from === 'player') || (msg.isPlayer);
+          const authorName = isMine ? 'Ethan (You)' : 'Alex';
+          const avatarSrc = isMine ? 'assets/Character/Ethan.png' : 'assets/Character/Alex.png';
+          const roleTag = isMine ? 'ETHAN (YOU)' : 'FRIEND';
+          const roleClass = isMine ? 'pl-gc-role-sysadmin' : 'pl-gc-role-you';
+
+          let seenReceiptHtml = '';
+          if (isMine) {
+            const isLatestMine = !allMessages.slice(idx + 1).some(m => (m.from === 'ethan') || (m.from === 'player') || (m.isPlayer));
+            if (msg.notDelivered) {
+              seenReceiptHtml = `
+                <div class="pl-gc-seen-row pl-msg-failed-row" style="color:#ef4444;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;margin-top:2px;" title="Not delivered — no internet connection">
+                  <span>⚠️ Not Delivered • No internet connection</span>
+                </div>
+              `;
+            } else if (isLatestMine) {
+              if (!_alexFriendIsTyping) {
+                seenReceiptHtml = `
+                  <div class="pl-gc-seen-row" title="Seen by Alex">
+                    <span class="pl-gc-seen-label">Seen</span>
+                    <img src="assets/Character/Alex.png" class="pl-gc-seen-avatar" alt="Alex">
+                  </div>
+                `;
+              } else {
+                seenReceiptHtml = `
+                  <div class="pl-gc-seen-row" title="Sent">
+                    <span class="pl-gc-seen-label" style="color:#64748b;">✓ Sent</span>
+                  </div>
+                `;
+              }
+            }
+          }
+
+          const isNew = !!msg.isNew;
+          const animClass = isNew ? 'pl-msg-new' : '';
+
+          return `
+            <div class="pl-gc-msg-item ${isMine ? 'mine' : 'theirs'} ${animClass}">
+              <img src="${avatarSrc}" class="pl-gc-msg-avatar ${isMine ? 'avatar-mine' : ''}" alt="${escapeHtml(authorName)}">
+              <div class="pl-gc-msg-col">
+                <div class="pl-gc-msg-meta">
+                  <span class="pl-gc-msg-author">${escapeHtml(authorName)}</span>
+                  <span class="pl-gc-msg-role-tag ${roleClass}">${escapeHtml(roleTag)}</span>
+                  <span class="pl-gc-msg-time-inline">${msg.time}</span>
+                </div>
+                <div class="pl-gc-bubble ${msg.notDelivered ? 'pl-gc-bubble-error' : ''}">${escapeHtml(msg.text)}</div>
+                ${seenReceiptHtml}
+              </div>
+            </div>
+          `;
+        }).join('')}
+
+        ${_alexFriendIsTyping ? `
+          <div class="pl-gc-msg-item theirs pl-typing-active" id="pl-alex-typing-item">
+            <img src="assets/Character/Alex.png" class="pl-gc-msg-avatar" alt="Alex">
+            <div class="pl-gc-msg-col">
+              <div class="pl-gc-msg-meta">
+                <span class="pl-gc-msg-author">Alex</span>
+                <span class="pl-gc-msg-role-tag pl-gc-role-you">FRIEND</span>
+              </div>
+              <div class="pl-gc-bubble pl-gc-typing-bubble">
+                <span class="pl-typing-dots" aria-hidden="true">
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                  <span class="pl-typing-dot"></span>
+                </span>
+                <span class="pl-typing-label">Alex is typing…</span>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Quick Replies & Input Bar -->
+      <div class="pl-gc-input-area">
+        <div class="pl-gc-quick-replies" style="display:flex;gap:8px;padding:4px 0;flex-wrap:wrap;align-items:center;">
+          ${getAlexFriendQuickReplies(allMessages).map(qr => `
+            <button type="button" class="pl-gc-chip" data-qr="${escapeHtml(qr.text)}" onclick="sendCustomAlexFriendMessage(this.getAttribute('data-qr'))" style="cursor:pointer;background:rgba(234,179,8,0.18);border:1px solid rgba(234,179,8,0.45);color:#fef08a;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:5px 12px;font-size:12px;" title="${escapeHtml(qr.text)}">
+              <span>${qr.icon}</span> <span>${escapeHtml(qr.label)}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="pl-gc-input-bar">
+          <input
+            type="text"
+            id="pl-alex-text-input"
+            class="pl-gc-input"
+            placeholder="Message Alex..."
+            maxlength="200"
+            autocomplete="off"
+            value="${escapeHtml(preservedText)}"
+            onkeydown="if(event.key==='Enter') sendCustomAlexFriendMessage();"
+          >
+          <button type="button" class="pl-gc-send-btn" onclick="sendCustomAlexFriendMessage()">
+            Send 📨
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Restore preserved input text if user had already begun typing
+  const inp = document.getElementById('pl-alex-text-input');
+  if (inp && preservedText) {
+    inp.value = preservedText;
+  }
+
+  // Auto-scroll to latest message
+  const isSmooth = !!options.smoothScroll;
+  const list = document.getElementById('pl-alex-messages-list');
+  if (list) {
+    if (isSmooth) {
+      list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+      setTimeout(() => {
+        const l2 = document.getElementById('pl-alex-messages-list');
+        if (l2) l2.scrollTo({ top: l2.scrollHeight, behavior: 'smooth' });
+      }, 70);
+    } else {
+      list.scrollTop = list.scrollHeight;
+      setTimeout(() => {
+        const l2 = document.getElementById('pl-alex-messages-list');
+        if (l2) l2.scrollTop = l2.scrollHeight;
+      }, 40);
+    }
+  }
+
+  if (inp && options.focusInput !== false) {
+    setTimeout(() => {
+      const i2 = document.getElementById('pl-alex-text-input');
+      if (i2 && document.activeElement !== i2 && !options.noFocus) {
+        i2.focus();
+      }
+    }, 60);
+  }
+
+  // Clear isNew flag on messages after animation finishes
+  let hadNew = false;
+  allMessages.forEach(m => {
+    if (m.isNew) {
+      hadNew = true;
+      m.isNew = false;
+    }
+  });
+  if (hadNew) {
+    setTimeout(() => {
+      saveAlexFriendMessages(allMessages);
+    }, 450);
+  }
+}
+
+function sendAlexFriendMessage(customText) {
+  sendCustomAlexFriendMessage(customText);
+}
+
+function sendCustomAlexFriendMessage(overrideText) {
+  if (_alexFriendIsTyping) return;
+  const input = document.getElementById('pl-alex-text-input');
+  let typed = (typeof overrideText === 'string' && overrideText.trim())
+    ? overrideText.trim()
+    : (input ? (input.value || '').trim() : '');
+
+  if (!typed) {
+    if (input) input.focus();
+    return;
+  }
+  if (input) input.value = '';
+
+  const conn = getPhoneLinkConnectionStatus();
+  if (!conn.isInternetConnected) {
+    const msgs = loadAlexFriendMessages();
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    msgs.push({
+      id: 'ethan_msg_' + Date.now(),
+      from: 'ethan',
+      author: 'Ethan',
+      roleTag: 'ETHAN (YOU)',
+      roleClass: 'pl-gc-role-sysadmin',
+      avatar: 'assets/Character/Ethan.png',
+      time: timeStr,
+      text: typed,
+      isNew: true,
+      notDelivered: true
+    });
+    saveAlexFriendMessages(msgs);
+
+    const content = document.getElementById('pl-tab-content');
+    if (content && g4ActiveConvo === 'alex_friend') {
+      renderAlexFriendChat(content, { smoothScroll: true });
+    }
+
+    const bar = document.querySelector('#pl-tab-content .pl-gc-input-bar');
+    if (bar) {
+      bar.classList.remove('pl-input-bar-error');
+      void bar.offsetWidth;
+      bar.classList.add('pl-input-bar-error');
+      setTimeout(() => bar.classList.remove('pl-input-bar-error'), 500);
+    }
+    const inp = document.getElementById('pl-alex-text-input');
+    if (inp) {
+      inp.classList.remove('pl-input-error');
+      void inp.offsetWidth;
+      inp.classList.add('pl-input-error');
+      setTimeout(() => inp.classList.remove('pl-input-error'), 500);
+    }
+    const banner = document.getElementById('pl-no-internet-banner');
+    if (banner) {
+      banner.classList.remove('pl-banner-flash-attention');
+      void banner.offsetWidth;
+      banner.classList.add('pl-banner-flash-attention');
+      setTimeout(() => banner.classList.remove('pl-banner-flash-attention'), 700);
+    }
+
+    const reason = conn.isAirplane
+      ? '✈️ Message not delivered: Airplane Mode is active. Turn off Airplane Mode to message Alex.'
+      : (typeof networkSettings !== 'undefined' && !networkSettings.wifi
+          ? '📶 Message not delivered: Wi-Fi is turned off. Turn on Wi-Fi to message Alex.'
+          : '📶 Message not delivered: No internet connection. Please connect to Wi-Fi to message Alex.');
+    if (typeof showToast === 'function') {
+      showToast(reason, 'error');
+    }
+    if (typeof AudioManager !== 'undefined' && AudioManager.playWarning) {
+      AudioManager.playWarning();
+    }
+    return;
+  }
+
+  const msgs = loadAlexFriendMessages();
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  msgs.push({
+    id: 'ethan_msg_' + Date.now(),
+    from: 'ethan',
+    author: 'Ethan',
+    roleTag: 'ETHAN (YOU)',
+    roleClass: 'pl-gc-role-sysadmin',
+    avatar: 'assets/Character/Ethan.png',
+    time: timeStr,
+    text: typed,
+    isNew: true
+  });
+  saveAlexFriendMessages(msgs);
+
+  if (typeof AudioManager !== 'undefined' && AudioManager.playClick) {
+    AudioManager.playClick();
+  }
+
+  _alexFriendIsTyping = true;
+  const content = document.getElementById('pl-tab-content');
+  if (content && g4ActiveConvo === 'alex_friend') {
+    renderAlexFriendChat(content, { smoothScroll: true });
+  }
+
+  setTimeout(() => {
+    _alexFriendIsTyping = false;
+    const alexReplyText = getAlexFriendReply(typed);
+
+    const replyNow = new Date();
+    const replyTime = replyNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const updatedMsgs = loadAlexFriendMessages();
+    updatedMsgs.push({
+      id: 'alex_reply_' + Date.now(),
+      from: 'alex',
+      author: 'Alex',
+      roleTag: 'FRIEND',
+      roleClass: 'pl-gc-role-newbie',
+      avatar: 'assets/Character/Alex.png',
+      time: replyTime,
+      text: alexReplyText,
+      isNew: true
+    });
+    saveAlexFriendMessages(updatedMsgs);
+
+    if (content && g4ActiveConvo === 'alex_friend') {
+      renderAlexFriendChat(content, { smoothScroll: true });
+    }
+
+    if (typeof AudioManager !== 'undefined' && AudioManager.playNotification) {
+      AudioManager.playNotification();
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RYAN (IT SUPPORT MENTOR) DIRECT CHAT & CYBERSECURITY MENTORSHIP
+// ═══════════════════════════════════════════════════════════════
+
+function getRyanMentorQuickRepliesForEthan(allMessages) {
+  const ethanMsgs = (allMessages || []).filter(m => (m.from === 'ethan') || (m.from === 'player') || (m.isPlayer));
+  if (!ethanMsgs || ethanMsgs.length === 0) {
+    return [
+      { icon: '🦠', label: 'Trojans & Ransomware threats', text: 'How do Trojans and Ransomware sneak past defenses?' },
+      { icon: '🛡️', label: 'Password security & MFA', text: "What's the best strategy for password security & MFA?" },
+      { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' },
+      { icon: '🎓', label: 'Certifications & IT career advice', text: 'What certifications or skills should an IT student prioritize?' },
+      { icon: '📜', label: 'Real incident experience', text: 'Have you ever handled a real cyber attack in your career?' }
+    ];
+  }
+
+  const lastEthan = ethanMsgs[ethanMsgs.length - 1];
+  const lastText = (lastEthan.text || '').toLowerCase();
+
+  if (lastText.includes('trojan') || lastText.includes('ransomware') || lastText.includes('malware')) {
+    return [
+      { icon: '🚨', label: 'What to do when ransomware suspected?', text: 'What should a SysAdmin do first when ransomware is suspected?' },
+      { icon: '⛏️', label: 'How to detect hidden cryptominers?', text: 'How can we detect hidden cryptominers on a workstation?' },
+      { icon: '🛡️', label: 'Password security & MFA', text: "What's the best strategy for password security & MFA?" },
+      { icon: '🎓', label: 'Certifications & IT careers', text: 'What certifications or skills should an IT student prioritize?' }
+    ];
+  }
+
+  if (lastText.includes('isolate') || lastText.includes('first') || lastText.includes('cryptominer')) {
+    return [
+      { icon: '⛏️', label: 'How to detect hidden cryptominers?', text: 'How can we detect hidden cryptominers on a workstation?' },
+      { icon: '🛡️', label: 'Password security & MFA', text: "What's the best strategy for password security & MFA?" },
+      { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' },
+      { icon: '📜', label: 'Real incident experience', text: 'Have you ever handled a real cyber attack in your career?' }
+    ];
+  }
+
+  if (lastText.includes('password') || lastText.includes('mfa')) {
+    return [
+      { icon: '📲', label: 'How attackers exploit MFA fatigue?', text: 'How do attackers exploit MFA fatigue?' },
+      { icon: '🔑', label: 'Are password managers safe?', text: 'What about password managers — are they completely safe?' },
+      { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' },
+      { icon: '🎓', label: 'Certifications & IT careers', text: 'What certifications or skills should an IT student prioritize?' }
+    ];
+  }
+
+  if (lastText.includes('mfa fatigue') || lastText.includes('password manager')) {
+    return [
+      { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' },
+      { icon: '🦠', label: 'Trojans & Ransomware threats', text: 'How do Trojans and Ransomware sneak past defenses?' },
+      { icon: '🎓', label: 'Certifications & IT careers', text: 'What certifications or skills should an IT student prioritize?' },
+      { icon: '📜', label: 'Real incident experience', text: 'Have you ever handled a real cyber attack in your career?' }
+    ];
+  }
+
+  if (lastText.includes('browsing') || lastText.includes('drive-by')) {
+    return [
+      { icon: '⚡', label: 'How do drive-by downloads work?', text: 'How do drive-by downloads work without clicking?' },
+      { icon: '🔒', label: 'Checking SSL/TLS certificates', text: 'What should I look for in SSL/TLS certificates?' },
+      { icon: '🦠', label: 'Trojans & Ransomware threats', text: 'How do Trojans and Ransomware sneak past defenses?' },
+      { icon: '🎓', label: 'Certifications & IT careers', text: 'What certifications or skills should an IT student prioritize?' }
+    ];
+  }
+
+  if (lastText.includes('cert') || lastText.includes('career') || lastText.includes('prioritize') || lastText.includes('skills')) {
+    return [
+      { icon: '🖥️', label: 'Home lab projects to stand out', text: 'What projects can I build in a home lab to stand out?' },
+      { icon: '⚔️', label: 'Blue Team vs Red Team roles', text: 'What is the difference between Blue Team and Red Team roles?' },
+      { icon: '📜', label: 'Real incident experience', text: 'Have you ever handled a real cyber attack in your career?' },
+      { icon: '🛡️', label: 'Password security & MFA', text: "What's the best strategy for password security & MFA?" }
+    ];
+  }
+
+  if (lastText.includes('home lab') || lastText.includes('blue team') || lastText.includes('red team')) {
+    return [
+      { icon: '📜', label: 'Real incident experience', text: 'Have you ever handled a real cyber attack in your career?' },
+      { icon: '🦠', label: 'Trojans & Ransomware threats', text: 'How do Trojans and Ransomware sneak past defenses?' },
+      { icon: '🛡️', label: 'Password security & MFA', text: "What's the best strategy for password security & MFA?" },
+      { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' }
+    ];
+  }
+
+  if (lastText.includes('attack') || lastText.includes('experience') || lastText.includes('incident')) {
+    return [
+      { icon: '🧹', label: 'Hardest part of remediation?', text: 'What was the hardest part of cleaning up that incident?' },
+      { icon: '🦠', label: 'Trojans & Ransomware threats', text: 'How do Trojans and Ransomware sneak past defenses?' },
+      { icon: '🎓', label: 'Certifications & IT careers', text: 'What certifications or skills should an IT student prioritize?' },
+      { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' }
+    ];
+  }
+
+  return [
+    { icon: '🦠', label: 'Trojans & Ransomware threats', text: 'How do Trojans and Ransomware sneak past defenses?' },
+    { icon: '🛡️', label: 'Password security & MFA', text: "What's the best strategy for password security & MFA?" },
+    { icon: '🌐', label: 'Safe browsing habits', text: 'Any advice for safe browsing habits and avoiding drive-by downloads?' },
+    { icon: '🎓', label: 'Certifications & IT careers', text: 'What certifications or skills should an IT student prioritize?' },
+    { icon: '📜', label: 'Real incident experience', text: 'Have you ever handled a real cyber attack in your career?' }
+  ];
+}
+
+function getRyanMentorReplyForEthan(typed) {
+  const lower = (typed || '').toLowerCase();
+
+  if (lower.includes('isolate') || (lower.includes('first') && lower.includes('ransomware'))) {
+    return "Immediate step #1: DISCONNECT the affected machine from the network immediately! Unplug the Ethernet cable or turn off Wi-Fi.\n\nThis prevents the ransomware from spreading laterally via SMB/shares to other department computers or contacting its Command & Control (C2) servers. Next, take a memory dump (RAM) if possible before powering off, because encryption keys might still linger in volatile memory. Never pay the ransom — rely on immutable offline backups!";
+  }
+
+  if (lower.includes('cryptominer') || lower.includes('cpu spike')) {
+    return "To spot cryptominers:\n\n1. Look for unexplained high CPU/GPU utilization (often pinned at 90-100%) during idle hours.\n2. Inspect outbound network connections on common mining pool ports (like 3333, 4444, 5555, or 14444).\n3. Check Windows Task Scheduler and registry Run keys for scripts downloading random base64 payloads.\n4. Watch for processes masquerading with names similar to Windows services (like 'scvhost.exe' or 'svch0st.exe').";
+  }
+
+  if (lower.includes('trojan') || lower.includes('ransomware') || lower.includes('sneak') || lower.includes('malware')) {
+    return "Trojans are masters of disguise. They usually arrive hidden inside pirated software, cracked game utilities, fake browser updates, or phishing invoice attachments. Once the user double-clicks, the dropper quietly executes in the background, disables defenses, and downloads the actual payload — which could be ransomware that encrypts your files or an infostealer.\n\nAs a SysAdmin, always verify file hashes (SHA-256), inspect digital signatures, and enforce application whitelisting!";
+  }
+
+  if (lower.includes('mfa fatigue') || lower.includes('push bombing')) {
+    return "MFA fatigue (or push bombing) happens when attackers obtain stolen passwords and flood the victim's phone with login approval notifications at 2:00 AM. The victim, exhausted or confused, eventually taps 'Approve' just to silence the alerts.\n\nThe modern defense is 'Number Matching': the login screen displays a two-digit number that the user must manually enter inside the authenticator app. That completely stops blind approvals!";
+  }
+
+  if (lower.includes('password manager') || lower.includes('managers')) {
+    return "Password managers are arguably the most effective daily security tool! They let you use unique, 20+ character random passwords for every single service. If one company suffers a database breach, none of your other accounts are compromised.\n\nJust ensure you secure your master vault with a long passphrase and hardware-based MFA (FIDO2 or TOTP authenticator).";
+  }
+
+  if (lower.includes('password') || lower.includes('passphrase') || lower.includes('mfa') || lower.includes('2fa') || lower.includes('account protection')) {
+    return "Passphrases beat complex passwords every time! A random 4-word passphrase like 'walrus-guitar-galaxy-apricot' has over 50 bits of entropy and is practically impossible to brute-force, while being easy for humans to remember.\n\nCombine passphrases with Multi-Factor Authentication (MFA). App-based authenticators (like Google Authenticator or Microsoft Authenticator) or hardware security keys (YubiKeys) are vastly superior to SMS, which is susceptible to SIM-swapping.";
+  }
+
+  if (lower.includes('drive-by') || lower.includes('drive by')) {
+    return "A drive-by download happens without you ever clicking 'Download'. You visit a legitimate website that was compromised or hosting malicious ads (malvertising). Hidden exploit kits scan your browser and operating system for unpatched security flaws and silently inject shellcode into memory.\n\nThe #1 defense? Keep your browser, OS, and software updated immediately whenever security patches release!";
+  }
+
+  if (lower.includes('ssl') || lower.includes('tls') || lower.includes('certificate')) {
+    return "When inspecting SSL/TLS certificates, look beyond just the green padlock: click the padlock to view the issued certificate. Verify who the certificate was issued to, check the Certificate Authority (CA) validity, and beware of lookalike domains (e.g. 'paypa1.com' or 'account-update-support.xyz'). Never click past browser certificate warning errors on enterprise machines!";
+  }
+
+  if (lower.includes('browsing') || lower.includes('safe habits') || lower.includes('download')) {
+    return "Safe browsing essentials for IT professionals:\n\n1. Keep browser extensions minimal. Shady extensions can read cookies, passwords, and inject ads.\n2. Never download game cracks or keygens — telemetry shows over 60% carry bundled malware.\n3. Always hover over hyperlinks to verify the true destination URL before clicking.\n4. Use DNS protection (like Quad9 9.9.9.9 or Cloudflare 1.1.1.2) that automatically blocks known malicious domains.";
+  }
+
+  if (lower.includes('home lab') || lower.includes('lab project') || lower.includes('projects')) {
+    return "Building a home lab is the single best way to learn! Here are high-impact projects:\n\n1. Install VirtualBox or Proxmox (free).\n2. Spin up Windows Server and configure Active Directory Domain Services with users, groups, and Group Policies (GPO).\n3. Set up a Linux server running pfSense or OPNsense as a virtual firewall.\n4. Deploy an open-source SIEM like Wazuh to ingest security logs from your virtual machines.\n\nDocument these on GitHub and you'll stand out from 95% of job applicants!";
+  }
+
+  if (lower.includes('blue team') || lower.includes('red team') || lower.includes('roles') || lower.includes('difference')) {
+    return "Great question! In cybersecurity:\n\n🛡️ Blue Team (Defensive): Focuses on protecting assets. Roles include SOC Analysts, Incident Responders, and Security Engineers who monitor logs, hunt threats, and harden servers.\n\n⚔️ Red Team (Offensive): Focuses on testing defenses by simulating adversary tactics. Roles include Penetration Testers and Ethical Hackers.\n\nI always advise beginners to start in Blue Team defense or SysAdmin infrastructure — knowing how systems are built and defended makes you far more effective in any security role!";
+  }
+
+  if (lower.includes('cert') || lower.includes('certification') || lower.includes('career') || lower.includes('student') || lower.includes('prioritize') || lower.includes('advice')) {
+    return "For an aspiring IT and cybersecurity student, here's my roadmap:\n\n1. Foundational Certs: Start with CompTIA Network+ to master networking, then CompTIA Security+ for core security concepts. These certs satisfy DoD 8570 baseline requirements and bypass automated HR filters.\n2. Hands-on Skills: Learn Linux command line basics and either Python or PowerShell scripting for automation.\n3. Networking Intuition: Understand how packets move, what DNS does, and how firewalls filter traffic.\n\nMost importantly: stay curious, experiment in virtual labs, and never stop learning!";
+  }
+
+  if (lower.includes('hardest part') || lower.includes('cleaning up') || lower.includes('remediation')) {
+    return "The hardest part of remediation isn't killing the malware — it's ensuring total eradication of persistence! Attackers often plant secondary backdoors, create stealthy scheduled tasks, and add unauthorized user accounts. If you don't find all of them, they'll simply reinfect the network next week. That's why thorough log analysis and forensic root cause analysis are crucial.";
+  }
+
+  if (lower.includes('attack') || lower.includes('incident') || lower.includes('experience') || lower.includes('story')) {
+    return "Early in my career, an employee found an unlabelled USB flash drive in our company parking lot and plugged it in out of curiosity — classic baiting attack! A cryptominer and backdoor immediately began running across the subnet.\n\nWe had to isolate the entire VLAN segment, analyze the memory artifacts, and reconstruct the incident timeline. It proved to me that the human element is the ultimate security perimeter. That's why awareness training is so vital.";
+  }
+
+  if (lower.includes('phish') || lower.includes('email') || lower.includes('link') || lower.includes('suspicious link')) {
+    return "Phishing remains the #1 initial access vector for ransomware and data breaches worldwide. Threat actors use lookalike domains (typosquatting), forged headers, and emotional triggers like urgent fear or executive authority. As IT staff, always inspect the full email headers, check the Return-Path, and analyze hyperlinks in an isolated sandbox.";
+  }
+
+  if (lower.includes('privacy') || lower.includes('digital footprint') || lower.includes('online safety')) {
+    return "Digital privacy starts with understanding your attack surface: review what third-party apps have access to your Google/Microsoft accounts, use encrypted messaging (like Signal), never reuse passwords across services, and avoid public Wi-Fi without an encrypted tunnel. What you keep private cannot be breached!";
+  }
+
+  if (lower.includes('thanks') || lower.includes('thank you') || lower.includes('appreciate') || lower.includes('got it')) {
+    return "You're very welcome, Ethan! You're asking the exact right questions for a budding SysAdmin. Keep that curiosity burning — security is all about understanding how things work underneath the hood!";
+  }
+
+  return "Good question, Ethan! As a SysAdmin, seeing how operating system processes, network sockets, and user permissions interlock is fundamental to securing any environment. Let me know if you want to explore malware persistence, firewall policies, or certifications next!";
+}
 
 function openRyanMentorConversation() {
   g4ActiveConvo = 'ryan_mentor';
@@ -1801,6 +2652,8 @@ function renderRyanMentorChat(container, options = {}) {
   const isOffline = !conn.isInternetConnected;
   const bannerHtml = isOffline ? renderNoInternetBannerHtml() : '';
   const isCh1Unlocked = isChapter1CompletedAndSaved();
+  const curChar = getCurrentPhoneCharacter();
+  const isEthan = curChar.id === 'ethan';
   const allMessages = loadRyanMentorMessages();
 
   const existingInput = document.getElementById('pl-ryan-text-input');
@@ -1829,26 +2682,28 @@ function renderRyanMentorChat(container, options = {}) {
 
       <!-- Messages Thread -->
       <div class="pl-convo-messages" id="pl-ryan-messages-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <!-- System event pills matching New Intern Team -->
+        <!-- System event pills -->
         <div class="pl-gc-system-events-container">
           <div class="pl-gc-system-pill">
             🛡️ <strong>Ryan</strong> is your assigned <strong>IT Support Mentor</strong>
           </div>
           <div class="pl-gc-system-pill pl-gc-pill-you">
-            🔒 Direct support line · Phishing training &amp; simulation assistance
+            ${isEthan
+              ? '🔒 Direct support line · SysAdmin, Malware Analysis &amp; Cybersecurity Mentorship'
+              : '🔒 Direct support line · Phishing training &amp; simulation assistance'}
           </div>
         </div>
 
         ${allMessages.map((msg, idx) => {
-          const isMine = (msg.from === 'alex') || (msg.from === 'player') || (msg.isPlayer);
-          const authorName = isMine ? 'Alex (You)' : 'Ryan';
-          const avatarSrc = isMine ? 'assets/Character/Alex.png' : 'assets/Character/Ryan.png';
-          const roleTag = isMine ? 'RECRUIT' : (msg.roleTag || 'MENTOR');
-          const roleClass = isMine ? 'pl-gc-role-you' : 'pl-gc-role-mentor';
+          const isMine = (msg.from === curChar.id) || (msg.from === 'player') || (msg.isPlayer) || (isEthan && msg.from === 'ethan') || (!isEthan && msg.from === 'alex');
+          const authorName = isMine ? curChar.displayName : 'Ryan';
+          const avatarSrc = isMine ? curChar.avatar : 'assets/Character/Ryan.png';
+          const roleTag = isMine ? (isEthan ? 'SYSADMIN' : 'RECRUIT') : (msg.roleTag || 'MENTOR');
+          const roleClass = isMine ? (isEthan ? 'pl-gc-role-sysadmin' : 'pl-gc-role-you') : 'pl-gc-role-mentor';
 
           let seenReceiptHtml = '';
           if (isMine) {
-            const isLatestMine = !allMessages.slice(idx + 1).some(m => (m.from === 'alex') || (m.from === 'player') || (m.isPlayer));
+            const isLatestMine = !allMessages.slice(idx + 1).some(m => (m.from === curChar.id) || (m.from === 'player') || (m.isPlayer) || (isEthan && m.from === 'ethan') || (!isEthan && m.from === 'alex'));
             if (msg.notDelivered) {
               seenReceiptHtml = `
                 <div class="pl-gc-seen-row pl-msg-failed-row" style="color:#ef4444;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;margin-top:2px;" title="Not delivered — no internet connection">
@@ -1913,10 +2768,16 @@ function renderRyanMentorChat(container, options = {}) {
         ` : ''}
       </div>
 
-      <!-- Quick Replies & Input Bar (Matching New Intern Team 2027 design) -->
+      <!-- Quick Replies & Input Bar -->
       <div class="pl-gc-input-area">
         <div class="pl-gc-quick-replies" style="display:flex;gap:8px;padding:4px 0;flex-wrap:wrap;align-items:center;">
-          ${isCh1Unlocked ? `
+          ${isEthan ? `
+            ${getRyanMentorQuickRepliesForEthan(allMessages).map(qr => `
+              <button type="button" class="pl-gc-chip" data-qr="${escapeHtml(qr.text)}" onclick="sendCustomRyanMentorMessage(this.getAttribute('data-qr'))" style="cursor:pointer;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.45);color:#f0f9ff;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:5px 12px;font-size:12px;" title="${escapeHtml(qr.text)}">
+                <span>${qr.icon}</span> <span>${escapeHtml(qr.label)}</span>
+              </button>
+            `).join('')}
+          ` : (isCh1Unlocked ? `
             <button type="button" class="pl-gc-chip pl-gc-chip-highlight" data-action="retry_investigation" onclick="sendRyanMentorRequest('retry_investigation')" style="cursor:pointer;background:rgba(56,189,248,0.2);border:1.5px solid #38bdf8;color:#f0f9ff;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:5px 12px;font-size:12px;box-shadow:0 2px 8px rgba(56,189,248,0.25);" title="Restart all 5 emails in Zmail &amp; reset checklist for a full retry">
               <span>🔁</span> <span>Retry Phishing Investigation</span> <span style="font-size:10px;color:#7dd3fc;margin-left:2px;">(Click to retry)</span>
             </button>
@@ -1927,7 +2788,7 @@ function renderRyanMentorChat(container, options = {}) {
             <div style="font-size:11px;color:#94a3b8;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:4px 10px;border-radius:12px;">
               <span>🔒</span> <span>Complete Chapter 1 &amp; save desktop progress to unlock Phishing Retries</span>
             </div>
-          `}
+          `)}
         </div>
         <div class="pl-gc-input-bar">
           <input
@@ -1999,6 +2860,12 @@ function renderRyanMentorChat(container, options = {}) {
 
 function sendRyanMentorRequest(type, customText) {
   if (_ryanMentorIsTyping) return;
+
+  const curChar = getCurrentPhoneCharacter();
+  if (curChar.id === 'ethan') {
+    sendCustomRyanMentorMessage(customText);
+    return;
+  }
 
   const conn = getPhoneLinkConnectionStatus();
   if (!conn.isInternetConnected) {
@@ -2107,6 +2974,8 @@ function sendRyanMentorRequest(type, customText) {
 
 function sendCustomRyanMentorMessage(overrideText) {
   if (_ryanMentorIsTyping) return;
+  const curChar = getCurrentPhoneCharacter();
+  const isEthan = curChar.id === 'ethan';
   const input = document.getElementById('pl-ryan-text-input');
   let typed = (typeof overrideText === 'string' && overrideText.trim())
     ? overrideText.trim()
@@ -2124,12 +2993,12 @@ function sendCustomRyanMentorMessage(overrideText) {
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     msgs.push({
-      id: 'alex_msg_' + Date.now(),
-      from: 'alex',
-      author: 'Alex',
-      roleTag: 'RECRUIT',
-      roleClass: 'pl-gc-role-you',
-      avatar: 'assets/Character/Alex.png',
+      id: (isEthan ? 'ethan_msg_' : 'alex_msg_') + Date.now(),
+      from: isEthan ? 'ethan' : 'alex',
+      author: isEthan ? 'Ethan' : 'Alex',
+      roleTag: isEthan ? 'SYSADMIN' : 'RECRUIT',
+      roleClass: isEthan ? 'pl-gc-role-sysadmin' : 'pl-gc-role-you',
+      avatar: isEthan ? 'assets/Character/Ethan.png' : 'assets/Character/Alex.png',
       time: timeStr,
       text: typed,
       isNew: true,
@@ -2183,12 +3052,12 @@ function sendCustomRyanMentorMessage(overrideText) {
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   msgs.push({
-    id: 'alex_msg_' + Date.now(),
-    from: 'alex',
-    author: 'Alex',
-    roleTag: 'RECRUIT',
-    roleClass: 'pl-gc-role-you',
-    avatar: 'assets/Character/Alex.png',
+    id: (isEthan ? 'ethan_msg_' : 'alex_msg_') + Date.now(),
+    from: isEthan ? 'ethan' : 'alex',
+    author: isEthan ? 'Ethan' : 'Alex',
+    roleTag: isEthan ? 'SYSADMIN' : 'RECRUIT',
+    roleClass: isEthan ? 'pl-gc-role-sysadmin' : 'pl-gc-role-you',
+    avatar: isEthan ? 'assets/Character/Ethan.png' : 'assets/Character/Alex.png',
     time: timeStr,
     text: typed,
     isNew: true
@@ -2207,29 +3076,33 @@ function sendCustomRyanMentorMessage(overrideText) {
 
   setTimeout(() => {
     _ryanMentorIsTyping = false;
-    const lower = typed.toLowerCase();
     let ryanReplyText = "";
 
-    const isCh1Unlocked = isChapter1CompletedAndSaved();
-
-    if (!isCh1Unlocked) {
-      ryanReplyText = "Hey Alex! Make sure to complete Chapter 1 (Phishing Investigation) and save your desktop progress first. Once that's done, you can message me here anytime to retry the phishing activity or restart the Zmail investigation!";
-    } else if (lower.includes('retry') || lower.includes('practice') || lower.includes('start over') || lower.includes('again')) {
-      retryPhishingActivity();
-      ryanReplyText = "Ok. Good luck! Here are some tips to help with your investigation:\n\n" +
-        "💡 Inspect the Sender: Always check the sender's full email address carefully for slight typos, numbers, or lookalike domains (e.g. paypa1.com).\n" +
-        "💡 Watch for Urgency: Phishing emails often pressure you with urgent deadlines, threats of account lockout, or fear.\n" +
-        "💡 Check Links & Attachments: Hover over links to preview the real destination URL, and be suspicious of unexpected file attachments.\n" +
-        "💡 Flag Clues First: Use Flag Mode in Zmail to pinpoint evidence before submitting your verdict.\n\n" +
-        "I've reset all 5 emails in Zmail and your Sticky Note checklist goals. Head over to Zmail and take your time!";
-    } else if (lower.includes('zmail') || lower.includes('email') || lower.includes('inbox')) {
-      ryanReplyText = "In Zmail, remember to inspect the sender domain, check for urgent or threatening language, and hover over links before clicking. Click 'Retry Phishing Investigation' below anytime to restart your practice!";
-    } else if (lower.includes('checklist') || lower.includes('sticky') || lower.includes('notes') || lower.includes('goal')) {
-      ryanReplyText = "Your Sticky Notes checklist tracks all 5 phishing mission goals. You can click 'Retry Phishing Investigation' below to clear your checklist goals and practice again from scratch!";
-    } else if (lower.includes('help') || lower.includes('tip') || lower.includes('how')) {
-      ryanReplyText = "Pro tip: Phishers love using lookalike domains (like paypa1.com or support-secure.net) and creating fake urgency. Always check the full sender address and inspect links carefully!";
+    if (isEthan) {
+      ryanReplyText = getRyanMentorReplyForEthan(typed);
     } else {
-      ryanReplyText = "I'm right here if you need anything! If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+      const lower = typed.toLowerCase();
+      const isCh1Unlocked = isChapter1CompletedAndSaved();
+
+      if (!isCh1Unlocked) {
+        ryanReplyText = "Hey Alex! Make sure to complete Chapter 1 (Phishing Investigation) and save your desktop progress first. Once that's done, you can message me here anytime to retry the phishing activity or restart the Zmail investigation!";
+      } else if (lower.includes('retry') || lower.includes('practice') || lower.includes('start over') || lower.includes('again')) {
+        retryPhishingActivity();
+        ryanReplyText = "Ok. Good luck! Here are some tips to help with your investigation:\n\n" +
+          "💡 Inspect the Sender: Always check the sender's full email address carefully for slight typos, numbers, or lookalike domains (e.g. paypa1.com).\n" +
+          "💡 Watch for Urgency: Phishing emails often pressure you with urgent deadlines, threats of account lockout, or fear.\n" +
+          "💡 Check Links & Attachments: Hover over links to preview the real destination URL, and be suspicious of unexpected file attachments.\n" +
+          "💡 Flag Clues First: Use Flag Mode in Zmail to pinpoint evidence before submitting your verdict.\n\n" +
+          "I've reset all 5 emails in Zmail and your Sticky Note checklist goals. Head over to Zmail and take your time!";
+      } else if (lower.includes('zmail') || lower.includes('email') || lower.includes('inbox')) {
+        ryanReplyText = "In Zmail, remember to inspect the sender domain, check for urgent or threatening language, and hover over links before clicking. Click 'Retry Phishing Investigation' below anytime to restart your practice!";
+      } else if (lower.includes('checklist') || lower.includes('sticky') || lower.includes('notes') || lower.includes('goal')) {
+        ryanReplyText = "Your Sticky Notes checklist tracks all 5 phishing mission goals. You can click 'Retry Phishing Investigation' below to clear your checklist goals and practice again from scratch!";
+      } else if (lower.includes('help') || lower.includes('tip') || lower.includes('how')) {
+        ryanReplyText = "Pro tip: Phishers love using lookalike domains (like paypa1.com or support-secure.net) and creating fake urgency. Always check the full sender address and inspect links carefully!";
+      } else {
+        ryanReplyText = "I'm right here if you need anything! If you want to practice identifying phishing emails again, just message me through Phone Link, and I'll help you retry the phishing activity!";
+      }
     }
 
     const replyNow = new Date();
@@ -2461,6 +3334,12 @@ window.renderNoInternetBannerHtml = renderNoInternetBannerHtml;
 window.updatePhoneLinkConnectionState = updatePhoneLinkConnectionState;
 window.turnOnWifiFromPhoneLink = turnOnWifiFromPhoneLink;
 window.turnOffAirplaneFromPhoneLink = turnOffAirplaneFromPhoneLink;
+window.openAlexFriendConversation = openAlexFriendConversation;
+window.renderAlexFriendChat = renderAlexFriendChat;
+window.sendAlexFriendMessage = sendAlexFriendMessage;
+window.sendCustomAlexFriendMessage = sendCustomAlexFriendMessage;
+window.loadAlexFriendMessages = loadAlexFriendMessages;
+window.saveAlexFriendMessages = saveAlexFriendMessages;
 
 
 function renderIndividualConvo(contactId, content) {
